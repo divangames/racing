@@ -22,7 +22,7 @@
 
 После публикации игра доступна по адресу:
 
-`https://<логин>.github.io/racing/`
+https://divangames.github.io/racing/
 
 ## Технологии
 
