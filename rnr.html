@@ -417,85 +417,68 @@ const CHIP={
 };
 ////////////////////////////////////////////////////////
 //
-// Плеер: случайный трек из music.js, лог выбора в консоли
+// Плеер: случайный трек из music.js; чип — если MP3 не стартовал
 //
 ////////////////////////////////////////////////////////
+function musicOn(){
+ return !!(settings&&settings.sound&&settings.sound.musicOn);
+}
 const MUSIC={
  el:null,cur:null,curCat:null,playedCount:0,
  list(cat){return (window.MUSIC_TRACKS&&MUSIC_TRACKS[cat])||[];},
  play(cat){
-  console.log('🎵 play() called with cat:',cat,'curCat:',this.curCat,'cur:',this.cur);
+  console.log('play()',cat,'curCat',this.curCat);
+  if(!musicOn()){this.stop();return;}
   const list=this.list(cat);
-  console.log('📋 Track list for',cat,':',list);
-  if(!list.length){console.log('❌ No tracks for',cat);return;}
-  if(!window.settings||!settings.sound||!settings.sound.musicOn){
-   console.log('❌ Music disabled in settings');
-   this.stop();
-   return;
-  }
-  // Если категория изменилась, сбросить текущий трек
-  if(this.curCat!==cat){
-   console.log('🔄 Category changed, resetting cur');
-   this.cur=null;
-  }
+  if(this.curCat!==cat)this.cur=null;
   this.curCat=cat;
+  if(!list.length){this.stopEl();CHIP.start(cat);return;}
+  CHIP.stop();
   this.next();
  },
  next(){
   const list=this.list(this.curCat)||[];
-  if(!list.length)return;
-  if(!window.settings||!settings.sound||!settings.sound.musicOn)return;
+  if(!musicOn())return;
+  if(!list.length){CHIP.start(this.curCat);return;}
 
   this.playedCount++;
-  console.log('🎲 Choosing random track from',list.length,'options, cur:',this.cur);
-
-  // Настоящий рандом
   let idx=(Math.random()*list.length)|0;
   let pick=list[idx];
-  console.log('🎲 Random index:',idx,'picked:',pick);
-
-  // Не повторять тот же трек (если есть другие)
   if(list.length>1&&pick===this.cur){
-   console.log('⚠️ Same track, choosing again');
    idx=(Math.random()*list.length)|0;
    pick=list[idx];
-   console.log('🎲 New random index:',idx,'picked:',pick);
   }
-
   this.cur=pick;
-  console.log('✅ Setting cur to:',this.cur,'playedCount:',this.playedCount);
+  console.log('track',this.playedCount,idx,pick);
 
   if(!this.el){
    this.el=new Audio();
-   this.el.addEventListener('ended',()=>{
-    console.log('🏁 Track ended, calling next()');
-    this.next();
+   this.el.preload='auto';
+   this.el.referrerPolicy='no-referrer';
+   this.el.addEventListener('ended',()=>this.next());
+   this.el.addEventListener('error',()=>{
+    console.error('audio error',this.el&&this.el.error);
+    CHIP.start(this.curCat);
    });
   }
   this.el.src=pick;
   this.el.volume=(settings.sound.music||50)/100;
   const playPromise=this.el.play();
   if(playPromise){
-   playPromise.then(()=>{
-    console.log('▶️ Playing:',pick);
-   }).catch(e=>{
-    console.error('❌ Play error:',e);
+   playPromise.then(()=>CHIP.stop()).catch(e=>{
+    console.error('play()',e);
+    CHIP.start(this.curCat);
    });
   }
  },
- stop(){
-  if(this.el){
-   this.el.pause();
-   this.el.currentTime=0;
-   console.log('⏹️ Music stopped');
-  }
+ stopEl(){
+  if(this.el){this.el.pause();this.el.currentTime=0;}
  },
+ stop(){this.stopEl();CHIP.stop();},
  resume(){
-  if(this.el&&this.el.src){
-   this.el.play().catch(()=>{});
-  }else if(this.curCat){
-   this.play(this.curCat);
-  }
+  if(!musicOn())return;
+  if(this.el&&this.el.src)this.el.play().catch(()=>{if(this.curCat)this.play(this.curCat);});
+  else if(this.curCat)this.play(this.curCat);
  },
  setVolume(v){if(this.el)this.el.volume=v;}
 };
@@ -504,6 +487,7 @@ function musicCat(){if(state==='race'||state==='results')return'racing';
  return'main';}
 let lastMusicCat=null;
 function audioInit(){if(AU.ctx)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const c=AU.ctx=new AC();
+ if(c.state==='suspended')c.resume().catch(()=>{});
  AU.master=c.createGain();AU.master.gain.value=.55;AU.master.connect(c.destination);
  AU.sfx=c.createGain();AU.sfx.connect(AU.master);
  AU.music=c.createGain();AU.music.connect(AU.master);
