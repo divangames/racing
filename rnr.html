@@ -15,6 +15,7 @@
 </head>
 <body>
 <canvas id="cv" width="1280" height="720" tabindex="0"></canvas>
+<script src="music.js"></script>
 <script>
 'use strict';
 const W=1280,H=720,TAU=Math.PI*2,ROADW=95,LAPS=4;
@@ -355,26 +356,9 @@ applyResolution();booted=true;
 let noiseBuf=null;
 ////////////////////////////////////////////////////////
 //
-// Музыка: локальные MP3 из assets/music, иначе оригинальный чип
+// Чип-тема: запасной синтез, если MP3 недоступны
 //
 ////////////////////////////////////////////////////////
-const MUSIC_BASE='assets/music/';
-const MUSIC_FILES={
- main:['0.mp3'],
- garage:["Blues Brothers - Peter Gunn Theme (Rock'n'Roll Racing OST) (www.lightaudio.ru).mp3"],
- racing:[
-  "MC QUATTRO - Rock n' Roll Racing (www.lightaudio.ru).mp3",
-  "ROCK AND ROLL RACING THEME - ROCK AND ROLL (www.lightaudio.ru).mp3",
-  "Steppenwolf (Rock'n'Roll Racing OST) - Born To Be Wild (www.lightaudio.ru).mp3",
-  "Deep Purple (Rock'n'Roll Racing OST) - Highway Star (www.lightaudio.ru).mp3",
-  "Golden Earing - Radar Love (Rock n' Roll Racing OST) (www.lightaudio.ru).mp3",
-  "OST Rock in Roll Racing - Highway Star (www.lightaudio.ru).mp3",
-  "OST Rock n' Roll Racing (Ventures) - Peter Gunn Theme (www.lightaudio.ru).mp3",
-  "Rock n Roll Racing Ost (Original) - Deep Purple - Highway Star (www.lightaudio.ru).mp3",
-  "Rock'n'Roll Racing OST - Paranoid (www.lightaudio.ru).mp3"
- ]
-};
-function musicUrl(cat,file){return MUSIC_BASE+cat+'/'+encodeURI(file);}
 const CHIP_BASS={
  main:[40,40,0,40,47,0,40,43,40,40,0,45,47,0,43,40],
  garage:[45,0,45,48,45,0,52,48,45,0,45,43,45,48,50,52],
@@ -431,46 +415,29 @@ const CHIP={
   if(lead)this.note('sawtooth',mtof(lead),t,.14,.045);
  }
 };
+////////////////////////////////////////////////////////
+//
+// Плеер: берёт URL из music.js, без сканирования папок
+//
+////////////////////////////////////////////////////////
 const MUSIC={
- cat:{main:[],garage:[],racing:[]},loaded:{},el:null,cur:null,curCat:null,
- async discover(cat){
-  if(this.loaded[cat])return;this.loaded[cat]=true;
-  // На GitHub Pages треки не публикуются — сразу чип.
-  if(/github\.io$/i.test(location.hostname)){this.cat[cat]=[];return;}
-  const names=MUSIC_FILES[cat]||[];
-  const local=location.protocol==='file:';
-  const list=[];
-  for(const name of names){
-   const url=musicUrl(cat,name);
-   if(local){list.push(url);continue;}
-   try{const r=await fetch(url,{method:'GET',headers:{Range:'bytes=0-0'}});if(r.ok||r.status===206)list.push(url);}catch(e){}
-  }
-  this.cat[cat]=list;
+ el:null,cur:null,curCat:null,
+ list(cat){return (window.MUSIC_TRACKS&&MUSIC_TRACKS[cat])||[];},
+ play(cat){ this.curCat=cat;const list=this.list(cat);
+  if(!list.length||!settings.sound.musicOn){this.stop();return;}
+  this.next();
  },
- async play(cat){
-  this.curCat=cat;await this.discover(cat);
-  if(!settings.sound.musicOn){this.stop();return;}
-  const list=this.cat[cat]||[];
-  if(list.length){CHIP.stop();this.next();return;}
-  this.stopEl();CHIP.start(cat);
- },
- next(){const list=this.cat[this.curCat]||[];
+ next(){ const list=this.list(this.curCat)||[];
   if(!list.length||!settings.sound.musicOn)return;
   let pick=list[(Math.random()*list.length)|0];
   if(list.length>1&&pick===this.cur)pick=list[(Math.random()*list.length)|0];
   this.cur=pick;
-  if(!this.el){this.el=new Audio();this.el.loop=false;this.el.addEventListener('ended',()=>this.next());}
+  if(!this.el){this.el=new Audio();this.el.addEventListener('ended',()=>this.next());}
   this.el.src=pick;this.el.volume=settings.sound.music/100;
-  this.el.play().catch(()=>{CHIP.start(this.curCat);});
+  this.el.play().catch(()=>{});
  },
- stopEl(){if(this.el){this.el.pause();this.el.removeAttribute('src');}},
- stop(){this.stopEl();CHIP.stop();},
- resume(){
-  if(!settings.sound.musicOn)return;
-  const list=this.cat[this.curCat]||[];
-  if(list.length&&this.el&&this.el.src)this.el.play().catch(()=>{});
-  else if(this.curCat)this.play(this.curCat);
- },
+ stop(){if(this.el)this.el.pause();},
+ resume(){ if(this.el&&this.el.src)this.el.play().catch(()=>{});else if(this.curCat)this.play(this.curCat); },
  setVolume(v){if(this.el)this.el.volume=v;}
 };
 function musicCat(){if(state==='race'||state==='results')return'racing';
