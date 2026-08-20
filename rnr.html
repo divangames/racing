@@ -351,17 +351,19 @@ if(typeof settings.graphics.resolution!=='number')settings.graphics.resolution=0
 if(typeof settings.graphics.showFps!=='boolean')settings.graphics.showFps=false;
 applyResolution();booted=true;
 let noiseBuf=null;
+const MUSIC_BASE='music/';
 const MUSIC={
  cat:{main:[],garage:[],racing:[]},loaded:{},el:null,cur:null,curCat:null,
- async discover(cat){if(this.loaded[cat])return;this.loaded[cat]=true;
-  const base='assets/music/'+cat+'/';let list=[];
+ async discover(cat){if(this.loaded[cat])return;
+  const base=MUSIC_BASE+cat+'/';let list=[];
   try{const res=await fetch(base);if(res.ok){const html=await res.text();
    const re=/href="([^"?#]+\.(?:mp3|ogg|wav|m4a))"/gi;let m;
    while((m=re.exec(html))){let f=m[1].replace(/^.+\//,'');list.push(f);}}}catch(e){}
   if(!list.length){for(let i=0;i<24;i++){let found=false;
-   for(const ext of['mp3','ogg','wav','m4a']){try{const r=await fetch(base+i+'.'+ext,{method:'HEAD'});if(r.ok){list.push(i+'.'+ext);found=true;break;}}catch(e){}}
+   for(const ext of['mp3','ogg','wav','m4a']){try{const r=await fetch(base+i+'.'+ext,{method:'GET',headers:{Range:'bytes=0-0'}});if(r.ok){list.push(i+'.'+ext);found=true;break;}}catch(e){}}
    if(!found&&i>0)break;}}
   this.cat[cat]=list.map(f=>base+f);
+  if(list.length)this.loaded[cat]=true;
  },
  async play(cat){this.curCat=cat;await this.discover(cat);
   const list=this.cat[cat]||[];
