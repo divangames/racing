@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Прототип кузова для drawCar — локальные координаты, центр (0,0), ось +X = перед.
+  Колёса, нитро и тень рисуются отдельно в canvas (см. README.md).
+  Цвета: --car-col, --car-col2, --ch-col (CSS-переменные).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -18 58 36" width="580" height="360">
+  <title>RNR — прототип кузова</title>
+  <defs>
+    <style>
+      :root {
+        --car-col: #d24a22;
+        --car-col2: #7e2a12;
+        --ch-col: #ffd23f;
+      }
+      .body-main { fill: var(--car-col); }
+      .body-rear { fill: var(--car-col2); }
+      .exhaust { fill: var(--car-col2); }
+      .stripe { fill: var(--ch-col); }
+      .cabin { fill: #0e1c28; }
+      .headlight { fill: #ffe9a0; }
+      .anchor { fill: none; stroke: #58ff6b; stroke-width: 0.4; stroke-dasharray: 2 2; opacity: 0.55; }
+      .axis { stroke: #6f6880; stroke-width: 0.35; opacity: 0.4; }
+    </style>
+  </defs>
+
+  <!-- Оси (только для прототипа) -->
+  <g class="axis" aria-hidden="true">
+    <line x1="-30" y1="0" x2="26" y2="0"/>
+    <line x1="0" y1="-16" x2="0" y2="16"/>
+  </g>
+
+  <!-- Точки крепления колёс (не экспортировать в игру) -->
+  <g id="wheel-anchors" class="anchor" aria-hidden="true">
+    <circle cx="-14" cy="-14" r="2.5"/>
+    <circle cx="-14" cy="14" r="2.5"/>
+    <circle cx="17" cy="-14" r="2.5"/>
+    <circle cx="17" cy="14" r="2.5"/>
+    <text x="-14" y="-18" fill="#58ff6b" font-size="3" font-family="monospace" text-anchor="middle">зад.л</text>
+    <text x="-14" y="18" fill="#58ff6b" font-size="3" font-family="monospace" text-anchor="middle">зад.пр</text>
+    <text x="17" y="-18" fill="#58ff6b" font-size="3" font-family="monospace" text-anchor="middle">пер.л</text>
+    <text x="17" y="18" fill="#58ff6b" font-size="3" font-family="monospace" text-anchor="middle">пер.пр</text>
+  </g>
+
+  <!-- Кузов (порядок как в drawCar) -->
+  <g id="chassis">
+  <!-- Выхлоп rect(-26,-10,5,20) -->
+    <rect class="exhaust" x="-26" y="-10" width="5" height="20"/>
+  <!-- Основной корпус rr(-23,-11,46,22,6) -->
+    <rect class="body-main" x="-23" y="-11" width="46" height="22" rx="6" ry="6"/>
+  <!-- Задняя часть rr(-23,-11,13,22,5) -->
+    <rect class="body-rear" x="-23" y="-11" width="13" height="22" rx="5" ry="5"/>
+  <!-- Полоса гонщика rect(-19,-2,36,4) -->
+    <rect class="stripe" x="-19" y="-2" width="36" height="4"/>
+  <!-- Кабина rr(3,-8,11,16,3) -->
+    <rect class="cabin" x="3" y="-8" width="11" height="16" rx="3" ry="3"/>
+  <!-- Фары -->
+    <rect class="headlight" x="20" y="-8" width="3" height="5"/>
+    <rect class="headlight" x="20" y="3" width="3" height="5"/>
+  </g>
+</svg>

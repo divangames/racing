@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ????? ????????? ?????? RNR � ???????? ??? ?????????? ? ?????????? SVG. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 -24 72 48" width="720" height="480">
+  <title>RNR � ????? ????????? ??????</title>
+  <style>
+    .frame { fill: none; stroke: #ff9d2e; stroke-width: 0.6; stroke-dasharray: 4 3; }
+    .label { fill: #c8c2d4; font-family: monospace; font-size: 3.2px; }
+    .label-accent { fill: #ffd23f; }
+    .body { fill: rgba(255,157,46,0.15); stroke: #ff9d2e; stroke-width: 0.5; }
+    .rear { fill: rgba(126,42,18,0.4); stroke: #7e2a12; stroke-width: 0.4; }
+    .wheel { fill: #0d0c10; stroke: #70707e; stroke-width: 0.4; }
+    .anchor { fill: #58ff6b; }
+    .axis { stroke: #3a3548; stroke-width: 0.35; }
+  </style>
+
+  <line class="axis" x1="-38" y1="0" x2="30" y2="0"/>
+  <line class="axis" x1="0" y1="-22" x2="0" y2="22"/>
+  <rect class="frame" x="-26" y="-11" width="49" height="22"/>
+
+  <text class="label" x="-38" y="-12">y = -11</text>
+  <text class="label" x="-38" y="12">y = 11</text>
+  <text class="label" x="-30" y="19">x = -26</text>
+  <text class="label" x="16" y="19">x = 23</text>
+  <text class="label label-accent" x="0" y="-18" text-anchor="middle">????? (+X)</text>
+  <text class="label" x="0" y="21" text-anchor="middle">????? (0,0)</text>
+
+  <rect class="body" x="-23" y="-11" width="46" height="22" rx="6"/>
+  <rect class="rear" x="-23" y="-11" width="13" height="22" rx="5"/>
+  <rect fill="#ffd23f" opacity="0.7" x="-19" y="-2" width="36" height="4"/>
+  <rect fill="#0e1c28" x="3" y="-8" width="11" height="16" rx="3"/>
+  <rect fill="#ffe9a0" x="20" y="-8" width="3" height="5"/>
+  <rect fill="#ffe9a0" x="20" y="3" width="3" height="5"/>
+  <rect fill="#7e2a12" x="-26" y="-10" width="5" height="20"/>
+
+  <!-- ??????: ?????? (-14,-14), (-14,14), (17,-14), (17,14); ?????? 12�8 -->
+  <rect class="wheel" x="-20" y="-18" width="12" height="8"/>
+  <rect class="wheel" x="-20" y="10" width="12" height="8"/>
+  <rect class="wheel" x="11" y="-18" width="12" height="8"/>
+  <rect class="wheel" x="11" y="10" width="12" height="8"/>
+
+  <circle class="anchor" cx="-14" cy="-14" r="1.3"/>
+  <circle class="anchor" cx="-14" cy="14" r="1.3"/>
+  <circle class="anchor" cx="17" cy="-14" r="1.3"/>
+  <circle class="anchor" cx="17" cy="14" r="1.3"/>
+</svg>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ???????? ?????? � ????????? ????? (0,0), ?????? 12�8.
+  ? ????: translate(wx,wy) ? rotate(steer) ? fillRect(-6,-4,12,8).
+  ???????? ??????: steer = r.wheelAngle; ??????: steer = 0.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-8 -6 16 12" width="160" height="120">
+  <title>RNR � ???????? ??????</title>
+  <defs>
+    <clipPath id="wheel-clip">
+      <rect x="-6" y="-4" width="12" height="8"/>
+    </clipPath>
+  </defs>
+  <rect x="-6" y="-4" width="12" height="8" fill="#0d0c10"/>
+  <g clip-path="url(#wheel-clip)">
+    <g stroke="#70707e" stroke-width="1.6" fill="none">
+      <line x1="-10" y1="-4" x2="-10" y2="4"/>
+      <line x1="-6" y1="-4" x2="-6" y2="4"/>
+      <line x1="-2" y1="-4" x2="-2" y2="4"/>
+      <line x1="2" y1="-4" x2="2" y2="4"/>
+      <line x1="6" y1="-4" x2="6" y2="4"/>
+    </g>
+  </g>
+  <!-- ????? ????????? -->
+  <circle cx="0" cy="0" r="0.8" fill="#58ff6b" opacity="0.6"/>
+</svg>

@@ -1,0 +1,16 @@
+# Описание: служебные и секреты не попадают в репозиторий.
+
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.log
+.env
+.env.*
+*.local
+node_modules/
+.idea/
+.vscode/
+
+# Сторонние треки и референсы не публикуются (авторские права).
+assets/music/
+assets/Материалы/
