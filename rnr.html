@@ -417,27 +417,86 @@ const CHIP={
 };
 ////////////////////////////////////////////////////////
 //
-// Плеер: берёт URL из music.js, без сканирования папок
+// Плеер: случайный трек из music.js, лог выбора в консоли
 //
 ////////////////////////////////////////////////////////
 const MUSIC={
- el:null,cur:null,curCat:null,
+ el:null,cur:null,curCat:null,playedCount:0,
  list(cat){return (window.MUSIC_TRACKS&&MUSIC_TRACKS[cat])||[];},
- play(cat){ this.curCat=cat;const list=this.list(cat);
-  if(!list.length||!settings.sound.musicOn){this.stop();return;}
+ play(cat){
+  console.log('🎵 play() called with cat:',cat,'curCat:',this.curCat,'cur:',this.cur);
+  const list=this.list(cat);
+  console.log('📋 Track list for',cat,':',list);
+  if(!list.length){console.log('❌ No tracks for',cat);return;}
+  if(!window.settings||!settings.sound||!settings.sound.musicOn){
+   console.log('❌ Music disabled in settings');
+   this.stop();
+   return;
+  }
+  // Если категория изменилась, сбросить текущий трек
+  if(this.curCat!==cat){
+   console.log('🔄 Category changed, resetting cur');
+   this.cur=null;
+  }
+  this.curCat=cat;
   this.next();
  },
- next(){ const list=this.list(this.curCat)||[];
-  if(!list.length||!settings.sound.musicOn)return;
-  let pick=list[(Math.random()*list.length)|0];
-  if(list.length>1&&pick===this.cur)pick=list[(Math.random()*list.length)|0];
+ next(){
+  const list=this.list(this.curCat)||[];
+  if(!list.length)return;
+  if(!window.settings||!settings.sound||!settings.sound.musicOn)return;
+
+  this.playedCount++;
+  console.log('🎲 Choosing random track from',list.length,'options, cur:',this.cur);
+
+  // Настоящий рандом
+  let idx=(Math.random()*list.length)|0;
+  let pick=list[idx];
+  console.log('🎲 Random index:',idx,'picked:',pick);
+
+  // Не повторять тот же трек (если есть другие)
+  if(list.length>1&&pick===this.cur){
+   console.log('⚠️ Same track, choosing again');
+   idx=(Math.random()*list.length)|0;
+   pick=list[idx];
+   console.log('🎲 New random index:',idx,'picked:',pick);
+  }
+
   this.cur=pick;
-  if(!this.el){this.el=new Audio();this.el.addEventListener('ended',()=>this.next());}
-  this.el.src=pick;this.el.volume=settings.sound.music/100;
-  this.el.play().catch(()=>{});
+  console.log('✅ Setting cur to:',this.cur,'playedCount:',this.playedCount);
+
+  if(!this.el){
+   this.el=new Audio();
+   this.el.addEventListener('ended',()=>{
+    console.log('🏁 Track ended, calling next()');
+    this.next();
+   });
+  }
+  this.el.src=pick;
+  this.el.volume=(settings.sound.music||50)/100;
+  const playPromise=this.el.play();
+  if(playPromise){
+   playPromise.then(()=>{
+    console.log('▶️ Playing:',pick);
+   }).catch(e=>{
+    console.error('❌ Play error:',e);
+   });
+  }
  },
- stop(){if(this.el)this.el.pause();},
- resume(){ if(this.el&&this.el.src)this.el.play().catch(()=>{});else if(this.curCat)this.play(this.curCat); },
+ stop(){
+  if(this.el){
+   this.el.pause();
+   this.el.currentTime=0;
+   console.log('⏹️ Music stopped');
+  }
+ },
+ resume(){
+  if(this.el&&this.el.src){
+   this.el.play().catch(()=>{});
+  }else if(this.curCat){
+   this.play(this.curCat);
+  }
+ },
  setVolume(v){if(this.el)this.el.volume=v;}
 };
 function musicCat(){if(state==='race'||state==='results')return'racing';
