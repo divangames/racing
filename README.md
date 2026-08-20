@@ -8,6 +8,7 @@
 - `index.html` — вход для GitHub Pages (переход к игре)
 - `music.js` — URL треков (меню / гараж / гонка)
 - `assets/machines/` — SVG-прототипы машин
+- `assets/image/avatars/` — портреты гонщиков (`01_Player.png` … `04_Player.png`)
 
 ## Запуск
 

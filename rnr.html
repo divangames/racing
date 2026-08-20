@@ -37,11 +37,21 @@ function rr(c,x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);els
 function panel(c,x,y,w,h,fill,stroke,sk=14){c.beginPath();c.moveTo(x+sk,y);c.lineTo(x+w,y);c.lineTo(x+w-sk,y+h);c.lineTo(x,y+h);c.closePath();if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=2;c.stroke();}}
 function txt(c,t,x,y,size,col,align='left',font=F_D,stroke=true){c.font=size+'px '+font;c.textAlign=align;c.textBaseline='middle';if(stroke){c.lineWidth=Math.max(2,size/9);c.strokeStyle='#000';c.strokeText(t,x,y);}c.fillStyle=col;c.fillText(t,x,y);}
 const CHARS=[
- {name:'ДЖЕССИ «ГРОЗА»',short:'ГРОЗА',spd:3,crn:3,grt:3,col:'#ffd23f',skin:'#eab98a',hair:'#2b2119',bio:'механик из пустоши. универсал.'},
- {name:'МАКС «РАКЕТА»',short:'РАКЕТА',spd:5,crn:2,grt:2,col:'#9dff4a',skin:'#f2cfa4',hair:'#c93a1e',bio:'ставит всё на скорость. брони нет — и не надо.'},
- {name:'КЭТ ЛАЙТНИНГ',short:'ЛАЙТНИНГ',spd:3,crn:5,grt:2,col:'#ff5db1',skin:'#e8b48e',hair:'#17d7ee',bio:'королева шпильки. входит в поворот боком.'},
- {name:'БЬОРН «ТАНК»',short:'ТАНК',spd:2,crn:3,grt:5,col:'#7fb2ff',skin:'#dba87c',hair:'#e8e2d0',bio:'выживает там, где остальные взрываются.'},
+ {name:'МЕДВЕДЬ',short:'МЕДВЕДЬ',spd:3,crn:3,grt:3,col:'#ffd23f',skin:'#eab98a',hair:'#2b2119',bio:'механик из пустоши. универсал.'},
+ {name:'ЕРШ',short:'ЕРШ',spd:5,crn:2,grt:2,col:'#9dff4a',skin:'#f2cfa4',hair:'#c93a1e',bio:'ставит всё на скорость. брони нет — и не надо.'},
+ {name:'БЕГЕМОТИК',short:'БЕГЕМОТИК',spd:3,crn:5,grt:2,col:'#ff5db1',skin:'#e8b48e',hair:'#17d7ee',bio:'королева шпильки. входит в поворот боком.'},
+ {name:'БАШКИР',short:'БАШКИР',spd:2,crn:3,grt:5,col:'#7fb2ff',skin:'#dba87c',hair:'#e8e2d0',bio:'выживает там, где остальные взрываются.'},
 ];
+////////////////////////////////////////////////////////
+//
+// Аватары: 01_Player.png … 04_Player.png, один раз
+//
+////////////////////////////////////////////////////////
+const AVATARS=CHARS.map((_,i)=>{
+ const img=new Image();
+ img.src='assets/image/avatars/'+String(i+1).padStart(2,'0')+'_Player.png';
+ return img;
+});
 const CARS=[
  {name:'«ГРЯЗЕВОЙ ДЬЯВОЛ»',price:0,top:1,acc:1,crn:1,hp:110,col:'#d24a22',col2:'#7e2a12',hov:false,
   traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
@@ -643,7 +653,12 @@ function buildRace(){
  const straight=byK.filter(o=>o.k<.0045&&valid(o.i)).sort((a,b)=>a.k-b.k);
  for(const o of straight){if(pads.length>=6)break;if(pads.every(p=>Math.abs(p.i-o.i)>34&&Math.abs(p.i-o.i)<N-34))pads.push({i:o.i});}
  const ramps=[];
- for(const o of straight){if(ramps.length>=3)break;
+ // Точка трамплина не должна быть близко к другой части трассы (перекрёсток)
+ const crossOK=(idx)=>{const p=S[idx];
+  for(let j=0;j<N;j+=6){if(Math.abs(((j-idx+N+N/2)%N)-N/2)<50)continue;
+   if(Math.hypot(S[j].x-p.x,S[j].y-p.y)<180)return false;}return true;};
+ for(const o of straight){ if(ramps.length>=3)break;
+  if(!crossOK(o.i))continue;
   if(ramps.every(q=>Math.abs(q.i-o.i)>60&&Math.abs(q.i-o.i)<N-60))
    ramps.push({i:o.i,x:S[o.i].x,y:S[o.i].y,ang:S[o.i].ang});
  }
@@ -1360,14 +1375,32 @@ function drawRaceWorld(){
   for(let k=0;k<3;k++){g.beginPath();g.moveTo(-18+k*14,-16);g.lineTo(-4+k*14,0);g.lineTo(-18+k*14,16);g.lineTo(-24+k*14,16);g.lineTo(-10+k*14,0);g.lineTo(-24+k*14,-16);g.closePath();g.fill();}
   if(ready){g.shadowColor='#35e0ff';g.shadowBlur=20;g.strokeStyle='#35e0ff';g.lineWidth=2;g.stroke();g.shadowBlur=0;}
   g.restore();}
- for(const rp of R.ramps){g.save();g.translate(rp.x,rp.y);g.rotate(rp.ang);
+ const S=T.S,N=T.N;
+ for(const rp of R.ramps){
+  // Подъездные стрелки на дороге перед трамплином (куда ехать)
+  for(let k=1;k<=3;k++){
+   const di=(rp.i-k*8+N)%N;const p=S[di];
+   const pulse=.5+.5*Math.sin(gt*4+k*1.2);
+   g.save();g.translate(p.x,p.y);g.rotate(p.ang);
+   g.fillStyle='rgba(125,249,255,'+(0.25+0.25*pulse)+')';
+   g.beginPath();g.moveTo(20,0);g.lineTo(8,-8);g.lineTo(8,-3);g.lineTo(-12,-3);
+   g.lineTo(-12,3);g.lineTo(8,3);g.lineTo(8,8);g.closePath();g.fill();
+   g.restore();
+  }
+  // Сам трамплин
+  g.save();g.translate(rp.x,rp.y);g.rotate(rp.ang);
   g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(2,3,30,44,0,0,TAU);g.fill();
   g.fillStyle='#8a6a3a';rr(g,-16,-40,32,80,6);g.fill();
   g.fillStyle='#c9a05a';rr(g,-12,-36,24,72,4);g.fill();
   g.fillStyle='#e8d9a0';g.fillRect(8,-36,6,72);
-  g.fillStyle='#7df9ff';
-  for(let k=0;k<3;k++){const yy=-24+k*24;g.beginPath();g.moveTo(0,yy-10);g.lineTo(-10,yy);g.lineTo(10,yy);g.closePath();g.fill();}
-  g.restore();}
+  // Стрелка прыжка на трамплине (направление взлёта — вперёд по движению)
+  const pulse=.6+.4*Math.sin(gt*5);
+  g.fillStyle='rgba(125,249,255,'+(0.7+0.3*pulse)+')';
+  g.beginPath();g.moveTo(16,0);g.lineTo(4,-10);g.lineTo(4,-4);g.lineTo(-14,-4);
+  g.lineTo(-14,4);g.lineTo(4,4);g.lineTo(4,10);g.closePath();g.fill();
+  g.strokeStyle='#7df9ff';g.lineWidth=1.5;g.stroke();
+  g.restore();
+ }
  for(const o of R.oils){g.save();g.translate(o.x,o.y);g.rotate(o.rot);
   g.fillStyle='rgba(16,14,20,.85)';g.beginPath();g.ellipse(0,0,28,18,0,0,TAU);g.fill();
   g.fillStyle='rgba(120,90,200,.15)';g.beginPath();g.ellipse(-4,-3,16,8,0,0,TAU);g.fill();g.restore();}
@@ -1615,22 +1648,28 @@ function drawHUD(){
    txt(g,t,HW/2,y,sel?26:20,sel?'#ffd23f':'#8f88a0','center');});
   txt(g,'↑↓ — выбор • ENTER — подтвердить • ESC — продолжить',HW/2,H/2+170,14,'#6f6880','center',F_B);}
 }
+////////////////////////////////////////////////////////
+//
+// Портрет без круга, в 2 раза крупнее базового 88×88
+//
+////////////////////////////////////////////////////////
 function drawPortrait(c,ch,cx,cy,s){
- c.save();c.translate(cx,cy);c.scale(s,s);
- c.fillStyle='#1a1622';c.beginPath();c.arc(0,0,46,0,TAU);c.fill();
- c.strokeStyle=ch.col;c.lineWidth=3;c.stroke();
- c.save();c.beginPath();c.arc(0,0,44,0,TAU);c.clip();
- c.fillStyle='#262130';c.beginPath();c.moveTo(-34,50);c.lineTo(-20,14);c.lineTo(20,14);c.lineTo(34,50);c.closePath();c.fill();
- c.fillStyle=ch.col;c.fillRect(-20,14,40,6);
- c.fillStyle=ch.skin;rr(c,-16,-26,32,38,10);c.fill();
- c.fillStyle=ch.hair;
- if(ch===CHARS[0]){c.fillRect(-17,-30,34,12);}
- else if(ch===CHARS[1]){c.beginPath();c.moveTo(-17,-24);c.lineTo(-8,-38);c.lineTo(0,-26);c.lineTo(9,-40);c.lineTo(17,-24);c.closePath();c.fill();}
- else if(ch===CHARS[2]){c.fillRect(-19,-32,38,14);c.fillRect(-21,-20,6,26);c.fillRect(15,-20,6,26);}
- else{c.fillRect(-17,-30,34,8);c.fillStyle='#d8d2c2';c.fillRect(-12,8,24,6);}
- c.fillStyle='#1a1622';c.fillRect(-11,-10,7,5);c.fillRect(4,-10,7,5);
- c.strokeStyle='#1a1622';c.lineWidth=2;c.beginPath();c.moveTo(-4,4);c.quadraticCurveTo(3,8,10,2);c.stroke();
- c.restore();c.restore();}
+ const idx=CHARS.indexOf(ch);
+ const img=idx>=0?AVATARS[idx]:null;
+ c.save();
+ c.translate(cx,cy);
+ const k=s*2;
+ c.scale(k,k);
+ if(img&&img.complete&&img.naturalWidth>0){
+  c.drawImage(img,-44,-44,88,88);
+ }else{
+  c.fillStyle=ch.col;rr(c,-30,-34,60,68,8);c.fill();
+  c.fillStyle=ch.skin;rr(c,-16,-26,32,38,10);c.fill();
+  c.fillStyle=ch.hair;c.fillRect(-17,-30,34,12);
+  c.fillStyle='#1a1622';c.fillRect(-11,-10,7,5);c.fillRect(4,-10,7,5);
+ }
+ c.restore();
+}
 function statPips(c,x,y,v,col){for(let i=0;i<5;i++){c.fillStyle=i<v?col:'#332e40';c.fillRect(x+i*18,y,14,10);}}
 function drawTitle(){
  const LX=(W-viewW)/2,LY=(H-viewH)/2;
@@ -1871,13 +1910,14 @@ function drawCharSel(){
  CHARS.forEach((ch,i)=>{
   const x=x0+i*(cw+gap),sel=i===selChar,y=sel?120:132,h=sel?470:450;
   panel(g,x,y,cw,h,sel?'rgba(255,157,46,.12)':'rgba(20,17,28,.9)',sel?'#ffd23f':'#3a3548');
-  drawPortrait(g,ch,x+cw/2,y+96,1.15);
-  txt(g,ch.name.split(' ')[0],x+cw/2,y+172,22,ch.col,'center');
-  txt(g,ch.name.split(' ').slice(1).join(' '),x+cw/2,y+198,20,'#fff','center');
+  drawPortrait(g,ch,x+cw/2,y+128,1.15);
+  const nick=ch.name!==ch.short?ch.short:'';
+  txt(g,ch.name,x+cw/2,y+(nick?248:258),22,ch.col,'center');
+  if(nick)txt(g,nick,x+cw/2,y+274,20,'#fff','center');
   const bars=[['СКОРОСТЬ',ch.spd,'#ff6b4a'],['ПОВОРОТ',ch.crn,'#35e0ff'],['БРОНЯ',ch.grt,'#58ff6b']];
-  bars.forEach((b,bi)=>{txt(g,b[0],x+24,y+244+bi*34,14,'#9a93a8','left',F_B);
-   statPips(g,x+120,y+238+bi*34,b[1],b[2]);});
-  txt(g,ch.bio,x+cw/2,y+360,13,'#8f88a0','center',F_B);
+  bars.forEach((b,bi)=>{txt(g,b[0],x+24,y+310+bi*34,14,'#9a93a8','left',F_B);
+   statPips(g,x+120,y+304+bi*34,b[1],b[2]);});
+  txt(g,ch.bio,x+cw/2,y+418,13,'#8f88a0','center',F_B);
   if(sel)txt(g,'▲',x+cw/2,y+h-18,20,'#ffd23f','center');});
  txt(g,'← → — выбор • ENTER — к машине',W/2,H-36,16,'#6f6880','center',F_B);
 }
@@ -2041,10 +2081,10 @@ function drawGarage(){
  g.fillStyle='rgba(255,210,63,.06)';g.beginPath();g.ellipse(215,470,170,46,0,0,TAU);g.fill();
  g.save();g.translate(215,430);g.scale(3.2,3.2);drawCar(g,{x:0,y:0,ang:-.4,car:CARS[save.car],ch:CHARS[save.char],nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
  
- drawPortrait(g,CHARS[save.char],90,160,1);
- txt(g,CHARS[save.char].name,30,230,17,CHARS[save.char].col,'left',F_B);
- txt(g,CARS[save.car].name,30,254,15,'#9a93a8','left',F_B);
- CARS[save.car].traits.forEach((tr,ti)=>{txt(g,'• '+tr,30,282+ti*20,12,'#8f88a0','left',F_B);});
+ drawPortrait(g,CHARS[save.char],100,168,1);
+ txt(g,CHARS[save.char].name,30,270,17,CHARS[save.char].col,'left',F_B);
+ txt(g,CARS[save.car].name,30,294,15,'#9a93a8','left',F_B);
+ CARS[save.car].traits.forEach((tr,ti)=>{txt(g,'• '+tr,30,322+ti*20,12,'#8f88a0','left',F_B);});
  
  const st=stats(CHARS[save.char],CARS[save.car],save.tuning[save.car]);
  txt(g,'МАКС ~'+Math.round(st.top*.45)+' КМ/Ч',30,560,15,'#e8e2d0','left',F_B);
