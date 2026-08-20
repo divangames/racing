@@ -323,6 +323,8 @@ function updateView(){
 function applyAudioSettings(){
  if(!AU.ctx)return;
  AU.sfx.gain.value=settings.sound.sfx/100*.9;
+ const mv=(settings.sound.music/100)*.42;
+ if(AU.music)AU.music.gain.value=mv;
  MUSIC.setVolume(settings.sound.music/100);
  if(settings.sound.musicOn)MUSIC.resume();else MUSIC.stop();
 }
@@ -351,36 +353,124 @@ if(typeof settings.graphics.resolution!=='number')settings.graphics.resolution=0
 if(typeof settings.graphics.showFps!=='boolean')settings.graphics.showFps=false;
 applyResolution();booted=true;
 let noiseBuf=null;
-const MUSIC_BASE='music/';
+////////////////////////////////////////////////////////
+//
+// Музыка: локальные MP3 из assets/music, иначе оригинальный чип
+//
+////////////////////////////////////////////////////////
+const MUSIC_BASE='assets/music/';
+const MUSIC_FILES={
+ main:['0.mp3'],
+ garage:["Blues Brothers - Peter Gunn Theme (Rock'n'Roll Racing OST) (www.lightaudio.ru).mp3"],
+ racing:[
+  "MC QUATTRO - Rock n' Roll Racing (www.lightaudio.ru).mp3",
+  "ROCK AND ROLL RACING THEME - ROCK AND ROLL (www.lightaudio.ru).mp3",
+  "Steppenwolf (Rock'n'Roll Racing OST) - Born To Be Wild (www.lightaudio.ru).mp3",
+  "Deep Purple (Rock'n'Roll Racing OST) - Highway Star (www.lightaudio.ru).mp3",
+  "Golden Earing - Radar Love (Rock n' Roll Racing OST) (www.lightaudio.ru).mp3",
+  "OST Rock in Roll Racing - Highway Star (www.lightaudio.ru).mp3",
+  "OST Rock n' Roll Racing (Ventures) - Peter Gunn Theme (www.lightaudio.ru).mp3",
+  "Rock n Roll Racing Ost (Original) - Deep Purple - Highway Star (www.lightaudio.ru).mp3",
+  "Rock'n'Roll Racing OST - Paranoid (www.lightaudio.ru).mp3"
+ ]
+};
+function musicUrl(cat,file){return MUSIC_BASE+cat+'/'+encodeURI(file);}
+const CHIP_BASS={
+ main:[40,40,0,40,47,0,40,43,40,40,0,45,47,0,43,40],
+ garage:[45,0,45,48,45,0,52,48,45,0,45,43,45,48,50,52],
+ racing:[36,36,36,43,36,38,43,36,38,38,38,45,40,40,47,43]
+};
+const CHIP_LEAD={
+ main:[64,0,67,64,0,69,67,0,64,62,64,67,0,69,71,67],
+ garage:[69,0,72,69,0,76,72,0,69,67,69,72,76,0,72,69],
+ racing:[72,72,79,72,74,0,79,76,72,67,72,79,76,74,72,67]
+};
+const CHIP={
+ on:false,cat:'main',step:0,nextT:0,bpm:128,
+ start(cat){
+  if(!AU.ctx||!settings.sound.musicOn){this.on=false;return;}
+  if(this.on&&this.cat===cat)return;
+  this.cat=cat;this.step=0;this.on=true;
+  this.bpm=cat==='racing'?168:cat==='garage'?104:128;
+  this.nextT=AU.ctx.currentTime+.05;
+ },
+ stop(){this.on=false;},
+ pump(){
+  if(!this.on||!AU.ctx)return;
+  const spb=60/this.bpm/2;
+  while(this.nextT<AU.ctx.currentTime+.14){this.hit(this.nextT,this.step);this.step++;this.nextT+=spb;}
+ },
+ note(type,freq,t,dur,vol){
+  const c=AU.ctx,o=c.createOscillator(),gn=c.createGain(),f=c.createBiquadFilter();
+  o.type=type;o.frequency.setValueAtTime(freq,t);
+  f.type='lowpass';f.frequency.setValueAtTime(type==='sawtooth'?1800:900,t);
+  gn.gain.setValueAtTime(vol,t);gn.gain.exponentialRampToValueAtTime(.01,t+dur);
+  o.connect(f);f.connect(gn);gn.connect(AU.music);o.start(t);o.stop(t+dur+.02);
+ },
+ kick(t){
+  const c=AU.ctx,o=c.createOscillator(),gn=c.createGain();
+  o.type='sine';o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(38,t+.11);
+  gn.gain.setValueAtTime(.28,t);gn.gain.exponentialRampToValueAtTime(.01,t+.12);
+  o.connect(gn);gn.connect(AU.music);o.start(t);o.stop(t+.14);
+ },
+ noise(t,dur,fq,vol,type){
+  if(!noiseBuf)return;
+  const c=AU.ctx,s=c.createBufferSource();s.buffer=noiseBuf;
+  const f=c.createBiquadFilter();f.type=type;f.frequency.value=fq;
+  const gn=c.createGain();gn.gain.setValueAtTime(vol,t);gn.gain.exponentialRampToValueAtTime(.01,t+dur);
+  s.connect(f);f.connect(gn);gn.connect(AU.music);s.start(t);s.stop(t+dur+.02);
+ },
+ hit(t,step){
+  const s=step&15;
+  if((s%4)===0)this.kick(t);
+  if((s%4)===2)this.noise(t,.09,2400,.16,'highpass');
+  if((s%2)===0)this.noise(t,.03,9000,.05,'highpass');
+  const bass=CHIP_BASS[this.cat][s];
+  if(bass)this.note('square',mtof(bass),t,.2,.07);
+  const lead=CHIP_LEAD[this.cat][s];
+  if(lead)this.note('sawtooth',mtof(lead),t,.14,.045);
+ }
+};
 const MUSIC={
  cat:{main:[],garage:[],racing:[]},loaded:{},el:null,cur:null,curCat:null,
- async discover(cat){if(this.loaded[cat])return;
-  const base=MUSIC_BASE+cat+'/';let list=[];
-  try{const res=await fetch(base);if(res.ok){const html=await res.text();
-   const re=/href="([^"?#]+\.(?:mp3|ogg|wav|m4a))"/gi;let m;
-   while((m=re.exec(html))){let f=m[1].replace(/^.+\//,'');list.push(f);}}}catch(e){}
-  if(!list.length){for(let i=0;i<24;i++){let found=false;
-   for(const ext of['mp3','ogg','wav','m4a']){try{const r=await fetch(base+i+'.'+ext,{method:'GET',headers:{Range:'bytes=0-0'}});if(r.ok){list.push(i+'.'+ext);found=true;break;}}catch(e){}}
-   if(!found&&i>0)break;}}
-  this.cat[cat]=list.map(f=>base+f);
-  if(list.length)this.loaded[cat]=true;
+ async discover(cat){
+  if(this.loaded[cat])return;this.loaded[cat]=true;
+  // На GitHub Pages треки не публикуются — сразу чип.
+  if(/github\.io$/i.test(location.hostname)){this.cat[cat]=[];return;}
+  const names=MUSIC_FILES[cat]||[];
+  const local=location.protocol==='file:';
+  const list=[];
+  for(const name of names){
+   const url=musicUrl(cat,name);
+   if(local){list.push(url);continue;}
+   try{const r=await fetch(url,{method:'GET',headers:{Range:'bytes=0-0'}});if(r.ok||r.status===206)list.push(url);}catch(e){}
+  }
+  this.cat[cat]=list;
  },
- async play(cat){this.curCat=cat;await this.discover(cat);
+ async play(cat){
+  this.curCat=cat;await this.discover(cat);
+  if(!settings.sound.musicOn){this.stop();return;}
   const list=this.cat[cat]||[];
-  if(!list.length||!settings.sound.musicOn){this.stop();return;}
-  this.next();
+  if(list.length){CHIP.stop();this.next();return;}
+  this.stopEl();CHIP.start(cat);
  },
  next(){const list=this.cat[this.curCat]||[];
   if(!list.length||!settings.sound.musicOn)return;
   let pick=list[(Math.random()*list.length)|0];
   if(list.length>1&&pick===this.cur)pick=list[(Math.random()*list.length)|0];
   this.cur=pick;
-  if(!this.el){this.el=new Audio();this.el.addEventListener('ended',()=>this.next());}
+  if(!this.el){this.el=new Audio();this.el.loop=false;this.el.addEventListener('ended',()=>this.next());}
   this.el.src=pick;this.el.volume=settings.sound.music/100;
-  this.el.play().catch(()=>{});
+  this.el.play().catch(()=>{CHIP.start(this.curCat);});
  },
- stop(){if(this.el)this.el.pause();},
- resume(){if(this.el&&this.el.src)this.el.play().catch(()=>{});else if(this.curCat)this.play(this.curCat);},
+ stopEl(){if(this.el){this.el.pause();this.el.removeAttribute('src');}},
+ stop(){this.stopEl();CHIP.stop();},
+ resume(){
+  if(!settings.sound.musicOn)return;
+  const list=this.cat[this.curCat]||[];
+  if(list.length&&this.el&&this.el.src)this.el.play().catch(()=>{});
+  else if(this.curCat)this.play(this.curCat);
+ },
  setVolume(v){if(this.el)this.el.volume=v;}
 };
 function musicCat(){if(state==='race'||state==='results')return'racing';
@@ -390,6 +480,7 @@ let lastMusicCat=null;
 function audioInit(){if(AU.ctx)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const c=AU.ctx=new AC();
  AU.master=c.createGain();AU.master.gain.value=.55;AU.master.connect(c.destination);
  AU.sfx=c.createGain();AU.sfx.connect(AU.master);
+ AU.music=c.createGain();AU.music.connect(AU.master);
  applyAudioSettings();
  noiseBuf=c.createBuffer(1,c.sampleRate*1.2,c.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
  AU.engO=c.createOscillator();AU.engO.type='sawtooth';AU.engO2=c.createOscillator();AU.engO2.type='square';
@@ -2407,6 +2498,7 @@ function frame(now){
  if(state==='results'&&R&&R.msg){R.msg.t+=dt;if(R.msg.t>3.4)R.msg=null;}
  if(state==='race'&&!paused)updRace(dt);
  updEngine(P,paused,state);
+ if(CHIP.on)CHIP.pump();
  if(AU.ctx){const mc=musicCat();if(mc!==lastMusicCat){lastMusicCat=mc;MUSIC.play(mc);}}
  if(state==='title'){
   updateTitleRace(dt);
