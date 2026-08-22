@@ -4,10 +4,10 @@
 
 ## Структура
 
-- `rnr.html` — игра
+- `rnr.html` — игра (гараж → тренажёрка: прокачка гонщика)
 - `index.html` — вход для GitHub Pages (переход к игре)
 - `music.js` — URL треков (меню / гараж / гонка)
-- `assets/machines/` — SVG-прототипы машин
+- `assets/machines/cars/` — кузова `01`–`06` (`.webp`, иначе `.png`, иначе `.svg`; нос вправо)
 - `assets/image/avatars/` — портреты гонщиков (`01_Player.png` … `04_Player.png`)
 
 ## Запуск

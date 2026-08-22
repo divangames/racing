@@ -1,16 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- �- -�  :C7>2 idx 3 (E>25@: :>;QA0 =5 @8ACNBAO 2 83@5) -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-32 -18 58 36" width="580" height="360">
-  <title>M@>-;8=>:  :C7>2</title>
-  <g id="chassis">
-    <rect fill="#8a93a6" x="-26" y="-10" width="5" height="20"/>
-    <rect fill="#c9cdd6" x="-23" y="-11" width="46" height="22" rx="6" ry="6"/>
-    <rect fill="#8a93a6" x="-23" y="-11" width="13" height="22" rx="5" ry="5"/>
-    <rect fill="#7fb2ff" x="-19" y="-2" width="36" height="4"/>
-    <rect fill="#0e1c28" x="3" y="-8" width="11" height="16" rx="3" ry="3"/>
-    <rect fill="#ffe9a0" x="20" y="-8" width="3" height="5"/>
-    <rect fill="#ffe9a0" x="20" y="3" width="3" height="5"/>
-    <!-- %>25@-A25G5=85 (2 83@5  0=8<8@>20==0O ellipse) -->
-    <ellipse cx="0" cy="7" rx="24" ry="11" fill="rgba(53,224,255,0.22)"/>
-  </g>
-</svg>

@@ -36,12 +36,108 @@ const F_D='"Russo One",Impact,sans-serif',F_B='"Chakra Petch","Segoe UI",sans-se
 function rr(c,x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else{c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}}
 function panel(c,x,y,w,h,fill,stroke,sk=14){c.beginPath();c.moveTo(x+sk,y);c.lineTo(x+w,y);c.lineTo(x+w-sk,y+h);c.lineTo(x,y+h);c.closePath();if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=2;c.stroke();}}
 function txt(c,t,x,y,size,col,align='left',font=F_D,stroke=true){c.font=size+'px '+font;c.textAlign=align;c.textBaseline='middle';if(stroke){c.lineWidth=Math.max(2,size/9);c.strokeStyle='#000';c.strokeText(t,x,y);}c.fillStyle=col;c.fillText(t,x,y);}
+////////////////////////////////////////////////////////
+//
+// Перенос подписи по ширине карточки
+//
+////////////////////////////////////////////////////////
+function wrapText(c,text,x,y,maxW,lineH,size,col,font){
+ c.font=size+'px '+font;c.textAlign='center';c.textBaseline='middle';c.fillStyle=col;
+ const words=text.split(' ');let line='';let yy=y;
+ for(const w of words){
+  const test=line?line+' '+w:w;
+  if(c.measureText(test).width>maxW&&line){c.fillText(line,x,yy);line=w;yy+=lineH;}
+  else line=test;
+ }
+ if(line)c.fillText(line,x,yy);
+ return yy;
+}
+function fm(n){return '$'+String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
 const CHARS=[
- {name:'МЕДВЕДЬ',short:'МЕДВЕДЬ',spd:3,crn:3,grt:3,col:'#ffd23f',skin:'#eab98a',hair:'#2b2119',bio:'механик из пустоши. универсал.'},
- {name:'ЕРШ',short:'ЕРШ',spd:5,crn:2,grt:2,col:'#9dff4a',skin:'#f2cfa4',hair:'#c93a1e',bio:'ставит всё на скорость. брони нет — и не надо.'},
- {name:'БЕГЕМОТИК',short:'БЕГЕМОТИК',spd:3,crn:5,grt:2,col:'#ff5db1',skin:'#e8b48e',hair:'#17d7ee',bio:'королева шпильки. входит в поворот боком.'},
- {name:'БАШКИР',short:'БАШКИР',spd:2,crn:3,grt:5,col:'#7fb2ff',skin:'#dba87c',hair:'#e8e2d0',bio:'выживает там, где остальные взрываются.'},
+ {name:'МЕДВЕДЬ',short:'МЕДВЕДЬ',spd:3,crn:3,grt:3,col:'#ffd23f',skin:'#eab98a',hair:'#2b2119',
+  bio:'Не водит — выпускает нейросеть. Тачки — пушки, мины и ненависть.',
+  bioFull:'Медведь не водит — он выпускает на колёса свою ебанутую нейросеть. Его тачки — пушки, мины и чистая ненависть. Тормозов нет, апдейты — прямо на гонке. Трасса ссыт: Медведь — военный амбал с ебаниной на колесах.'},
+ {name:'ЕРШ',short:'ЕРШ',spd:5,crn:2,grt:2,col:'#9dff4a',skin:'#f2cfa4',hair:'#c93a1e',
+  bio:'Пиздец на колёсах. Брони нет, зато хуй догонишь.',
+  bioFull:'Мелкий, злой, вечно небритый. Брони не носит принципиально — «хуй догонишь», говорит. И правда: летит так, что вместо фар две полосы огня, а вместо тормозов — молитва. Ни разу не финишировал вторым: либо первый, либо в кювете, но с улыбкой. Соперники боятся, страховщики — тем более.'},
+ {name:'БЕГЕМОТИК',short:'БЕГЕМОТИК',spd:3,crn:5,grt:2,col:'#ff5db1',skin:'#e8b48e',hair:'#17d7ee',
+  bio:'Королева шпильки. Войдёт боком и выебет всех, кто сзади.',
+  bioFull:'Королева шпильки и королева нервов. Входит в поворот боком, выходит с трофеями. Если Бегемотик сзади — это не угроза, это приговор: выебет и не заметит. Носит розовое, ездит как мужик, курит на пит-стопе. У её машины вместо клаксона — смех хозяйки.'},
+ {name:'БАШКИР',short:'БАШКИР',spd:2,crn:3,grt:5,col:'#7fb2ff',skin:'#dba87c',hair:'#e8e2d0',
+  bio:'Выживает там, где все взрываются. Ест металл, пьёт бензин, сука.',
+  bioFull:'Огромный, как шкаф, и спокойный, как удав. Выживает там, где все взрываются, потому что его машина — танк, обшитый ещё одним танком. Ест металл, пьёт бензин, сука. Не гонится за первым местом — первое место само к нему приезжает, когда он таранит всех, кто был впереди.'},
 ];
+////////////////////////////////////////////////////////
+//
+// Личные скилы гонщиков: ур.1…6
+//
+////////////////////////////////////////////////////////
+const SKILL_MAX=6;
+const SKILL_COSTS=[100000,250000,500000,1000000,2000000];
+const SKILL_META=[
+ {n:'РЕМОНТ-ДРОН',d:'авто-лечение'},
+ {n:'ФОРСАЖ-КЛАПАН',d:'нитро-кд'},
+ {n:'АГРЕССИЯ',d:'урон'},
+ {n:'МИННЫЙ ИММУНИТЕТ',d:'пропуск мин'},
+];
+function skillT(lvl){return clamp((lvl-1)/(SKILL_MAX-1),0,1);}
+function skillVal(chIdx,lvl){
+ const t=skillT(lvl);
+ if(chIdx===0)return lerp(10,2,t);
+ if(chIdx===1)return lerp(0.05,0.15,t);
+ if(chIdx===2)return lerp(0.02,0.15,t);
+ if(chIdx===3)return lerp(0.10,1.0,t);
+ return 0;
+}
+function SKILL_DESC(chIdx,lvl){
+ const v=skillVal(chIdx,lvl);
+ if(chIdx===0)return 'полное лечение за '+v.toFixed(1)+'с';
+ if(chIdx===1)return 'нитро-кд −'+Math.round(v*100)+'%';
+ if(chIdx===2)return 'урон +'+Math.round(v*100)+'%';
+ if(chIdx===3)return 'пропуск мин '+Math.round(v*100)+'%';
+ return '';
+}
+let raceDiv=1;
+////////////////////////////////////////////////////////
+//
+// Прокачка базы гонщика: скорость / поворот / броня
+//
+////////////////////////////////////////////////////////
+const STAT_COSTS=[100000,250000,500000];
+const STAT_NAME={spd:'СКОРОСТЬ',crn:'ПОВОРОТ',grt:'БРОНЯ'};
+function charEff(i){
+ const ch=CHARS[i];
+ const cs=(save&&save.cstats&&save.cstats[i])||{spd:0,crn:0,grt:0};
+ return{spd:ch.spd+cs.spd,crn:ch.crn+cs.crn,grt:ch.grt+cs.grt};
+}
+function upgradeCharStat(i,key){
+ if(!save.cstats)save.cstats={0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}};
+ const ch=CHARS[i];
+ const cs=save.cstats[i]||(save.cstats[i]={spd:0,crn:0,grt:0});
+ const maxAdd=5-ch[key];
+ if(cs[key]>=maxAdd){garMsg='МАКСИМУМ';garMsgT=2.2;sHit();return;}
+ const cost=STAT_COSTS[Math.min(cs[key],STAT_COSTS.length-1)];
+ if(save.cash>=cost){save.cash-=cost;cs[key]++;persist();sCash();garMsg='НАКАЧАНО: '+STAT_NAME[key];garMsgT=2.2;}
+ else{garMsg='НЕ ХВАТАЕТ '+fm(cost-save.cash);garMsgT=2.2;sHit();}
+}
+////////////////////////////////////////////////////////
+//
+// Покупка в тренажёрке: 0–2 база, 3 — скил текущего гонщика
+//
+////////////////////////////////////////////////////////
+function buyGym(idx){
+ if(!save.cstats)save.cstats={0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}};
+ const chI=save.char;
+ if(idx<3){
+  upgradeCharStat(chI,['spd','crn','grt'][idx]);
+  return;
+ }
+ const lvl=save.skills[chI]||1;
+ if(lvl>=SKILL_MAX){garMsg='МАКСИМАЛЬНЫЙ УРОВЕНЬ';garMsgT=2.2;sHit();return;}
+ const cost=SKILL_COSTS[lvl-1];
+ if(save.cash>=cost){save.cash-=cost;save.skills[chI]=lvl+1;persist();sCash();garMsg='СКИЛЛ УЛУЧШЕН: '+SKILL_META[chI].n;garMsgT=2.2;}
+ else{garMsg='НЕ ХВАТАЕТ '+fm(cost-save.cash);garMsgT=2.2;sHit();}
+}
 ////////////////////////////////////////////////////////
 //
 // Аватары: 01_Player.png … 04_Player.png, один раз
@@ -67,6 +163,23 @@ const CARS=[
   traits:['МАСКИРОВКА: невидимость 3 сек (G)','ФАЗА: проходит сквозь мины','ХИЩНИК: ракеты быстрее']},
 ];
 CARS.forEach((c,i)=>c.idx=i);
+////////////////////////////////////////////////////////
+//
+// Кузова 01.* … 06.*: пробуем .webp → .png → .svg
+// Нос должен смотреть вправо (CAR_SVG_ROT=0)
+//
+////////////////////////////////////////////////////////
+const CAR_SVG_ROT=0; // 0 = нос вправо; Math.PI/2 = нос вверх
+const CAR_IMG_EXT=['webp','png','svg'];
+const CAR_SVG=CARS.map((_,i)=>{
+ const img=new Image();
+ const base='assets/machines/cars/'+String(i+1).padStart(2,'0');
+ let e=0;
+ const tryNext=()=>{ if(e<CAR_IMG_EXT.length) img.src=base+'.'+CAR_IMG_EXT[e++]; };
+ img.onerror=tryNext;   // если расширения нет — пробуем следующее
+ tryNext();
+ return img;
+});
 const CAR_ABIL=[
  {nitro:{cd:10},weapon:{cd:1.2,dmg:22,name:'ДВУСТВОЛКА',type:'shotgun'},ult:{cd:8,name:'БЫЧИЙ РЫВОК',type:'dash'}},
  {nitro:{cd:9},weapon:{cd:0.15,dmg:10,name:'ГАТЛИНГ',type:'gatling'},ult:{cd:12,name:'ПРИЦЕЛ',type:'slowmo'}},
@@ -148,7 +261,9 @@ loadSlots();
 let save=null;
 function newSave(){const t={arm:0,eng:0,tir:0,shk:0,nit:0};return{cash:1200,char:0,car:0,
  tuning:{0:{...t},1:{...t},2:{...t},3:{...t},4:{...t},5:{...t}},
- carOwned:{0:true},bet:0,race:0,achievements:{},tracksWon:{}};}
+ carOwned:{0:true},skills:{0:1,1:1,2:1,3:1},
+ cstats:{0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}},
+ bet:0,race:0,achievements:{},tracksWon:{}};}
 let saveFlash=0,garMsg='',garMsgT=0;
 function persist(slotIndex){
  const key=slotIndex!==undefined?SLOTS_KEY+'_'+slotIndex:SKEY;
@@ -177,6 +292,10 @@ function loadSave(slotIndex){
    save.tuning={0:{...t},1:{...t},2:{...t},3:{...t},4:{...t},5:{...t}};}
   for(const k in save.tuning)if(save.tuning[k].nit==null)save.tuning[k].nit=0;
   if(!save.carOwned)save.carOwned={0:true};
+  if(!save.skills)save.skills={0:1,1:1,2:1,3:1};
+  for(const k in save.skills)if(save.skills[k]==null)save.skills[k]=1;
+  if(!save.cstats)save.cstats={0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}};
+  for(const k in save.cstats){save.cstats[k].spd=save.cstats[k].spd||0;save.cstats[k].crn=save.cstats[k].crn||0;save.cstats[k].grt=save.cstats[k].grt||0;}
   if(typeof save.bet!=='number')save.bet=0;
   if(!save.achievements)save.achievements={};
   if(!save.tracksWon)save.tracksWon={};
@@ -344,7 +463,9 @@ function partN(n){
  return Math.max(1,Math.round(n*m));
 }
 function doShake(v){if(settings.graphics.shake)R.shake=Math.min(14,R.shake+v);}
-function stats(ch,car,lvl){const spd=ch.spd||3,crn=ch.crn||3,grt=ch.grt||3;
+function stats(ch,car,lvl,cs){const chIdx=CHARS.indexOf(ch);
+ if(cs===undefined)cs=(chIdx>=0&&save&&save.cstats&&save.cstats[chIdx])||null;
+ const spd=(ch.spd||3)+((cs&&cs.spd)||0),crn=(ch.crn||3)+((cs&&cs.crn)||0),grt=(ch.grt||3)+((cs&&cs.grt)||0);
  const hpBonus=car.idx===0?20:0;
  const crnM=car.idx===2?1.12:1;
  const accM=car.idx===1?1.15:1;
@@ -493,7 +614,7 @@ const MUSIC={
  setVolume(v){if(this.el)this.el.volume=v;}
 };
 function musicCat(){if(state==='race'||state==='results')return'racing';
- if(state==='garage'||state==='autopark'||state==='detail'||state==='prerace')return'garage';
+ if(state==='garage'||state==='autopark'||state==='detail'||state==='prerace'||state==='gym')return'garage';
  return'main';}
 let lastMusicCat=null;
 function audioInit(){if(AU.ctx)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const c=AU.ctx=new AC();
@@ -615,21 +736,24 @@ function prerender(T){
  return c;
 }
 let state='title',paused=false,P=null,R=null,gt=0;
-let selTitle=0,selChar=0,selCar=0,carConfirmed=false;
+let selTitle=0,selChar=0,selCar=0,carConfirmed=false,bioOpen=-1;
 let G={col:0,row:0};
 let resetArm=false;
 let pauseMenuIndex=0,garagePaused=false,garagePauseIndex=0,settingsReturn='title',slotReturn='title';
 let slotSelectMode=null; // 'save' или 'load'
 let slotSelectIndex=0;
-let autoparkSel=0,autodetailOpen=false,tuningSel=0;
+let autoparkSel=0,autodetailOpen=false,tuningSel=0,gymSel=0;
 let settingsState='main'; // 'main', 'graphics', 'controls', 'sound'
 let settingsTab=0;
 let controlCaptureKey=null;
 let captureBackup=null;
 const keys={};
 function makeRacer(ch,car,isP,lvl,slot){
- const st=stats(ch,car,lvl);
- return{ch,car,isP,st,x:0,y:0,ang:0,spd:0,hp:st.maxhp,maxhp:st.maxhp,shield:0,wheelAngle:0,wheelRot:0,
+ const st=stats(ch,car,lvl,isP?undefined:{spd:0,crn:0,grt:0});
+ const chIdx=CHARS.indexOf(ch);
+ const skillLvl=isP?((save.skills&&save.skills[chIdx])||1):clamp(raceDiv,1,SKILL_MAX);
+ const dmgMul=1+(chIdx===2?skillVal(2,skillLvl):0);
+ return{ch,car,isP,st,chIdx,skillLvl,dmgMul,x:0,y:0,ang:0,spd:0,hp:st.maxhp,maxhp:st.maxhp,shield:0,wheelAngle:0,wheelRot:0,
   bolt:0,nitro:0,invuln:0,cloak:0,cdN:0,cdW:0,cdU:0,buffDmg:1,buffArmor:1,buffDmgT:0,berserk:0,slow:0,drone:0,dead:false,respawnT:0,
   z:0,vz:0,air:false,jumpCd:0,jumpSpd:0,lvl:lvl,
   nitLvl:isP?((save.tuning[car.idx]&&save.tuning[car.idx].nit)||0):0,
@@ -639,6 +763,7 @@ function makeRacer(ch,car,isP,lvl,slot){
 function buildRace(){
  const tIdx=save.race%TRACKDEFS.length;
  const div=1+((save.race/TRACKDEFS.length)|0);
+ raceDiv=div;
  const T=buildTrack(TRACKDEFS[tIdx],tIdx);T.img=prerender(T);
  const tile=document.createElement('canvas');tile.width=tile.height=128;
  const tq=tile.getContext('2d');
@@ -744,10 +869,11 @@ function respawn(r){const S=R.S,N=R.N,i=(r.trackIdx-10+N)%N,p=S[i];
  if(r.car.idx===3)r.shield=1;}
 function nearP(x,y,d){return P&&Math.hypot(x-P.x,y-P.y)<d;}
 function useNitro(r){if(r.dead||r.cdN>0)return;
- r.cdN=Math.max(2,CAR_ABIL[r.car.idx].nitro.cd-(r.nitLvl||0)*0.6);
+ const red=r.chIdx===1?skillVal(1,r.skillLvl):0;
+ r.cdN=Math.max(1,(CAR_ABIL[r.car.idx].nitro.cd*(1-red))-(r.nitLvl||0)*0.6);
  r.nitro=1.6+(r.nitLvl||0)*0.12;swp('sawtooth',150,500,.4,.2);}
 function fireWeapon(r){if(r.dead||r.cdW>0)return;const ab=CAR_ABIL[r.car.idx].weapon;r.cdW=ab.cd;
- const a=r.ang,dmg=ab.dmg*r.buffDmg*(r.berserk>0?1.5:1);
+ const a=r.ang,dmg=ab.dmg*r.buffDmg*(r.berserk>0?1.5:1)*(r.dmgMul||1);
  if(ab.type==='shotgun'){for(const off of[-0.15,0.15])R.shots.push({x:r.x+Math.cos(a)*26,y:r.y+Math.sin(a)*26,vx:Math.cos(a+off)*900,vy:Math.sin(a+off)*900,r,life:.7,dmg:dmg/2});}
  else if(ab.type==='homing')R.shots.push({x:r.x+Math.cos(a)*26,y:r.y+Math.sin(a)*26,vx:Math.cos(a)*600,vy:Math.sin(a)*600,r,life:2.2,rocket:true,dmg});
  else if(ab.type==='mortar')R.shots.push({x:r.x+Math.cos(a)*26,y:r.y+Math.sin(a)*26,vx:Math.cos(a)*450,vy:Math.sin(a)*450,r,life:1.4,mortar:true,dmg});
@@ -892,6 +1018,7 @@ function stepVehicle(r,th,steer,dt){
   r.ang+=slip*(Math.abs(r.spd)/r.st.top);
  }
  if(r.car.idx===2)r.hp=Math.min(r.maxhp,r.hp+2*dt);
+ if(r.chIdx===0){const ht=skillVal(0,r.skillLvl);r.hp=Math.min(r.maxhp,r.hp+(r.maxhp/ht)*dt);}
  r.x+=Math.cos(r.ang)*r.spd*dt;r.y+=Math.sin(r.ang)*r.spd*dt;
  r.x=clamp(r.x,20,R.T.w-20);r.y=clamp(r.y,20,R.T.h-20);
  // ТРАМПЛИН: прыжок. Высота/дальность зависят от скорости (баланс).
@@ -915,7 +1042,7 @@ function stepVehicle(r,th,steer,dt){
    const shk=(r.lvl&&r.lvl.shk)||0;
    for(const o of R.racers){if(o===r||o.dead||o.air)continue;
     if(Math.hypot(o.x-r.x,o.y-r.y)<52){
-     const fdmg=(18+r.jumpSpd*0.06)*(1-(o.lvl&&o.lvl.shk||0)*0.05);
+     const fdmg=(18+r.jumpSpd*0.06)*(1-(o.lvl&&o.lvl.shk||0)*0.05)*(r.dmgMul||1);
      dmgRacer(o,fdmg,r);
      if(r.isP||o.isP)fl(o.x,o.y,'УДАР СВЕРХУ!','#ff6b4a');
     }
@@ -1110,6 +1237,7 @@ function updRace(dt){
     let dA=rel*.015+1,dB=rel*.015+1;
     if(a.car.idx===0){dB*=2;dA*=.5;}
     if(b.car.idx===0){dA*=2;dB*=.5;}
+    dA*=(a.dmgMul||1);dB*=(b.dmgMul||1);
     dmgRacer(a,dA,b);dmgRacer(b,dB,a);
     spark((a.x+b.x)/2,(a.y+b.y)/2,'#ffd23f',6,160);}
    a.spd*=.97;b.spd*=.97;}}
@@ -1142,6 +1270,7 @@ function updRace(dt){
   if(hit)R.shots.splice(i,1);}
  for(const m of R.mines){if(m.dead)continue;
   for(const r of R.racers){if(r.dead||r.air||r.finished||(r.car.idx===5&&r.cloak>0))continue;
+   if(r.chIdx===3&&Math.random()<skillVal(3,r.skillLvl)){if(r.isP)fl(r.x,r.y,'УКЛОН!','#7fb2ff');continue;}
    if(Math.hypot(r.x-m.x,r.y-m.y)<32){m.dead=true;mineExplode(m,null);break;}}}
  if(R.spikes){
   for(let i=R.spikes.length-1;i>=0;i--){
@@ -1223,7 +1352,23 @@ function drawCar(c,r,sc){
   c.fillStyle='rgba(53,224,255,'+(0.18+0.1*Math.sin(gt*10))+')';
   c.beginPath();c.ellipse(0,6,25,12,0,0,TAU);c.fill();
  }
- // ===== КУЗОВА =====
+ const svgImg=CAR_SVG[idx];
+ if(svgImg&&svgImg.complete&&svgImg.naturalWidth>0){
+  const iw=svgImg.naturalWidth,ih=svgImg.naturalHeight;
+  const s=60/Math.max(iw,ih);
+  c.save();c.rotate(CAR_SVG_ROT);
+  c.drawImage(svgImg,-iw*s/2,-ih*s/2,iw*s,ih*s);
+  c.restore();
+  if(r.nitro>0){
+   c.fillStyle='#35e0ff';
+   c.beginPath();c.moveTo(-24,-5);c.lineTo(-24-(12+Math.random()*10),0);c.lineTo(-24,5);c.closePath();c.fill();
+   c.fillStyle='#fff';
+   c.beginPath();c.moveTo(-24,-2);c.lineTo(-24-(6+Math.random()*5),0);c.lineTo(-24,2);c.closePath();c.fill();
+  }
+  c.restore();
+  return;
+ }
+ // ===== КУЗОВА (фолбэк, если SVG ещё нет) =====
  if(idx===0){ // ГРЯЗЕВОЙ ДЬЯВОЛ — рэт-род, бык-бар, шипы
   c.fillStyle='#3a3128';c.fillRect(-27,-9,4,18);
   c.fillStyle=r.car.col;rr(c,-24,-11,47,22,4);c.fill();
@@ -1555,7 +1700,7 @@ function drawHUD(){
  }
  // верх справа: деньги и миникарта
  panel(g,HW-216,14,200,44,'rgba(12,10,18,.85)','#ffd23f');
- txt(g,'$'+save.cash,HW-116,36,24,'#ffd23f','center');
+ txt(g,fm(save.cash),HW-116,36,24,'#ffd23f','center');
  if(saveFlash>0){g.globalAlpha=Math.min(1,saveFlash);txt(g,'✓ СОХРАНЕНО',HW-16,64,14,'#58ff6b','right',F_B);g.globalAlpha=1;}
  const pw=144,ph=150,px0=HW-12-pw,py0=64;
  panel(g,px0,py0,pw,ph,'rgba(12,10,18,.7)','#3a3548');
@@ -1671,6 +1816,32 @@ function drawPortrait(c,ch,cx,cy,s){
  c.restore();
 }
 function statPips(c,x,y,v,col){for(let i=0;i<5;i++){c.fillStyle=i<v?col:'#332e40';c.fillRect(x+i*18,y,14,10);}}
+function statPipsN(c,x,y,v,max,col){for(let i=0;i<max;i++){c.fillStyle=i<v?col:'#332e40';c.fillRect(x+i*16,y,13,10);}}
+////////////////////////////////////////////////////////
+//
+// Шкала уровня тюнинга (6 делений)
+//
+////////////////////////////////////////////////////////
+function drawLevelPips(c,x,y,lvl,max,col){
+ for(let i=0;i<max;i++){
+  c.fillStyle=i<lvl?col:'#2a2636';
+  rr(c,x+i*13,y,10,7,2);c.fill();
+ }
+}
+////////////////////////////////////////////////////////
+//
+// Плашка скила: рамка, шкала, имя, эффект
+//
+////////////////////////////////////////////////////////
+function drawSkillBlock(c,x,y,w,chIdx,lvl){
+ const h=70;
+ panel(c,x,y,w,h,'rgba(180,120,255,.14)','#c89bff',8);
+ txt(c,'СКИЛЛ',x+14,y+15,13,'#e0c8ff','left',F_B);
+ txt(c,'ур.'+lvl+'/'+SKILL_MAX,x+w-14,y+15,13,'#f2eef8','right',F_B);
+ statPipsN(c,x+14,y+27,lvl,SKILL_MAX,'#d4b0ff');
+ txt(c,SKILL_META[chIdx].n,x+14,y+46,12,'#f6f0ff','left',F_B);
+ txt(c,SKILL_DESC(chIdx,lvl),x+14,y+60,11,'#d8d0e8','left',F_B);
+}
 function drawTitle(){
  const LX=(W-viewW)/2,LY=(H-viewH)/2;
  g.fillStyle='#050409';g.fillRect(LX,LY,viewW,viewH);
@@ -1906,20 +2077,104 @@ function drawCharSel(){
  g.fillStyle='#12101a';g.fillRect(0,0,W,H);
  for(let x=-40;x<W+40;x+=48){g.fillStyle='rgba(255,157,46,.06)';g.save();g.translate(x,30);g.rotate(-.5);g.fillRect(0,0,20,90);g.restore();}
  txt(g,'ВЫБЕРИ ГОНЩИКА',W/2,64,46,'#ffd23f','center');
+ g._bioBtns=[];
  const cw=278,gap=20,x0=(W-4*cw-3*gap)/2;
  CHARS.forEach((ch,i)=>{
-  const x=x0+i*(cw+gap),sel=i===selChar,y=sel?120:132,h=sel?470:450;
+  const x=x0+i*(cw+gap),sel=i===selChar,y=sel?100:112,h=sel?542:528;
   panel(g,x,y,cw,h,sel?'rgba(255,157,46,.12)':'rgba(20,17,28,.9)',sel?'#ffd23f':'#3a3548');
   drawPortrait(g,ch,x+cw/2,y+128,1.15);
   const nick=ch.name!==ch.short?ch.short:'';
   txt(g,ch.name,x+cw/2,y+(nick?248:258),22,ch.col,'center');
   if(nick)txt(g,nick,x+cw/2,y+274,20,'#fff','center');
-  const bars=[['СКОРОСТЬ',ch.spd,'#ff6b4a'],['ПОВОРОТ',ch.crn,'#35e0ff'],['БРОНЯ',ch.grt,'#58ff6b']];
-  bars.forEach((b,bi)=>{txt(g,b[0],x+24,y+310+bi*34,14,'#9a93a8','left',F_B);
-   statPips(g,x+120,y+304+bi*34,b[1],b[2]);});
-  txt(g,ch.bio,x+cw/2,y+418,13,'#8f88a0','center',F_B);
-  if(sel)txt(g,'▲',x+cw/2,y+h-18,20,'#ffd23f','center');});
- txt(g,'← → — выбор • ENTER — к машине',W/2,H-36,16,'#6f6880','center',F_B);
+  const pipX=x+128;
+  const eff=charEff(i);
+  const bars=[['СКОРОСТЬ',eff.spd,'#ff6b4a'],['ПОВОРОТ',eff.crn,'#35e0ff'],['БРОНЯ',eff.grt,'#58ff6b']];
+  bars.forEach((b,bi)=>{txt(g,b[0],x+22,y+286+bi*28,13,'#c4bdce','left',F_B);
+   statPips(g,pipX,y+280+bi*28,b[1],b[2]);});
+  const slvlC=(save&&save.skills&&save.skills[i])||1;
+  drawSkillBlock(g,x+12,y+368,cw-24,i,slvlC);
+  wrapText(g,ch.bio,x+cw/2,y+456,cw-40,16,12,'#e8e2d0',F_B);
+  const bbx=x+cw/2-70,bby=y+h-44,bbw=140,bbh=30;
+  const hot=mx>bbx&&mx<bbx+bbw&&my>bby&&my<bby+bbh;
+  panel(g,bbx,bby,bbw,bbh,(sel||hot)?'rgba(53,224,255,.15)':'rgba(20,17,28,.9)',(sel||hot)?'#35e0ff':'#3a3548',8);
+  txt(g,'ВЫБРАТЬ',x+cw/2,bby+bbh/2,13,(sel||hot)?'#35e0ff':'#c8c2d4','center',F_B);
+  g._bioBtns.push({x:bbx,y:bby,w:bbw,h:bbh,idx:i});});
+ txt(g,'← → — выбор • ENTER / «ВЫБРАТЬ» — досье • в досье ENTER — взять гонщика',W/2,H-28,15,'#6f6880','center',F_B);
+}
+////////////////////////////////////////////////////////
+//
+// Досье гонщика: широкая карточка, свечение, сканлайны
+//
+////////////////////////////////////////////////////////
+function drawBio(){
+ if(bioOpen<0)return;
+ const ch=CHARS[bioOpen];
+ g.fillStyle='rgba(5,4,9,.88)';g.fillRect(0,0,W,H);
+ const px=W/2-470,py=36,pw=940,ph=648;
+ panel(g,px,py,pw,ph,'rgba(14,11,22,.97)',ch.col,0);
+ g.save();
+ g.strokeStyle=ch.col;g.lineWidth=4;g.lineCap='square';g.lineJoin='miter';
+ const cb=28;
+ g.beginPath();
+ g.moveTo(px,py+cb);g.lineTo(px,py);g.lineTo(px+cb,py);
+ g.moveTo(px+pw-cb,py);g.lineTo(px+pw,py);g.lineTo(px+pw,py+cb);
+ g.moveTo(px+pw,py+ph-cb);g.lineTo(px+pw,py+ph);g.lineTo(px+pw-cb,py+ph);
+ g.moveTo(px+cb,py+ph);g.lineTo(px,py+ph);g.lineTo(px,py+ph-cb);
+ g.stroke();
+ g.restore();
+ g.fillStyle='rgba(255,255,255,.02)';
+ for(let yy=py+6;yy<py+ph-6;yy+=4)g.fillRect(px+6,yy,pw-12,1);
+ panel(g,px+24,py+18,300,40,'rgba(255,255,255,.05)',ch.col,10);
+ txt(g,'ДОСЬЕ ГОНЩИКА',px+40,py+38,16,ch.col,'left',F_D);
+ txt(g,'// СОВЕРШЕННО СЕКРЕТНО // +18',px+pw-32,py+38,12,'#6f6880','right',F_B);
+ g.save();g.shadowColor=ch.col;g.shadowBlur=36;
+ drawPortrait(g,ch,px+188,py+248,1.8);
+ g.restore();
+ const rx=px+380;
+ txt(g,ch.name,rx,py+120,44,ch.col,'left');
+ g.strokeStyle=ch.col;g.lineWidth=2;g.beginPath();g.moveTo(rx,py+150);g.lineTo(rx+400,py+150);g.stroke();
+ wrapText(g,'«'+ch.bio+'»',rx+200,py+190,420,20,14,'#c8b8a0',F_B);
+ const effB=charEff(bioOpen);
+ const keys3=['spd','crn','grt'];
+ const bars=[['СКОРОСТЬ',effB.spd,'#ff6b4a'],['ПОВОРОТ',effB.crn,'#35e0ff'],['БРОНЯ',effB.grt,'#58ff6b']];
+ g._statBtns=[];
+ bars.forEach((b,bi)=>{const by=py+268+bi*34;
+  txt(g,b[0],rx,by,14,'#c4bdce','left',F_B);
+  statPips(g,rx+118,by-6,b[1],b[2]);
+  txt(g,b[1]+'/5',rx+118+5*18+10,by,12,'#a8a0b4','left',F_B);
+  const cs=(save&&save.cstats&&save.cstats[bioOpen])||{spd:0,crn:0,grt:0};
+  const key=keys3[bi];const base=({spd:ch.spd,crn:ch.crn,grt:ch.grt})[key];
+  const cur=cs[key],maxAdd=5-base;
+  if(cur<maxAdd){
+   const cost=STAT_COSTS[Math.min(cur,STAT_COSTS.length-1)];
+   const can=save.cash>=cost;
+   const bx=rx+300,bw=112,bh=22,byy=by-11;
+   const hot=mx>bx&&mx<bx+bw&&my>byy&&my<byy+bh;
+   panel(g,bx,byy,bw,bh,hot?'rgba(88,255,107,.18)':'rgba(20,17,28,.9)',can?'#58ff6b':'#ff3d2e',6);
+   txt(g,'+ '+fm(cost),bx+bw/2,byy+bh/2,11,can?'#58ff6b':'#ff3d2e','center',F_B);
+   g._statBtns.push({x:bx,y:byy,w:bw,h:bh,key});
+  }else{
+   txt(g,'МАКС',rx+340,by,12,'#58ff6b','left',F_B);
+  }
+ });
+ if(garMsgT>0){g.globalAlpha=Math.min(1,garMsgT);txt(g,garMsg,rx+200,py+248,14,'#ffd23f','center');g.globalAlpha=1;}
+ const slvlB=(save&&save.skills&&save.skills[bioOpen])||1;
+ drawSkillBlock(g,rx-8,py+268+3*34+12,430,bioOpen,slvlB);
+ g.strokeStyle='rgba(255,255,255,.1)';g.lineWidth=1;
+ g.beginPath();g.moveTo(px+40,py+468);g.lineTo(px+pw-40,py+468);g.stroke();
+ txt(g,'// БИОГРАФИЯ',px+40,py+490,13,'#9a93a8','left',F_B);
+ wrapText(g,ch.bioFull,px+pw/2,py+518,pw-120,22,15,'#e8e2d0',F_B);
+ g._bioActs=[];
+ const bw=280,bh=46,by=py+ph-64;
+ const bx1=W/2-bw-16,bx2=W/2+16;
+ const hot1=mx>bx1&&mx<bx1+bw&&my>by&&my<by+bh;
+ panel(g,bx1,by,bw,bh,hot1?'rgba(88,255,107,.18)':'rgba(20,17,28,.9)',hot1?'#58ff6b':'#3a3548',10);
+ txt(g,'ВЫБРАТЬ ГОНЩИКА [ENTER]',bx1+bw/2,by+bh/2,15,hot1?'#58ff6b':'#9a93a8','center',F_B);
+ g._bioActs.push({x:bx1,y:by,w:bw,h:bh,act:'pick'});
+ const hot2=mx>bx2&&mx<bx2+bw&&my>by&&my<by+bh;
+ panel(g,bx2,by,bw,bh,hot2?'rgba(255,157,46,.15)':'rgba(20,17,28,.9)',hot2?'#ff9d2e':'#3a3548',10);
+ txt(g,'ЗАКРЫТЬ [ESC]',bx2+bw/2,by+bh/2,15,hot2?'#ff9d2e':'#9a93a8','center',F_B);
+ g._bioActs.push({x:bx2,y:by,w:bw,h:bh,act:'close'});
 }
 function drawCarSel(){
  g.fillStyle='#12101a';g.fillRect(0,0,W,H);
@@ -1945,42 +2200,91 @@ function drawCarSel(){
    if(save.cash<car.price)txt(g,'не хватает $'+(car.price-save.cash),x+cw/2,py+10,11,'#ff3d2e','center',F_B);}});
  txt(g,carConfirmed?'ENTER — НА СТАРТ!':'← → — выбор • ENTER — купить/выбрать • ESC — назад',W/2,H-20,16,carConfirmed?'#58ff6b':'#6f6880','center',F_B);
 }
+////////////////////////////////////////////////////////
+//
+// Общая рамка хабов (тренажёрка / автопарк): как у гаража
+//
+////////////////////////////////////////////////////////
+const HUB_PAD=48,HUB_TOP=108,HUB_FOOT=656;
+function drawHubBackdrop(tint){
+ const bg=g.createLinearGradient(0,0,0,H);
+ bg.addColorStop(0,'#16131e');bg.addColorStop(1,'#0a090f');
+ g.fillStyle=bg;g.fillRect(0,0,W,H);
+ g.fillStyle=tint||'rgba(255,210,63,.04)';g.fillRect(0,0,W,96);
+ g.strokeStyle='rgba(255,210,63,.14)';g.lineWidth=1;
+ g.beginPath();g.moveTo(HUB_PAD,96);g.lineTo(W-HUB_PAD,96);g.stroke();
+}
+function drawHubHeader(title,sub,titleCol){
+ txt(g,title,HUB_PAD,48,32,titleCol||'#ffd23f');
+ if(sub)txt(g,sub,W/2,48,14,'#8f88a0','center',F_B);
+ const cash=fm(save.cash);
+ g.font='20px '+F_D;
+ const cashW=Math.max(168,g.measureText(cash).width+36);
+ panel(g,W-HUB_PAD-cashW,28,cashW,40,'rgba(255,210,63,.08)','rgba(255,210,63,.38)',10);
+ txt(g,cash,W-HUB_PAD-18,48,20,'#ffd23f','right');
+}
+function drawHubCard(x,y,w,h,stroke){
+ rr(g,x,y,w,h,16);g.fillStyle='rgba(18,15,26,.92)';g.fill();
+ g.strokeStyle=stroke||'rgba(255,255,255,.08)';g.lineWidth=stroke?2:1;g.stroke();
+}
+function drawHubToast(){
+ if(garMsgT<=0)return;
+ g.globalAlpha=Math.min(1,garMsgT);
+ panel(g,W/2-220,100,440,32,'rgba(16,13,22,.96)','#ffd23f',10);
+ txt(g,garMsg,W/2,116,15,'#ffd23f','center');
+ g.globalAlpha=1;
+}
+function drawHubPlus(x,y,w,h,can,sel,costStr){
+ const hot=mx>x&&mx<x+w&&my>y&&my<y+h;
+ panel(g,x,y,w,h,(sel||hot)?'rgba(88,255,107,.18)':'rgba(16,13,22,.94)',can?'#58ff6b':'#ff3d2e',8);
+ txt(g,'+',x+16,y+h/2,20,can?'#58ff6b':'#ff3d2e','center');
+ txt(g,costStr,x+w-10,y+h/2,11,can?'#58ff6b':'#ff3d2e','right',F_B);
+}
+////////////////////////////////////////////////////////
+//
+// Автопарк: сетка 3×2 в карточках хаба
+//
+////////////////////////////////////////////////////////
 function drawAutopark(){
- g.fillStyle='#12101a';g.fillRect(0,0,W,H);
- txt(g,'АВТОПАРК',W/2,50,42,'#ffd23f','center');
- txt(g,'ДЕНЬГИ: $'+save.cash,W/2,88,20,'#ffd23f','center');
- 
- const cw=380,gap=20,x0=(W-2*cw-gap)/2;
+ drawHubBackdrop('rgba(53,224,255,.04)');
+ drawHubHeader('АВТОПАРК','выберите машину для сравнения','#35e0ff');
+ const cols=3,gap=18;
+ const gridW=W-HUB_PAD*2,gridH=HUB_FOOT-HUB_TOP;
+ const cw=(gridW-(cols-1)*gap)/cols,ch=(gridH-gap)/2;
+ g._park=[];
  CARS.forEach((car,i)=>{
-  const col=i%2,row=Math.floor(i/2);
-  const x=x0+col*(cw+gap),y=130+row*180;
-  const sel=i===autoparkSel;
-  const owned=i===0||(save.carOwned&&save.carOwned[i]);
-  const unlocked=carUnlocked(i);
-  const current=save.car===i;
-  
-  panel(g,x,y,cw,160,sel?'rgba(53,224,255,.15)':'rgba(20,17,28,.9)',sel?'#35e0ff':'#3a3548');
-  
+  const col=i%cols,row=(i/cols)|0;
+  const x=HUB_PAD+col*(cw+gap),y=HUB_TOP+row*(ch+gap);
+  const sel=i===autoparkSel,owned=i===0||(save.carOwned&&save.carOwned[i]);
+  const unlocked=carUnlocked(i),current=save.car===i;
+  const hot=mx>x&&mx<x+cw&&my>y&&my<y+ch;
+  const stroke=sel?'#35e0ff':(hot?'#5a5468':'rgba(255,255,255,.08)');
+  drawHubCard(x,y,cw,ch,stroke);
+  g._park.push({x,y,w:cw,h:ch,i});
   if(!unlocked){
-   txt(g,'🔒 ЗАБЛОКИРОВАНО',x+cw/2,y+80,24,'#5a5468','center');
-   txt(g,'Откроется на этапе '+(CAR_UNLOCK[i].race+1),x+cw/2,y+110,14,'#6f6880','center',F_B);
+   txt(g,'ЗАБЛОКИРОВАНО',x+cw/2,y+ch/2-8,18,'#5a5468','center');
+   txt(g,'этап '+(CAR_UNLOCK[i].race+1),x+cw/2,y+ch/2+18,13,'#6f6880','center',F_B);
    return;
   }
-  
-  txt(g,car.name,x+cw/2,y+28,20,car.col,'center');
-  g.save();g.translate(x+80,y+90);g.scale(2.5,2.5);
-  drawCar(g,{x:0,y:0,ang:0,car,ch:CHARS[0],nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
-  
-  if(owned){
-   txt(g,current?'✓ ТЕКУЩАЯ':'В СОБСТВЕННОСТИ',x+cw-20,y+140,14,'#58ff6b','right',F_B);
-  }else{
-   const canBuy=save.cash>=car.price;
-   txt(g,'$'+car.price,x+cw-20,y+130,18,canBuy?'#ffd23f':'#ff3d2e','right');
-   if(!canBuy)txt(g,'не хватает $'+(car.price-save.cash),x+cw-20,y+150,10,'#ff3d2e','right',F_B);
-  }
+  txt(g,car.name,x+20,y+28,16,car.col,'left',F_B);
+  const st=current?'ТЕКУЩАЯ':(owned?'В ПАРКЕ':fm(car.price));
+  const stCol=owned?'#58ff6b':(save.cash>=car.price?'#ffd23f':'#ff3d2e');
+  txt(g,st,x+cw-18,y+28,13,stCol,'right',F_B);
+  g.fillStyle='rgba(255,210,63,.06)';g.beginPath();g.ellipse(x+cw/2,y+ch*0.52,110,28,0,0,TAU);g.fill();
+  g.save();g.translate(x+cw/2,y+ch*0.46);g.scale(2.35,2.35);
+  drawCar(g,{x:0,y:0,ang:-.35,car,ch:CHARS[save.char],nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
+  let tx=x+16;
+  car.traits.forEach(tr=>{
+   const tag=(tr.split(':')[0]||tr).trim();
+   g.font='11px '+F_B;
+   const tw=Math.ceil(g.measureText(tag).width)+16;
+   if(tx+tw>x+cw-12)return;
+   rr(g,tx,y+ch-36,tw,22,6);g.fillStyle='rgba(255,210,63,.08)';g.fill();
+   txt(g,tag,tx+8,y+ch-25,11,'#d8c89a','left',F_B,false);
+   tx+=tw+6;
+  });
  });
- 
- txt(g,'← → ↑ ↓ — выбор • ENTER — детали • ESC — назад',W/2,H-30,16,'#6f6880','center',F_B);
+ txt(g,'← → ↑ ↓  выбор   ·   ENTER  детали   ·   ESC  в гараж',W/2,H-28,13,'#6f6880','center',F_B);
 }
 function drawCarDetail(){
  const car=CARS[autoparkSel];
@@ -1995,72 +2299,66 @@ function drawCarDetail(){
  const selStock=stats(CHARS[save.char],car,zero);
  const selTuned=stats(CHARS[save.char],car,selT);
  const hasTun=t=>t.arm+t.eng+t.tir+t.shk+t.nit>0;
+ const ch=CHARS[save.char];
 
- g.fillStyle='rgba(5,4,9,.92)';g.fillRect(0,0,W,H);
- panel(g,W/2-520,50,1040,620,'rgba(16,13,24,.97)','#35e0ff');
+ drawHubBackdrop('rgba(53,224,255,.04)');
+ drawHubHeader('АВТОПАРК',same?'текущая машина':'сравнение: '+cur.name+' → '+car.name,'#35e0ff');
 
- txt(g,car.name,W/2,92,34,car.col,'center');
- txt(g,same?'ЭТО ВАША ТЕКУЩАЯ МАШИНА':'СРАВНЕНИЕ С ВАШЕЙ МАШИНОЙ: '+cur.name,W/2,126,15,same?'#58ff6b':'#9a93a8','center',F_B);
+ const gap=20,bayH=236,bayW=(W-HUB_PAD*2-gap)/2;
+ const drawBay=(x,label,labelCol,cobj,fillA,strokeA)=>{
+  drawHubCard(x,HUB_TOP,bayW,bayH,strokeA);
+  txt(g,label,x+20,HUB_TOP+24,13,labelCol,'left',F_B);
+  g.fillStyle=fillA;g.beginPath();g.ellipse(x+bayW/2,HUB_TOP+148,120,32,0,0,TAU);g.fill();
+  g.save();g.translate(x+bayW/2,HUB_TOP+118);g.scale(2.5,2.5);
+  drawCar(g,{x:0,y:0,ang:-.4,car:cobj,ch,nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
+ };
+ drawBay(HUB_PAD,'ВАША','#ffd23f',cur,'rgba(255,210,63,.08)','rgba(255,210,63,.35)');
+ drawBay(HUB_PAD+bayW+gap,same?'ТЕКУЩАЯ':(owned?'В ПАРКЕ':'НОВАЯ'),owned?'#58ff6b':'#35e0ff',car,
+  owned?'rgba(88,255,107,.08)':'rgba(53,224,255,.08)',owned?'rgba(88,255,107,.4)':'rgba(53,224,255,.4)');
 
- g.save();g.translate(W/2-260,210);g.scale(2.4,2.4);
- drawCar(g,{x:0,y:0,ang:-.4,car:cur,ch:CHARS[save.char],nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
- panel(g,W/2-330,266,140,26,'rgba(255,210,63,.12)','#ffd23f',8);
- txt(g,'ВАША',W/2-260,279,13,'#ffd23f','center',F_B);
-
- g.save();g.translate(W/2+260,210);g.scale(2.4,2.4);
- drawCar(g,{x:0,y:0,ang:-.4,car:car,ch:CHARS[save.char],nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
- panel(g,W/2+190,266,140,26,owned?'rgba(88,255,107,.1)':'rgba(53,224,255,.1)',owned?'#58ff6b':'#35e0ff',8);
- txt(g,same?'ТЕКУЩАЯ':(owned?'В ПАРКЕ':'НОВАЯ'),W/2+260,279,13,owned?'#58ff6b':'#35e0ff','center',F_B);
-
- const L=W/2-440,C1=W/2-60,C2=W/2+170,C3=W/2+440;
- txt(g,'ХАРАКТЕРИСТИКА',L,330,12,'#9a93a8','left',F_B);
- txt(g,'ВАША (ТЮНИНГ)',C1,330,12,'#ffd23f','right',F_B);
- txt(g,'ЭТА МАШИНА',C2,330,12,car.col,'right',F_B);
- txt(g,'РАЗНИЦА',C3,330,12,'#9a93a8','right',F_B);
- g.strokeStyle='rgba(255,255,255,.15)';g.lineWidth=1;
- g.beginPath();g.moveTo(L,344);g.lineTo(C3,344);g.stroke();
-
+ const ty=HUB_TOP+bayH+18,th=HUB_FOOT-ty;
+ drawHubCard(HUB_PAD,ty,W-HUB_PAD*2,th);
+ const L=HUB_PAD+28,C1=W/2-40,C2=W/2+200,C3=W-HUB_PAD-28;
+ txt(g,'ХАРАКТЕРИСТИКА',L,ty+24,12,'#9a93a8','left',F_B);
+ txt(g,'ВАША',C1,ty+24,12,'#ffd23f','right',F_B);
+ txt(g,'ЭТА',C2,ty+24,12,car.col,'right',F_B);
+ txt(g,'РАЗНИЦА',C3,ty+24,12,'#9a93a8','right',F_B);
+ g.strokeStyle='rgba(255,255,255,.08)';g.beginPath();g.moveTo(L,ty+38);g.lineTo(C3,ty+38);g.stroke();
  const rows=[
-  ['МАКС СКОРОСТЬ','КМ/Ч',Math.round(curTuned.top*.45),Math.round(selTuned.top*.45),Math.round(curStock.top*.45),Math.round(selStock.top*.45)],
+  ['МАКС СКОРОСТЬ',' КМ/Ч',Math.round(curTuned.top*.45),Math.round(selTuned.top*.45),Math.round(curStock.top*.45),Math.round(selStock.top*.45)],
   ['РАЗГОН','',Math.round(curTuned.acc),Math.round(selTuned.acc),Math.round(curStock.acc),Math.round(selStock.acc)],
   ['УПРАВЛЕНИЕ','',+curTuned.crn.toFixed(1),+selTuned.crn.toFixed(1),+curStock.crn.toFixed(1),+selStock.crn.toFixed(1)],
-  ['КОРПУС','HP',curTuned.maxhp,selTuned.maxhp,curStock.maxhp,selStock.maxhp]
+  ['КОРПУС','',curTuned.maxhp,selTuned.maxhp,curStock.maxhp,selStock.maxhp]
  ];
  rows.forEach((s,i)=>{
-  const y=372+i*44;
-  if(i%2===0){g.fillStyle='rgba(255,255,255,.03)';g.fillRect(L,y-17,C3-L,36);}
-  txt(g,s[0],L+8,y,16,'#e8e2d0','left',F_B);
-  txt(g,String(s[2])+(s[1]?' '+s[1]:''),C1,y,19,'#ffd23f','right');
-  if(hasTun(curT))txt(g,'сток '+s[4],C1,y+15,10,'#6f6880','right',F_B);
-  txt(g,String(s[3]),C2,y,19,'#e8e2d0','right');
-  if(hasTun(selT))txt(g,'сток '+s[5],C2,y+15,10,'#6f6880','right',F_B);
+  const y=ty+62+i*38;
+  if(i%2===0){g.fillStyle='rgba(255,255,255,.03)';g.fillRect(L,y-16,C3-L,32);}
+  txt(g,s[0],L+8,y,15,'#e8e2d0','left',F_B);
+  txt(g,String(s[2])+s[1],C1,y,17,'#ffd23f','right');
+  if(hasTun(curT))txt(g,'сток '+s[4],C1,y+14,10,'#6f6880','right',F_B);
+  txt(g,String(s[3])+s[1],C2,y,17,'#e8e2d0','right');
+  if(hasTun(selT))txt(g,'сток '+s[5],C2,y+14,10,'#6f6880','right',F_B);
   const d=+(s[3]-s[2]).toFixed(1);
   const dcol=d>0?'#58ff6b':d<0?'#ff3d2e':'#9a93a8';
-  txt(g,d>0?'↑ +'+d:d<0?'↓ '+d:'=',C3,y,18,dcol,'right');
+  txt(g,d>0?'↑ +'+d:d<0?'↓ '+d:'=',C3,y,16,dcol,'right');
  });
-
  const abC=CAR_ABIL[save.car],abS=CAR_ABIL[autoparkSel];
- txt(g,'СПОСОБНОСТИ:',L,548,14,'#b478ff','left',F_B);
- txt(g,'ВАША: '+abC.weapon.name+' • НИТРО '+abC.nitro.cd+'с • '+abC.ult.name,L+8,576,13,'#e8e2d0','left',F_B);
- txt(g,'ЭТА:  '+abS.weapon.name+' • НИТРО '+abS.nitro.cd+'с • '+abS.ult.name,L+8,600,13,'#e8e2d0','left',F_B);
- txt(g,'зелёная стрелка — эта машина лучше, красная — хуже',L+8,632,11,'#6f6880','left',F_B);
-
- if(same){
-  txt(g,'✓ ТЕКУЩАЯ МАШИНА',C3,585,20,'#58ff6b','right');
- }else if(owned){
-  txt(g,'ENTER — ПЕРЕСАТЬ НА НЕЁ',C3,585,20,'#35e0ff','right');
- }else{
+ txt(g,abC.weapon.name+' · нитро '+abC.nitro.cd+'с · '+abC.ult.name,L,ty+th-48,12,'#9a93a8','left',F_B);
+ txt(g,abS.weapon.name+' · нитро '+abS.nitro.cd+'с · '+abS.ult.name,L,ty+th-28,12,'#e8e2d0','left',F_B);
+ if(same)txt(g,'ТЕКУЩАЯ',C3,ty+th-36,16,'#58ff6b','right');
+ else if(owned)txt(g,'ENTER — ПЕРЕСЕСТЬ',C3,ty+th-36,16,'#35e0ff','right');
+ else{
   const canBuy=save.cash>=car.price;
-  txt(g,canBuy?'ENTER — КУПИТЬ $'+car.price:'НЕ ХВАТАЕТ $'+(car.price-save.cash),C3,585,20,canBuy?'#ffd23f':'#ff3d2e','right');
+  txt(g,canBuy?'ENTER — КУПИТЬ '+fm(car.price):'НЕ ХВАТАЕТ '+fm(car.price-save.cash),C3,ty+th-36,15,canBuy?'#ffd23f':'#ff3d2e','right');
  }
- txt(g,'ESC — назад',W/2,655,13,'#6f6880','center',F_B);
+ txt(g,'ESC  назад в автопарк',W/2,H-28,13,'#6f6880','center',F_B);
 }
 const UP_COSTS={
- arm:[350,600,950,1400,2000,2800],
- eng:[450,750,1150,1700,2400,3300],
- tir:[300,520,800,1200,1750,2500],
- shk:[280,480,700,940,1200,1500],
- nit:[400,700,1000,1400,1900,2500]
+arm:[350,600,950,1400,2000,2800],
+eng:[450,750,1150,1700,2400,3300],
+tir:[300,520,800,1200,1750,2500],
+shk:[280,480,700,940,1200,1500],
+nit:[400,700,1000,1400,1900,2500]
 };
 const UP_INFO={
  arm:{n:'БРОНЯ',d:'+25 корпус / ур.'},
@@ -2069,76 +2367,207 @@ const UP_INFO={
  shk:{n:'АМОРТИЗАТОРЫ',d:'−штраф бездорожья'},
  nit:{n:'НИТРО-БАК',d:'−0.6с перезарядка нитро'}
 };
+////////////////////////////////////////////////////////
+//
+// Строка меню гаража: зазор, hover, цена справа
+//
+////////////////////////////////////////////////////////
+function drawGarageRow(x,y,w,h,sel,accent,fillSel,title,desc,right,rightCol){
+ const hot=mx>x&&mx<x+w&&my>y&&my<y+h;
+ const fill=sel?fillSel:(hot?'rgba(255,255,255,.05)':'rgba(16,13,22,.94)');
+ const stroke=sel?accent:(hot?'#5a5468':'#2e2a38');
+ panel(g,x,y,w,h,fill,stroke,12);
+ txt(g,title,x+22,y+(desc?18:h/2),16,sel?'#fff':'#e8e2d0','left',F_B);
+ if(desc)txt(g,desc,x+22,y+38,11,'#7a7388','left',F_B);
+ if(right)txt(g,right,x+w-20,y+h/2,16,rightCol,'right');
+}
 function drawGarage(){
- g.fillStyle='#12101a';g.fillRect(0,0,W,H);
- g.fillStyle='#181420';g.fillRect(0,0,W,86);
- txt(g,'ГАРАЖ',30,44,36,'#ffd23f');
- txt(g,'ЭТАП '+(save.race+1)+' • '+TRACKDEFS[save.race%TRACKDEFS.length].name+' • '+DIVN[Math.min(3,((save.race/TRACKDEFS.length)|0))],240,38,16,'#9a93a8','left',F_B);
- txt(g,'$'+save.cash,W-30,44,32,'#ffd23f','right');
- if(saveFlash>0){g.globalAlpha=Math.min(1,saveFlash);txt(g,'✓ СОХРАНЕНО',W-30,74,14,'#58ff6b','right',F_B);g.globalAlpha=1;}
- if(garMsgT>0){g.globalAlpha=Math.min(1,garMsgT);txt(g,garMsg,W/2,104,18,'#ffd23f','center');g.globalAlpha=1;}
- 
- g.fillStyle='rgba(255,210,63,.06)';g.beginPath();g.ellipse(215,470,170,46,0,0,TAU);g.fill();
- g.save();g.translate(215,430);g.scale(3.2,3.2);drawCar(g,{x:0,y:0,ang:-.4,car:CARS[save.car],ch:CHARS[save.char],nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
- 
- drawPortrait(g,CHARS[save.char],100,168,1);
- txt(g,CHARS[save.char].name,30,270,17,CHARS[save.char].col,'left',F_B);
- txt(g,CARS[save.car].name,30,294,15,'#9a93a8','left',F_B);
- CARS[save.car].traits.forEach((tr,ti)=>{txt(g,'• '+tr,30,322+ti*20,12,'#8f88a0','left',F_B);});
- 
- const st=stats(CHARS[save.char],CARS[save.car],save.tuning[save.car]);
- txt(g,'МАКС ~'+Math.round(st.top*.45)+' КМ/Ч',30,560,15,'#e8e2d0','left',F_B);
- txt(g,'КОРПУС '+st.maxhp,30,586,15,'#e8e2d0','left',F_B);
- 
- txt(g,'ТЮНИНГ',430,120,20,'#ffd23f','left');
- 
+ const PAD=48,LEFT_W=452,COL_GAP=28,RIGHT_X=PAD+LEFT_W+COL_GAP,RIGHT_W=W-PAD-RIGHT_X;
+ const TOP=108,FOOT=656;
+ const ch=CHARS[save.char],car=CARS[save.car],tun=save.tuning[save.car];
+ const st=stats(ch,car,tun);
+ const stage='ЭТАП '+(save.race+1)+'  ·  '+TRACKDEFS[save.race%TRACKDEFS.length].name+'  ·  '+DIVN[Math.min(3,((save.race/TRACKDEFS.length)|0))];
+
+ const bg=g.createLinearGradient(0,0,0,H);
+ bg.addColorStop(0,'#16131e');bg.addColorStop(1,'#0a090f');
+ g.fillStyle=bg;g.fillRect(0,0,W,H);
+ g.fillStyle='rgba(255,210,63,.04)';g.fillRect(0,0,W,96);
+ g.strokeStyle='rgba(255,210,63,.14)';g.lineWidth=1;
+ g.beginPath();g.moveTo(PAD,96);g.lineTo(W-PAD,96);g.stroke();
+
+ txt(g,'ГАРАЖ',PAD,48,32,'#ffd23f');
+ txt(g,stage,W/2,48,14,'#8f88a0','center',F_B);
+ const cash=fm(save.cash);
+ g.font='20px '+F_D;
+ const cashW=Math.max(168,g.measureText(cash).width+36);
+ panel(g,W-PAD-cashW,28,cashW,40,'rgba(255,210,63,.08)','rgba(255,210,63,.38)',10);
+ txt(g,cash,W-PAD-18,48,20,'#ffd23f','right');
+ if(saveFlash>0){g.globalAlpha=Math.min(1,saveFlash);txt(g,'✓ СОХРАНЕНО',W-PAD,82,12,'#58ff6b','right',F_B);g.globalAlpha=1;}
+
+ const idY=TOP,idH=214;
+ rr(g,PAD,idY,LEFT_W,idH,16);g.fillStyle='rgba(18,15,26,.92)';g.fill();
+ g.strokeStyle='rgba(255,255,255,.08)';g.lineWidth=1;g.stroke();
+ g.save();rr(g,PAD,idY,LEFT_W,idH,16);g.clip();
+ drawPortrait(g,ch,PAD+108,idY+idH/2,1);g.restore();
+ txt(g,ch.name,PAD+212,idY+44,22,ch.col,'left');
+ txt(g,car.name,PAD+212,idY+72,14,'#9a93a8','left',F_B);
+ txt(g,'ОСОБЕННОСТИ',PAD+212,idY+102,11,'#6f6880','left',F_B);
+ car.traits.forEach((tr,ti)=>{
+  const tag=(tr.split(':')[0]||tr).trim();
+  const tx=PAD+212,ty=idY+124+ti*26;
+  g.font='12px '+F_B;
+  const cw=Math.min(228,Math.ceil(g.measureText(tag).width)+22);
+  rr(g,tx,ty,cw,20,6);g.fillStyle='rgba(255,210,63,.08)';g.fill();
+  g.strokeStyle='rgba(255,210,63,.22)';g.lineWidth=1;g.stroke();
+  txt(g,tag,tx+11,ty+10,12,'#d8c89a','left',F_B,false);
+ });
+
+ const bayY=idY+idH+18,bayH=FOOT-bayY;
+ rr(g,PAD,bayY,LEFT_W,bayH,16);g.fillStyle='rgba(18,15,26,.92)';g.fill();
+ g.strokeStyle='rgba(255,255,255,.08)';g.lineWidth=1;g.stroke();
+ g.fillStyle='rgba(255,210,63,.07)';g.beginPath();g.ellipse(PAD+LEFT_W/2,bayY+bayH*0.52,150,38,0,0,TAU);g.fill();
+ g.save();g.translate(PAD+LEFT_W/2,bayY+bayH*0.42);g.scale(3.15,3.15);
+ drawCar(g,{x:0,y:0,ang:-.4,car,ch,nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
+ const chipY=bayY+bayH-52,chipW=(LEFT_W-48)/2;
+ const chips=[['МАКС. СКОРОСТЬ','~'+Math.round(st.top*.45)+' КМ/Ч'],['КОРПУС',String(st.maxhp)]];
+ chips.forEach((c,i)=>{
+  const cx=PAD+16+i*(chipW+16);
+  rr(g,cx,chipY,chipW,36,8);g.fillStyle='rgba(255,255,255,.04)';g.fill();
+  txt(g,c[0],cx+14,chipY+12,10,'#7a7388','left',F_B,false);
+  txt(g,c[1],cx+14,chipY+26,14,'#e8e2d0','left',F_B,false);
+ });
+
+ rr(g,RIGHT_X,TOP,RIGHT_W,FOOT-TOP,16);g.fillStyle='rgba(18,15,26,.92)';g.fill();
+ g.strokeStyle='rgba(255,255,255,.08)';g.lineWidth=1;g.stroke();
+ txt(g,'ТЮНИНГ',RIGHT_X+24,TOP+28,18,'#ffd23f','left');
+ txt(g,'улучшения этой машины',RIGHT_X+RIGHT_W-24,TOP+28,12,'#6f6880','right',F_B);
+
  g._gar=[];
+ const rx=RIGHT_X+20,rw=RIGHT_W-40,rowH=52,rowGap=10;
+ let y=TOP+56;
  const tuningKeys=['arm','eng','tir','shk','nit'];
  tuningKeys.forEach((k,i)=>{
   const sel=tuningSel===i;
-  const lvl=save.tuning[save.car][k];
-  const maxed=lvl>=6;
-  const cost=maxed?null:UP_COSTS[k][lvl];
+  const lvl=tun[k],maxed=lvl>=6,cost=maxed?null:UP_COSTS[k][lvl];
   const dis=maxed||save.cash<cost;
-  
-  const y=160+i*70;
-  panel(g,430,y,400,60,sel?(dis?'rgba(255,61,46,.12)':'rgba(255,157,46,.15)'):'rgba(20,17,28,.9)',sel?(dis?'#ff3d2e':'#ffd23f'):'#3a3548');
-  
-  txt(g,UP_INFO[k].n,450,y+20,18,dis?'#6f6880':'#fff','left',F_B);
-  txt(g,UP_INFO[k].d,450,y+45,12,'#8f88a0','left',F_B);
-  
-  txt(g,'ур.'+lvl+'/6',650,y+20,14,'#9a93a8','right',F_B);
-  
-  if(maxed){
-   txt(g,'МАКС',810,y+30,16,'#58ff6b','right');
-  }else{
-   txt(g,'$'+cost,810,y+30,18,dis?'#6f6880':'#ffd23f','right');
-  }
-  
-  g._gar.push({x:430,y,w:400,h:60,row:i});
+  const accent=dis&&sel?'#ff3d2e':'#ffd23f';
+  const fill=dis?'rgba(255,61,46,.10)':'rgba(255,157,46,.14)';
+  drawGarageRow(rx,y,rw,rowH,sel,accent,fill,UP_INFO[k].n,UP_INFO[k].d,
+   maxed?'МАКС':fm(cost),maxed?'#58ff6b':(dis?'#6f6880':'#ffd23f'));
+  drawLevelPips(g,rx+rw-248,y+22,lvl,6,dis?'#6f6880':'#ffd23f');
+  txt(g,lvl+'/6',rx+rw-162,y+26,11,'#8f88a0','left',F_B,false);
+  g._gar.push({x:rx,y,w:rw,h:rowH,row:i});
+  y+=rowH+rowGap;
  });
- const selA=tuningSel===5;
- const yA=160+5*70;
- panel(g,430,yA,400,60,selA?'rgba(53,224,255,.15)':'rgba(20,17,28,.9)',selA?'#35e0ff':'#3a3548');
- txt(g,'🚗 АВТОПАРК',450,yA+30,18,selA?'#35e0ff':'#e8e2d0','left',F_B);
- g._gar.push({x:430,y:yA,w:400,h:60,row:5,isAutopark:true});
- 
- const selR=tuningSel===6;
- const yR=160+6*70;
- panel(g,430,yR,400,60,selR?'rgba(255,157,46,.2)':'rgba(20,17,28,.9)',selR?'#ff9d2e':'#3a3548');
- txt(g,'🏁 В ГОНКУ!',450,yR+30,20,selR?'#ffd23f':'#e8e2d0','left',F_B);
- g._gar.push({x:430,y:yR,w:400,h:60,row:6,isRace:true});
- 
- txt(g,'↑ ↓ — выбор • ENTER — улучшить/выбрать • A — АВТОПАРК • SPACE — В ГОНКУ',W/2,H-24,13,'#6f6880','center',F_B);
- 
+
+ y+=8;
+ g.strokeStyle='rgba(255,255,255,.08)';g.beginPath();g.moveTo(rx,y);g.lineTo(rx+rw,y);g.stroke();
+ y+=16;
+ const navH=56,navGap=12,navW=(rw-navGap)/2;
+ const selS=tuningSel===5,selA=tuningSel===6,selR=tuningSel===7;
+ drawGarageRow(rx,y,navW,navH,selS,'#b478ff','rgba(180,120,255,.16)','ТРЕНАЖЁРКА','пилот: скил и статы','','');
+ g._gar.push({x:rx,y,w:navW,h:navH,row:5});
+ drawGarageRow(rx+navW+navGap,y,navW,navH,selA,'#35e0ff','rgba(53,224,255,.14)','АВТОПАРК','смена машины','','');
+ g._gar.push({x:rx+navW+navGap,y,w:navW,h:navH,row:6,isAutopark:true});
+ y+=navH+16;
+ drawGarageRow(rx,y,rw,60,selR,'#ff9d2e','rgba(255,157,46,.22)','В ГОНКУ!','пробел — сразу на старт','ГОНКА','#ffd23f');
+ g._gar.push({x:rx,y,w:rw,h:60,row:7,isRace:true});
+
+ txt(g,'↑ ↓  выбор   ·   ENTER  улучшить   ·   ПРОБЕЛ  гонка   ·   ESC  меню',W/2,H-28,13,'#6f6880','center',F_B);
+
+ if(garMsgT>0){
+  g.globalAlpha=Math.min(1,garMsgT);
+  panel(g,W/2-220,100,440,32,'rgba(16,13,22,.96)','#ffd23f',10);
+  txt(g,garMsg,W/2,116,15,'#ffd23f','center');
+  g.globalAlpha=1;
+ }
  if(garagePaused){
   g.fillStyle='rgba(5,4,9,.78)';g.fillRect(0,0,W,H);
   txt(g,'ПАУЗА',W/2,H/2-170,56,'#ffd23f','center');
   const items=['ПРОДОЛЖИТЬ','СОХРАНИТЬ ИГРУ','ЗАГРУЗИТЬ ИГРУ','НАСТРОЙКИ','В ГЛАВНОЕ МЕНЮ'];
-  items.forEach((t,i)=>{const y=H/2-80+i*56;const sel=i===garagePauseIndex;
-   if(sel)panel(g,W/2-220,y-24,440,46,'rgba(255,157,46,.15)','#ff9d2e');
-   txt(g,t,W/2,y,sel?26:20,sel?'#ffd23f':'#8f88a0','center');});
+  items.forEach((t,i)=>{const yy=H/2-80+i*56;const sel=i===garagePauseIndex;
+   if(sel)panel(g,W/2-220,yy-24,440,46,'rgba(255,157,46,.15)','#ff9d2e');
+   txt(g,t,W/2,yy,sel?26:20,sel?'#ffd23f':'#8f88a0','center');});
   txt(g,'↑↓ — выбор • ENTER — подтвердить • ESC — продолжить',W/2,H/2+190,14,'#6f6880','center',F_B);}
+}
+////////////////////////////////////////////////////////
+//
+// Тренажёрка: текущий гонщик, база + скил
+//
+////////////////////////////////////////////////////////
+function drawGym(){
+ const chI=save.char,ch=CHARS[chI];
+ if(!save.cstats)save.cstats={0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}};
+ const cs=save.cstats[chI]||(save.cstats[chI]={spd:0,crn:0,grt:0});
+ const eff=charEff(chI);
+ const lvl=save.skills[chI]||1;
+ const LEFT_W=452,COL_GAP=28,RIGHT_X=HUB_PAD+LEFT_W+COL_GAP,RIGHT_W=W-HUB_PAD-RIGHT_X;
+
+ drawHubBackdrop('rgba(180,120,255,.05)');
+ drawHubHeader('ТРЕНАЖЁРКА','качаем гонщика, а не тачку','#b478ff');
+
+ drawHubCard(HUB_PAD,HUB_TOP,LEFT_W,HUB_FOOT-HUB_TOP);
+ g.save();rr(g,HUB_PAD,HUB_TOP,LEFT_W,HUB_FOOT-HUB_TOP,16);g.clip();
+ drawPortrait(g,ch,HUB_PAD+LEFT_W/2,HUB_TOP+148,1.15);g.restore();
+ txt(g,ch.name,HUB_PAD+LEFT_W/2,HUB_TOP+268,24,ch.col,'center');
+ txt(g,SKILL_META[chI].n,HUB_PAD+LEFT_W/2,HUB_TOP+296,13,'#c89bff','center',F_B);
+ txt(g,SKILL_DESC(chI,lvl),HUB_PAD+LEFT_W/2,HUB_TOP+318,12,'#8f88a0','center',F_B);
+ const chips=[['СКОРОСТЬ',eff.spd+'/5'],['ПОВОРОТ',eff.crn+'/5'],['БРОНЯ',eff.grt+'/5']];
+ const chipW=(LEFT_W-48)/3;
+ chips.forEach((c,i)=>{
+  const cx=HUB_PAD+16+i*(chipW+8),cy=HUB_FOOT-56;
+  rr(g,cx,cy,chipW,40,8);g.fillStyle='rgba(255,255,255,.04)';g.fill();
+  txt(g,c[0],cx+chipW/2,cy+12,10,'#7a7388','center',F_B,false);
+  txt(g,c[1],cx+chipW/2,cy+28,14,'#e8e2d0','center',F_B,false);
+ });
+
+ drawHubCard(RIGHT_X,HUB_TOP,RIGHT_W,HUB_FOOT-HUB_TOP);
+ txt(g,'ПРОКАЧКА',RIGHT_X+24,HUB_TOP+28,18,'#b478ff','left');
+ txt(g,'база и личный скил',RIGHT_X+RIGHT_W-24,HUB_TOP+28,12,'#6f6880','right',F_B);
+
+ g._gymBtns=[];
+ const rx=RIGHT_X+20,rw=RIGHT_W-40,rowH=72,rowGap=12;
+ const rows=[
+  {key:'spd',label:'СКОРОСТЬ',val:eff.spd,base:ch.spd,col:'#ff6b4a',d:'макс. скорость гонщика'},
+  {key:'crn',label:'ПОВОРОТ',val:eff.crn,base:ch.crn,col:'#35e0ff',d:'хватка в виражах'},
+  {key:'grt',label:'БРОНЯ',val:eff.grt,base:ch.grt,col:'#58ff6b',d:'запас корпуса пилота'},
+ ];
+ let y=HUB_TOP+52;
+ rows.forEach((rwRow,i)=>{
+  const sel=gymSel===i;
+  const cur=cs[rwRow.key],maxAdd=5-rwRow.base,maxed=cur>=maxAdd;
+  const cost=maxed?null:STAT_COSTS[Math.min(cur,STAT_COSTS.length-1)];
+  const can=!maxed&&save.cash>=cost;
+  drawGarageRow(rx,y,rw,rowH,sel,rwRow.col,'rgba(255,157,46,.14)',
+   rwRow.label,rwRow.d,maxed?'МАКС':'',maxed?'#58ff6b':'#ffd23f');
+  statPips(g,rx+168,y+14,rwRow.val,rwRow.col);
+  txt(g,rwRow.val+'/5',rx+268,y+19,11,'#8f88a0','left',F_B,false);
+  if(!maxed){
+   const bx=rx+rw-118,by=y+16,bw=100,bh=40;
+   drawHubPlus(bx,by,bw,bh,can,sel,fm(cost));
+   g._gymBtns.push({idx:i,x:bx,y:by,w:bw,h:bh});
+  }
+  g._gymBtns.push({idx:i,x:rx,y,w:rw,h:rowH});
+  y+=rowH+rowGap;
+ });
+ y+=6;
+ g.strokeStyle='rgba(255,255,255,.08)';g.beginPath();g.moveTo(rx,y);g.lineTo(rx+rw,y);g.stroke();
+ y+=14;
+ const selS=gymSel===3,skH=HUB_FOOT-(y+16);
+ drawGarageRow(rx,y,rw,skH,selS,'#b478ff','rgba(180,120,255,.16)',
+  SKILL_META[chI].n,SKILL_DESC(chI,lvl),lvl>=SKILL_MAX?'МАКС':'', '#58ff6b');
+ statPipsN(g,rx+22,y+50,lvl,SKILL_MAX,'#d4b0ff');
+ txt(g,'ур.'+lvl+'/'+SKILL_MAX,rx+22+SKILL_MAX*16+10,y+55,11,'#8f88a0','left',F_B,false);
+ if(lvl<SKILL_MAX){
+  const cost=SKILL_COSTS[lvl-1],can=save.cash>=cost;
+  const bx=rx+rw-118,by=y+16,bw=100,bh=40;
+  drawHubPlus(bx,by,bw,bh,can,selS,fm(cost));
+  g._gymBtns.push({idx:3,x:bx,y:by,w:bw,h:bh});
+ }
+ g._gymBtns.push({idx:3,x:rx,y,w:rw,h:skH});
+
+ txt(g,'↑ ↓  выбор   ·   ENTER / «+»  качать   ·   ESC  в гараж',W/2,H-28,13,'#6f6880','center',F_B);
+ drawHubToast();
 }
 function drawPreRace(){
  g.fillStyle='rgba(5,4,9,.92)';g.fillRect(0,0,W,H);
@@ -2182,7 +2611,7 @@ function drawResults(){
   txt(g,r.finished?fmtT(r.finishTime):'СНЯТ',W/2+120,y,18,'#c8c2d4','right',F_B);
   if(R.prize[i]>0)txt(g,'+$'+R.prize[i]+(i===3?' (утеш.)':''),W/2+330,y,20,i===0?'#ffd23f':'#58ff6b','right');
   else txt(g,'—',W/2+330,y,20,'#5a5468','right');});
- txt(g,'БАЛАНС: $'+save.cash,W/2,562,24,'#ffd23f','center');
+ txt(g,'БАЛАНС: '+fm(save.cash),W/2,562,24,'#ffd23f','center');
  if(R&&R.msg){const a=R.msg.t<.25?R.msg.t/.25:R.msg.t>2.9?clamp((3.4-R.msg.t)/.5,0,1):1;
   g.globalAlpha=a;
   const w=R.msg.big?640:520;
@@ -2369,12 +2798,24 @@ function press(c){
   }
   return;
  }
+ if(state==='gym'){
+  if(c==='Escape'){state='garage';sClick();return;}
+  if(c==='ArrowUp'){gymSel=(gymSel+3)%4;sClick();return;}
+  if(c==='ArrowDown'){gymSel=(gymSel+1)%4;sClick();return;}
+  if(c==='Enter'||c==='Space'){buyGym(gymSel);return;}
+  return;
+ }
  if(state==='help'){enterTitle();return;}
  if(state==='achievements'){enterTitle();return;}
  if(state==='char'){
+  if(bioOpen>=0){
+   if(c==='Enter'){selChar=bioOpen;save.char=bioOpen;persist();bioOpen=-1;state='car';sClick();}
+   else if(c==='Escape'){bioOpen=-1;sClick();}
+   return;
+  }
   if(c==='ArrowLeft'){selChar=(selChar+3)%4;sClick();}
   if(c==='ArrowRight'){selChar=(selChar+1)%4;sClick();}
-  if(c==='Enter'){save.char=selChar;persist();state='car';sClick();}
+  if(c==='Enter'||c==='KeyB'){bioOpen=selChar;sClick();}
   return;
  }
  if(state==='car'){
@@ -2393,8 +2834,8 @@ function press(c){
  if(state==='autopark'){
   if(c==='ArrowLeft'){autoparkSel=(autoparkSel+CARS.length-1)%CARS.length;sClick();}
   if(c==='ArrowRight'){autoparkSel=(autoparkSel+1)%CARS.length;sClick();}
-  if(c==='ArrowUp'){autoparkSel=(autoparkSel+CARS.length-2)%CARS.length;sClick();}
-  if(c==='ArrowDown'){autoparkSel=(autoparkSel+2)%CARS.length;sClick();}
+  if(c==='ArrowUp'){autoparkSel=(autoparkSel+CARS.length-3)%CARS.length;sClick();}
+  if(c==='ArrowDown'){autoparkSel=(autoparkSel+3)%CARS.length;sClick();}
   if(c==='Escape'){state='garage';sClick();}
   if(c==='Enter'||c==='Space'){
    if(carUnlocked(autoparkSel)){autodetailOpen=true;state='detail';sClick();}
@@ -2483,20 +2924,21 @@ function press(c){
    sClick();}
   return;}
  if(state==='garage'){
-  const rows=7;
+  const rows=8;
   if(c==='ArrowUp'){tuningSel=(tuningSel+rows-1)%rows;sClick();}
   if(c==='ArrowDown'){tuningSel=(tuningSel+1)%rows;sClick();}
   if(c==='KeyA'){state='autopark';sClick();}
-  if(c==='Space'||(c==='Enter'&&tuningSel===6)){state='prerace';sClick();}
+  if(c==='Space'||(c==='Enter'&&tuningSel===7)){state='prerace';sClick();}
   else if(c==='Enter'){
-   if(tuningSel===5){state='autopark';sClick();}
+   if(tuningSel===6){state='autopark';sClick();}
    else garageAction(0,tuningSel);
   }
   return;
  }}
 function garageAction(col,row){
- if(row===5){state='autopark';sClick();return;}
- if(row===6){state='prerace';sClick();return;}
+ if(row===6){state='autopark';sClick();return;}
+ if(row===7){state='prerace';sClick();return;}
+ if(row===5){gymSel=0;state='gym';sClick();return;}
  if(col===0){
   const tuningKeys=['arm','eng','tir','shk','nit'];
   const k=tuningKeys[row];
@@ -2507,7 +2949,7 @@ function garageAction(col,row){
    if(save.cash>=cost){
     save.cash-=cost;save.tuning[save.car][k]++;
     persist();sCash();garMsg='УСТАНОВЛЕНО: '+UP_INFO[k].n;garMsgT=2.2;
-   }else{garMsg='НЕ ХВАТАЕТ $'+(cost-save.cash);garMsgT=2.2;sHit();}
+   }else{garMsg='НЕ ХВАТАЕТ '+fm(cost-save.cash);garMsgT=2.2;sHit();}
   }
  }
 }
@@ -2525,6 +2967,29 @@ cv.addEventListener('mousedown',e=>{
  else if(state==='results')press('Enter');
  else if(state==='garage'&&!garagePaused&&g._gar){for(const b of g._gar)
   if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){tuningSel=b.row;garageAction(0,b.row);break;}}
+ else if(state==='char'){
+  if(bioOpen>=0){
+   if(g._statBtns)for(const b of g._statBtns){if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){upgradeCharStat(bioOpen,b.key);sClick();return;}}
+   if(g._bioActs)for(const b of g._bioActs){
+    if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){
+     if(b.act==='pick'){selChar=bioOpen;save.char=bioOpen;persist();bioOpen=-1;state='car';}
+     else bioOpen=-1;
+     sClick();return;
+    }
+   }
+   bioOpen=-1;sClick();return;
+  }
+  if(g._bioBtns)for(const b of g._bioBtns){if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){bioOpen=b.idx;sClick();return;}}
+ }
+ else if(state==='gym'&&g._gymBtns){for(const b of g._gymBtns){if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){gymSel=b.idx;buyGym(b.idx);sClick();return;}}}
+ else if(state==='autopark'&&g._park){
+  for(const b of g._park)if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){
+   autoparkSel=b.i;
+   if(carUnlocked(b.i)){autodetailOpen=true;state='detail';sClick();}
+   else sHit();
+   return;
+  }
+ }
  else if(state==='help')enterTitle();});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>{if(state==='race'||state==='garage'||state==='title')e.preventDefault();});
@@ -2558,9 +3023,10 @@ function frame(now){
  else if(state==='achievements')drawAchievements();
  else if(state==='slotSelect')drawSlotSelect();
  else if(state==='settings')drawSettings();
- else if(state==='char')drawCharSel();
+ else if(state==='char'){drawCharSel();if(bioOpen>=0)drawBio();}
  else if(state==='car')drawCarSel();
  else if(state==='garage')drawGarage();
+ else if(state==='gym')drawGym();
  else if(state==='autopark')drawAutopark();
  else if(state==='detail')drawCarDetail();
  else if(state==='prerace')drawPreRace();
