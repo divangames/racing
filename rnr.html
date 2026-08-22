@@ -1367,14 +1367,17 @@ function drawCar(c,r,sc){
   for(let x0=-12;x0<10;x0+=4){const xx=x0+off;c.beginPath();c.moveTo(xx,-wh/2);c.lineTo(xx,wh/2);c.stroke();}
   c.restore();c.restore();
  };
- const wheelSize=idx===0?[14,3]:idx===1?[12,4]:idx===2?[13,9]:[12,8];
+ // Вынос колёс; рисуются под кузовом
+ const L=idx===0?{xR:-15.5,xF:14.2,yR:11.4,yF:11.4,ww:12,wh:4,fs:1}:
+        idx===1?{xR:-15.5,xF:14.2,yR:12.0,yF:12.0,ww:12,wh:4,fs:1}:
+        idx===2?{xR:-16.5,xF:13.5,yR:12.4,yF:10.0,ww:13,wh:9,fs:.5}:
+        idx===5?{xR:-15.8,xF:14.6,yR:14,yF:11.6,ww:12,wh:8,fs:1}:
+                {xR:-14,xF:17,yR:14,yF:14,ww:12,wh:8,fs:1};
  const drawWheels=()=>{
-  wheel(-14,-14,0,wheelSize[0],wheelSize[1]);
-  wheel(-14, 14,0,wheelSize[0],wheelSize[1]);
-  // Шредер: передние в 1.5 раза меньше задних
-  const fw=idx===2?[13/1.5,9/1.5]:wheelSize;
-  wheel( 17,-14,r.wheelAngle,fw[0],fw[1]);
-  wheel( 17, 14,r.wheelAngle,fw[0],fw[1]);
+  wheel(L.xR,-L.yR,0,L.ww,L.wh);
+  wheel(L.xR, L.yR,0,L.ww,L.wh);
+  wheel(L.xF,-L.yF,r.wheelAngle,L.ww*L.fs,L.wh*L.fs);
+  wheel(L.xF, L.yF,r.wheelAngle,L.ww*L.fs,L.wh*L.fs);
  };
  const drawShredderSaws=()=>{
   const spin=gt*28;
@@ -1400,23 +1403,28 @@ function drawCar(c,r,sc){
    c.restore();
  };
   // Центры на передних колёсах кузова, чуть наружу, чтобы зубья выглядывали из-под крыльев
-  saw(12.4,-8.8,7.2,1);
-  saw(12.4, 8.8,7.2,-1);
+  saw(L.xF,-L.yF,7.2,1);
+  saw(L.xF, L.yF,7.2,-1);
  };
  const svgImg=CAR_SVG[idx];
- // колёса / ховер
- if(!r.car.hov){
-  if(!(svgImg&&svgImg.complete&&svgImg.naturalWidth>0))drawWheels();
+ if(!(svgImg&&svgImg.complete&&svgImg.naturalWidth>0)){
+  if(!r.car.hov)drawWheels();
+  else{
+   const pulse=0.12+0.05*Math.sin(gt*6);
+   c.fillStyle='rgba(53,224,255,'+pulse+')';
+   c.beginPath();c.ellipse(0,0,32,15,0,0,TAU);c.fill();
+  }
  }else{
-  // Подсветка ховера ровно под кузовом (без сдвига вбок)
-  c.fillStyle='rgba(53,224,255,'+(0.18+0.1*Math.sin(gt*10))+')';
-  c.beginPath();c.ellipse(0,0,26,11,0,0,TAU);c.fill();
- }
- if(svgImg&&svgImg.complete&&svgImg.naturalWidth>0){
   const iw=svgImg.naturalWidth,ih=svgImg.naturalHeight;
   const s=60/Math.max(iw,ih);
   c.save();c.rotate(CAR_SVG_ROT);
-  // Слои сверху вниз: корпус, эффекты (пилы), колёса
+  if(r.car.hov){
+   // Неон под кузовом, мягкий ореол (без additive — иначе пересвет)
+   const pulse=0.14+0.05*Math.sin(gt*6);
+   c.fillStyle='rgba(53,224,255,'+pulse+')';
+   c.beginPath();c.ellipse(-4,0,32,16,0,0,TAU);c.fill();
+  }
+  // Слои сверху вниз: корпус, пилы, колёса
   if(!r.car.hov)drawWheels();
   if(idx===2)drawShredderSaws();
   c.drawImage(svgImg,-iw*s/2,-ih*s/2,iw*s,ih*s);
