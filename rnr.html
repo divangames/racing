@@ -1577,8 +1577,18 @@ function updRace(dt){
   if(hit)R.shots.splice(i,1);}
  for(const m of R.mines){if(m.dead)continue;
   for(const r of R.racers){if(r.dead||r.air||r.finished||(r.car.idx===5&&r.cloak>0))continue;
-   if(r.chIdx===3&&Math.random()<skillVal(3,r.skillLvl)){if(r.isP)fl(r.x,r.y,'УКЛОН!','#7fb2ff');continue;}
-   if(Math.hypot(r.x-m.x,r.y-m.y)<32){m.dead=true;mineExplode(m,null);break;}}}
+   if(Math.hypot(r.x-m.x,r.y-m.y)>=32)continue;
+   // Минный иммунитет: один бросок на наезд, мина остаётся для остальных
+   if(r.chIdx===3){
+    if(!m.skip)m.skip=[];
+    if(m.skip.includes(r))continue;
+    if(Math.random()<skillVal(3,r.skillLvl)){
+     m.skip.push(r);
+     if(r.isP)fl(r.x,r.y,'УКЛОН!','#7fb2ff');
+     continue;
+    }
+   }
+   m.dead=true;mineExplode(m,null);break;}}
  if(R.spikes){
   for(let i=R.spikes.length-1;i>=0;i--){
    const sp=R.spikes[i];
