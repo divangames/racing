@@ -1131,7 +1131,16 @@ function buildRace(){
 }
 function restartRace(){if(!R||R.over)return;persist();buildRace();}
 function announce(txt,big){if(R)R.msg={txt,t:0,big:!!big};}
-function fl(x,y,txt,col){R.floats.push({x,y,txt,col,t:0});}
+function fl(x,y,txt,col){
+ if(!R||!R.floats)return;
+ // Один и тот же тост не чаще раза в секунду — иначе навык рисует ленту по трассе
+ if(txt==='УКЛОН!'){
+  if(R._dodgeFl!=null&&R.time-R._dodgeFl<1.2)return;
+  R._dodgeFl=R.time;
+ }
+ if(R.floats.length>18)R.floats.splice(0,R.floats.length-18);
+ R.floats.push({x,y,txt,col,t:0});
+}
 function spark(x,y,col,n,sp){const cnt=partN(n);for(let i=0;i<cnt;i++){const a=rnd(TAU),s=rnd(sp*.3,sp);R.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:rnd(.2,.5),col,sz:rnd(2,4)});}}
 function irnd4(){return(Math.random()*4)|0;}
 function boom(x,y,big){
@@ -1576,14 +1585,16 @@ function updRace(dt){
     hit=true;break;}}
   if(hit)R.shots.splice(i,1);}
  for(const m of R.mines){if(m.dead)continue;
-  for(const r of R.racers){if(r.dead||r.air||r.finished||(r.car.idx===5&&r.cloak>0))continue;
-   if(Math.hypot(r.x-m.x,r.y-m.y)>=32)continue;
-   // Минный иммунитет: один бросок на наезд, мина остаётся для остальных
+  for(const r of R.racers){
+   if(r.dead||r.air||r.finished||(r.car.idx===5&&r.cloak>0))continue;
+   const dx=r.x-m.x,dy=r.y-m.y;
+   if(!(dx*dx+dy*dy<32*32))continue;
+   // Башкир: один бросок на мину (ключ — индекс на сплайне), без повторного текста
    if(r.chIdx===3){
-    if(!m.skip)m.skip=[];
-    if(m.skip.includes(r))continue;
+    if(!r.mineSeen)r.mineSeen=new Set();
+    if(r.mineSeen.has(m.i))continue;
+    r.mineSeen.add(m.i);
     if(Math.random()<skillVal(3,r.skillLvl)){
-     m.skip.push(r);
      if(r.isP)fl(r.x,r.y,'УКЛОН!','#7fb2ff');
      continue;
     }
