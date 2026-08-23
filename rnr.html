@@ -246,6 +246,140 @@ const AVATARS=CHARS.map((_,i)=>{
  img.src='assets/image/avatars/'+String(i+1).padStart(2,'0')+'_Player.png';
  return img;
 });
+////////////////////////////////////////////////////////
+//
+// Интро-комиксы гонщиков: кадры грузятся один раз
+// Сначала 01.webp…, иначе 1.png…
+//
+////////////////////////////////////////////////////////
+/** Подгрузка кадров папки комикса. */
+function loadIntroImgs(folder,count){
+ const base='assets/image/comics/'+folder+'/';
+ return Array.from({length:count},(_,i)=>{
+  const n=i+1,img=new Image();
+  img.onerror=()=>{
+   if(img.dataset.fb)return;
+   img.dataset.fb='1';
+   img.src=base+n+'.png';
+  };
+  img.src=base+String(n).padStart(2,'0')+'.webp';
+  return img;
+ });
+}
+const CHAR_INTROS=[
+ {
+  name:'МЕДВЕДЬ',col:'#ffd23f',
+  music:'https://ikrinka24.com/ROCK/music/intro/01.mp3',
+  imgs:loadIntroImgs('Bear',7),
+  scenes:[
+   {img:0,text:'Нам сказали: «Обычная операция, Медведь. Зайди, зачисти и возвращайся». Когда военные говорят «обычная», это обычно значит: горит всё, кроме твоей задницы.'},
+   {img:1,text:'Потом приказ изменили. Наш маршрут заменили на координаты настоящей мясорубки. Но моя машина решила, что командование — идиоты, и вытащила меня оттуда. Умная железка. Жаль, что не могла ещё и рапорт за меня написать.'},
+   {img:2,text:'После войны я собрал её заново. Снял с неё всё лишнее, поставил броню, пушки и характер похуже моего. Механики спрашивали, зачем машине столько оружия. Я отвечал: «Чтобы переговоры были короткими».'},
+   {img:3,text:'Я нашёл фотографии всех, кто погиб в той операции. И рядом — подписи тех, кто нас туда отправил. Они получили медали, повышение и чистые кабинеты. Мы получили дырки в броне и место на стене. Очень честная система, мать её.'},
+   {img:4,text:'Потом пришло приглашение. Без имени, без адреса, зато с обещанием большого приза и доступа к закрытому серверу. Вежливые люди даже написали: «Участие добровольное». Конечно добровольное. Как смерть от пули — тоже, если очень быстро бежать.'},
+   {img:5,text:'Я приехал к арене и увидел тот же знак, что был на наших военных документах. Ворота открылись, вокруг ревели боевые машины, а ведущий обещал зрителям «честную гонку». Я чуть не рассмеялся. Честной здесь была только цена патронов.'},
+   {img:6,text:'Мне не нужен их приз. Я заберу его, если понадобится, но это будет приятным бонусом. Мне нужен доступ к серверу — к приказам, маршрутам и именам тех ублюдков, которые подписали наш приговор. А потом мы с моей машиной заедем к ним в гости. Без тормозов и предварительной записи.'}
+  ]
+ },
+ {
+  name:'ЕРШ',col:'#9dff4a',
+  music:'https://ikrinka24.com/ROCK/music/intro/02.mp3',
+  imgs:loadIntroImgs('Ersh',6),
+  scenes:[
+   {img:0,text:'Я был курьером. Возил чужие посылки, чужие секреты и чужие проблемы — за деньги, которых всегда не хватало. Сильным меня не назовёшь. Зато я был быстрым, злым и достаточно тупым, чтобы снова соглашаться на опасную работу.'},
+   {img:1,text:'Однажды мне дали обычную доставку: забрать чёрный контейнер и не задавать вопросов. Я, конечно, задал. Внутри лежал список участников смертельной гонки и расчёты, кому из них позволят дожить до финиша. Честный спорт, мать его.'},
+   {img:2,text:'Я скопировал данные — и через десять минут за мной уже гнались люди, которые очень не любят чужое любопытство. Тогда я понял простую вещь: броня нужна тем, кто собирается получить пулю. А я собирался сделать так, чтобы пуля до меня просто не успела доехать.'},
+   {img:3,text:'Я снял с машины всё, что могло замедлить её: броню, двери, здравый смысл и почти всю надежду на нормальную жизнь. Получился зелёный кусок бешенства. Выглядел он как мусорный бак после войны, зато разгонялся так, что у преследователей начиналась паническая депрессия.'},
+   {img:4,text:'Потом мне прислали приглашение. Обещали деньги, новый паспорт и списание всех долгов. Очень щедро. Особенно если учесть, что долги мне оставили те же ублюдки, которые теперь приглашали меня на убой.'},
+   {img:4,text:'Я приехал на старт и увидел машины размером с дом, пушки, шипы и толпу психопатов в броне. Они готовились пережить конец света. Я приехал на машине, которую держали вместе болты, мат и чистая наглость.'},
+   {img:5,text:'Я вошёл в гонку не ради приза. Приз пусть заберут себе — купят на него ещё пару дорогих костюмов и совесть, если найдут. Мне нужен доступ к серверу. Там лежат имена тех, кто подделал документы, заказал мою смерть и решил, что мелкого курьера можно просто стереть.'},
+   {img:5,text:'Я не собираюсь мстить красиво. Красиво мстят в кино. Я просто выиграю гонку, скачаю их чёртов архив и оставлю им один вопрос: кто, сука, теперь будет от меня убегать?'}
+  ]
+ },
+ {
+  name:'БЕГЕМОТИК',col:'#ff5db1',
+  music:'https://ikrinka24.com/ROCK/music/intro/03.mp3',
+  imgs:loadIntroImgs('Begemotik',6),
+  scenes:[
+   {img:0,text:'Я всегда смеялась, когда всё шло по пизде. Не потому что весело — просто страх охуевал от такой реакции и не успевал меня догнать.'},
+   {img:1,text:'Командир орал: «Не возвращаться!» А я послала его приказ нахуй и развернулась обратно. Если человек остался в огне — это не “потери”, это тот, кого ты обязан вытащить.'},
+   {img:2,text:'Я вернулась за ним, пробилась через ебаный ад и нашла только его жетон. С тех пор он висит у меня на шее и напоминает: иногда ты спасаешь человека, а иногда спасаешь только доказательство того, что его убили.'},
+   {img:3,text:'После этого я стала улыбаться на каждом пит-стопе. Механики думали, что я безбашенная. Да нет, ребята — я просто уже видела настоящий пиздец, и ваши сломанные тормоза меня не впечатляют.'},
+   {img:4,text:'Потом пришло приглашение на эту гонку. На конверте был тот же символ, что стоял на приказе, из-за которого он сгорел. Я сначала хотела сжечь бумагу. Потом подумала: нахуй бумагу — сожгу лучше тех, кто её прислал.'},
+   {img:5,text:'Я приехала не за кубком и не за деньгами. Я приехала вырвать из них правду, разнести к чертям их ебаный архив и показать всем, кто на самом деле отправил нас в эту бойню. А если по дороге кто-то не успеет затормозить — это уже не моя проблема.'}
+  ]
+ }
+];
+/** Сцены текущего интро. */
+function introScenes(){
+ const p=CHAR_INTROS[introChar];
+ return (p&&p.scenes)||[];
+}
+/** Обрезка чёрных полей, которые зашиты в кадры комикса. */
+function introCrop(img){
+ if(img._crop)return img._crop;
+ const w=img.naturalWidth,h=img.naturalHeight;
+ if(!w||!h)return{sx:0,sy:0,sw:1,sh:1};
+ const full={sx:0,sy:0,sw:w,sh:h};
+ const tc=document.createElement('canvas');
+ tc.width=w;tc.height=h;
+ const tg=tc.getContext('2d',{willReadFrequently:true});
+ if(!tg){img._crop=full;return full;}
+ tg.drawImage(img,0,0);
+ let data;
+ try{data=tg.getImageData(0,0,w,h).data;}catch(e){img._crop=full;return full;}
+ const isBar=(px)=>{
+  const r=data[px],gch=data[px+1],b=data[px+2],a=data[px+3];
+  return a<8||(r<8&&gch<8&&b<10);
+ };
+ let x0=0,x1=w-1,y0=0,y1=h-1;
+ scanL:for(;x0<w;x0++){for(let y=0;y<h;y++)if(!isBar((y*w+x0)<<2))break scanL;}
+ scanR:for(;x1>x0;x1--){for(let y=0;y<h;y++)if(!isBar((y*w+x1)<<2))break scanR;}
+ scanT:for(;y0<h;y0++){for(let x=x0;x<=x1;x++)if(!isBar((y0*w+x)<<2))break scanT;}
+ scanB:for(;y1>y0;y1--){for(let x=x0;x<=x1;x++)if(!isBar((y1*w+x)<<2))break scanB;}
+ const sw=x1-x0+1,sh=y1-y0+1;
+ img._crop=(sw<w*0.35||sh<h*0.35)?full:{sx:x0,sy:y0,sw:sw,sh:sh};
+ return img._crop;
+}
+let introChar=0,introFrame=0,introCur=0,introPrintT=0,introAudio=null,introAudioSrc='',introDone=false;
+const introReduceMotion=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** Сброс печатной машинки на текущий кадр. */
+function resetIntroType(){
+ const sc=introScenes()[introFrame];
+ introCur=introReduceMotion?(sc&&sc.text.length)||0:0;
+ introPrintT=0;
+}
+/** Запуск комикса выбранного гонщика. */
+function startIntro(charIdx){
+ introChar=charIdx;
+ const pack=CHAR_INTROS[introChar];
+ if(!pack){enterCarSel(0);return;}
+ introFrame=0;introDone=false;resetIntroType();
+ state='intro';
+ if(!introAudio||introAudioSrc!==pack.music){
+  if(introAudio){try{introAudio.pause();}catch(e){}}
+  introAudio=new Audio(pack.music);
+  introAudioSrc=pack.music;
+ }
+ introAudio.loop=true;
+ introAudio.volume=(settings.sound.music||50)/100;
+ introAudio.currentTime=0;
+ if(settings.sound.musicOn!==false)introAudio.play().catch(()=>{});
+ MUSIC.stop();CHIP.stop();
+}
+/** Выход из интро: в выбор машины или на титул. */
+function endIntro(goCar){
+ if(introAudio){try{introAudio.pause();introAudio.currentTime=0;}catch(e){}}
+ lastMusicCat=null;
+ if(goCar)enterCarSel(0);
+ else enterTitle();
+}
+/** Подтверждение гонщика из досье: если есть комикс — сначала он. */
+function confirmCharPick(idx){
+ selChar=idx;save.char=idx;persist();bioOpen=-1;
+ if(CHAR_INTROS[idx])startIntro(idx);
+ else enterCarSel(0);
+}
 const CARS=[
  {name:'«ГРЯЗЕВОЙ ДЬЯВОЛ»',price:0,top:1,acc:1,crn:1,hp:110,col:'#d24a22',col2:'#7e2a12',hov:false,
   traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
@@ -562,6 +696,15 @@ function applyAudioSettings(){
  const mv=(settings.sound.music/100)*.42;
  if(AU.music)AU.music.gain.value=mv;
  MUSIC.setVolume(settings.sound.music/100);
+ if(introAudio)introAudio.volume=(settings.sound.music||50)/100;
+ if(state==='intro'){
+  MUSIC.stop();CHIP.stop();
+  if(introAudio){
+   if(settings.sound.musicOn)introAudio.play().catch(()=>{});
+   else{try{introAudio.pause();}catch(e){}}
+  }
+  return;
+ }
  if(settings.sound.musicOn)MUSIC.resume();else MUSIC.stop();
 }
 function partN(n){
@@ -654,20 +797,21 @@ const CHIP={
 };
 ////////////////////////////////////////////////////////
 //
-// Плеер: случайный трек из music.js; чип — если MP3 не стартовал
+// Плеер: треки главного экрана и выбора машины по очереди, остальные — случайно;
+// чип — если MP3 не стартовал
 //
 ////////////////////////////////////////////////////////
 function musicOn(){
  return !!(settings&&settings.sound&&settings.sound.musicOn);
 }
 const MUSIC={
- el:null,cur:null,curCat:null,playedCount:0,
+ el:null,cur:null,curCat:null,playedCount:0,mainIndex:0,
  list(cat){return (window.MUSIC_TRACKS&&MUSIC_TRACKS[cat])||[];},
  play(cat){
   console.log('play()',cat,'curCat',this.curCat);
   if(!musicOn()){this.stop();return;}
   const list=this.list(cat);
-  if(this.curCat!==cat)this.cur=null;
+  if(this.curCat!==cat){this.cur=null;if(cat==='main'||cat==='change')this.mainIndex=0;}
   this.curCat=cat;
   if(!list.length){this.stopEl();CHIP.start(cat);return;}
   CHIP.stop();
@@ -679,7 +823,9 @@ const MUSIC={
   if(!list.length){CHIP.start(this.curCat);return;}
 
   this.playedCount++;
-  let idx=(Math.random()*list.length)|0;
+  let idx=(this.curCat==='main'||this.curCat==='change')
+   ? (this.mainIndex++%list.length)
+   : (Math.random()*list.length)|0;
   let pick=list[idx];
   if(list.length>1&&pick===this.cur){
    idx=(Math.random()*list.length)|0;
@@ -719,7 +865,10 @@ const MUSIC={
  },
  setVolume(v){if(this.el)this.el.volume=v;}
 };
-function musicCat(){if(state==='race'||state==='results')return'racing';
+function musicCat(){
+ if(state==='intro')return'main';
+ if(state==='car')return'change';
+ if(state==='race'||state==='results')return'racing';
  if(state==='garage'||state==='autopark'||state==='detail'||state==='prerace'||state==='gym')return'garage';
  return'main';}
 let lastMusicCat=null;
@@ -843,6 +992,7 @@ function prerender(T){
 }
 let state='title',paused=false,P=null,R=null,gt=0;
 let selTitle=0,selChar=0,selCar=0,carConfirmed=false,bioOpen=-1;
+let carSelScroll=0,carSelDriveT=0,carSelWheelT=0;
 let G={col:0,row:0};
 let resetArm=false;
 let pauseMenuIndex=0,garagePaused=false,garagePauseIndex=0,settingsReturn='title',slotReturn='title';
@@ -1521,6 +1671,30 @@ function drawCar(c,r,sc){
   saw(L.xF, L.yF,7.2,-1);
  };
  const svgImg=CAR_SVG[idx];
+ const drawNitro=()=>{
+  if(!(r.nitro>0))return;
+  // Струя из одной трубы: основание у кузова, язык назад
+  const jet=(x,y,len,half)=>{
+   const flick=len+Math.random()*len*.35;
+   c.fillStyle='#35e0ff';
+   c.beginPath();c.moveTo(x,y-half);c.lineTo(x-flick,y);c.lineTo(x,y+half);c.closePath();c.fill();
+   c.fillStyle='#fff';
+   c.beginPath();c.moveTo(x,y-half*.4);c.lineTo(x-flick*.55,y);c.lineTo(x,y+half*.4);c.closePath();c.fill();
+  };
+  if(idx===0){ // Грязевой дьявол: 4 малых трубы, как Camaro
+   for(const y of[-6.4,-3.2,3.2,6.4])jet(-26,y,8,1.35);
+  }else if(idx===1){ // V8: 2 малых трубы
+   jet(-25,-7.8,9,1.55);jet(-25,7.8,9,1.55);
+  }else if(idx===2){ // Шредер: 2 струи в видимых раструбах
+   jet(-26.4,-8.0,10,1.9);jet(-26.4,8.0,10,1.9);
+  }else if(idx===4){ // Чёрный молот: 2 малых трубы
+   jet(-24,-6.6,9,1.55);jet(-24,6.6,9,1.55);
+  }else if(idx===5){ // Фантом: 2 широких сопла
+   jet(-27,-7.2,14,3.3);jet(-27,7.2,14,3.3);
+  }else{ // ховер и прочие: две узкие струи
+   jet(-26,-5.2,9,1.5);jet(-26,5.2,9,1.5);
+  }
+ };
  if(!(svgImg&&svgImg.complete&&svgImg.naturalWidth>0)){
   if(!r.car.hov)drawWheels();
   else{
@@ -1528,6 +1702,7 @@ function drawCar(c,r,sc){
    c.fillStyle='rgba(53,224,255,'+pulse+')';
    c.beginPath();c.ellipse(0,0,32,15,0,0,TAU);c.fill();
   }
+  drawNitro();
  }else{
   const iw=svgImg.naturalWidth,ih=svgImg.naturalHeight;
   const s=60/Math.max(iw,ih);
@@ -1538,17 +1713,12 @@ function drawCar(c,r,sc){
    c.fillStyle='rgba(53,224,255,'+pulse+')';
    c.beginPath();c.ellipse(-4,0,32,16,0,0,TAU);c.fill();
   }
-  // Слои сверху вниз: корпус, пилы, колёса
+  // Слои сверху вниз: корпус, пилы, колёса/ускорение
   if(!r.car.hov)drawWheels();
+  drawNitro();
   if(idx===2)drawShredderSaws();
   c.drawImage(svgImg,-iw*s/2,-ih*s/2,iw*s,ih*s);
   c.restore();
-  if(r.nitro>0){
-   c.fillStyle='#35e0ff';
-   c.beginPath();c.moveTo(-24,-5);c.lineTo(-24-(12+Math.random()*10),0);c.lineTo(-24,5);c.closePath();c.fill();
-   c.fillStyle='#fff';
-   c.beginPath();c.moveTo(-24,-2);c.lineTo(-24-(6+Math.random()*5),0);c.lineTo(-24,2);c.closePath();c.fill();
-  }
   c.restore();
   return;
  }
@@ -1642,13 +1812,6 @@ function drawCar(c,r,sc){
   c.strokeStyle='rgba(180,120,255,.8)';c.lineWidth=1;
   c.beginPath();c.moveTo(20,-8);c.lineTo(28,-2);c.moveTo(20,8);c.lineTo(28,2);c.stroke();
   c.fillStyle='#ffe9a0';c.fillRect(24,-2,2,4);
- }
- // нитро-пламя
- if(r.nitro>0){
-  c.fillStyle='#35e0ff';
-  c.beginPath();c.moveTo(-24,-5);c.lineTo(-24-(12+Math.random()*10),0);c.lineTo(-24,5);c.closePath();c.fill();
-  c.fillStyle='#fff';
-  c.beginPath();c.moveTo(-24,-2);c.lineTo(-24-(6+Math.random()*5),0);c.lineTo(-24,2);c.closePath();c.fill();
  }
  c.restore();}
 function drawFinishZone(c,p0){
@@ -2504,29 +2667,246 @@ function drawBio(){
  txt(g,'ЗАКРЫТЬ [ESC]',bx2+bw/2,by+bh/2,15,hot2?'#ff9d2e':'#9a93a8','center',F_B);
  g._bioActs.push({x:bx2,y:by,w:bw,h:bh,act:'close'});
 }
+////////////////////////////////////////////////////////
+//
+// Комикс-интро Медведя: кадр сверху, печать текста снизу
+//
+////////////////////////////////////////////////////////
+function drawIntro(){
+ const pack=CHAR_INTROS[introChar];
+ const scenes=introScenes();
+ const sc=scenes[introFrame];
+ if(!pack||!sc)return;
+ g.setTransform(1,0,0,1,0,0);
+ const IW=cv.width,IH=cv.height;
+ const s=Math.min(IW/1280,IH/720);
+ const pad=Math.max(16,Math.round(22*s));
+ const img=pack.imgs[sc.img];
+ const accent=pack.col||'#ffd23f';
+ g.fillStyle='#050409';g.fillRect(0,0,IW,IH);
+ const panelH=Math.round(IH*0.64);
+ if(img&&img.complete&&img.naturalWidth>0){
+  const crop=introCrop(img);
+  g.save();
+  g.beginPath();g.rect(0,0,IW,panelH);g.clip();
+  const cover=Math.max(IW/crop.sw,panelH/crop.sh);
+  g.drawImage(img,crop.sx,crop.sy,crop.sw,crop.sh,(IW-crop.sw*cover)/2,(panelH-crop.sh*cover)/2,crop.sw*cover,crop.sh*cover);
+  g.fillStyle='rgba(5,4,9,.78)';g.fillRect(0,0,IW,panelH);
+  const fit=Math.min(IW/crop.sw,panelH/crop.sh);
+  g.drawImage(img,crop.sx,crop.sy,crop.sw,crop.sh,(IW-crop.sw*fit)/2,(panelH-crop.sh*fit)/2,crop.sw*fit,crop.sh*fit);
+  if(!introReduceMotion){
+   const step=Math.max(3,Math.round(3*s));
+   g.fillStyle='rgba(0,0,0,.08)';
+   for(let yy=0;yy<panelH;yy+=step)g.fillRect(0,yy,IW,1);
+  }
+  g.restore();
+ }else{
+  g.fillStyle='#181420';g.fillRect(0,0,IW,panelH);
+  txt(g,'[КАДР '+(introFrame+1)+']',IW/2,panelH/2,Math.round(22*s),'#6f6880','center');
+ }
+ g.fillStyle=accent;g.fillRect(0,panelH,IW,Math.max(2,Math.round(2*s)));
+ const boxY=panelH;
+ g.fillStyle='#0c0a14';g.fillRect(0,boxY,IW,IH-panelH);
+ g.strokeStyle=accent;g.globalAlpha=.22;g.lineWidth=1;
+ g.beginPath();g.moveTo(pad,boxY+1);g.lineTo(IW-pad,boxY+1);g.stroke();g.globalAlpha=1;
+ const headY=boxY+Math.round(28*s);
+ txt(g,'ГЛАВА '+(introFrame+1)+' / '+scenes.length,pad,headY,Math.round(12*s),'#6f6880','left',F_B);
+ txt(g,pack.name,IW-pad,headY,Math.round(14*s),accent,'right',F_B);
+ const shown=sc.text.substring(0,introCur);
+ const cursor=introCur<sc.text.length&&Math.floor(gt*4)%2===0?'▌':'';
+ const fs=Math.round(18*s);
+ const wrapW=Math.min(Math.round(IW*0.78),Math.round(980*s));
+ const lines=layoutLines(g,shown+cursor,wrapW,fs,F_B);
+ const lineH=Math.round(26*s);
+ const textTop=boxY+Math.round(58*s);
+ lines.forEach((ln,i)=>txt(g,ln,IW/2,textTop+i*lineH,fs,'#f2eef8','center',F_B));
+ const hintY=IH-Math.round(22*s);
+ const allPrinted=introCur>=sc.text.length;
+ txt(g,allPrinted?'ENTER — ДАЛЬШЕ  ·  ESC — ПРОПУСТИТЬ ИНТРО':'ENTER — УСКОРИТЬ  ·  ESC — ПРОПУСТИТЬ ИНТРО',IW/2,hintY,Math.round(13*s),'#6f6880','center',F_B);
+ const n=scenes.length,gap=Math.round(16*s),r=Math.max(3,Math.round(3.5*s));
+ const dotsX=IW/2-(n*gap)/2;
+ const dotsY=boxY+Math.round(28*s);
+ for(let i=0;i<n;i++){
+  g.fillStyle=i<introFrame?accent:(i===introFrame?'#ff9d2e':'#3a3548');
+  g.beginPath();g.arc(dotsX+i*gap+gap/2,dotsY,r,0,TAU);g.fill();
+ }
+}
+////////////////////////////////////////////////////////
+//
+// Превью: машина едет по полосе (гараж / выбор)
+//
+////////////////////////////////////////////////////////
+function carPreviewAnim(){
+ const drive=!introReduceMotion;
+ return{
+  drive,
+  wr:drive?gt*42:0,
+  wa:drive?Math.sin(gt*2.6)*0.16:0,
+  bob:drive?Math.sin(gt*14)*1.4:0
+ };
+}
+/** Машина в боксе превью: дорога и вращение колёс. scaleK — множитель к высоте бокса. */
+function drawDrivingCarPreview(c,cx,cy,boxW,boxH,car,ch,scaleK){
+ const a=carPreviewAnim();
+ c.save();
+ c.translate(cx,cy+a.bob);
+ drawPreviewRoad(boxW,boxH,a.drive,0);
+ const sc=(boxH/52)*(scaleK||1);
+ c.scale(sc,sc);
+ drawCar(c,{x:0,y:0,ang:0,car,ch,nitro:0,wheelRot:a.wr,wheelAngle:a.wa},1);
+ c.restore();
+}
+function drawPreviewRoad(boxW,boxH,moving,burst){
+ const hw=boxW/2,hh=boxH/2;
+ g.fillStyle='#b98a4e';g.fillRect(-hw,-hh,boxW,boxH);
+ g.fillStyle='#9a6f3a';
+ for(let i=0;i<18;i++)g.fillRect(-hw+(i*47)%boxW,-hh+(i*31)%boxH,5,4);
+ const half=boxH*0.48;
+ g.fillStyle='#d9c49a';g.fillRect(-hw,-half-10,boxW,half*2+20);
+ g.fillStyle='#43404b';g.fillRect(-hw,-half,boxW,half*2);
+ g.fillStyle='#2c2a33';
+ g.fillRect(-hw,-half,boxW,7);g.fillRect(-hw,half-7,boxW,7);
+ g.fillStyle='#c8b896';
+ g.fillRect(-hw,-half+10,boxW,3);g.fillRect(-hw,half-13,boxW,3);
+ const period=58,dash=30;
+ const v=moving?520+(burst||0)*280:0;
+ const shift=v?-((gt*v)%period):0;
+ g.fillStyle='#ffd23f';
+ for(let x=-hw-period+shift;x<hw;x+=period)g.fillRect(x,-5,dash,10);
+}
+/** Подпись статуса машины на карточке. */
+function carSelStatus(i,owned){
+ if(i===0)return{t:'БАЗОВАЯ',col:'#58ff6b'};
+ if(owned)return{t:save.car===i?'ТЕКУЩАЯ':'В ПАРКЕ',col:'#58ff6b'};
+ const car=CARS[i];
+ return{t:'$'+car.price,col:save.cash>=car.price?'#ffd23f':'#ff3d2e'};
+}
+////////////////////////////////////////////////////////
+//
+// Выбор машины: горизонтальная карусель
+// Крупное превью по центру, соседи выглядывают, выбранная едет
+//
+////////////////////////////////////////////////////////
+/** Открыть экран выбора машины с каруселью на указанном индексе. */
+function enterCarSel(idx){
+ state='car';carConfirmed=false;selCar=idx||0;carSelScroll=selCar;carSelDriveT=gt;
+}
+/** Кратчайший сдвиг по кольцу карусели (чтобы 5→0 не мотало через все карты). */
+function carSelWrapDelta(from,to,n){
+ let d=to-from;
+ d=((d%n)+n)%n;
+ if(d>n/2)d-=n;
+ return d;
+}
+/** Фокус карусели: индекс машины, сброс подтверждения, старт анимации езды. */
+function pickCarSel(i){
+ const n=CARS.length;
+ const next=((i%n)+n)%n;
+ if(next===selCar)return;
+ selCar=next;carConfirmed=false;carSelDriveT=gt;sClick();
+}
 function drawCarSel(){
- g.fillStyle='#12101a';g.fillRect(0,0,W,H);
- txt(g,'ВЫБЕРИ МАШИНУ',W/2,50,42,'#ffd23f','center');
- txt(g,'ДЕНЬГИ: $'+save.cash,W/2,88,20,'#ffd23f','center');
- const cw=296,gap=16,x0=(W-4*cw-3*gap)/2;
- CARS.forEach((car,i)=>{
-  const x=x0+i*(cw+gap),sel=i===selCar,y=sel?118:130,h=sel?470:450;
+ const n=CARS.length;
+ carSelScroll+=carSelWrapDelta(carSelScroll,selCar,n)*0.18;
+ carSelScroll=((carSelScroll%n)+n)%n;
+ const reduce=introReduceMotion;
+ drawHubBackdrop('rgba(53,224,255,.04)');
+ drawHubHeader('ВЫБЕРИ МАШИНУ','← →  листать   ·   все машины в ленте','#ffd23f');
+ g._carSel=[];
+ const stageY=HUB_TOP,stageH=HUB_FOOT-HUB_TOP,pitch=410;
+ const cardH=stageH;
+ g.save();
+ g.beginPath();g.rect(24,stageY-4,W-48,stageH+8);g.clip();
+ const items=[];
+ for(let i=0;i<n;i++){
+  const d=carSelWrapDelta(carSelScroll,i,n);
+  if(Math.abs(d)>1.65)continue;
+  items.push({i,d});
+ }
+ items.sort((a,b)=>Math.abs(b.d)-Math.abs(a.d));
+ const ch=save?CHARS[save.char]:CHARS[0];
+ items.forEach(({i,d})=>{
+  const car=CARS[i];
+  const focus=clamp(1-Math.abs(d),0,1);
+  const f2=focus*focus;
+  const sel=i===selCar;
+  const cw=268+172*f2;
+  const x=W/2+d*pitch-cw/2;
+  const y=stageY;
   const owned=i===0||(save.carOwned&&save.carOwned[i]);
-  panel(g,x,y,cw,h,sel?'rgba(53,224,255,.1)':'rgba(20,17,28,.9)',sel?'#35e0ff':'#3a3548');
-  txt(g,car.name,x+cw/2,y+28,18,car.col,'center');
-  g.save();g.translate(x+cw/2,y+100);g.scale(2.2,2.2);
-  drawCar(g,{x:0,y:0,ang:-.5,car,ch:CHARS[0],nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
-  const bars=[['МАКС',car.top,1.3,'#ff6b4a'],['РАЗГОН',car.acc,1.25,'#ffd23f'],['РУЛЬ',car.crn,1.35,'#35e0ff'],['КОРПУС',car.hp/130,1,'#58ff6b']];
-  bars.forEach((b,bi)=>{txt(g,b[0],x+20,y+170+bi*24,12,'#9a93a8','left',F_B);
-   const v=clamp((b[1]-0.9)/(b[2]-0.9),0,1)*5;statPips(g,x+96,y+165+bi*24,Math.round(v),b[3]);});
-  car.traits.forEach((tr,ti)=>{txt(g,'• '+tr,x+20,y+278+ti*22,10,'#9a93a8','left',F_B);});
-  const py=y+h-26;
-  if(i===0)txt(g,'БАЗОВАЯ',x+cw/2,py,18,'#58ff6b','center');
-  else if(owned)txt(g,'В СОБСТВЕННОСТИ'+(save.car===i?' • ТЕКУЩАЯ':''),x+cw/2,py,14,'#58ff6b','center');
-  else{
-   txt(g,'$'+car.price,x+cw/2,py-10,20,save.cash>=car.price?'#ffd23f':'#ff3d2e','center');
-   if(save.cash<car.price)txt(g,'не хватает $'+(car.price-save.cash),x+cw/2,py+10,11,'#ff3d2e','center',F_B);}});
- txt(g,carConfirmed?'ENTER — НА СТАРТ!':'← → — выбор • ENTER — купить/выбрать • ESC — назад',W/2,H-20,16,carConfirmed?'#58ff6b':'#6f6880','center',F_B);
+  const stroke=sel?'#35e0ff':(Math.abs(d)<0.55?'#5a5468':'rgba(255,255,255,.08)');
+  drawHubCard(x,y,cw,cardH,stroke);
+  if(sel){
+   g.fillStyle='rgba(53,224,255,.06)';g.fillRect(x+2,y+2,cw-4,48);
+  }
+  g._carSel.push({x,y,w:cw,h:cardH,i});
+  txt(g,car.name,x+cw/2,y+28,sel?18:14,car.col,'center');
+  const artX=x+16,artY=y+48,artW=cw-32,artH=sel?268:168;
+  rr(g,artX,artY,artW,artH,10);g.fillStyle='#1a1510';g.fill();
+  const drive=sel&&!reduce;
+  const burst=drive?Math.max(0,1.05-(gt-carSelDriveT)):0;
+  const a=carPreviewAnim();
+  const wr=drive?a.wr+burst*22*gt:0;
+  const wa=drive?a.wa:0;
+  const bob=drive?a.bob:0;
+  g.save();
+  rr(g,artX,artY,artW,artH,10);g.clip();
+  g.translate(artX+artW/2,artY+artH/2+bob);
+  drawPreviewRoad(artW,artH,drive,burst);
+  const sc=artH/52;
+  g.scale(sc,sc);
+  drawCar(g,{x:0,y:0,ang:0,car,ch,nitro:drive&&burst>0.4?0.5:0,wheelRot:wr,wheelAngle:wa},1);
+  g.restore();
+  if(!sel){
+   g.fillStyle='rgba(8,7,12,.42)';
+   rr(g,artX,artY,artW,artH,10);g.fill();
+  }else{
+   g.strokeStyle='rgba(53,224,255,.4)';g.lineWidth=1.5;
+   rr(g,artX,artY,artW,artH,10);g.stroke();
+  }
+  if(sel){
+   const by=artY+artH+28;
+   const bars=[['МАКС',car.top,1.3,'#ff6b4a'],['РАЗГОН',car.acc,1.25,'#ffd23f'],['РУЛЬ',car.crn,1.35,'#35e0ff'],['КОРПУС',car.hp/130,1,'#58ff6b']];
+   bars.forEach((b,bi)=>{
+    const ly=by+bi*22;
+    txt(g,b[0],x+22,ly,12,'#9a93a8','left',F_B);
+    const v=clamp((b[1]-0.9)/(b[2]-0.9),0,1)*5;
+    statPips(g,x+108,ly-5,Math.max(1,Math.round(v)),b[3]);
+   });
+   let tx=x+22,ty=by+100;
+   car.traits.forEach(tr=>{
+    const tag=(tr.split(':')[0]||tr).trim();
+    g.font='12px '+F_B;
+    const tw=Math.ceil(g.measureText(tag).width)+16;
+    if(tx+tw>x+cw-16){tx=x+22;ty+=28;}
+    if(ty>y+cardH-56)return;
+    rr(g,tx,ty-11,tw,22,6);g.fillStyle='rgba(255,210,63,.1)';g.fill();
+    txt(g,tag,tx+8,ty,12,'#d8c89a','left',F_B,false);
+    tx+=tw+8;
+   });
+  }
+  const st=carSelStatus(i,owned);
+  txt(g,st.t,x+cw/2,y+cardH-22,sel?16:13,st.col,'center');
+  if(sel&&!owned&&save.cash<CARS[i].price)
+   txt(g,'не хватает $'+(CARS[i].price-save.cash),x+cw/2,y+cardH-42,11,'#ff3d2e','center',F_B);
+ });
+ g.restore();
+ const pulse=0.6+0.4*Math.sin(gt*3.2);
+ g.globalAlpha=n>1?pulse:0.3;
+ g.fillStyle='#35e0ff';
+ g.beginPath();g.moveTo(34,H/2-16);g.lineTo(16,H/2);g.lineTo(34,H/2+16);g.closePath();g.fill();
+ g.beginPath();g.moveTo(W-34,H/2-16);g.lineTo(W-16,H/2);g.lineTo(W-34,H/2+16);g.closePath();g.fill();
+ g.globalAlpha=1;
+ g._carSel.push({x:6,y:H/2-36,w:40,h:72,act:'prev'});
+ g._carSel.push({x:W-46,y:H/2-36,w:40,h:72,act:'next'});
+ const gap=22,dotsW=n*gap,dx=W/2-dotsW/2,dy=H-48;
+ for(let i=0;i<n;i++){
+  const on=i===selCar;
+  g.fillStyle=on?'#35e0ff':'#3a3548';
+  g.beginPath();g.arc(dx+i*gap+gap/2,dy,on?5:3.5,0,TAU);g.fill();
+  g._carSel.push({x:dx+i*gap,y:dy-12,w:gap,h:24,i});
+ }
+ txt(g,carConfirmed?'ENTER — НА СТАРТ!':'ENTER — купить/выбрать   ·   ESC — назад',W/2,H-20,13,carConfirmed?'#58ff6b':'#6f6880','center',F_B);
 }
 ////////////////////////////////////////////////////////
 //
@@ -2753,10 +3133,12 @@ function drawGarage(){
  const bayY=idY+idH+18,bayH=FOOT-bayY;
  rr(g,PAD,bayY,LEFT_W,bayH,16);g.fillStyle='rgba(18,15,26,.92)';g.fill();
  g.strokeStyle='rgba(255,255,255,.08)';g.lineWidth=1;g.stroke();
- g.fillStyle='rgba(255,210,63,.07)';g.beginPath();g.ellipse(PAD+LEFT_W/2,bayY+bayH*0.52,150,38,0,0,TAU);g.fill();
- g.save();g.translate(PAD+LEFT_W/2,bayY+bayH*0.42);g.scale(3.15,3.15);
- drawCar(g,{x:0,y:0,ang:-.4,car,ch,nitro:0,wheelRot:0,wheelAngle:0},1);g.restore();
- const chipY=bayY+bayH-52,chipW=(LEFT_W-48)/2;
+ const chipH=52,artH=bayH-chipH-8;
+ g.save();
+ rr(g,PAD+4,bayY+4,LEFT_W-8,artH,12);g.clip();
+ drawDrivingCarPreview(g,PAD+LEFT_W/2,bayY+4+artH/2,LEFT_W,artH,car,ch,1.18);
+ g.restore();
+ const chipY=bayY+bayH-chipH,chipW=(LEFT_W-48)/2;
  const chips=[['МАКС. СКОРОСТЬ','~'+Math.round(st.top*.45)+' КМ/Ч'],['КОРПУС',String(st.maxhp)]];
  chips.forEach((c,i)=>{
   const cx=PAD+16+i*(chipW+16);
@@ -3141,6 +3523,21 @@ function press(c,k){
   }
   return;
  }
+ if(state==='intro'){
+  if(c==='Escape'){endIntro(false);sClick();return;}
+  if(c==='Enter'||c==='Space'){
+   const sc=introScenes()[introFrame];
+   if(!sc){endIntro(true);return;}
+   if(introCur<sc.text.length)introCur=sc.text.length;
+   else{
+    introFrame++;
+    if(introFrame>=introScenes().length)endIntro(true);
+    else resetIntroType();
+   }
+   sClick();return;
+  }
+  return;
+ }
  if(state==='gym'){
   if(c==='Escape'){state='garage';sClick();return;}
   if(c==='ArrowUp'){gymSel=(gymSel+3)%4;sClick();return;}
@@ -3163,7 +3560,7 @@ function press(c,k){
  if(state==='achievements'){enterTitle();return;}
  if(state==='char'){
   if(bioOpen>=0){
-   if(c==='Enter'){selChar=bioOpen;save.char=bioOpen;persist();bioOpen=-1;state='car';sClick();}
+   if(c==='Enter'){confirmCharPick(bioOpen);sClick();}
    else if(c==='Escape'){bioOpen=-1;sClick();}
    return;
   }
@@ -3173,8 +3570,8 @@ function press(c,k){
   return;
  }
  if(state==='car'){
-  if(c==='ArrowLeft'){selCar=(selCar+3)%4;carConfirmed=false;sClick();}
-  if(c==='ArrowRight'){selCar=(selCar+1)%4;carConfirmed=false;sClick();}
+  if(c==='ArrowLeft'){pickCarSel(selCar-1);}
+  if(c==='ArrowRight'){pickCarSel(selCar+1);}
   if(c==='Escape'){state='char';return;}
   if(c==='Enter'){
    const car=CARS[selCar];
@@ -3310,12 +3707,21 @@ function garageAction(col,row){
 }
 let mx=0,my=0;
 cv.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();const px=(e.clientX-r.left)*(cv.width/r.width),py=(e.clientY-r.top)*(cv.height/r.height);mx=(px-viewOX)/viewS;my=(py-viewOY)/viewS;});
+cv.addEventListener('wheel',e=>{
+ if(state!=='car')return;
+ e.preventDefault();
+ if(gt-carSelWheelT<0.16)return;
+ carSelWheelT=gt;
+ if(e.deltaY>6||e.deltaX>6)pickCarSel(selCar+1);
+ else if(e.deltaY<-6||e.deltaX<-6)pickCarSel(selCar-1);
+},{passive:false});
 cv.addEventListener('mousedown',e=>{
  if(!AU.ctx)audioInit();
  cv.focus();
  const r=cv.getBoundingClientRect();
  const px=(e.clientX-r.left)*(cv.width/r.width),py=(e.clientY-r.top)*(cv.height/r.height);
  const x=(px-viewOX)/viewS,y=(py-viewOY)/viewS;
+ if(state==='intro'){press('Enter');return;}
  if(state==='title'){
   const items=g._titleItems||[];
   const y0=g._titleY0||320,step=g._titleStep||52;
@@ -3328,7 +3734,7 @@ cv.addEventListener('mousedown',e=>{
    if(g._statBtns)for(const b of g._statBtns){if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){upgradeCharStat(bioOpen,b.key);sClick();return;}}
    if(g._bioActs)for(const b of g._bioActs){
     if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){
-     if(b.act==='pick'){selChar=bioOpen;save.char=bioOpen;persist();bioOpen=-1;state='car';}
+     if(b.act==='pick')confirmCharPick(bioOpen);
      else bioOpen=-1;
      sClick();return;
     }
@@ -3336,6 +3742,15 @@ cv.addEventListener('mousedown',e=>{
    bioOpen=-1;sClick();return;
   }
   if(g._bioBtns)for(const b of g._bioBtns){if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){bioOpen=b.idx;sClick();return;}}
+ }
+ else if(state==='car'&&g._carSel){
+  for(let k=g._carSel.length-1;k>=0;k--){
+   const b=g._carSel[k];
+   if(x<b.x||x>b.x+b.w||y<b.y||y>b.y+b.h)continue;
+   if(b.act==='prev'){pickCarSel(selCar-1);return;}
+   if(b.act==='next'){pickCarSel(selCar+1);return;}
+   if(b.i!=null){pickCarSel(b.i);return;}
+  }
  }
  else if(state==='gym'&&g._gymBtns){for(const b of g._gymBtns){if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){gymSel=b.idx;buyGym(b.idx);sClick();return;}}}
  else if(state==='autopark'&&g._park){
@@ -3371,7 +3786,17 @@ function frame(now){
  if(state==='race'&&!paused)updRace(dt);
  updEngine(P,paused,state);
  if(CHIP.on)CHIP.pump();
- if(AU.ctx){const mc=musicCat();if(mc!==lastMusicCat){lastMusicCat=mc;MUSIC.play(mc);}}
+ if(state==='intro'&&!introDone){
+  const sc=introScenes()[introFrame];
+  if(sc&&introCur<sc.text.length){
+   introPrintT+=dt;
+   const step=0.028;
+   while(introPrintT>=step&&introCur<sc.text.length){
+    introPrintT-=step;introCur++;
+   }
+  }
+ }
+ if(AU.ctx&&state!=='intro'){const mc=musicCat();if(mc!==lastMusicCat){lastMusicCat=mc;MUSIC.play(mc);}}
  if(state==='title'){
   updateTitleRace(dt);
   drawTitle();
@@ -3382,6 +3807,7 @@ function frame(now){
  else if(state==='slotSelect')drawSlotSelect();
  else if(state==='settings')drawSettings();
  else if(state==='char'){drawCharSel();if(bioOpen>=0)drawBio();}
+ else if(state==='intro')drawIntro();
  else if(state==='car')drawCarSel();
  else if(state==='garage')drawGarage();
  else if(state==='gym')drawGym();

@@ -4,11 +4,14 @@
 
 ## Структура
 
-- `rnr.html` — игра (гараж → тренажёрка: прокачка гонщика)
+- `rnr.html` — игра (выбор гонщика и машин-карусель → гараж → тренажёрка)
 - `index.html` — вход для GitHub Pages (переход к игре)
 - `music.js` — URL треков (меню / гараж / гонка)
 - `assets/machines/cars/` — кузова `01`–`06` (`.webp`, иначе `.png`, иначе `.svg`; нос вправо)
 - `assets/image/avatars/` — портреты гонщиков (`01_Player.png` … `04_Player.png`)
+- `assets/image/comics/Bear/` — кадры интро Медведя (`1.png` … `7.png`)
+- `assets/image/comics/Ersh/` — кадры интро Ерша (`1.png` … `6.png`)
+- `assets/image/comics/Begemotik/` — кадры интро Бегемотика (`1.png` … `6.png`)
 
 ## Запуск
 
