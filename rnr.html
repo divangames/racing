@@ -708,6 +708,14 @@ function updateView(){
  viewW=cv.width/viewS;
  viewH=cv.height/viewS;
 }
+////////////////////////////////////////////////////////
+//
+// Зум камеры в гонке: ближе к машине, трасса крупнее
+//
+////////////////////////////////////////////////////////
+const RACE_ZOOM=1.55;
+function visW(){return viewW/RACE_ZOOM;}
+function visH(){return viewH/RACE_ZOOM;}
 function applyAudioSettings(){
  if(!AU.ctx)return;
  AU.sfx.gain.value=settings.sound.sfx/100*.9;
@@ -1464,11 +1472,12 @@ function updRace(dt){
  R.shake*=Math.pow(.02,dt);
  if(settings.graphics.shake){R.sx=rnd(-R.shake,R.shake);R.sy=rnd(-R.shake,R.shake);}
  else{R.sx=0;R.sy=0;}
- const cam=R.cam,tgtX=P.x+Math.cos(P.ang)*P.spd*.22-viewW/2,tgtY=P.y+Math.sin(P.ang)*P.spd*.22-viewH/2;
- if(R.T.w<=viewW)cam.x=(R.T.w-viewW)/2;
- else cam.x=clamp(lerp(cam.x,tgtX,1-Math.pow(.001,dt)),0,R.T.w-viewW);
- if(R.T.h<=viewH)cam.y=(R.T.h-viewH)/2;
- else cam.y=clamp(lerp(cam.y,tgtY,1-Math.pow(.001,dt)),0,R.T.h-viewH);
+ const cam=R.cam,vw=visW(),vh=visH();
+ const tgtX=P.x+Math.cos(P.ang)*P.spd*.22-vw/2,tgtY=P.y+Math.sin(P.ang)*P.spd*.22-vh/2;
+ if(R.T.w<=vw)cam.x=(R.T.w-vw)/2;
+ else cam.x=clamp(lerp(cam.x,tgtX,1-Math.pow(.001,dt)),0,R.T.w-vw);
+ if(R.T.h<=vh)cam.y=(R.T.h-vh)/2;
+ else cam.y=clamp(lerp(cam.y,tgtY,1-Math.pow(.001,dt)),0,R.T.h-vh);
  for(let i=R.parts.length-1;i>=0;i--){const p=R.parts[i];p.t-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.94;p.vy*=.94;if(p.t<=0)R.parts.splice(i,1);}
  for(let i=R.skids.length-1;i>=0;i--){R.skids[i].t-=dt;if(R.skids[i].t<=0)R.skids.splice(i,1);}
  for(let i=R.shocks.length-1;i>=0;i--){const s=R.shocks[i];s.t-=dt;s.r+=(s.maxR-s.r)*dt*8;if(s.t<=0)R.shocks.splice(i,1);}
@@ -1485,7 +1494,7 @@ function updRace(dt){
   const w=R.weather,cnt=w.parts;
   while(R.weatherParts.length<cnt){
    R.weatherParts.push({
-    x:R.cam.x+rnd(-100,viewW+100),
+    x:R.cam.x+rnd(-100,visW()+100),
     y:R.cam.y-20,
     vx:w.name==='ПЕСЧАНАЯ БУРЯ'?rnd(80,160):rnd(-30,30),
     vy:w.name==='ДОЖДЬ'?rnd(400,600):rnd(60,120),
@@ -1495,9 +1504,9 @@ function updRace(dt){
   for(let i=R.weatherParts.length-1;i>=0;i--){
    const p=R.weatherParts[i];
    p.x+=p.vx*dt;p.y+=p.vy*dt;
-   if(p.y>R.cam.y+viewH+20||p.x>R.cam.x+viewW+100||p.x<R.cam.x-100){
+   if(p.y>R.cam.y+visH()+20||p.x>R.cam.x+visW()+100||p.x<R.cam.x-100){
     R.weatherParts[i]={
-     x:R.cam.x+rnd(-100,viewW+100),
+     x:R.cam.x+rnd(-100,visW()+100),
      y:R.cam.y-20,
      vx:w.name==='ПЕСЧАНАЯ БУРЯ'?rnd(80,160):rnd(-30,30),
      vy:w.name==='ДОЖДЬ'?rnd(400,600):rnd(60,120),
@@ -1876,10 +1885,11 @@ function drawFinishZone(c,p0){
 }
 function drawRaceWorld(){
  const T=R.T;
- g.setTransform(viewS,0,0,viewS,0,0);
+ const z=RACE_ZOOM,vw=visW(),vh=visH();
+ g.setTransform(viewS*z,0,0,viewS*z,0,0);
  g.save();g.translate(-R.cam.x+R.sx,-R.cam.y+R.sy);
  g.fillStyle=T.pat||T.theme.ground;
- g.fillRect(R.cam.x-400,R.cam.y-400,viewW+800,viewH+800);
+ g.fillRect(R.cam.x-400,R.cam.y-400,vw+800,vh+800);
  g.drawImage(T.img,0,0);
  // Следы от шин (два отдельных следа + протектор)
  g.lineCap='round';
@@ -2064,7 +2074,8 @@ function drawRaceWorld(){
   }
  }
  g.restore();
- // Затемнение в экранных координатах
+ g.setTransform(viewS,0,0,viewS,0,0);
+ // Затемнение в экранных координатах HUD
  if(settings.graphics.weather&&R.weather.parts>0&&R.weather.vis<1){
   g.fillStyle='rgba(0,0,0,'+(1-R.weather.vis)*.3+')';
   g.fillRect(0,0,viewW,viewH);
