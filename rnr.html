@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>РОК-Н-РОЛЛ ГОНКИ — браузерный оммаж</title>
+<link rel="icon" type="image/webp" href="assets/image/favicon.webp">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -27,6 +28,9 @@ const ACH_DESC_MAX_WIDTH=400;
 const ACH_DESC_LINE_HEIGHT=16;
 const achIconSheet=new Image();
 achIconSheet.src=ACH_ICON_SHEET;
+const TITLE_LOGO_SRC='assets/image/game-logo.webp';
+const titleLogo=new Image();
+titleLogo.src=TITLE_LOGO_SRC;
 let booted=false;
 function fit(){const s=Math.min(innerWidth/cv.width,innerHeight/cv.height);cv.style.width=Math.round(cv.width*s)+'px';cv.style.height=Math.round(cv.height*s)+'px';}
 addEventListener('resize',()=>{booted?applyResolution():fit();});
@@ -307,6 +311,20 @@ const CHAR_INTROS=[
    {img:3,text:'После этого я стала улыбаться на каждом пит-стопе. Механики думали, что я безбашенная. Да нет, ребята — я просто уже видела настоящий пиздец, и ваши сломанные тормоза меня не впечатляют.'},
    {img:4,text:'Потом пришло приглашение на эту гонку. На конверте был тот же символ, что стоял на приказе, из-за которого он сгорел. Я сначала хотела сжечь бумагу. Потом подумала: нахуй бумагу — сожгу лучше тех, кто её прислал.'},
    {img:5,text:'Я приехала не за кубком и не за деньгами. Я приехала вырвать из них правду, разнести к чертям их ебаный архив и показать всем, кто на самом деле отправил нас в эту бойню. А если по дороге кто-то не успеет затормозить — это уже не моя проблема.'}
+  ]
+ },
+ {
+  name:'БАШКИР',col:'#7fb2ff',
+  music:'https://ikrinka24.com/ROCK/music/intro/04.mp3',
+  imgs:loadIntroImgs('Bashkir',7),
+  scenes:[
+   {img:0,text:'Я дважды похоронил сына и его жену. А потом эта чёртова коробка сказала мне: я хоронил их зря. Они живы. И кто-то, сука, всё это время держал их в клетке.'},
+   {img:1,text:'Медведь приехал за убийцами и курил так, будто дым мог забить запах прошлого. Я смотрел на него из тени и уже знал: мы оба идём в одну бойню. Только наши дети приехали туда раньше нас.'},
+   {img:2,text:'На табло я увидел Ерша. Рядом с ним была Бегемотик — моя невестка, которую я давно считал дочерью. Они были живы, мать их. Только смотрели на нас так, будто мы для них чужие.'},
+   {img:3,text:'Организаторы не просто собрали нас в одной гонке. Они устроили семейный расстрел. Я, Медведь, мой сын и его жена. Четыре машины, один финиш и три трупа — вот их ебаная математика.'},
+   {img:4,text:'Я увидел их на стартовой линии. Ерш смотрел на меня как на врага, а Бегемотик держала палец на спуске. Мне хотелось заорать, что я их отец. Но на этой трассе родство ничего не стоит — оно только делает тебя удобнее для убийства.'},
+   {img:5,text:'Огни погасли, и все рванули вперёд, будто уже согласились с этой грязной игрой. Я нажал не на газ, а на связь: «Ерш… это я. Папа». Если он услышит, пусть весь этот чёртов ад подождёт.'},
+   {img:6,text:'В рации сначала был только треск. Потом я услышал одно слово: «Папа?..» И в ту же секунду они включили ракеты. Значит, эти ублюдки боятся не наших машин. Они боятся, что семья вспомнит, кто устроил эту бойню.'}
   ]
  }
 ];
@@ -2292,22 +2310,28 @@ function drawTitle(){
  g.fillStyle='#050409';g.fillRect(LX,LY,viewW,viewH);
  drawTitleRace();
  g.fillStyle='rgba(5,4,9,.45)';g.fillRect(LX,LY,viewW,viewH);
- g.save();g.translate(W/2,190);g.rotate(-.02+Math.sin(gt*2)*.008);
- g.textAlign='center';
- g.font='54px '+F_D;g.lineWidth=10;g.strokeStyle='#000';g.strokeText('РОК-Н-РОЛЛ',0,-58);
- const lg=g.createLinearGradient(0,-110,0,-30);lg.addColorStop(0,'#ffd23f');lg.addColorStop(1,'#ff7b2e');
- g.fillStyle=lg;g.fillText('РОК-Н-РОЛЛ',0,-58);
- g.font='112px '+F_D;g.lineWidth=14;g.strokeStyle='#000';g.strokeText('ГОНКИ',0,52);
- const lg2=g.createLinearGradient(0,-30,0,70);lg2.addColorStop(0,'#ffd23f');lg2.addColorStop(1,'#ff3d2e');
- g.fillStyle=lg2;g.fillText('ГОНКИ',0,52);
- g.restore();
- txt(g,'браузерный оммаж Rock N\' Roll Racing (1993)',W/2,268,16,'#c8b8a0','center',F_B);
+ if(titleLogo.complete&&titleLogo.naturalWidth){
+  const logoW=470,logoH=logoW*titleLogo.naturalHeight/titleLogo.naturalWidth;
+  g.save();g.translate(W/2,10);g.rotate(-.012+Math.sin(gt*2)*.004);
+  g.shadowColor='rgba(0,0,0,.65)';g.shadowBlur=18;g.shadowOffsetY=8;
+  g.drawImage(titleLogo,-logoW/2,0,logoW,logoH);g.restore();
+ }else{
+  g.save();g.translate(W/2,190);g.rotate(-.02+Math.sin(gt*2)*.008);
+  g.textAlign='center';
+  g.font='54px '+F_D;g.lineWidth=10;g.strokeStyle='#000';g.strokeText('РОК-Н-РОЛЛ',0,-58);
+  const lg=g.createLinearGradient(0,-110,0,-30);lg.addColorStop(0,'#ffd23f');lg.addColorStop(1,'#ff7b2e');
+  g.fillStyle=lg;g.fillText('РОК-Н-РОЛЛ',0,-58);
+  g.font='112px '+F_D;g.lineWidth=14;g.strokeStyle='#000';g.strokeText('ГОНКИ',0,52);
+  const lg2=g.createLinearGradient(0,-30,0,70);lg2.addColorStop(0,'#ffd23f');lg2.addColorStop(1,'#ff3d2e');
+  g.fillStyle=lg2;g.fillText('ГОНКИ',0,52);
+  g.restore();
+ }
  const items=[];
  if(save)items.push('ПРОДОЛЖИТЬ (ЭТАП '+(save.race+1)+')');
  items.push('НОВАЯ ИГРА','ЗАГРУЗИТЬ ИГРУ','НАСТРОЙКИ','ДОСТИЖЕНИЯ','ЧИТЫ');
  if(save)items.push('СБРОС ПРОГРЕССА');
  if(selTitle>=items.length)selTitle=items.length-1;
- const titleStep=items.length>6?44:52,titleY0=items.length>6?306:320;
+ const titleStep=items.length>6?44:52,titleY0=items.length>6?328:342;
  items.forEach((t,i)=>{const y=titleY0+i*titleStep,sel=i===selTitle;
   if(sel){panel(g,W/2-220,y-24,440,42,'rgba(255,157,46,.15)','#ff9d2e');
    txt(g,'▸',W/2-196,y-3,24,'#ff9d2e');}

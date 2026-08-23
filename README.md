@@ -12,6 +12,7 @@
 - `assets/image/comics/Bear/` — кадры интро Медведя (`1.png` … `7.png`)
 - `assets/image/comics/Ersh/` — кадры интро Ерша (`1.png` … `6.png`)
 - `assets/image/comics/Begemotik/` — кадры интро Бегемотика (`1.png` … `6.png`)
+- `assets/image/comics/Bashkir/` — кадры интро Башкира (`1.png` … `7.png`)
 
 ## Запуск
 
