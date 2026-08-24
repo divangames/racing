@@ -430,6 +430,32 @@ const CAR_SVG=CARS.map((_,i)=>{
  tryNext();
  return img;
 });
+////////////////////////////////////////////////////////
+//
+// Визуальная броня: 01_armor_1 … 01_armor_6 (6 слоёв, webp → png)
+//
+////////////////////////////////////////////////////////
+const CAR_ARMOR=CARS.map((_,i)=>{
+ const arr=[null]; // [0]=база, [1..6]=слои брони
+ for(let l=1;l<=6;l++){
+  const im=new Image();
+  const base='assets/machines/cars/'+String(i+1).padStart(2,'0')+'_armor_'+l;
+  let e=0;const exts=['webp','png'];
+  const tryNext=()=>{ if(e<exts.length) im.src=base+'.'+exts[e++]; };
+  im.onerror=tryNext;tryNext();
+  arr[l]=im;
+ }
+ return arr;
+});
+/** Спрайт кузова: слой брони armLvl (1–6) или базовая машина. */
+function carSprite(idx,armLvl){
+ const a=clamp(armLvl|0,0,6);
+ if(a>=1){
+  const set=CAR_ARMOR[idx];
+  if(set){const im=set[a];if(im&&im.complete&&im.naturalWidth>0)return im;}
+ }
+ return CAR_SVG[idx];
+}
 const CAR_ABIL=[
  {nitro:{cd:10},weapon:{cd:1.2,dmg:22,name:'ДВУСТВОЛКА',type:'shotgun'},ult:{cd:8,name:'БЫЧИЙ РЫВОК',type:'dash'}},
  {nitro:{cd:9},weapon:{cd:0.15,dmg:10,name:'ГАТЛИНГ',type:'gatling'},ult:{cd:12,name:'ПРИЦЕЛ',type:'slowmo'}},
@@ -1718,7 +1744,8 @@ function drawCar(c,r,sc){
   saw(L.xF,-L.yF,7.2,1);
   saw(L.xF, L.yF,7.2,-1);
  };
- const svgImg=CAR_SVG[idx];
+ const armLvl=(r.lvl&&r.lvl.arm!=null)?r.lvl.arm:((save&&save.tuning&&save.tuning[idx])?(save.tuning[idx].arm||0):0);
+ const svgImg=carSprite(idx,armLvl);
  const drawNitro=()=>{
   if(!(r.nitro>0))return;
   // Струя из одной трубы: основание у кузова, язык назад
