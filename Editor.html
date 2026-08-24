@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<!-- Лаборатория машин: визуальная правка кузовов, колёс и характеристик. -->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Редактор машин Рок-н-ролл гонки">
+<title>RNR // Лаборатория машин</title>
+<link rel="icon" href="assets/image/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" href="assets/image/favicon-32.png" sizes="32x32">
+<link rel="icon" type="image/webp" href="assets/image/favicon.webp">
+<link rel="apple-touch-icon" href="assets/image/apple-touch-icon.png">
+<link rel="stylesheet" href="editor/editor.css">
+</head>
+<body>
+<main class="app">
+  <header class="topbar">
+    <div>
+      <div class="eyebrow">RNR // GARAGE LAB</div>
+      <h1 class="title">ЛАБОРАТОРИЯ МАШИН</h1>
+    </div>
+    <nav class="top-actions" aria-label="Навигация">
+      <button type="button" id="gameBtn">← В игру</button>
+      <button type="button" id="resetBtn" class="danger">Сбросить авто</button>
+    </nav>
+  </header>
+  <div class="workspace">
+    <section class="stage-card">
+      <div class="stage-head">
+        <div>
+          <div class="machine-name" id="machineName">МАШИНА</div>
+          <p class="stage-note">Колесо — зум · средняя кнопка — панорама · + / − / 0 — масштаб · Ctrl+клик — мультивыбор · стрелки — сдвиг</p>
+        </div>
+        <div class="legend">
+          <span><i class="dot yellow"></i>кузов</span>
+          <span><i class="dot green"></i>колесо</span>
+          <span><i class="dot orange"></i>нитро</span>
+          <span><i class="dot cyan"></i>выбрано</span>
+        </div>
+      </div>
+      <canvas id="stage" aria-label="Холст редактора машины"></canvas>
+      <div class="stage-tools">
+        <button type="button" id="undoBtn" title="Ctrl+Z">Отмена</button>
+        <button type="button" id="redoBtn" title="Ctrl+Y">Вперёд</button>
+        <div class="zoom-tools" role="group" aria-label="Масштаб холста">
+          <button type="button" id="zoomOutBtn" title="Отдалить (−)">−</button>
+          <button type="button" id="zoomReadout" title="Вписать машину в кадр">100%</button>
+          <button type="button" id="zoomInBtn" title="Приблизить (+)">+</button>
+        </div>
+        <button type="button" id="fitBtn">В кадр</button>
+        <label class="file-label" style="min-height:36px">Сетка<input class="check" id="snapToggle" type="checkbox"></label>
+        <label class="file-label" style="min-height:36px">Вращение<input class="check" id="playToggle" type="checkbox" checked></label>
+        <label class="file-label" style="min-height:36px">На холсте<input class="check" id="testToggle" type="checkbox"></label>
+        <button type="button" id="testDriveBtn" class="primary">Полигон</button>
+        <label class="field" style="min-width:140px"><span class="hint">Ракурс</span><input id="yawRange" type="range" min="-40" max="40" value="0"></label>
+      </div>
+      <div class="stage-foot">
+        <span id="coordReadout">X 0.0 · Y 0.0</span>
+        <span id="saveState">Настройки не изменены</span>
+      </div>
+    </section>
+    <aside class="panel">
+      <section class="section">
+        <div class="section-title">МАШИНА <span id="carCounter">01 / 09</span></div>
+        <div class="car-list" id="carList"></div>
+        <div class="actions" style="margin-top:8px">
+          <button type="button" id="addCarBtn">+ Своя</button>
+          <button type="button" id="dupCarBtn">Копия</button>
+          <button type="button" id="delCarBtn" class="danger">Удалить</button>
+        </div>
+      </section>
+      <section class="section">
+        <div class="section-title">ХАРАКТЕРИСТИКИ</div>
+        <div class="field"><label for="statName">Имя</label><input id="statName" maxlength="42"></div>
+        <div class="field-grid" style="margin-top:8px">
+          <div class="field"><label for="statTop">Макс. скорость</label><input id="statTop" type="number" step="0.01" min="0.6" max="1.8"><div class="bar"><i id="barTop"></i></div></div>
+          <div class="field"><label for="statAcc">Разгон</label><input id="statAcc" type="number" step="0.01" min="0.6" max="1.8"><div class="bar"><i id="barAcc"></i></div></div>
+          <div class="field"><label for="statCrn">Поворот</label><input id="statCrn" type="number" step="0.01" min="0.6" max="1.8"><div class="bar"><i id="barCrn"></i></div></div>
+          <div class="field"><label for="statHp">Корпус</label><input id="statHp" type="number" step="1" min="40" max="240"><div class="bar"><i id="barHp"></i></div></div>
+          <div class="field"><label for="statPrice">Цена</label><input id="statPrice" type="number" step="100" min="0"></div>
+          <div class="field"><label for="statHov">Ховер</label><input class="check" id="statHov" type="checkbox"></div>
+          <div class="field"><label for="statCol">Цвет 1</label><input id="statCol" type="color"></div>
+          <div class="field"><label for="statCol2">Цвет 2</label><input id="statCol2" type="color"></div>
+        </div>
+        <div class="field" style="margin-top:8px"><label for="trait0">Особенность 1</label><input id="trait0"></div>
+        <div class="field"><label for="trait1">Особенность 2</label><input id="trait1"></div>
+        <div class="field"><label for="trait2">Особенность 3</label><input id="trait2"></div>
+      </section>
+      <section class="section">
+        <div class="section-title">КУЗОВ</div>
+        <div class="field-grid">
+          <div class="field"><label for="bodyX">Смещение X</label><input id="bodyX" type="number" step="0.1"></div>
+          <div class="field"><label for="bodyY">Смещение Y</label><input id="bodyY" type="number" step="0.1"></div>
+          <div class="field"><label for="bodyScale">Масштаб</label><input id="bodyScale" type="number" step="0.01" min=".2" max="4"></div>
+          <div class="field"><label for="armor">Тюнинг корпуса</label>
+            <select id="armor">
+              <option value="0">База</option>
+              <option value="1">Броня I</option>
+              <option value="2">Броня II</option>
+              <option value="3">Броня III</option>
+              <option value="4">Броня IV</option>
+              <option value="5">Броня V</option>
+              <option value="6">Броня VI</option>
+            </select>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:8px">
+          <label class="file-label">Заменить корпус<input id="bodyFile" type="file" accept="image/*"></label>
+          <button type="button" id="clearBody">Вернуть игровой</button>
+        </div>
+      </section>
+      <section class="section">
+        <div class="section-title">СЛОИ <span>верхний поверх</span></div>
+        <p class="hint">Галочка сразу прячет слой на холсте и в игре. Имя — выбрать, чтобы тащить. ↑ наверх (поверх), ↓ вниз. Порядок сохраняется, в том числе у «Урала». Нарисованные на кузове колёса остаются в картинке — это слой «Кузов».</p>
+        <div class="actions" style="margin-bottom:8px">
+          <button type="button" id="cloneLayer">Клонировать выбранное</button>
+        </div>
+        <div id="layers"></div>
+      </section>
+      <section class="section">
+        <div class="section-title">КОЛЁСА</div>
+        <div class="wheel-list" id="wheelList"></div>
+        <div class="actions" style="margin-top:8px">
+          <button type="button" id="addWheel">+ Колесо</button>
+          <button type="button" id="cloneWheel">Клон</button>
+          <button type="button" id="mirrorWheel">Зеркало Y</button>
+          <button type="button" id="delWheel" class="danger">Убрать</button>
+        </div>
+        <div class="field-grid" style="margin-top:9px">
+          <div class="field"><label for="wheelX">X</label><input id="wheelX" type="number" step="0.1"></div>
+          <div class="field"><label for="wheelY">Y</label><input id="wheelY" type="number" step="0.1"></div>
+          <div class="field"><label for="wheelW">Ширина</label><input id="wheelW" type="number" step="0.1" min="1"></div>
+          <div class="field"><label for="wheelH">Высота</label><input id="wheelH" type="number" step="0.1" min="1"></div>
+          <div class="field"><label for="wheelAngle">Поворот</label><input id="wheelAngle" type="number" step="0.01"></div>
+          <div class="field"><label for="wheelScale">Множитель</label><input id="wheelScale" type="number" step="0.01" min=".1" max="4"></div>
+        </div>
+        <label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input class="check" id="wheelSteer" type="checkbox"> Рулевое (крутится в повороте)</label>
+        <p class="hint">Зелёная точка — ступица. Утопите её под крылом, если диск не должен торчать.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">НИТРО</div>
+        <div class="wheel-list" id="nitroList"></div>
+        <div class="actions" style="margin-top:8px">
+          <button type="button" id="addNitro">+ Труба</button>
+          <button type="button" id="cloneNitro">Клон</button>
+          <button type="button" id="mirrorNitro">Зеркало Y</button>
+          <button type="button" id="delNitro" class="danger">Убрать</button>
+        </div>
+        <div class="field-grid" style="margin-top:9px">
+          <div class="field"><label for="nitroX">X</label><input id="nitroX" type="number" step="0.1"></div>
+          <div class="field"><label for="nitroY">Y</label><input id="nitroY" type="number" step="0.1"></div>
+          <div class="field"><label for="nitroLen">Длина</label><input id="nitroLen" type="number" step="0.1" min="1"></div>
+          <div class="field"><label for="nitroHalf">Ширина</label><input id="nitroHalf" type="number" step="0.05" min="0.2"></div>
+        </div>
+        <p class="hint">Оранжевая точка — выход струи. Включите «Тест», чтобы увидеть живое пламя.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">СОХРАНЕНИЕ</div>
+        <div class="actions">
+          <button type="button" id="saveBtn" class="primary">Сохранить настройки</button>
+          <button type="button" id="loadBtn">Загрузить сохранённые</button>
+          <button type="button" id="exportBtn">Скачать JSON</button>
+          <label class="file-label">Импорт JSON<input id="jsonFile" type="file" accept="application/json"></label>
+        </div>
+        <div class="status" id="status" role="status"></div>
+      </section>
+    </aside>
+  </div>
+</main>
+<script src="editor/data.js"></script>
+<script src="editor/fx.js"></script>
+<script src="editor/view.js"></script>
+<script src="editor/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Один спрайт-лист колеса: 8 кадров, каждый 32x24 px. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="24" viewBox="0 0 256 24">
+  <defs>
+    <g id="wheel">
+      <rect x="3" y="5" width="26" height="14" rx="3" fill="#0d0c10"/>
+      <rect x="4" y="6" width="24" height="12" rx="2" fill="#17161c" stroke="#050509" stroke-width="1"/>
+      <circle cx="16" cy="12" r="2.1" fill="#1c1b22" stroke="#3a3944" stroke-width=".6"/>
+    </g>
+    <clipPath id="clip"><rect x="3" y="5" width="26" height="14" rx="3"/></clipPath>
+  </defs>
+  <g>
+    <use href="#wheel" x="0"/>
+    <g clip-path="url(#clip)" stroke="#858594" stroke-width="1.8" opacity=".9">
+      <path d="M4 5v14M10 5v14M16 5v14M22 5v14M28 5v14"/>
+    </g>
+  </g>
+  <g transform="translate(32)"><use href="#wheel"/><g clip-path="url(#clip)" stroke="#858594" stroke-width="1.8" opacity=".9"><path d="M2 5v14M8 5v14M14 5v14M20 5v14M26 5v14"/></g></g>
+  <g transform="translate(64)"><use href="#wheel"/><g clip-path="url(#clip)" stroke="#858594" stroke-width="1.8" opacity=".9"><path d="M0 5v14M6 5v14M12 5v14M18 5v14M24 5v14"/></g></g>
+  <g transform="translate(96)"><use href="#wheel"/><g clip-path="url(#clip)" stroke="#858594" stroke-width="1.8" opacity=".9"><path d="M-2 5v14M4 5v14M10 5v14M16 5v14M22 5v14M28 5v14"/></g></g>
+  <g transform="translate(128)"><use href="#wheel"/><g clip-path="url(#clip)" stroke="#858594" stroke-width="1.8" opacity=".9"><path d="M0 5v14M6 5v14M12 5v14M18 5v14M24 5v14"/></g></g>
+  <g transform="translate(160)"><use href="#wheel"/><g clip-path="url(#clip)" stroke="#858594" stroke-width="1.8" opacity=".9"><path d="M2 5v14M8 5v14M14 5v14M20 5v14M26 5v14"/></g></g>
+  <g transform="translate(192)"><use href="#wheel"/><g clip-path="url(#clip)" stroke="#858594" stroke-width="1.8" opacity=".9"><path d="M0 5v14M6 5v14M12 5v14M18 5v14M24 5v14"/></g></g>
+  <g transform="translate(224)"><use href="#wheel"/><g clip-path="url(#clip)" stroke="#858594" stroke-width="1.8" opacity=".9"><path d="M-2 5v14M4 5v14M10 5v14M16 5v14M22 5v14M28 5v14"/></g></g>
+</svg>

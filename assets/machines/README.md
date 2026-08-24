@@ -7,7 +7,8 @@
 | Файл | Описание |
 |------|----------|
 | `car-chassis-prototype.svg` | Шаблон кузова с CSS-переменными и маркерами колёс |
-| `wheel-prototype.svg` | Колесо 12×8 с протектором |
+| `wheel-prototype.svg` | Старый прототип колеса 12×8 |
+| `wheels/wheel-strip.svg` | Единый спрайт-лист колеса, 8 кадров |
 | `layout-reference.svg` | Карта координат (референс) |
 | Файл | Машина |
 |------|--------|
@@ -67,7 +68,7 @@
 // Предзагрузка (один раз)
 const carSVG = await Promise.all(CARS.map((_, i) => loadImage(`assets/machines/cars/${names[i]}.svg`)));
 
-// В drawCar — кузов из SVG, колёса процедурно
+// В drawCar — кузов из SVG, колёса из общего спрайт-листа
 c.save();
 c.translate(r.x, r.y);
 c.rotate(r.ang);
@@ -82,7 +83,7 @@ c.fill();
 // Кузов (подгонка: viewBox -32..26 по X, -18..18 по Y → ~58×36)
 c.drawImage(carSVG[r.car.idx], -29, -14, 58, 28);
 
-// Колёса ПОВЕРХ кузова
+// Колёса ПОВЕРХ кузова; размер и деформация задаются раскладкой машины
 if (!r.car.hov) {
   wd(-14, -14, 0);
   wd(-14, 14, 0);
