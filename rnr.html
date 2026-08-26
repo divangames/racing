@@ -15,9 +15,57 @@
  body{display:flex;align-items:center;justify-content:center}
  canvas{display:block;background:#050409}
  canvas:focus{outline:none}
+ #boot-screen{
+  position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+  padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
+  background:#050409;color:#ffd23f;
+  font-family:"Russo One",Impact,sans-serif;
+ }
+ #boot-screen::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;
+  background:repeating-linear-gradient(-52deg,transparent,transparent 46px,#ff9d2e 46px,#ff9d2e 58px);
+ }
+ .boot-box{position:relative;width:min(560px,86vw);text-align:center}
+ .boot-kicker{
+  margin:0 0 10px;font-family:"Chakra Petch","Segoe UI",sans-serif;
+  font-size:clamp(11px,1.6vw,13px);letter-spacing:.32em;color:#8f88a0;text-transform:uppercase
+ }
+ .boot-title{margin:0 0 28px;font-size:clamp(28px,6vw,44px);line-height:1.05;text-shadow:0 4px 0 #000,0 0 24px rgba(255,157,46,.35)}
+ .boot-status{margin:0 0 14px;font-family:"Chakra Petch","Segoe UI",sans-serif;font-size:clamp(13px,2vw,16px);color:#c8c2d4}
+ .boot-track{
+  position:relative;height:16px;background:#16121c;border:2px solid #ff9d2e;
+  clip-path:polygon(12px 0,100% 0,calc(100% - 12px) 100%,0 100%)
+ }
+ .boot-fill{
+  display:block;height:100%;width:0%;
+  background:linear-gradient(90deg,#ff7b2e,#ffd23f);
+  box-shadow:0 0 16px rgba(255,157,46,.45)
+ }
+ .boot-pct{margin:12px 0 0;font-size:clamp(18px,3vw,22px)}
+ .boot-vpn{
+  display:none;margin:22px 0 0;padding:14px 16px;
+  font-family:"Chakra Petch","Segoe UI",sans-serif;font-size:clamp(13px,2vw,15px);line-height:1.45;
+  color:#e8e2d0;background:rgba(255,61,46,.1);border:1px solid rgba(255,157,46,.45)
+ }
+ .boot-vpn.is-on{display:block}
+ #boot-screen.is-out{opacity:0;pointer-events:none;transition:opacity .35s ease}
+ @media (prefers-reduced-motion:reduce){
+  .boot-fill{box-shadow:none}
+  #boot-screen.is-out{transition:none}
+ }
 </style>
 </head>
 <body>
+<div id="boot-screen" role="status" aria-live="polite">
+ <div class="boot-box">
+  <p class="boot-kicker">Колесница войны</p>
+  <h1 class="boot-title">ЗАГРУЗКА</h1>
+  <p id="boot-status" class="boot-status">Собираем трассу…</p>
+  <div class="boot-track" aria-hidden="true"><span id="boot-fill" class="boot-fill"></span></div>
+  <p id="boot-pct" class="boot-pct">0%</p>
+  <p id="boot-vpn" class="boot-vpn">Загрузка идёт слишком долго. Если включён VPN — отключите его и обновите страницу: музыка и шрифты часто не проходят через туннель.</p>
+ </div>
+</div>
 <canvas id="cv" width="1280" height="720" tabindex="0"></canvas>
 <script src="music.js"></script>
 <script>
@@ -32,10 +80,8 @@ const ACH_ICON_GRID=3;
 const ACH_DESC_MAX_WIDTH=400;
 const ACH_DESC_LINE_HEIGHT=16;
 const achIconSheet=new Image();
-achIconSheet.src=ACH_ICON_SHEET;
 const TITLE_LOGO_SRC='assets/image/game-logo.webp';
 const titleLogo=new Image();
-titleLogo.src=TITLE_LOGO_SRC;
 let booted=false;
 function fit(){const s=Math.min(innerWidth/cv.width,innerHeight/cv.height);cv.style.width=Math.round(cv.width*s)+'px';cv.style.height=Math.round(cv.height*s)+'px';}
 addEventListener('resize',()=>{booted?applyResolution():fit();});
@@ -53,6 +99,198 @@ function panel(c,x,y,w,h,fill,stroke,sk=14){c.beginPath();c.moveTo(x+sk,y);c.lin
 /** Путь параллелограмма — для обрезки иконки по карточке. */
 function panelPath(c,x,y,w,h,sk=14){c.beginPath();c.moveTo(x+sk,y);c.lineTo(x+w,y);c.lineTo(x+w-sk,y+h);c.lineTo(x,y+h);c.closePath();}
 function txt(c,t,x,y,size,col,align='left',font=F_D,stroke=true){c.font=size+'px '+font;c.textAlign=align;c.textBaseline='middle';if(stroke){c.lineWidth=Math.max(2,size/9);c.strokeStyle='#000';c.strokeText(t,x,y);}c.fillStyle=col;c.fillText(t,x,y);}
+////////////////////////////////////////////////////////
+//
+// Стартовая загрузка: реальный прогресс по байтам, без запуска игры
+//
+////////////////////////////////////////////////////////
+const BOOT={ready:false,jobs:[],t0:0,vpnShown:false,els:null};
+/** Ставит картинку в очередь: пробуем URL по порядку, считаем байты. */
+function bootEnqueue(img,urls){
+ BOOT.jobs.push({img,urls:(urls||[]).filter(Boolean),got:0,total:0,done:false});
+}
+/** Удалённый файл (музыка): только прогресс и кэш, без привязки к Image. */
+function bootEnqueueFetch(urls){
+ BOOT.jobs.push({img:null,urls:(urls||[]).filter(Boolean),got:0,total:0,done:false});
+}
+function bootEls(){
+ if(BOOT.els)return BOOT.els;
+ BOOT.els={
+  root:document.getElementById('boot-screen'),
+  fill:document.getElementById('boot-fill'),
+  pct:document.getElementById('boot-pct'),
+  status:document.getElementById('boot-status'),
+  vpn:document.getElementById('boot-vpn')
+ };
+ return BOOT.els;
+}
+/** Доля загрузки: готовые файлы + текущий поток по Content-Length. */
+function bootRatio(){
+ const n=BOOT.jobs.length;if(!n)return 0;
+ let s=0;
+ for(const j of BOOT.jobs){
+  if(j.done)s+=1;
+  else if(j.total>0)s+=Math.min(.99,j.got/j.total);
+ }
+ return s/n;
+}
+function bootPaint(){
+ const el=bootEls();
+ const n=BOOT.jobs.length;
+ const done=BOOT.jobs.filter(j=>j.done).length;
+ const pct=Math.min(99,Math.floor(bootRatio()*100));
+ if(el.fill)el.fill.style.width=pct+'%';
+ if(el.pct)el.pct.textContent=pct+'%';
+ if(el.status)el.status.textContent=n?('Файлы '+done+' / '+n):'Собираем трассу…';
+ if(!BOOT.vpnShown&&BOOT.t0&&performance.now()-BOOT.t0>8000){
+  BOOT.vpnShown=true;
+  if(el.vpn)el.vpn.classList.add('is-on');
+ }
+}
+function bootMime(url,header){
+ const h=(header||'').split(';')[0].trim();
+ if(h&&h!=='application/octet-stream')return h;
+ if(/\.svg(\?|$)/i.test(url))return 'image/svg+xml';
+ if(/\.webp(\?|$)/i.test(url))return 'image/webp';
+ if(/\.png(\?|$)/i.test(url))return 'image/png';
+ if(/\.jpg|\.jpeg/i.test(url))return 'image/jpeg';
+ if(/\.mp3(\?|$)/i.test(url))return 'audio/mpeg';
+ return h||'application/octet-stream';
+}
+async function bootFetchUrl(url,job,signal){
+ const res=await fetch(url,{cache:'force-cache',signal});
+ if(!res.ok)return null;
+ const cl=+res.headers.get('Content-Length')||0;
+ if(cl)job.total=cl;
+ const mime=bootMime(url,res.headers.get('Content-Type'));
+ if(!res.body||!res.body.getReader){
+  const raw=await res.blob();
+  if(!raw||!raw.size)return null;
+  const blob=raw.type?raw:new Blob([raw],{type:mime});
+  job.got=blob.size;if(!job.total)job.total=blob.size;
+  bootPaint();
+  return blob;
+ }
+ const reader=res.body.getReader();
+ const chunks=[];
+ let got=0;
+ while(true){
+  const step=await reader.read();
+  if(step.done)break;
+  chunks.push(step.value);
+  got+=step.value.byteLength;
+  job.got=got;
+  if(!job.total)job.total=got;
+  bootPaint();
+ }
+ const blob=new Blob(chunks,{type:mime});
+ if(!blob.size)return null;
+ if(!job.total)job.total=got;
+ job.got=got;
+ bootPaint();
+ return blob;
+}
+async function bootBind(img,blob){
+ const href=URL.createObjectURL(blob);
+ img.src=href;
+ try{if(img.decode)await img.decode();}catch(e){}
+}
+/** Если fetch недоступен (file://), грузим как обычный Image. */
+function bootImgTag(img,url){
+ return new Promise(resolve=>{
+  const t=setTimeout(()=>done(false),14000);
+  const done=ok=>{clearTimeout(t);img.onload=null;img.onerror=null;resolve(ok);};
+  img.onload=()=>done(img.naturalWidth>0||/\.svg(\?|$)/i.test(url));
+  img.onerror=()=>done(false);
+  img.src=url;
+ });
+}
+async function bootRunJob(job){
+ const remote=(job.urls||[]).some(u=>/^https?:\/\//i.test(u));
+ const ac=typeof AbortController==='function'?new AbortController():null;
+ const timer=setTimeout(()=>{if(ac)ac.abort();},remote?12000:22000);
+ try{
+  for(const url of job.urls){
+   try{
+    const blob=await bootFetchUrl(url,job,ac&&ac.signal);
+    if(!blob)continue;
+    if(job.img)await bootBind(job.img,blob);
+    job.done=true;
+    if(job.got<job.total)job.got=job.total;
+    bootPaint();
+    clearTimeout(timer);
+    return;
+   }catch(e){}
+  }
+ }finally{clearTimeout(timer);}
+ if(job.img){
+  for(const url of job.urls){
+   const ok=await bootImgTag(job.img,url);
+   if(ok){
+    job.done=true;
+    if(!job.total){job.total=1;job.got=1;}
+    else job.got=job.total;
+    bootPaint();
+    return;
+   }
+  }
+ }
+ job.done=true;
+ if(!job.total){job.total=1;job.got=1;}
+ bootPaint();
+}
+async function bootPool(list,limit,fn){
+ let i=0;
+ const n=Math.max(1,Math.min(limit,list.length||1));
+ await Promise.all(Array.from({length:n},async()=>{
+  while(i<list.length){const idx=i++;await fn(list[idx]);}
+ }));
+}
+function bootFontsJob(){
+ const job={img:null,urls:[],got:0,total:1,done:false};
+ BOOT.jobs.push(job);
+ return new Promise(resolve=>{
+  let done=false;
+  const fin=()=>{if(done)return;done=true;job.done=true;job.got=1;bootPaint();resolve();};
+  const t=setTimeout(fin,2500);
+  const ready=document.fonts&&document.fonts.ready;
+  if(ready)ready.then(()=>{clearTimeout(t);fin();}).catch(()=>{clearTimeout(t);fin();});
+  else{clearTimeout(t);fin();}
+ });
+}
+function bootFinish(){
+ const el=bootEls();
+ if(el.fill)el.fill.style.width='100%';
+ if(el.pct)el.pct.textContent='100%';
+ if(el.status)el.status.textContent='Готово';
+ BOOT.ready=true;
+ try{initTitleRace();requestAnimationFrame(frame);}catch(e){console.error(e);}
+ const hide=()=>{
+  if(!el.root)return;
+  el.root.classList.add('is-out');
+  const drop=()=>{if(el.root&&el.root.parentNode)el.root.parentNode.removeChild(el.root);};
+  const reduce=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce)drop();
+  else setTimeout(drop,380);
+ };
+ setTimeout(hide,120);
+}
+async function bootGo(){
+ BOOT.t0=performance.now();
+ bootEls();
+ const mainList=window.MUSIC_TRACKS&&MUSIC_TRACKS.main;
+ if(mainList&&mainList[0])bootEnqueueFetch([mainList[0]]);
+ const files=BOOT.jobs.slice();
+ const fonts=bootFontsJob();
+ bootPaint();
+ const tick=setInterval(bootPaint,250);
+ try{
+  await Promise.all([fonts,bootPool(files,8,bootRunJob)]);
+ }finally{clearInterval(tick);}
+ bootFinish();
+}
+bootEnqueue(achIconSheet,[ACH_ICON_SHEET]);
+bootEnqueue(titleLogo,[TITLE_LOGO_SRC]);
 ////////////////////////////////////////////////////////
 //
 // Фон экранов результатов и достижений
@@ -260,10 +498,7 @@ function loadPlayerImgs(suffix){
  return CHARS.map((_,i)=>{
   const img=new Image();
   const base='assets/image/avatars/'+String(i+1).padStart(2,'0')+'_Player'+suffix;
-  let e=0;
-  const tryNext=()=>{ if(e<AVATAR_EXT.length) img.src=base+'.'+AVATAR_EXT[e++]; };
-  img.onerror=tryNext;
-  tryNext();
+  bootEnqueue(img,AVATAR_EXT.map(ext=>base+'.'+ext));
   return img;
  });
 }
@@ -280,12 +515,7 @@ function loadIntroImgs(folder,count){
  const base='assets/image/comics/'+folder+'/';
  return Array.from({length:count},(_,i)=>{
   const n=i+1,img=new Image();
-  img.onerror=()=>{
-   if(img.dataset.fb)return;
-   img.dataset.fb='1';
-   img.src=base+n+'.png';
-  };
-  img.src=base+String(n).padStart(2,'0')+'.webp';
+  bootEnqueue(img,[base+String(n).padStart(2,'0')+'.webp',base+n+'.png']);
   return img;
  });
 }
@@ -567,15 +797,13 @@ function applyCharCar(chI){
 const CAR_SVG_ROT=0; // 0 = нос вправо; Math.PI/2 = нос вверх
 const CAR_IMG_EXT=['webp','png','svg'];
 // Единый спрайт колеса: кадр выбирается по пройденному пути, а не по времени.
-const WHEEL_SPRITE=(()=>{const im=new Image();im.src='assets/machines/wheels/wheel-strip.svg';return im;})();
+const WHEEL_SPRITE=new Image();
+bootEnqueue(WHEEL_SPRITE,['assets/machines/wheels/wheel-strip.svg']);
 const WHEEL_FRAME_W=32,WHEEL_FRAME_H=24,WHEEL_FRAME_COUNT=8;
 const CAR_SVG=CARS.map((_,i)=>{
  const img=new Image();
  const base='assets/machines/cars/'+String(i+1).padStart(2,'0');
- let e=0;
- const tryNext=()=>{ if(e<CAR_IMG_EXT.length) img.src=base+'.'+CAR_IMG_EXT[e++]; };
- img.onerror=tryNext;   // если расширения нет — пробуем следующее
- tryNext();
+ bootEnqueue(img,CAR_IMG_EXT.map(ext=>base+'.'+ext));
  return img;
 });
 ////////////////////////////////////////////////////////
@@ -584,13 +812,11 @@ const CAR_SVG=CARS.map((_,i)=>{
 //
 ////////////////////////////////////////////////////////
 const CAR_ARMOR=CARS.map((_,i)=>{
- const arr=[null]; // [0]=база, [1..6]=слои брони
+ const arr=[null];
  for(let l=1;l<=6;l++){
   const im=new Image();
   const base='assets/machines/cars/'+String(i+1).padStart(2,'0')+'_armor_'+l;
-  let e=0;const exts=['webp','png'];
-  const tryNext=()=>{ if(e<exts.length) im.src=base+'.'+exts[e++]; };
-  im.onerror=tryNext;tryNext();
+  bootEnqueue(im,['webp','png'].map(ext=>base+'.'+ext));
   arr[l]=im;
  }
  return arr;
@@ -967,7 +1193,6 @@ function pollPressStartPad(){
   }
  }
 }
-initTitleRace();
 const SETTINGS_KEY='rnr_ru_settings';
 let settings={
  graphics:{resolution:0,particles:'high',skids:true,weather:true,shake:true,showFps:false},
@@ -4098,6 +4323,7 @@ function drawResults(){
  txt(g,labTest?'ENTER — В ЛАБОРАТОРИЮ':'ENTER — В ГАРАЖ',W/2,enterY,15,'#ff9d2e','center');
 }
 addEventListener('keydown',e=>{
+ if(!BOOT.ready){e.preventDefault();return;}
  if(!AU.ctx)audioInit();
  const gameCodes=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD',
   'ControlLeft','ControlRight','AltLeft','AltRight','ShiftLeft','ShiftRight','Tab','Escape',
@@ -4473,6 +4699,7 @@ cv.addEventListener('wheel',e=>{
  else if(e.deltaY<-6||e.deltaX<-6)pickCarSel(selCar-1);
 },{passive:false});
 cv.addEventListener('mousedown',e=>{
+ if(!BOOT.ready)return;
  if(!AU.ctx)audioInit();
  cv.focus();
  const r=cv.getBoundingClientRect();
@@ -4590,7 +4817,7 @@ function frame(now){
   g.fillText(Math.round(fpsSmooth)+' FPS',10,20);
  }
  requestAnimationFrame(frame);}
-requestAnimationFrame(frame);
+bootGo();
 </script>
 </body>
 </html>
