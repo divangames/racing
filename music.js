@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////
 //
-// Список треков для меню, гаража и гонки.
+// Список треков: меню, выбор машины, гараж, гонка, интро.
 // Менять URL только в этом файле.
 //
 ////////////////////////////////////////////////////////
@@ -23,6 +23,13 @@ var MUSIC_TRACKS = {
  ],
  garage: [
   'https://ikrinka24.com/ROCK/music/garage/0.mp3'
+ ],
+ intro: [
+  // Медведь, Ерш, Бегемотик, Башкир
+  'https://ikrinka24.com/ROCK/music/intro/01.mp3',
+  'https://ikrinka24.com/ROCK/music/intro/02.mp3',
+  'https://ikrinka24.com/ROCK/music/intro/03.mp3',
+  'https://ikrinka24.com/ROCK/music/intro/04.mp3'
  ],
  racing: [
   'https://ikrinka24.com/ROCK/music/racing/0.mp3',
