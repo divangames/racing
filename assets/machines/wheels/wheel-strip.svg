@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Один спрайт-лист колеса: 8 кадров, каждый 32x24 px. -->
+<!-- Один спрайт-лист колеса: 8 кадров, каждый 32x24 px.
+     Полосы протектора смещаются между кадрами, поэтому движение читается
+     даже при маленьком размере колеса на машине сверху. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="256" height="24" viewBox="0 0 256 24">
   <defs>
     <g id="wheel">
       <rect x="3" y="5" width="26" height="14" rx="3" fill="#0d0c10"/>
       <rect x="4" y="6" width="24" height="12" rx="2" fill="#17161c" stroke="#050509" stroke-width="1"/>
       <circle cx="16" cy="12" r="2.1" fill="#1c1b22" stroke="#3a3944" stroke-width=".6"/>
+      <circle cx="16" cy="12" r=".75" fill="#858594" opacity=".65"/>
     </g>
     <clipPath id="clip"><rect x="3" y="5" width="26" height="14" rx="3"/></clipPath>
   </defs>

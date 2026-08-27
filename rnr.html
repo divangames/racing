@@ -820,8 +820,15 @@ const CAR_SVG_ROT=0; // 0 = нос вправо; Math.PI/2 = нос вверх
 const CAR_IMG_EXT=['webp','png','svg'];
 // Единый спрайт колеса: кадр выбирается по пройденному пути, а не по времени.
 const WHEEL_SPRITE=new Image();
-bootEnqueue(WHEEL_SPRITE,['assets/machines/wheels/wheel-strip.svg']);
-const WHEEL_FRAME_W=32,WHEEL_FRAME_H=24,WHEEL_FRAME_COUNT=8;
+// Большой прозрачный WEBP даёт запас качества при зуме; SVG остаётся fallback.
+bootEnqueue(WHEEL_SPRITE,[
+ 'assets/machines/wheels/wheel-strip.webp',
+ 'assets/machines/wheels/wheel-strip.png',
+ 'assets/machines/wheels/wheel-strip.svg'
+]);
+const WHEEL_FRAME_COUNT=8;
+// Логический размер старого кадра: размеры колёс машин не меняются.
+const WHEEL_DRAW_FRAME_W=32,WHEEL_DRAW_FRAME_H=24;
 const CAR_SVG=CARS.map((_,i)=>{
  const img=new Image();
  const base='assets/machines/cars/'+String(i+1).padStart(2,'0');
@@ -998,7 +1005,7 @@ const AIDRV=[
 const TRACKDEFS=[
  {name:'ПЫЛЬНЫЙ ОВАЛ',theme:{ground:'#b98a4e',dark:'#9a6f3a',road:'#43404b',line:'#d9c49a',deco:'rock',map:'sand'},
   cps:[[420,610],[1150,420],[1980,560],[2560,380],[3180,640],[3280,1320],[2860,1930],[2050,2080],[1300,1940],[760,2060],[380,1600],[300,1000]]},
- {name:'ПЕРЕКРЁСТОК СМЕРТИ',theme:{ground:'#5c6b4a',dark:'#4a5739',road:'#3c3a42',line:'#c8d6a8',deco:'skull'},cps:null},
+ {name:'ПЕРЕКРЁСТОК СМЕРТИ',theme:{ground:'#5c6b4a',dark:'#4a5739',road:'#3c3a42',line:'#c8d6a8',deco:'skull',map:'garden'},cps:null},
  {name:'КАНЬОН «КРУШЕНИЕ»',theme:{ground:'#a05a3c',dark:'#83472e',road:'#4a4048',line:'#f0d9c0',deco:'cactus',map:'desert'},
   cps:[[520,1980],[360,1300],[620,640],[1320,520],[1780,860],[2160,1180],[2600,860],[3120,700],[3380,1200],[3100,1750],[2520,1620],[2140,1980],[1560,1860],[1060,2060]]},
  {name:'ЛЕДЯНОЙ ПЕРЕВАЛ',theme:{ground:'#a8d5e8',dark:'#7fb3d4',road:'#2c4a5a',line:'#e8f4f8',deco:'ice',map:'snow'},
@@ -1024,63 +1031,74 @@ function loadMapTiles(biome){
 loadMapTiles('desert');
 loadMapTiles('snow');
 loadMapTiles('sand');
+loadMapTiles('garden');
 /**
- * Ищем 01.webp, 02.webp, … пока файл открывается. Дырка в нумерации
- * (есть 01 и 03, нет 02) — стоп на 02, тройку не берём. Потолок MAP_TILE_MAX.
+ * Ищем 01.webp / 01.png, 02… Потолок MAP_TILE_MAX.
+ * Две дырки подряд — стоп (01 и 03 подхватятся, 01 без 02 и 03 — только единица).
  */
 async function bootDiscoverMapTiles(biome){
  const list=[];
+ let miss=0;
  for(let i=1;i<=MAP_TILE_MAX;i++){
   const n=String(i).padStart(2,'0');
-  const url='assets/image/textures/map/'+biome+'/'+n+'.webp';
+  const base='assets/image/textures/map/'+biome+'/'+n;
   const img=new Image();
-  const job={img,urls:[url],got:0,total:0,done:false};
+  const job={img,urls:[base+'.webp',base+'.png'],got:0,total:0,done:false};
   BOOT.jobs.push(job);
   bootPaint();
   await bootRunJob(job);
-  if(img.complete&&img.naturalWidth>0){list.push(img);continue;}
+  if(img.complete&&img.naturalWidth>0){list.push(img);miss=0;continue;}
   const ix=BOOT.jobs.indexOf(job);
   if(ix>=0)BOOT.jobs.splice(ix,1);
   bootPaint();
-  break;
+  miss++;
+  if(miss>=2)break;
  }
  MAP_TILES[biome]=list;
 }
 async function bootDiscoverAllMapTiles(){
  for(const biome of MAP_TILE_BIOMES)await bootDiscoverMapTiles(biome);
 }
-// В мире гонки тайлы 1000px выглядят как огромные пласты — сажаем в 256
+// Шаг клетки в мире — 256. Кэш 512: хватает на зум 2.25, без фильтрации 1000px каждый кадр
 const MAP_TILE_CELL=256;
+const MAP_TILE_CACHE=512;
 /** Живые картинки биома: только complete и с шириной, битые кадры не в сетку. */
 function mapTileList(biome){
  return (MAP_TILES[biome]||[]).filter(im=>im.complete&&im.naturalWidth>0);
 }
-/**
- * Случайная сетка тайлов: соседние клетки без одинакового кадра.
- * Кадр рисуем как есть — без поворота и зеркала.
- */
-function fillTiledGround(ctx,w,h,biome,seed,cellSize){
+/** Один случайный кадр из папки: 01 или 02 или любой другой — на весь заезд. */
+function pickMapTile(biome){
  const tiles=mapTileList(biome);
- if(!tiles.length)return false;
- const cell=cellSize||MAP_TILE_CELL;
- const rnd=mulberry(seed);
- const cols=Math.ceil(w/cell),rows=Math.ceil(h/cell);
- ctx.imageSmoothingEnabled=true;
- if(ctx.imageSmoothingQuality)ctx.imageSmoothingQuality='high';
- const grid=[];
- for(let y=0;y<rows;y++){
-  grid[y]=[];
-  for(let x=0;x<cols;x++){
-   let idx=(rnd()*tiles.length)|0;
-   const left=x?grid[y][x-1]:-1;
-   const up=y?grid[y-1][x]:-1;
-   let guard=0;
-   while(tiles.length>1&&(idx===left||idx===up)&&guard++<8)idx=(rnd()*tiles.length)|0;
-   grid[y][x]=idx;
-   ctx.drawImage(tiles[idx],x*cell,y*cell,cell,cell);
-  }
+ if(!tiles.length)return null;
+ return tiles[(Math.random()*tiles.length)|0];
+}
+/** Сжимаем исходник один раз в 512 px — дальше в кадре только этот холст. */
+function bakeMapTile(img){
+ const c=document.createElement('canvas');
+ c.width=c.height=MAP_TILE_CACHE;
+ const q=c.getContext('2d');
+ q.imageSmoothingEnabled=true;
+ if(q.imageSmoothingQuality)q.imageSmoothingQuality='medium';
+ q.drawImage(img,0,0,MAP_TILE_CACHE,MAP_TILE_CACHE);
+ return c;
+}
+/** Повтор запечённого кадра: шаг 256 в мире, без high-quality по полному файлу. */
+function fillMapTileWorld(x,y,w,h,T){
+ if(!T.pat){
+  g.fillStyle=(T.theme&&T.theme.ground)||'#3a2a20';
+  g.fillRect(x,y,w,h);
+  return;
  }
- return true;
+ const src=T.mapBake||T.mapTile;
+ const nw=(src&&(src.width||src.naturalWidth))||MAP_TILE_CELL;
+ const s=MAP_TILE_CELL/nw;
+ g.save();
+ g.imageSmoothingEnabled=true;
+ if(g.imageSmoothingQuality)g.imageSmoothingQuality='medium';
+ g.scale(s,s);
+ g.fillStyle=T.pat;
+ g.fillRect(x/s,y/s,w/s,h/s);
+ g.restore();
 }
 // Полигон лаборатории: широкий овал без карьерного прогресса
 const LAB_TRACK={name:'ПОЛИГОН ЛАБОРАТОРИИ',theme:{ground:'#5a5348',dark:'#3e3a34',road:'#3a3840',line:'#e8dcc0',deco:'rock'},
@@ -1774,10 +1792,11 @@ function distToTrack(T,x,y){let bd=1e18;const S=T.S;for(let i=0;i<S.length;i+=6)
 function prerender(T){
  const c=document.createElement('canvas');c.width=Math.ceil(T.w);c.height=Math.ceil(T.h);const q=c.getContext('2d');
  const th=T.theme,R=mulberry(7+T.idx*31);
- q.fillStyle=th.ground;q.fillRect(0,0,c.width,c.height);
- // Пустыня и другие биомы: фототайлы под трассой, без процедурной «песчаной» крошки
- const tiled=th.map&&fillTiledGround(q,c.width,c.height,th.map,7+T.idx*31);
- if(!tiled){
+ T.mapTile=th.map?pickMapTile(th.map):null;
+ if(T.mapTile){
+  // Земля рисуется в кадре из исходника; здесь только декор и полотно
+ }else{
+  q.fillStyle=th.ground;q.fillRect(0,0,c.width,c.height);
   for(let i=0;i<2600;i++){q.fillStyle=R()<.5?th.dark:'#00000022';const s=2+R()*4;q.fillRect(R()*c.width,R()*c.height,s,s);}
   for(let i=0;i<60;i++){q.fillStyle='#00000014';q.beginPath();q.arc(R()*c.width,R()*c.height,30+R()*90,0,TAU);q.fill();}
  }
@@ -1920,15 +1939,11 @@ function placeTrackHazards(T,seed){
  return{pads,ramps,mines,oils,picks};
 }
 function makeTrackPattern(T,tIdx){
- const biome=T.theme&&T.theme.map;
- if(biome&&mapTileList(biome).length){
-  const cell=MAP_TILE_CELL;
-  const mosaic=document.createElement('canvas');
-  mosaic.width=mosaic.height=cell*3;
-  const mq=mosaic.getContext('2d');
-  mq.fillStyle=T.theme.ground;mq.fillRect(0,0,mosaic.width,mosaic.height);
-  fillTiledGround(mq,mosaic.width,mosaic.height,biome,42+tIdx*7,cell);
-  T.pat=g.createPattern(mosaic,'repeat');
+ const img=T.mapTile||(T.theme&&T.theme.map&&pickMapTile(T.theme.map));
+ if(img){
+  T.mapTile=img;
+  T.mapBake=bakeMapTile(img);
+  T.pat=g.createPattern(T.mapBake,'repeat');
   return;
  }
  const tile=document.createElement('canvas');tile.width=tile.height=128;
@@ -2612,19 +2627,175 @@ function editorWheelSteers(q,i,list){
  if(hi-lo<1)return i>=list.length-2;
  return (+q[0]||0)>=mid;
 }
+////////////////////////////////////////////////////////
+//
+// Щит: полупрозрачная заливка и контур по маске кузова
+//
+////////////////////////////////////////////////////////
+const SHIELD_GFX={};
+const CAR_SHADOW_GFX={};
+let SHIELD_SWEEP=null;
+function bodyMaskReady(im){
+ return !!(im&&im.complete&&im.naturalWidth>0);
+}
+/** Основной спрайт кузова — без слоя брони. */
+function carBodyMaskImg(idx){
+ return editorBodySprite(idx)||CAR_SVG[idx];
+}
+/** Кэш: циановая заливка и кольцо по альфе кузова. */
+function getShieldGfx(idx){
+ const im=carBodyMaskImg(idx);
+ if(!bodyMaskReady(im))return null;
+ const key=idx+'|'+(im.src||'')+'|'+im.naturalWidth+'x'+im.naturalHeight;
+ if(SHIELD_GFX[key])return SHIELD_GFX[key];
+ const iw=im.naturalWidth,ih=im.naturalHeight;
+ const maxSide=140,sc=maxSide/Math.max(iw,ih);
+ const mw=Math.max(8,Math.round(iw*sc)),mh=Math.max(8,Math.round(ih*sc));
+ const pad=10,cw=mw+pad*2,ch=mh+pad*2;
+ const fill=document.createElement('canvas');
+ fill.width=cw;fill.height=ch;
+ const fg=fill.getContext('2d');
+ fg.drawImage(im,pad,pad,mw,mh);
+ fg.globalCompositeOperation='source-in';
+ fg.fillStyle='#35e0ff';
+ fg.fillRect(0,0,cw,ch);
+ const ring=document.createElement('canvas');
+ ring.width=cw;ring.height=ch;
+ const rg=ring.getContext('2d');
+ const d=5;
+ for(let i=0;i<16;i++){
+  const a=i/16*TAU;
+  rg.drawImage(fill,Math.cos(a)*d,Math.sin(a)*d);
+ }
+ rg.globalCompositeOperation='destination-out';
+ rg.drawImage(fill,0,0);
+ const gfx={fill,ring,pad,mw,mh,cw,ch,iw,ih};
+ SHIELD_GFX[key]=gfx;
+ return gfx;
+}
+/** Кэш: чёрный силуэт по альфе кузова (без брони), лёгкое размытие края. */
+function getCarShadowGfx(idx){
+ const im=carBodyMaskImg(idx);
+ if(!bodyMaskReady(im))return null;
+ const key=idx+'|'+(im.src||'')+'|'+im.naturalWidth+'x'+im.naturalHeight;
+ if(CAR_SHADOW_GFX[key])return CAR_SHADOW_GFX[key];
+ const iw=im.naturalWidth,ih=im.naturalHeight;
+ const maxSide=128,sc=maxSide/Math.max(iw,ih);
+ const mw=Math.max(8,Math.round(iw*sc)),mh=Math.max(8,Math.round(ih*sc));
+ const pad=8,cw=mw+pad*2,ch=mh+pad*2;
+ const fill=document.createElement('canvas');
+ fill.width=cw;fill.height=ch;
+ const fg=fill.getContext('2d');
+ fg.drawImage(im,pad,pad,mw,mh);
+ fg.globalCompositeOperation='source-in';
+ fg.fillStyle='#000';
+ fg.fillRect(0,0,cw,ch);
+ const out=document.createElement('canvas');
+ out.width=cw;out.height=ch;
+ const og=out.getContext('2d');
+ if(og.filter!==undefined){
+  og.filter='blur(1.6px)';
+  og.drawImage(fill,0,0);
+  og.filter='none';
+ }else og.drawImage(fill,0,0);
+ const gfx={img:out,pad,mw,mh,cw,ch,iw,ih};
+ CAR_SHADOW_GFX[key]=gfx;
+ return gfx;
+}
+/** Тень на земле: силуэт кузова, в полёте меньше и бледнее. */
+function drawCarGroundShadow(c,r,bodyS){
+ const idx=r.car.idx,z=r.z||0;
+ const airborne=z>2;
+ const gfx=getCarShadowGfx(idx);
+ const cfg=editorCarConfig(idx);
+ const ox=(cfg&&cfg.body&&cfg.body.x)||0;
+ const oy=(cfg&&cfg.body&&cfg.body.y)||0;
+ const shs=airborne?0.72:1;
+ const alpha=airborne?0.22:0.36;
+ c.save();
+ c.translate(0,-z+(airborne?14:5));
+ c.rotate(r.ang);
+ c.scale(shs,shs*0.92);
+ if(CAR_SVG_ROT)c.rotate(CAR_SVG_ROT);
+ c.translate(ox,oy);
+ c.globalAlpha=alpha;
+ if(gfx){
+  const s=60/Math.max(gfx.iw,gfx.ih)*bodyS;
+  const dw=gfx.iw*s,dh=gfx.ih*s;
+  const padU=gfx.pad*(dw/gfx.mw);
+  c.drawImage(gfx.img,-dw/2-padU,-dh/2-padU,dw+padU*2,dh+padU*2);
+ }else{
+  c.fillStyle='#000';
+  rr(c,-27*bodyS,-16*bodyS,54*bodyS,32*bodyS,7);c.fill();
+ }
+ c.restore();
+}
+/** Временный холст для бегущей вспышки по маске. */
+function shieldSweepBuf(w,h){
+ if(!SHIELD_SWEEP||SHIELD_SWEEP.width!==w||SHIELD_SWEEP.height!==h){
+  SHIELD_SWEEP=document.createElement('canvas');
+  SHIELD_SWEEP.width=w;SHIELD_SWEEP.height=h;
+  SHIELD_SWEEP._g=SHIELD_SWEEP.getContext('2d');
+ }
+ return SHIELD_SWEEP;
+}
+/** Щит в пространстве машины: те же поворот и масштаб, что у кузова. */
+function drawCarShield(c,r){
+ if(!(r.shield>0))return;
+ const idx=r.car.idx,z=r.z||0,gfx=getShieldGfx(idx);
+ const mot=typeof hudMotionOk==='function'?hudMotionOk():true;
+ if(!gfx){
+  c.save();
+  c.strokeStyle='rgba(53,224,255,'+(mot?(.5+.3*Math.sin(gt*8)):0.65)+')';
+  c.lineWidth=3;
+  c.beginPath();c.arc(r.x,r.y-z,32,0,TAU);c.stroke();
+  c.restore();
+  return;
+ }
+ const cfg=editorCarConfig(idx);
+ const bodyS=carBodyScale(idx);
+ const ox=(cfg&&cfg.body&&cfg.body.x)||0;
+ const oy=(cfg&&cfg.body&&cfg.body.y)||0;
+ const lift=1+(z/46)*0.25;
+ const s=60/Math.max(gfx.iw,gfx.ih)*bodyS;
+ const dw=gfx.iw*s,dh=gfx.ih*s;
+ const padU=gfx.pad*(dw/gfx.mw);
+ const stacks=Math.min(3,r.shield|0);
+ c.save();
+ c.translate(r.x,r.y-z);
+ c.rotate(r.ang);
+ c.scale(lift,lift);
+ if(CAR_SVG_ROT)c.rotate(CAR_SVG_ROT);
+ c.translate(ox,oy);
+ const x=-dw/2-padU,y=-dh/2-padU,w=dw+padU*2,h=dh+padU*2;
+ c.globalAlpha=mot?(0.12+0.06*Math.sin(gt*5+idx)+stacks*0.04):0.18;
+ c.drawImage(gfx.fill,x,y,w,h);
+ c.globalAlpha=Math.min(1,mot?(0.52+0.28*Math.sin(gt*7)+stacks*0.08):0.72);
+ c.drawImage(gfx.ring,x,y,w,h);
+ if(mot){
+  const buf=shieldSweepBuf(gfx.cw,gfx.ch),sg=buf._g;
+  sg.clearRect(0,0,gfx.cw,gfx.ch);
+  sg.drawImage(gfx.fill,0,0);
+  sg.globalCompositeOperation='source-in';
+  const t=(gt*90+idx*40)%(gfx.cw+36)-18;
+  const band=sg.createLinearGradient(t,0,t+22,0);
+  band.addColorStop(0,'rgba(255,255,255,0)');
+  band.addColorStop(.45,'rgba(180,255,255,.95)');
+  band.addColorStop(1,'rgba(255,255,255,0)');
+  sg.fillStyle=band;sg.fillRect(0,0,gfx.cw,gfx.ch);
+  sg.globalCompositeOperation='source-over';
+  c.globalAlpha=.42;
+  c.drawImage(buf,x,y,w,h);
+ }
+ c.restore();
+}
 function drawCar(c,r,sc){
  const z=r.z||0;
- const airborne=z>2&&z<44;
  const idx=r.car.idx;
  const editorCfg=editorCarConfig(idx);
  const bodyS=editorCfg&&editorCfg.body&&editorCfg.body.scale!=null?editorCfg.body.scale:(idx===6?1.65:1);
  c.save();c.translate(r.x,r.y);
- // ТЕНЬ: всегда под машиной; меньше/бледнее ТОЛЬКО в полёте
- const shs=airborne?0.72:1;
- c.save();c.translate(0,-z+5);c.rotate(r.ang);c.scale(shs,shs);
- c.fillStyle='rgba(0,0,0,'+(airborne?0.28:0.35)+')';
- rr(c,-27*bodyS,-16*bodyS,54*bodyS,32*bodyS,7);c.fill();
- c.restore();
+ drawCarGroundShadow(c,r,bodyS);
  // МАШИНА: поднимается на z и растёт с высотой
  c.translate(0,-z);
  c.rotate(r.ang);
@@ -2634,9 +2805,11 @@ function drawCar(c,r,sc){
  const wheel=(wx,wy,steer,ww,wh)=>{
   c.save();c.translate(wx,wy);c.rotate(steer);
   const frame=((Math.floor(r.wheelRot*.5)%WHEEL_FRAME_COUNT)+WHEEL_FRAME_COUNT)%WHEEL_FRAME_COUNT;
-  const dw=ww*WHEEL_FRAME_W/26,dh=wh*WHEEL_FRAME_H/14;
+  const dw=ww*WHEEL_DRAW_FRAME_W/26,dh=wh*WHEEL_DRAW_FRAME_H/14;
   if(WHEEL_SPRITE.complete&&WHEEL_SPRITE.naturalWidth>0){
-   c.drawImage(WHEEL_SPRITE,frame*WHEEL_FRAME_W,0,WHEEL_FRAME_W,WHEEL_FRAME_H,-dw/2,-dh/2,dw,dh);
+   const srcW=WHEEL_SPRITE.naturalWidth/WHEEL_FRAME_COUNT;
+   const srcH=WHEEL_SPRITE.naturalHeight;
+   c.drawImage(WHEEL_SPRITE,frame*srcW,0,srcW,srcH,-dw/2,-dh/2,dw,dh);
   }else{
    c.fillStyle='#0d0c10';
    c.beginPath();if(c.roundRect)c.roundRect(-ww/2,-wh/2,ww,wh,2);else c.rect(-ww/2,-wh/2,ww,wh);c.fill();
@@ -2950,8 +3123,7 @@ function drawRaceWorld(){
 function drawRaceArena(){
  const T=R.T;
  const vw=visW(),vh=visH();
- g.fillStyle=T.pat||T.theme.ground;
- g.fillRect(R.cam.x-400,R.cam.y-400,vw+800,vh+800);
+ fillMapTileWorld(R.cam.x-64,R.cam.y-64,vw+128,vh+128,T);
  g.drawImage(T.img,0,0);
  // Следы от шин (два отдельных следа + протектор)
  g.lineCap='round';
@@ -3088,7 +3260,7 @@ function drawRaceArena(){
   let al=1;if(r.invuln>0)al=.4+.3*Math.sin(gt*25);
   if(r.cloak&&r.cloak>0)al*=0.15+.05*Math.sin(gt*20);
   g.globalAlpha=al;drawCar(g,r,1);g.globalAlpha=1;
-  if(r.shield>0){g.strokeStyle='rgba(53,224,255,'+(.5+.3*Math.sin(gt*8))+')';g.lineWidth=3;g.beginPath();g.arc(r.x,r.y-(r.z||0),32,0,TAU);g.stroke();}
+  drawCarShield(g,r);
   if(r.isP)drawPlayerRaceTag(g,r);};
  for(const r of order)drawR(r);
  for(const p of R.parts){g.globalAlpha=clamp(p.t*2,0,1);g.fillStyle=p.col;g.beginPath();g.arc(p.x,p.y,p.sz,0,TAU);g.fill();}
