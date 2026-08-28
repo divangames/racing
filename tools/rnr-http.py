@@ -2,10 +2,18 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
 import os
+import shutil
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PORT = int(os.environ.get('PORT', '8765'))
+
+
+def write_car(path, car):
+    """Пишет JSON машины с переводом строки в конце."""
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(car, f, ensure_ascii=False, indent=2)
+        f.write('\n')
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -30,16 +38,27 @@ class Handler(SimpleHTTPRequestHandler):
             return
         slot = data.get('slot')
         car = data.get('car')
+        kind = data.get('kind') or 'work'
         if not isinstance(slot, int) or slot < 0 or slot > 98 or not isinstance(car, dict):
             self.send_error(400)
             return
         folder = '%02d' % (slot + 1)
         dest_dir = os.path.join(ROOT, 'assets', 'data', 'cars', folder)
         os.makedirs(dest_dir, exist_ok=True)
-        dest = os.path.join(dest_dir, 'car.json')
-        with open(dest, 'w', encoding='utf-8') as f:
-            json.dump(car, f, ensure_ascii=False, indent=2)
-            f.write('\n')
+        work = os.path.join(dest_dir, 'car.json')
+        base = os.path.join(dest_dir, 'car.base.json')
+        backup = os.path.join(dest_dir, 'car.backup.json')
+        if kind == 'base':
+            if os.path.isfile(base):
+                shutil.copy2(base, backup)
+            elif os.path.isfile(work):
+                shutil.copy2(work, backup)
+            write_car(base, car)
+            write_car(work, car)
+        elif kind == 'backup':
+            write_car(backup, car)
+        else:
+            write_car(work, car)
         body = b'{"ok":true}'
         self.send_response(200)
         self.send_header('Content-Type', 'application/json; charset=utf-8')

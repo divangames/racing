@@ -7,6 +7,8 @@
 
 const EditorData = (() => {
   const KEY = 'rnr.carEditor.v1';
+  const KEY_BASE = KEY + '.base';
+  const KEY_BACKUP = KEY + '.backup';
   const LEGACY_KEYS = ['rnr.carEditor.v1', 'rnr.carEditor.v1'];
   const STOCK = 11;
   const NAMES = [
@@ -23,17 +25,17 @@ const EditorData = (() => {
     ['11', 'БРИЧКА']
   ];
   const STATS = [
-    {name:'«ГРЯЗЕВОЙ ДЬЯВОЛ»',price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d24a22',col2:'#7e2a12',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
-    {name:'«V8 ПЕРЕХВАТЧИК»',price:3000,top:1.1,acc:1.07,crn:1.02,hp:125,col:'#2f7de0',col2:'#164a8c',hov:false,traits:['ПРОБОЙ: пушки наносят 18 урона','ФОРСАЖ: нитро 1.6x вместо 1.45x','НАДДУВ: +15% разгон']},
-    {name:'«ШРЕДЕР»',price:7500,top:1.16,acc:1.12,crn:1.12,hp:105,col:'#37c94f',col2:'#1c7a2e',hov:false,traits:['ХВАТКА: +12% поворот','РЕГЕН: +2 корпуса в секунду','МИНЁР: мины мощнее и шире']},
-    {name:'«АЭРО-КЛИНОК»',price:15000,top:1.24,acc:1.18,crn:1.28,hp:92,col:'#c9cdd6',col2:'#8a93a6',hov:true,traits:['ХОВЕР: не тормозит вне трассы, не скользит по маслу','ФАЗА: старт гонки с 1 щитом','ИМПУЛЬС: ракеты быстрее и чаще']},
-    {name:'«ЧЁРНЫЙ МОЛОТ»',price:20000,top:0.9,acc:0.85,crn:0.9,hp:180,col:'#1a1a1a',col2:'#8b0000',hov:false,traits:['ТАРАН: тройной урон + отбрасывание','БРОНЯ: -50% урона от мин/ракет','МОНОЛИТ: +70 корпуса']},
-    {name:'«ФАНТОМ»',price:18000,top:1.3,acc:1.22,crn:1.25,hp:85,col:'#3a2a5c',col2:'#1a1028',hov:false,traits:['МАСКИРОВКА: невидимость 3 сек (G)','ФАЗА: проходит сквозь мины','ХИЩНИК: ракеты быстрее']},
-    {name:'«УРАЛ»',price:0,top:0.98,acc:0.97,crn:1.08,hp:120,col:'#7fb2ff',col2:'#2a4a7a',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
-    {name:'«КУРЬЕР»',price:0,top:1.06,acc:1.04,crn:0.99,hp:80,col:'#9dff4a',col2:'#3a7a18',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
-    {name:'«ШПИЛЬКА»',price:0,top:1.06,acc:0.97,crn:1.08,hp:100,col:'#ff5db1',col2:'#8a2458',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
-    {name:'«ЖЕРЕБЕЦ»',price:25000,top:1.26,acc:1.20,crn:1.14,hp:118,col:'#c41e2a',col2:'#5a1018',hov:false,traits:['МИНИГАН: 50 патронов, шкала — магазин, перегрев после опустошения','СКАЧОК: прыжок как с трамплина вместо нитро','ТАБУН: ульта отталкивает и сбрасывает скорость рядом']},
-    {name:'«БРИЧКА»',price:800,top:0.90,acc:0.90,crn:0.99,hp:80,col:'#d45a1a',col2:'#2c2c30',hov:false,traits:['ПУЛЯ: стреляет прямо','ПЫЛЕСОС: тянет деньги, ремонт и ускорение рядом','КУПОЛ: ульта — щит 10 сек от всего урона']}
+    {name:'«ГРЯЗЕВОЙ ДЬЯВОЛ»',owner:0,price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d24a22',col2:'#7e2a12',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
+    {name:'«V8 ПЕРЕХВАТЧИК»',owner:null,price:3000,top:1.1,acc:1.07,crn:1.02,hp:125,col:'#2f7de0',col2:'#164a8c',hov:false,traits:['ПРОБОЙ: пушки наносят 18 урона','ФОРСАЖ: нитро 1.6x вместо 1.45x','НАДДУВ: +15% разгон']},
+    {name:'«ШРЕДЕР»',owner:null,price:7500,top:1.16,acc:1.12,crn:1.12,hp:105,col:'#37c94f',col2:'#1c7a2e',hov:false,traits:['ХВАТКА: +12% поворот','РЕГЕН: +2 корпуса в секунду','МИНЁР: мины мощнее и шире']},
+    {name:'«АЭРО-КЛИНОК»',owner:null,price:15000,top:1.24,acc:1.18,crn:1.28,hp:92,col:'#c9cdd6',col2:'#8a93a6',hov:true,traits:['ХОВЕР: не тормозит вне трассы, не скользит по маслу','ФАЗА: старт гонки с 1 щитом','ИМПУЛЬС: ракеты быстрее и чаще']},
+    {name:'«ЧЁРНЫЙ МОЛОТ»',owner:null,price:20000,top:0.9,acc:0.85,crn:0.9,hp:180,col:'#1a1a1a',col2:'#8b0000',hov:false,traits:['ТАРАН: тройной урон + отбрасывание','БРОНЯ: -50% урона от мин/ракет','МОНОЛИТ: +70 корпуса']},
+    {name:'«ФАНТОМ»',owner:null,price:18000,top:1.3,acc:1.22,crn:1.25,hp:85,col:'#3a2a5c',col2:'#1a1028',hov:false,traits:['МАСКИРОВКА: невидимость 3 сек (G)','ФАЗА: проходит сквозь мины','ХИЩНИК: ракеты быстрее']},
+    {name:'«УРАЛ»',owner:3,price:0,top:0.98,acc:0.97,crn:1.08,hp:120,col:'#7fb2ff',col2:'#2a4a7a',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
+    {name:'«КУРЬЕР»',owner:1,price:0,top:1.06,acc:1.04,crn:0.99,hp:80,col:'#9dff4a',col2:'#3a7a18',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
+    {name:'«ШПИЛЬКА»',owner:2,price:0,top:1.06,acc:0.97,crn:1.08,hp:100,col:'#ff5db1',col2:'#8a2458',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
+    {name:'«ЖЕРЕБЕЦ»',owner:null,price:25000,top:1.26,acc:1.20,crn:1.14,hp:118,col:'#c41e2a',col2:'#5a1018',hov:false,traits:['МИНИГАН: 50 патронов, шкала — магазин, перегрев после опустошения','СКАЧОК: прыжок как с трамплина вместо нитро','ТАБУН: ульта отталкивает и сбрасывает скорость рядом']},
+    {name:'«БРИЧКА»',owner:null,price:800,top:0.90,acc:0.90,crn:0.99,hp:80,col:'#d45a1a',col2:'#2c2c30',hov:false,traits:['ПУЛЯ: стреляет прямо','ПЫЛЕСОС: тянет деньги, ремонт и ускорение рядом','КУПОЛ: ульта — щит 10 сек от всего урона']}
   ];
   const LAYOUTS = [
     [[-15.5,-11.4,12,4,0,1,0],[-15.5,11.4,12,4,0,1,0],[14.2,-11.4,12,4,0,1,1],[14.2,11.4,12,4,0,1,1]],
@@ -54,6 +56,113 @@ const EditorData = (() => {
     [-30.2, -13.5, 10.4, 5.1, 0, 1, 0], [-30.2, 13.5, 10.4, 5.1, 0, 1, 0],
     [37.6, -13.4, 10.4, 5.1, 0, 1, 1], [37.6, 13.4, 10.4, 5.1, 0, 1, 1]
   ];
+  const PILOTS = [];
+
+  /** Стем аватара: 0 → 01_Player. */
+  function avatarStem(i) {
+    if (typeof charAvatarStem === 'function') return charAvatarStem(i);
+    return String((i | 0) + 1).padStart(2, '0') + '_Player';
+  }
+
+  /** Карточки хозяев из CHARS (все, включая NPC). */
+  function pilotsFromChars() {
+    const list = (typeof CHARS !== 'undefined' && Array.isArray(CHARS)) ? CHARS : [];
+    return list.map((c, id) => ({
+      id: id,
+      name: String((c && (c.short || c.name)) || ('ГОНЩИК ' + avatarStem(id).slice(0, 2))).toUpperCase(),
+      file: avatarStem(id),
+      npc: !!(c && c.npc)
+    }));
+  }
+
+  /** Пишет список на месте: игра и панель читают тот же массив. */
+  function setPilots(list) {
+    PILOTS.length = 0;
+    (list || []).forEach((p) => PILOTS.push(p));
+  }
+
+  setPilots(pilotsFromChars());
+
+  /** Номера NN из листинга папки аватаров. */
+  function idsFromAvatarListing(html) {
+    const ids = {};
+    const re = /(\d{2})_Player(?!_fullbody)\.(?:webp|png)/gi;
+    let m;
+    while ((m = re.exec(html || ''))) ids[Number(m[1]) - 1] = true;
+    return Object.keys(ids).map(Number).filter((n) => n >= 0 && n <= 99).sort((a, b) => a - b);
+  }
+
+  /** Есть ли портрет webp/png. */
+  function avatarFileExists(stem) {
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (ok) => { if (done) return; done = true; resolve(!!ok); };
+      const im = new Image();
+      im.onload = () => finish(true);
+      im.onerror = () => {
+        const im2 = new Image();
+        im2.onload = () => finish(true);
+        im2.onerror = () => finish(false);
+        im2.src = 'assets/image/avatars/' + stem + '.png';
+      };
+      im.src = 'assets/image/avatars/' + stem + '.webp';
+      setTimeout(() => finish(false), 2500);
+    });
+  }
+
+  /** Добирает гонщиков из аватаров, которых ещё нет в CHARS. */
+  async function refreshPilots() {
+    const byId = {};
+    pilotsFromChars().forEach((p) => { byId[p.id] = p; });
+    let listed = [];
+    try {
+      const res = await fetch('assets/image/avatars/?rnr=pilots');
+      if (res.ok) listed = idsFromAvatarListing(await res.text());
+    } catch (err) {}
+    listed.forEach((id) => {
+      if (byId[id]) return;
+      byId[id] = {
+        id: id,
+        name: 'ГОНЩИК ' + String(id + 1).padStart(2, '0'),
+        file: avatarStem(id),
+        extra: true
+      };
+    });
+    const start = Math.max(Object.keys(byId).length ? Math.max.apply(null, Object.keys(byId).map(Number)) + 1 : 0, (typeof CHARS !== 'undefined' && CHARS.length) || 0);
+    let miss = 0;
+    for (let i = start; i < 40 && miss < 3; i++) {
+      if (byId[i]) { miss = 0; continue; }
+      const ok = await avatarFileExists(avatarStem(i));
+      if (ok) {
+        byId[i] = {id: i, name: 'ГОНЩИК ' + String(i + 1).padStart(2, '0'), file: avatarStem(i), extra: true};
+        miss = 0;
+      } else miss += 1;
+    }
+    setPilots(Object.keys(byId).map(Number).sort((a, b) => a - b).map((id) => byId[id]));
+    return PILOTS;
+  }
+
+  /** Заводской хозяин слота: null — магазин. */
+  function defaultOwner(i) {
+    if (i == null || i < 0 || i >= STATS.length) return null;
+    const o = STATS[i].owner;
+    return (typeof parseOwnerId === 'function' ? parseOwnerId(o) : ((o === 0 || o > 0) ? o : null));
+  }
+
+  /** Хозяин из слота: индекс гонщика или null. */
+  function ownerOf(car, slot) {
+    const parse = (typeof parseOwnerId === 'function')
+      ? parseOwnerId
+      : (raw) => {
+        if (raw === null || raw === '') return null;
+        const n = Number(raw);
+        return (n === 0 || n > 0) ? (n | 0) : null;
+      };
+    const s = car && car.stats;
+    if (s && 'owner' in s) return parse(s.owner);
+    if (car && 'owner' in car) return parse(car.owner);
+    return defaultOwner(slot);
+  }
   const LAYERS = ['shadow', 'wheels', 'nitro', 'body', 'armor', 'guides'];
   const URAL_LAYERS = ['shadow', 'wheels', 'nitro', 'body', 'armor', 'guides'];
   const LAYER_RU = {shadow:'Тень',wheels:'Колёса',nitro:'Нитро',body:'Кузов',armor:'Броня',guides:'Метки'};
@@ -111,13 +220,15 @@ const EditorData = (() => {
   /** Стек слоёв: каждый клон — отдельная строка, порядок снизу вверх. */
   function ensureStack(car) {
     if (!car) return car;
-    if (Array.isArray(car.stack) && car.stack.length) {
+    if (Array.isArray(car.stack) && car.stack.length &&
+        car.stack.every((L) => L && typeof L === 'object' && L.type)) {
       car.stack.forEach((L) => {
         if (!L.id) L.id = newLayerId('l');
         if (L.on == null) L.on = true;
       });
       return car;
     }
+    delete car.stack;
     const vis = car.visible || {};
     const order = (car.layers && car.layers.length) ? car.layers : LAYERS.slice();
     const stack = [];
@@ -143,7 +254,6 @@ const EditorData = (() => {
     addMissing('wheel', car.w, 'w');
     addMissing('nitro', car.nitro, 'n');
     car.stack = stack;
-    if (car.rev == null) car.rev = DISK_REV;
     return car;
   }
 
@@ -253,6 +363,7 @@ const EditorData = (() => {
       nitro: clone(car.nitro || []),
       stack: clone(car.stack),
       stats: clone(car.stats),
+      owner: ownerOf(car, null),
       visible: clone(car.visible || {}),
       layers: clone(car.layers || LAYERS)
     };
@@ -273,11 +384,11 @@ const EditorData = (() => {
   /** Ставит руль на нос машины, если флаг потерян или остался только на задней оси. */
   function restoreSteer(wheels, factoryW) {
     if (!wheels || !wheels.length) return wheels;
-    const xs = wheels.map((w) => w[0]);
+    const xs = wheels.map((w) => (w && w[0]) || 0);
     const mid = (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2;
     if (wheels.some((w) => w && w[6] && w[0] >= mid)) return wheels;
     return wheels.map((w, i) => {
-      const out = w.slice();
+      const out = (Array.isArray(w) ? w : normWheel(w)).slice();
       if (factoryW && factoryW[i] && factoryW[i][6]) out[6] = 1;
       else out[6] = w[0] >= mid ? 1 : 0;
       return out;
@@ -290,7 +401,7 @@ const EditorData = (() => {
     const st = clone(stock ? STATS[i] : {
       name: '«СВОЯ ' + String(i + 1).padStart(2, '0') + '»',
       price: 0, top: 1, acc: 1, crn: 1, hp: 100,
-      col: '#c8b48a', col2: '#5a4630', hov: false,
+      col: '#c8b48a', col2: '#5a4630', hov: false, owner: null,
       traits: ['СВОЯ МАШИНА', 'НАСТРОЙ ПОД СЕБЯ', '']
     });
     const wheels = stock
@@ -301,7 +412,7 @@ const EditorData = (() => {
     ];
     const car = {
       custom: !stock,
-      body: {x: 0, y: 0, scale: stock && i === 6 ? 1.65 : 1, armor: 0},
+      body: {x: 0, y: 0, ax: 0, ay: 0, sx: 1, sy: 1, scale: stock && i === 6 ? 1.65 : 1, armor: 0},
       w: wheels,
       nitro: defaultNitro(stock ? i : 3),
       layers: (stock && i === 6 ? URAL_LAYERS : LAYERS).slice(),
@@ -320,7 +431,7 @@ const EditorData = (() => {
 
   /** Старая раскладка: средняя ось у стыка кабины, слишком широкий вынос. */
   function isOldUralLayout(w) {
-    if (!w || w.length !== 6) return false;
+    if (!w || w.length !== 6 || !Array.isArray(w[0]) || !Array.isArray(w[2])) return false;
     return Math.abs(+w[0][0] + 38.12) < 2.8 && Math.abs(+w[2][0] + 19.31) < 3.5;
   }
 
@@ -331,13 +442,19 @@ const EditorData = (() => {
     const body = Object.assign(base.body, saved.body || {});
     if (body.armor == null && saved.body && saved.body.armor != null) body.armor = saved.body.armor;
     body.armor = body.armor || 0;
+    body.ax = +body.ax || 0;
+    body.ay = +body.ay || 0;
+    body.sx = isFinite(+body.sx) && +body.sx > 0 ? +body.sx : 1;
+    body.sy = isFinite(+body.sy) && +body.sy > 0 ? +body.sy : 1;
     const vis = Object.assign(base.visible, saved.visible || {});
     const stats = Object.assign(base.stats, saved.stats || {});
     if (typeof saved.name === 'string' && !saved.stats) stats.name = saved.name;
+    if (saved && 'owner' in saved && !('owner' in (saved.stats || {}))) stats.owner = saved.owner;
+    if (!('owner' in stats)) stats.owner = defaultOwner(i);
     let wheels = restoreSteer(Array.isArray(saved.w) ? saved.w.map(normWheel) : base.w, base.w);
     const nitro = saved.nitro != null ? (Array.isArray(saved.nitro) ? saved.nitro.map(normJet) : []) : base.nitro;
     let layers = Array.isArray(saved.layers) && saved.layers.length ? saved.layers.slice() : base.layers.slice();
-    if (i === 6) {
+    if (i === 6 && revTime(saved.rev) === 0) {
       if (isOldUralStack(layers)) layers = URAL_LAYERS.slice();
       if (isOldUralLayout(wheels)) wheels = URAL_WHEELS.map(normWheel);
     }
@@ -350,6 +467,12 @@ const EditorData = (() => {
     return ensureStack(out);
   }
 
+  /** Метка времени сохранения; 1, 2, 3 — номер схемы, не дата. */
+  function revTime(v) {
+    const n = Number(v);
+    return (isFinite(n) && n > 1e11) ? n : 0;
+  }
+
   /** Читает localStorage с запасными ключами. */
   function readRaw() {
     for (const k of [KEY, ...LEGACY_KEYS]) {
@@ -359,22 +482,28 @@ const EditorData = (() => {
     return null;
   }
 
+  /** fetch с отсечкой, чтобы file:// не держал лабораторию пустой. */
+  function fetchJson(url) {
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, 1800);
+    const opts = {cache: 'no-store'};
+    if (ctrl) opts.signal = ctrl.signal;
+    return fetch(url, opts).then((r) => r.ok ? r.json() : null).finally(() => clearTimeout(timer));
+  }
+
   /** Подгружает заводские JSON из assets/data/cars. */
   async function hydrateFromDisk() {
+    if (typeof location !== 'undefined' && location.protocol === 'file:') return;
     diskCars = {};
     const jobs = [];
     for (let i = 0; i < STOCK; i++) {
       const url = 'assets/data/cars/' + folderId(i) + '/car.json';
-      jobs.push(
-        fetch(url, {cache: 'no-store'}).then((r) => r.ok ? r.json() : null).then((j) => {
-          if (j) diskCars[i] = j;
-        }).catch(() => {})
-      );
+      jobs.push(fetchJson(url).then((j) => { if (j) diskCars[i] = j; }).catch(() => {}));
     }
     await Promise.all(jobs);
   }
 
-  /** Диск + браузер: свежие правки (rev) перекрывают файл. */
+  /** Диск + браузер: слот из браузера не уступает файлу с той же или старой меткой. */
   function load() {
     let ls = {};
     try {
@@ -387,48 +516,115 @@ const EditorData = (() => {
     Object.keys(diskCars).forEach((k) => { ids[Number(k)] = true; });
     Object.keys(ls).forEach((k) => { ids[Number(k)] = true; });
     Object.keys(ids).map(Number).filter((n) => !isNaN(n)).sort((a, b) => a - b).forEach((i) => {
-      const d = diskCars[i] || diskCars[String(i)];
-      const s = ls[i] || ls[String(i)];
-      let c = factory(i);
-      if (d) c = mergeCar(i, d);
-      const dRev = (d && d.rev) || 0;
-      const sRev = (s && s.rev) || 0;
-      if (s && (sRev >= dRev || !d)) c = mergeCar(i, s);
-      cars[i] = c;
+      try {
+        const d = diskCars[i] || diskCars[String(i)];
+        const s = ls[i] || ls[String(i)];
+        let c = factory(i);
+        const dRev = revTime(d && d.rev);
+        const sRev = revTime(s && s.rev);
+        if (s && (!d || sRev >= dRev)) c = mergeCar(i, s);
+        else if (d) c = mergeCar(i, d);
+        cars[i] = c;
+      } catch (err) {
+        console.error('слот ' + i, err);
+        cars[i] = factory(i);
+      }
     });
+    if (!Object.keys(cars).length) {
+      for (let i = 0; i < STOCK; i++) cars[i] = factory(i);
+    }
     return {version: 3, cars};
   }
 
-  /** Пишет пакет в браузер. */
+  /** Пишет пакет в браузер, не трогая живой объект редактора. */
   function save(data) {
-    Object.keys(data.cars || {}).forEach((k) => {
-      const car = data.cars[k];
+    const out = clone(data);
+    Object.keys(out.cars || {}).forEach((k) => {
+      const car = out.cars[k];
       if (!car || !Array.isArray(car.w)) return;
       car.w = restoreSteer(car.w.map(normWheel), factory(Number(k)).w);
       ensureStack(car);
       syncVisibleFromStack(car);
     });
-    const json = JSON.stringify(data);
+    const json = JSON.stringify(out);
     localStorage.setItem(KEY, json);
     try { localStorage.setItem(KEY + '.ts', String(Date.now())); } catch (err) {}
     return json.length;
   }
 
-  /** Пишет car.json на диск через локальный сервер. */
-  function pushDisk(slot, car) {
-    car.rev = Date.now();
+  /** Пишет одну машину в localStorage-мешок. */
+  function bagSet(key, slot, car) {
+    let bag = {cars: {}};
+    try { bag = JSON.parse(localStorage.getItem(key) || '{}') || {cars: {}}; } catch (err) {}
+    if (!bag.cars) bag.cars = {};
+    bag.cars[slot] = fileCar(car);
+    localStorage.setItem(key, JSON.stringify(bag));
+  }
+
+  /** Читает одну машину из мешка. */
+  function bagGet(key, slot) {
+    try {
+      const bag = JSON.parse(localStorage.getItem(key) || '{}');
+      return (bag && bag.cars && (bag.cars[slot] || bag.cars[String(slot)])) || null;
+    } catch (err) { return null; }
+  }
+
+  /** Пишет car.json / car.base.json / car.backup.json. */
+  function pushDisk(slot, car, kind) {
+    if (!revTime(car.rev)) car.rev = Date.now();
     const payload = fileCar(car);
     payload.rev = car.rev;
     return fetch('/__save-car', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({slot: slot, car: payload})
+      body: JSON.stringify({slot: slot, car: payload, kind: kind || 'work'})
     }).then((r) => r.ok).catch(() => false);
+  }
+
+  /** Текущее состояние — новая база; прежняя база уходит в бэкап. */
+  function saveAsBase(slot, car) {
+    const prev = bagGet(KEY_BASE, slot);
+    if (prev) bagSet(KEY_BACKUP, slot, prev);
+    else bagSet(KEY_BACKUP, slot, factory(slot));
+    bagSet(KEY_BASE, slot, car);
+    return pushDisk(slot, car, 'base');
+  }
+
+  /** Кладёт текущую машину в бэкап (перед сбросом). */
+  function saveBackup(slot, car) {
+    bagSet(KEY_BACKUP, slot, car);
+    return pushDisk(slot, car, 'backup');
+  }
+
+  /** Файл слота с диска. */
+  function fetchSlotFile(slot, name) {
+    if (typeof location !== 'undefined' && location.protocol === 'file:') {
+      return Promise.resolve(null);
+    }
+    return fetchJson('assets/data/cars/' + folderId(slot) + '/' + name);
+  }
+
+  /** Базовые настройки слота: диск, затем браузер. */
+  function loadBaseCar(slot) {
+    return fetchSlotFile(slot, 'car.base.json').then((j) => {
+      if (j) return mergeCar(slot, j);
+      const b = bagGet(KEY_BASE, slot);
+      return b ? mergeCar(slot, b) : null;
+    });
+  }
+
+  /** Бэкап слота: диск, затем браузер. */
+  function loadBackupCar(slot) {
+    return fetchSlotFile(slot, 'car.backup.json').then((j) => {
+      if (j) return mergeCar(slot, j);
+      const b = bagGet(KEY_BACKUP, slot);
+      return b ? mergeCar(slot, b) : null;
+    });
   }
 
     /** Список индексов: сток 0–10 плюс кастомы. */
   function indices(data) {
-    const extra = Object.keys(data.cars).map(Number).filter((n) => n >= STOCK);
+    const extra = Object.keys((data && data.cars) || {}).map(Number).filter((n) => n >= STOCK);
     extra.sort((a, b) => a - b);
     const out = [];
     for (let i = 0; i < STOCK; i++) out.push(i);
@@ -444,5 +640,11 @@ const EditorData = (() => {
     return [String(i + 1).padStart(2, '0'), n];
   }
 
-  return {KEY, STOCK, NAMES, STATS, LAYERS, URAL_LAYERS, LAYER_RU, DISK_REV, clone, factory, mergeCar, load, save, indices, label, normWheel, restoreSteer, normJet, defaultNitro, ensureStack, stackItemOn, cloneWheelLayer, cloneNitroLayer, reindexStack, appendWheel, appendNitro, syncVisibleFromStack, layerTitle, fileCar, hydrateFromDisk, pushDisk, folderId};
+  /** База слота из браузера или завод, без сети. */
+  function peekBase(slot) {
+    const b = bagGet(KEY_BASE, slot);
+    return b ? mergeCar(slot, b) : factory(slot);
+  }
+
+  return {KEY, STOCK, NAMES, STATS, LAYERS, URAL_LAYERS, LAYER_RU, PILOTS, DISK_REV, clone, factory, mergeCar, load, save, indices, label, normWheel, restoreSteer, normJet, defaultNitro, defaultOwner, ownerOf, ensureStack, stackItemOn, cloneWheelLayer, cloneNitroLayer, reindexStack, appendWheel, appendNitro, syncVisibleFromStack, layerTitle, fileCar, hydrateFromDisk, pushDisk, saveAsBase, saveBackup, loadBaseCar, loadBackupCar, peekBase, folderId, revTime, refreshPilots};
 })();

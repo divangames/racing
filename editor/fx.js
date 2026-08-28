@@ -38,11 +38,11 @@ const EditorFx = (() => {
       const chosen = i === sel || multi.indexOf(i) >= 0 || layerOn;
       if (opts.marks === false) return;
       ctx.beginPath();
-      ctx.arc(p[0], p[1], chosen ? 1.35 : 1.05, 0, Math.PI * 2);
-      ctx.fillStyle = chosen ? '#35e0ff' : (i === opts.hover ? '#ffd23f' : '#ff8a3d');
+      ctx.arc(p[0], p[1], chosen ? 0.7 : 0.45, 0, Math.PI * 2);
+      ctx.fillStyle = chosen ? '#3d9eff' : (i === opts.hover ? '#e8c547' : '#ff8a3d');
       ctx.fill();
-      ctx.fillStyle = '#eee8f4';
-      ctx.font = '2.3px Arial';
+      ctx.fillStyle = 'rgba(238,232,244,.85)';
+      ctx.font = '1.6px Arial';
       ctx.fillText('N' + (i + 1), p[0] + 1.4, p[1] - 1.3);
     });
   }
@@ -51,7 +51,8 @@ const EditorFx = (() => {
   function armorFallback(ctx, car, sz) {
     const lvl = car.body.armor | 0;
     if (lvl < 1) return;
-    const x = car.body.x, y = car.body.y;
+    const x = (car.body.x || 0) + (+car.body.ax || 0);
+    const y = (car.body.y || 0) + (+car.body.ay || 0);
     const w = sz.w * (0.92 + lvl * 0.012);
     const h = sz.h * (0.88 + lvl * 0.01);
     ctx.save();
@@ -76,7 +77,9 @@ const EditorFx = (() => {
     if (lvl < 1) return;
     ctx.fillStyle = '#ffd23f';
     ctx.font = '2.6px Arial';
-    ctx.fillText('БРОНЯ ' + ['', 'I', 'II', 'III', 'IV', 'V', 'VI'][lvl], car.body.x - 8, car.body.y + sz.h / 2 + 3.4);
+    ctx.fillText('БРОНЯ ' + ['', 'I', 'II', 'III', 'IV', 'V', 'VI'][lvl],
+      (car.body.x || 0) + (+car.body.ax || 0) - 8,
+      (car.body.y || 0) + (+car.body.ay || 0) + sz.h / 2 + 3.4);
   }
 
   return {drawNitro, armorFallback, armorBadge};
