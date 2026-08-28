@@ -35,6 +35,7 @@ const EditorFx = (() => {
     (jets || []).forEach((p, i) => {
       jet(ctx, p[0], p[1], p[2], p[3], t, live);
       const chosen = i === sel || multi.indexOf(i) >= 0 || layerOn;
+      if (opts.marks === false) return;
       ctx.beginPath();
       ctx.arc(p[0], p[1], chosen ? 1.35 : 1.05, 0, Math.PI * 2);
       ctx.fillStyle = chosen ? '#35e0ff' : (i === opts.hover ? '#ffd23f' : '#ff8a3d');

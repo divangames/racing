@@ -1,4 +1,5 @@
 @echo off
-chcp 65001 >nul
 cd /d "%~dp0"
-start "" "rnr.html"
+echo Opening game...
+call "%~dp0local-server.bat" rnr.html
+if errorlevel 1 pause

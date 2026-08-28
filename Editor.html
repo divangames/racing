@@ -29,7 +29,7 @@
       <div class="stage-head">
         <div>
           <div class="machine-name" id="machineName">МАШИНА</div>
-          <p class="stage-note">Колесо — зум · средняя кнопка — панорама · + / − / 0 — масштаб · Ctrl+клик — мультивыбор · стрелки — сдвиг</p>
+          <p class="stage-note">Колесо — зум · средняя кнопка — панорама · Ctrl+клик — несколько · Ctrl+D — клон · Ctrl+Z / Ctrl+Y — шаг · H — отметки</p>
         </div>
         <div class="legend">
           <span><i class="dot yellow"></i>кузов</span>
@@ -40,8 +40,11 @@
       </div>
       <canvas id="stage" aria-label="Холст редактора машины"></canvas>
       <div class="stage-tools">
-        <button type="button" id="undoBtn" title="Ctrl+Z">Отмена</button>
-        <button type="button" id="redoBtn" title="Ctrl+Y">Вперёд</button>
+        <div class="history-tools" role="group" aria-label="История правок">
+          <button type="button" id="undoBtn" title="Шаг назад · Ctrl+Z">← Назад</button>
+          <button type="button" id="redoBtn" title="Шаг вперёд · Ctrl+Y">Вперёд →</button>
+        </div>
+        <label class="file-label" style="min-height:36px">Отметки<input class="check" id="marksToggle" type="checkbox" checked></label>
         <div class="zoom-tools" role="group" aria-label="Масштаб холста">
           <button type="button" id="zoomOutBtn" title="Отдалить (−)">−</button>
           <button type="button" id="zoomReadout" title="Вписать машину в кадр">100%</button>
@@ -58,33 +61,17 @@
         <span id="coordReadout">X 0.0 · Y 0.0</span>
         <span id="saveState">Настройки не изменены</span>
       </div>
+      <p class="origin-warn" id="originWarn" hidden></p>
     </section>
     <aside class="panel">
       <section class="section">
-        <div class="section-title">МАШИНА <span id="carCounter">01 / 10</span></div>
+        <div class="section-title">МАШИНА <span id="carCounter">01 / 11</span></div>
         <div class="car-list" id="carList"></div>
         <div class="actions" style="margin-top:8px">
           <button type="button" id="addCarBtn">+ Своя</button>
           <button type="button" id="dupCarBtn">Копия</button>
           <button type="button" id="delCarBtn" class="danger">Удалить</button>
         </div>
-      </section>
-      <section class="section">
-        <div class="section-title">ХАРАКТЕРИСТИКИ</div>
-        <div class="field"><label for="statName">Имя</label><input id="statName" maxlength="42"></div>
-        <div class="field-grid" style="margin-top:8px">
-          <div class="field"><label for="statTop">Макс. скорость</label><input id="statTop" type="number" step="0.01" min="0.6" max="1.8"><div class="bar"><i id="barTop"></i></div></div>
-          <div class="field"><label for="statAcc">Разгон</label><input id="statAcc" type="number" step="0.01" min="0.6" max="1.8"><div class="bar"><i id="barAcc"></i></div></div>
-          <div class="field"><label for="statCrn">Поворот</label><input id="statCrn" type="number" step="0.01" min="0.6" max="1.8"><div class="bar"><i id="barCrn"></i></div></div>
-          <div class="field"><label for="statHp">Корпус</label><input id="statHp" type="number" step="1" min="40" max="240"><div class="bar"><i id="barHp"></i></div></div>
-          <div class="field"><label for="statPrice">Цена</label><input id="statPrice" type="number" step="100" min="0"></div>
-          <div class="field"><label for="statHov">Ховер</label><input class="check" id="statHov" type="checkbox"></div>
-          <div class="field"><label for="statCol">Цвет 1</label><input id="statCol" type="color"></div>
-          <div class="field"><label for="statCol2">Цвет 2</label><input id="statCol2" type="color"></div>
-        </div>
-        <div class="field" style="margin-top:8px"><label for="trait0">Особенность 1</label><input id="trait0"></div>
-        <div class="field"><label for="trait1">Особенность 2</label><input id="trait1"></div>
-        <div class="field"><label for="trait2">Особенность 3</label><input id="trait2"></div>
       </section>
       <section class="section">
         <div class="section-title">КУЗОВ</div>
@@ -111,9 +98,9 @@
       </section>
       <section class="section">
         <div class="section-title">СЛОИ <span>верхний поверх</span></div>
-        <p class="hint">Галочка сразу прячет слой на холсте и в игре. Имя — выбрать, чтобы тащить. ↑ наверх (поверх), ↓ вниз. Порядок сохраняется, в том числе у «Урала». Нарисованные на кузове колёса остаются в картинке — это слой «Кузов».</p>
+        <p class="hint">Галочка прячет слой. Имя — выбрать слой целиком. Клик по колесу или трубе — править только его. «Клонировать элемент» / Ctrl+D — копия, дальше независимо.</p>
         <div class="actions" style="margin-bottom:8px">
-          <button type="button" id="cloneLayer">Клонировать выбранное</button>
+          <button type="button" id="cloneLayer">Клонировать элемент</button>
         </div>
         <div id="layers"></div>
       </section>
@@ -129,13 +116,14 @@
         <div class="field-grid" style="margin-top:9px">
           <div class="field"><label for="wheelX">X</label><input id="wheelX" type="number" step="0.1"></div>
           <div class="field"><label for="wheelY">Y</label><input id="wheelY" type="number" step="0.1"></div>
-          <div class="field"><label for="wheelW">Ширина</label><input id="wheelW" type="number" step="0.1" min="1"></div>
-          <div class="field"><label for="wheelH">Высота</label><input id="wheelH" type="number" step="0.1" min="1"></div>
+          <div class="field"><label for="wheelW">Ширина</label><input id="wheelW" type="number" step="0.5" min="0.2"></div>
+          <div class="field"><label for="wheelH">Высота</label><input id="wheelH" type="number" step="0.5" min="0.2"></div>
           <div class="field"><label for="wheelAngle">Поворот</label><input id="wheelAngle" type="number" step="0.01"></div>
           <div class="field"><label for="wheelScale">Множитель</label><input id="wheelScale" type="number" step="0.01" min=".1" max="4"></div>
         </div>
         <label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:8px"><input class="check" id="wheelSteer" type="checkbox"> Рулевое (крутится в повороте)</label>
-        <p class="hint">Зелёная точка — ступица. Утопите её под крылом, если диск не должен торчать.</p>
+        <label class="hint" style="display:flex;gap:8px;align-items:center;margin-top:6px"><input class="check" id="wheelMirror" type="checkbox" checked> Зеркалить пару по Y</label>
+        <p class="hint">Зелёная точка — ступица. С зеркалом левое и правое на одной оси едут вместе: позиция, ширина, высота и масштаб. Снимите галочку, чтобы править сторону отдельно.</p>
       </section>
       <section class="section">
         <div class="section-title">НИТРО</div>
@@ -152,7 +140,24 @@
           <div class="field"><label for="nitroLen">Длина</label><input id="nitroLen" type="number" step="0.1" min="1"></div>
           <div class="field"><label for="nitroHalf">Ширина</label><input id="nitroHalf" type="number" step="0.05" min="0.2"></div>
         </div>
-        <p class="hint">Оранжевая точка — выход струи. Включите «Тест», чтобы увидеть живое пламя.</p>
+        <p class="hint">Оранжевая точка — выход струи. «Клон» делает отдельную трубу: длина и место свои. «Тест» — живое пламя.</p>
+      </section>
+      <section class="section">
+        <div class="section-title">ХАРАКТЕРИСТИКИ</div>
+        <div class="field"><label for="statName">Имя</label><input id="statName" maxlength="42"></div>
+        <div class="field-grid" style="margin-top:8px">
+          <div class="field"><label for="statTop">Макс. скорость</label><input id="statTop" type="number" step="0.01" min="0.6" max="1.8"><div class="bar"><i id="barTop"></i></div></div>
+          <div class="field"><label for="statAcc">Разгон</label><input id="statAcc" type="number" step="0.01" min="0.6" max="1.8"><div class="bar"><i id="barAcc"></i></div></div>
+          <div class="field"><label for="statCrn">Поворот</label><input id="statCrn" type="number" step="0.01" min="0.6" max="1.8"><div class="bar"><i id="barCrn"></i></div></div>
+          <div class="field"><label for="statHp">Корпус</label><input id="statHp" type="number" step="1" min="40" max="240"><div class="bar"><i id="barHp"></i></div></div>
+          <div class="field"><label for="statPrice">Цена</label><input id="statPrice" type="number" step="100" min="0"></div>
+          <div class="field"><label for="statHov">Ховер</label><input class="check" id="statHov" type="checkbox"></div>
+          <div class="field"><label for="statCol">Цвет 1</label><input id="statCol" type="color"></div>
+          <div class="field"><label for="statCol2">Цвет 2</label><input id="statCol2" type="color"></div>
+        </div>
+        <div class="field" style="margin-top:8px"><label for="trait0">Особенность 1</label><input id="trait0"></div>
+        <div class="field"><label for="trait1">Особенность 2</label><input id="trait1"></div>
+        <div class="field"><label for="trait2">Особенность 3</label><input id="trait2"></div>
       </section>
       <section class="section">
         <div class="section-title">СОХРАНЕНИЕ</div>

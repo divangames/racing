@@ -1,4 +1,5 @@
 @echo off
-chcp 65001 >nul
 cd /d "%~dp0"
-start "" "Editor.html"
+echo Opening car lab...
+call "%~dp0local-server.bat" Editor.html
+if errorlevel 1 pause

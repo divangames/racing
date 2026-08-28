@@ -13,6 +13,8 @@ const EditorView = (() => {
   let pendingFit = false;
   let drag = null, hoverW = -1, hoverN = -1, spin = 0, playing = true, testing = false;
   let snap = false, yaw = 0, testSteer = 0, now = 0;
+  let mirrorWheels = true;
+  let showMarks = true;
   let layerSel = [], wheelSel = [], nitroSel = [], lastFocus = 'wheel';
   const cache = new Map();
 
@@ -20,9 +22,6 @@ const EditorView = (() => {
   function init(opts) {
     canvas = opts.canvas;
     ctx = canvas.getContext('2d');
-    sprite = new Image();
-    sprite.src = 'assets/machines/wheels/wheel-strip.svg';
-    sprite.onload = draw;
     getCar = opts.getCar;
     getIndex = opts.getIndex;
     getWheel = opts.getWheel;
@@ -34,6 +33,11 @@ const EditorView = (() => {
     onHover = opts.onHover;
     onDragEnd = opts.onDragEnd;
     onZoom = opts.onZoom;
+    sprite = imgChain([
+      'assets/machines/wheels/wheel-strip.webp',
+      'assets/machines/wheels/wheel-strip.png',
+      'assets/machines/wheels/wheel-strip.svg'
+    ]);
     bind();
     fit();
     window.addEventListener('resize', resize);
@@ -216,25 +220,47 @@ const EditorView = (() => {
     ctx.scale(cam.z, cam.z);
     ctx.translate(-cam.x, -cam.y);
     ctx.rotate(yaw);
+    drawGrid();
     const car = getCar();
+    if (!car) { ctx.restore(); return; }
     const layers = car.layers || EditorData.LAYERS;
     layers.forEach((name) => {
       if (!layerOn(car, name)) return;
       drawLayer(car, name);
     });
-    // Колёса и нитро под непрозрачным кузовом иначе не видны — дублируем полупрозрачно сверху.
     const covers = ['body', 'armor'];
-    if (layerOn(car, 'wheels') && (layerOn(car, 'body') || layerOn(car, 'armor')) && buriedUnder(layers, 'wheels', covers)) {
-      ctx.save();
-      ctx.globalAlpha = 0.7;
-      drawWheels(car);
-      ctx.restore();
-    }
     if (layerOn(car, 'nitro') && (layerOn(car, 'body') || layerOn(car, 'armor')) && buriedUnder(layers, 'nitro', covers)) {
       ctx.save();
       ctx.globalAlpha = 0.7;
       drawNitro(car);
       ctx.restore();
+    }
+    if (layerOn(car, 'body') && !bodyReady()) {
+      ctx.fillStyle = '#ffd23f';
+      ctx.font = '4px Arial';
+      ctx.fillText('Нет спрайта кузова', -22, 0);
+    }
+    ctx.restore();
+  }
+
+  /** Сетка при включённой привязке. */
+  function drawGrid() {
+    if (!snap) return;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(53,224,255,.14)';
+    ctx.lineWidth = 1 / Math.max(cam.z, 1);
+    const step = 5;
+    for (let x = -90; x <= 90; x += step) {
+      ctx.beginPath();
+      ctx.moveTo(x, -60);
+      ctx.lineTo(x, 60);
+      ctx.stroke();
+    }
+    for (let y = -60; y <= 60; y += step) {
+      ctx.beginPath();
+      ctx.moveTo(-90, y);
+      ctx.lineTo(90, y);
+      ctx.stroke();
     }
     ctx.restore();
   }
@@ -266,12 +292,35 @@ const EditorView = (() => {
     const painted = drawBody(car, true);
     const sz = bodyDrawSize(car);
     if (!painted) EditorFx.armorFallback(ctx, car, sz);
-    EditorFx.armorBadge(ctx, car, sz);
+    if (showMarks) EditorFx.armorBadge(ctx, car, sz);
   }
 
-  /** Размер колеса как в игре. */
+  /** Размер колеса как в игре: ширина / высота / множитель сразу видны на холсте. */
   function wheelSize(w) {
-    return {dw: w[2] * 32 / 26 * w[5], dh: w[3] * 24 / 14 * w[5]};
+    const sx = Number(w && w[5]);
+    const scale = isFinite(sx) && sx > 0 ? sx : 1;
+    const ww = Number(w && w[2]);
+    const wh = Number(w && w[3]);
+    return {
+      dw: Math.max(0.4, (isFinite(ww) ? ww : 12) * scale),
+      dh: Math.max(0.4, (isFinite(wh) ? wh : 8) * scale)
+    };
+  }
+
+  /** Точка центра колеса: ось вращения и якорь размера. */
+  function drawWheelHub(selected, hovered) {
+    const r = Math.max(0.55, 2.4 / Math.max(cam.z, 0.8));
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fillStyle = selected ? '#35e0ff' : (hovered ? '#ffd23f' : '#fff4c8');
+    ctx.fill();
+    ctx.strokeStyle = '#111018';
+    ctx.lineWidth = Math.max(0.2, 0.9 / Math.max(cam.z, 0.8));
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.28, 0, Math.PI * 2);
+    ctx.fillStyle = '#111018';
+    ctx.fill();
   }
 
   /** Колёса: спрайт, руль в тесте, рамка выбора. */
@@ -290,17 +339,21 @@ const EditorView = (() => {
       ctx.translate(w[0], w[1]);
       ctx.rotate(w[4] + (w[6] ? testSteer : 0));
       const frame = ((Math.floor(spin) % 8) + 8) % 8;
-      if (sprite.complete && sprite.naturalWidth) {
-        ctx.drawImage(sprite, frame * 32, 0, 32, 24, -dw / 2, -dh / 2, dw, dh);
+      ctx.imageSmoothingEnabled = true;
+      if (sprite && sprite.complete && sprite.naturalWidth) {
+        const srcW = sprite.naturalWidth / 8;
+        const srcH = sprite.naturalHeight;
+        ctx.drawImage(sprite, frame * srcW, 0, srcW, srcH, -dw / 2, -dh / 2, dw, dh);
       } else {
         ctx.fillStyle = '#111';
         ctx.fillRect(-dw / 2, -dh / 2, dw, dh);
       }
-      if (i === sel || wheelSel.indexOf(i) >= 0 || layerSel.indexOf('wheels') >= 0) {
+      if (showMarks && (i === sel || wheelSel.indexOf(i) >= 0 || layerSel.indexOf('wheels') >= 0)) {
         ctx.strokeStyle = i === sel ? '#35e0ff' : '#7af0ff';
         ctx.lineWidth = i === sel ? 0.7 : 0.45;
         ctx.strokeRect(-dw / 2, -dh / 2, dw, dh);
       }
+      if (showMarks) drawWheelHub(i === sel || wheelSel.indexOf(i) >= 0, i === hoverW);
       ctx.restore();
     });
   }
@@ -313,19 +366,16 @@ const EditorView = (() => {
       sel: getNitro(),
       multi: nitroSel,
       layerOn: layerSel.indexOf('nitro') >= 0,
-      hover: hoverN
+      hover: hoverN,
+      marks: showMarks
     });
   }
 
   /** Точки колёс, нитро и рамка кузова. */
   function drawGuides(car) {
-    const sel = getWheel();
+    if (!showMarks) return;
     if (layerOn(car, 'wheels')) {
       (car.w || []).forEach((w, i) => {
-        ctx.fillStyle = (i === sel || wheelSel.indexOf(i) >= 0) ? '#35e0ff' : (i === hoverW ? '#ffd23f' : '#58ff6b');
-        ctx.beginPath();
-        ctx.arc(w[0], w[1], 1.1, 0, Math.PI * 2);
-        ctx.fill();
         ctx.fillStyle = '#eee8f4';
         ctx.font = '2.3px Arial';
         ctx.fillText(String(i + 1) + (w[6] ? '*' : ''), w[0] + 1.4, w[1] - 1.3);
@@ -359,9 +409,31 @@ const EditorView = (() => {
     }
     return {
       body: body,
-      wheels: allW ? (car.w || []).map((_, i) => i) : (wheelSel.length > 1 ? wheelSel.slice() : []),
-      nitros: allN ? (car.nitro || []).map((_, i) => i) : (nitroSel.length > 1 ? nitroSel.slice() : [])
+      wheels: allW ? (car.w || []).map((_, i) => i) : (wheelSel.length ? wheelSel.slice() : (lastFocus === 'wheel' ? [getWheel()] : [])),
+      nitros: allN ? (car.nitro || []).map((_, i) => i) : (nitroSel.length ? nitroSel.slice() : (lastFocus === 'nitro' ? [getNitro()] : []))
     };
+  }
+
+  /** Пара на той же оси: близкий X и зеркальный Y, иначе сосед в раскладке 0–1, 2–3, 4–5. */
+  function pairWheel(car, i) {
+    const list = car && car.w;
+    if (!list || i < 0 || !list[i]) return -1;
+    const x = list[i][0], y = list[i][1];
+    if (Math.abs(y) < 0.35) return -1;
+    let best = -1, bestScore = 8;
+    list.forEach((w, j) => {
+      if (j === i || !w) return;
+      if (y * w[1] >= 0) return;
+      const dx = Math.abs(w[0] - x);
+      const dy = Math.abs(w[1] + y);
+      if (dx > 10 || dy > 5) return;
+      const score = dx + dy;
+      if (score < bestScore) {
+        bestScore = score;
+        best = j;
+      }
+    });
+    return best;
   }
 
   /** Сдвигает выбранные слои, колёса и нитро. */
@@ -371,12 +443,24 @@ const EditorView = (() => {
       car.body.x = (pose ? pose.body.x : car.body.x) + dx;
       car.body.y = (pose ? pose.body.y : car.body.y) + dy;
     }
+    const moved = {};
     (t.wheels || []).forEach((i) => {
       const w = car.w[i];
       if (!w) return;
       w[0] = (pose ? pose.wheels[i][0] : w[0]) + dx;
       w[1] = (pose ? pose.wheels[i][1] : w[1]) + dy;
+      moved[i] = true;
     });
+    if (mirrorWheels && t.wheels && t.wheels.length) {
+      t.wheels.forEach((i) => {
+        const j = pairWheel(car, i);
+        if (j < 0 || moved[j] || !car.w[j]) return;
+        const pw = car.w[j];
+        pw[0] = (pose ? pose.wheels[j][0] : pw[0]) + dx;
+        pw[1] = (pose ? pose.wheels[j][1] : pw[1]) - dy;
+        moved[j] = true;
+      });
+    }
     (t.nitros || []).forEach((i) => {
       const n = car.nitro[i];
       if (!n) return;
@@ -409,7 +493,7 @@ const EditorView = (() => {
 
   /** Выбор колеса: Ctrl добавляет в набор. */
   function pickWheel(i, add) {
-    if (!add) layerSel = [];
+    if (!add) layerSel = layerSel.filter((n) => n !== 'wheels');
     setWheel(i);
     lastFocus = 'wheel';
     if (!add) { wheelSel = [i]; return; }
@@ -421,7 +505,7 @@ const EditorView = (() => {
 
   /** Выбор трубы нитро: Ctrl добавляет в набор. */
   function pickNitro(i, add) {
-    if (!add) layerSel = [];
+    if (!add) layerSel = layerSel.filter((n) => n !== 'nitro');
     setNitro(i);
     lastFocus = 'nitro';
     if (!add) { nitroSel = [i]; return; }
@@ -503,14 +587,6 @@ const EditorView = (() => {
         return;
       }
       const add = e.ctrlKey || e.metaKey;
-      // Выбранный слой двигается целиком — колёса не перехватывают жест.
-      if (layerSel.length && !add && e.button === 0) {
-        if (layerSel.indexOf('body') >= 0 || layerSel.indexOf('armor') >= 0 || layerSel.indexOf('shadow') >= 0) lastFocus = 'body';
-        drag = {type: 'move', px: p.x, py: p.y, pose: capturePose(car)};
-        canvas.setPointerCapture(e.pointerId);
-        onSelect();
-        return;
-      }
       if (nHit >= 0) {
         pickNitro(nHit, add);
         onSelect();
@@ -525,13 +601,17 @@ const EditorView = (() => {
         canvas.setPointerCapture(e.pointerId);
         return;
       }
-      if (hitBody(p, car) || layerSel.length) {
-        if (layerSel.indexOf('body') >= 0 || layerSel.indexOf('armor') >= 0 || layerSel.indexOf('shadow') >= 0) lastFocus = 'body';
-        if (!(e.ctrlKey || e.metaKey) && !layerSel.length) layerSel = [];
+      if (hitBody(p, car)) {
+        if (!add && layerSel.indexOf('body') < 0 && layerSel.indexOf('armor') < 0) layerSel = [];
+        lastFocus = 'body';
         drag = {type: 'move', px: p.x, py: p.y, pose: capturePose(car)};
         canvas.setPointerCapture(e.pointerId);
         onSelect();
         return;
+      }
+      if (layerSel.length && e.button === 0) {
+        layerSel = [];
+        onSelect();
       }
       drag = {type: 'pan', x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y};
       canvas.setPointerCapture(e.pointerId);
@@ -587,13 +667,16 @@ const EditorView = (() => {
   }
 
   function setSnap(v) { snap = !!v; }
+  function setMarks(v) { showMarks = !!v; draw(); }
+  function marksOn() { return showMarks; }
+  function setMirrorWheels(v) { mirrorWheels = !!v; }
   function setPlay(v) { playing = !!v; }
   function setTest(v) { testing = !!v; if (v) playing = true; }
   function setYaw(v) { yaw = +v || 0; }
   function clearCache() { cache.clear(); }
 
   return {
-    init, draw, fit, zoomBy, zoomLabel, resize, setSnap, setPlay, setTest, setYaw, clearCache,
+    init, draw, fit, zoomBy, zoomLabel, resize, setSnap, setMarks, marksOn, setMirrorWheels, pairWheel, setPlay, setTest, setYaw, clearCache,
     pickLayer, pickWheel, pickNitro, hasLayer, hasWheel, hasNitro, clearSel,
     focusKind, selectedWheels, selectedNitro, cam
   };

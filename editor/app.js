@@ -11,10 +11,12 @@ const EditorApp = (() => {
   let nitroIndex = 0;
   let dirty = false;
   let fillLock = false;
+  let sizeEdit = false;
   let history = [];
   let histAt = -1;
   let restoring = false;
   let inputTimer = null;
+  let persistTimer = null;
 
   /** Текущая машина, при необходимости создаётся из завода. */
   function car() {
@@ -42,6 +44,7 @@ const EditorApp = (() => {
       histAt = history.length - 1;
     }
     syncHistoryBtns();
+    persistSoon();
   }
 
   /** Откладывает шаг, чтобы набор цифр или стрелок стал одним действием. */
@@ -69,8 +72,26 @@ const EditorApp = (() => {
 
   /** Включает кнопки отмены и повтора. */
   function syncHistoryBtns() {
-    $('undoBtn').disabled = histAt <= 0;
-    $('redoBtn').disabled = histAt < 0 || histAt >= history.length - 1;
+    const u = $('undoBtn');
+    const r = $('redoBtn');
+    if (u) u.disabled = histAt <= 0;
+    if (r) r.disabled = histAt < 0 || histAt >= history.length - 1;
+  }
+
+  const MARKS_KEY = 'rnr.carEditor.marks';
+
+  /** Показать или спрятать точки, номера, рамки и оси. */
+  function applyMarks(on, silent) {
+    EditorView.setMarks(on);
+    const t = $('marksToggle');
+    if (t) t.checked = !!on;
+    try { localStorage.setItem(MARKS_KEY, on ? '1' : '0'); } catch (err) {}
+    if (!silent) setText('status', on ? 'Отметки на холсте.' : 'Отметки скрыты.');
+  }
+
+  /** Читает прошлый выбор отметок. */
+  function loadMarksPref() {
+    try { return localStorage.getItem(MARKS_KEY) !== '0'; } catch (err) { return true; }
   }
 
   /** Откатывает пакет к снимку. */
@@ -85,7 +106,7 @@ const EditorApp = (() => {
     fillFields();
     EditorView.draw();
     restoring = false;
-    mark();
+    persist(true);
     syncHistoryBtns();
   }
 
@@ -118,16 +139,46 @@ const EditorApp = (() => {
   }
 
   /** Сохраняет пакет в браузер. */
-  function persist() {
+  function persist(silent) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
     try {
       EditorData.save(pack);
       dirty = false;
       setText('saveState', 'Сохранено в браузере');
-      setText('status', 'Игра на этом адресе подхватит колёса, нитро, броню и характеристики.');
+      if (!silent) setText('status', 'Игра на этом адресе подхватит колёса, нитро, броню и характеристики.');
+      return true;
     } catch (err) {
       console.error(err);
-      setText('status', 'Не удалось сохранить в браузер.');
+      try {
+        const slim = EditorData.clone(pack);
+        Object.keys(slim.cars || {}).forEach((k) => {
+          if (+k !== carIndex) delete slim.cars[k].bodyData;
+        });
+        EditorData.save(slim);
+        dirty = false;
+        setText('saveState', 'Сохранено (без чужих корпусов)');
+        if (!silent) setText('status', 'Места в браузере мало: свой корпус оставлен только у текущей машины.');
+        return true;
+      } catch (err2) {
+        console.error(err2);
+        setText('status', 'Не удалось сохранить в браузер. Скачайте JSON.');
+        return false;
+      }
     }
+  }
+
+  /** Пишет пакет и сразу уходит в игру или на полигон. */
+  function goToGame(query) {
+    flushCommit();
+    persist(true);
+    location.href = 'rnr.html' + (query || '');
+  }
+
+  /** Пишет в браузер после паузы ввода, чтобы игра видела те же колёса, что холст. */
+  function persistSoon() {
+    clearTimeout(persistTimer);
+    persistTimer = setTimeout(() => { persistTimer = null; persist(true); }, 280);
   }
 
   /** Заполняет список слотов. */
@@ -204,7 +255,8 @@ const EditorApp = (() => {
       c.visible = c.visible || {};
       c.visible[name] = inp.checked;
       mark();
-      persist();
+      commitNow();
+      persist(true);
       EditorView.draw();
       const ru = EditorData.LAYER_RU[name] || name;
       setText('status', inp.checked ? 'Слой «' + ru + '» включён.' : 'Слой «' + ru + '» скрыт.');
@@ -244,9 +296,11 @@ const EditorApp = (() => {
         c.layers.slice(i + 1).some((n) => covers.indexOf(n) >= 0);
       const ru = EditorData.LAYER_RU[name] || name;
       const hint = buried && c.visible[name] !== false ? ' <i class="hint">под кузовом</i>' : '';
-      const checked = c.visible[name] === false ? '' : ' checked';
+      const hidden = c.visible[name] === false;
+      const checked = hidden ? '' : ' checked';
       const on = EditorView.hasLayer(name) ? ' is-on' : '';
-      return '<div class="layer-row' + on + '" data-layer-row="' + name + '">' +
+      const off = hidden ? ' is-off' : '';
+      return '<div class="layer-row' + on + off + '" data-layer-row="' + name + '">' +
         '<input class="check" type="checkbox" data-layer="' + name + '" aria-label="' + ru + '"' + checked + '>' +
         '<span>' + ru + hint + '</span>' +
         '<button type="button" data-i="' + i + '" data-dir="-1" title="Ниже">↓</button>' +
@@ -265,7 +319,7 @@ const EditorApp = (() => {
     mark();
     renderLayers();
     commit();
-    persist();
+    persist(true);
     EditorView.draw();
   }
 
@@ -293,19 +347,8 @@ const EditorApp = (() => {
       $('trait1').value = (s.traits && s.traits[1]) || '';
       $('trait2').value = (s.traits && s.traits[2]) || '';
       paintBars(s);
-      const w = c.w[wheelIndex] || [0, 0, 12, 8, 0, 1, 0];
-      $('wheelX').value = w[0].toFixed(2);
-      $('wheelY').value = w[1].toFixed(2);
-      $('wheelW').value = w[2].toFixed(2);
-      $('wheelH').value = w[3].toFixed(2);
-      $('wheelAngle').value = w[4].toFixed(2);
-      $('wheelScale').value = w[5].toFixed(2);
-      $('wheelSteer').checked = !!w[6];
-      const n = (c.nitro || [])[nitroIndex] || [-26, 0, 9, 1.5];
-      $('nitroX').value = n[0].toFixed(2);
-      $('nitroY').value = n[1].toFixed(2);
-      $('nitroLen').value = n[2].toFixed(2);
-      $('nitroHalf').value = n[3].toFixed(2);
+      paintWheelFields();
+      paintNitroFields();
     } catch (err) {
       console.error(err);
     }
@@ -324,6 +367,68 @@ const EditorApp = (() => {
     $('barHp').style.width = Math.round((s.hp - 60) / 160 * 100) + '%';
   }
 
+  /** Курсор в поле ввода — наведение на холсте не должно сбивать набор. */
+  function fieldTyping() {
+    if (sizeEdit) return true;
+    const el = document.activeElement;
+    return !!(el && /INPUT|TEXTAREA|SELECT/.test(el.tagName));
+  }
+
+  /** Пишет в поля текущее колесо. */
+  function paintWheelFields() {
+    const w = (car().w || [])[wheelIndex] || [0, 0, 12, 8, 0, 1, 0];
+    const lock = fillLock;
+    fillLock = true;
+    $('wheelX').value = w[0].toFixed(2);
+    $('wheelY').value = w[1].toFixed(2);
+    $('wheelW').value = w[2].toFixed(2);
+    $('wheelH').value = w[3].toFixed(2);
+    $('wheelAngle').value = w[4].toFixed(2);
+    $('wheelScale').value = w[5].toFixed(2);
+    $('wheelSteer').checked = !!w[6];
+    fillLock = lock;
+  }
+
+  /** Пишет в поля текущую трубу нитро. */
+  function paintNitroFields() {
+    const n = (car().nitro || [])[nitroIndex] || [-26, 0, 9, 1.5];
+    const lock = fillLock;
+    fillLock = true;
+    $('nitroX').value = n[0].toFixed(2);
+    $('nitroY').value = n[1].toFixed(2);
+    $('nitroLen').value = n[2].toFixed(2);
+    $('nitroHalf').value = n[3].toFixed(2);
+    fillLock = lock;
+  }
+
+  /** Колесо или нитро под курсором становятся текущими, поля сразу их показывают. */
+  function followHover(hoverW, hoverN) {
+    if (fieldTyping()) return;
+    const c = car();
+    if (hoverW >= 0 && c.w && c.w[hoverW]) {
+      if (wheelIndex === hoverW) return;
+      wheelIndex = hoverW;
+      renderWheels();
+      paintWheelFields();
+      return;
+    }
+    if (hoverN >= 0 && c.nitro && c.nitro[hoverN]) {
+      if (nitroIndex === hoverN) return;
+      nitroIndex = hoverN;
+      renderNitro();
+      paintNitroFields();
+    }
+  }
+
+  /** Подсветка списков без перезаписи всей панели. */
+  function refreshSel() {
+    renderWheels();
+    renderNitro();
+    renderLayers();
+    paintWheelFields();
+    paintNitroFields();
+  }
+
   /** Выбор слота. */
   function selectCar(i) {
     carIndex = i;
@@ -335,8 +440,31 @@ const EditorApp = (() => {
     EditorView.fit();
   }
 
-  /** Число из поля. */
-  function num(id) { return Number($(id).value) || 0; }
+  /** Копирует правку на парное колесо: размер целиком, Y и угол зеркалятся. */
+  function mirrorWheelValue(i, k, v) {
+    if (!$('wheelMirror') || !$('wheelMirror').checked) return;
+    const src = car().w[i];
+    const j = EditorView.pairWheel(car(), i);
+    if (j < 0 || !src) return;
+    const p = car().w[j];
+    if (!p) return;
+    if (k === 2 || k === 3 || k === 5) {
+      p[2] = src[2];
+      p[3] = src[3];
+      p[5] = src[5];
+      return;
+    }
+    p[k] = (k === 1 || k === 4) ? -v : v;
+  }
+
+  /** Число из поля: и точка, и запятая, valueAsNumber у type=number. */
+  function num(id) {
+    const el = $(id);
+    if (!el) return 0;
+    if (el.type === 'number' && isFinite(el.valueAsNumber)) return el.valueAsNumber;
+    const n = Number(String(el.value || '').trim().replace(',', '.'));
+    return isFinite(n) ? n : 0;
+  }
 
   /** Навешивает поля кузова, статов и колёс. */
   function bindFields() {
@@ -379,14 +507,26 @@ const EditorApp = (() => {
       });
     });
     [['wheelX', 0], ['wheelY', 1], ['wheelW', 2], ['wheelH', 3], ['wheelAngle', 4], ['wheelScale', 5]].forEach(([id, k]) => {
-      $(id).addEventListener('input', () => {
+      const el = $(id);
+      el.addEventListener('focus', () => { sizeEdit = true; });
+      el.addEventListener('blur', () => { sizeEdit = false; });
+      const apply = () => {
         if (fillLock || !car().w[wheelIndex]) return;
-        car().w[wheelIndex][k] = num(id); commitSoon();
-      });
+        const v = num(id);
+        if (!isFinite(v)) return;
+        car().w[wheelIndex][k] = v;
+        mirrorWheelValue(wheelIndex, k, v);
+        commitSoon();
+        EditorView.draw();
+      };
+      el.addEventListener('input', apply);
+      el.addEventListener('change', apply);
     });
     $('wheelSteer').addEventListener('change', () => {
       if (!car().w[wheelIndex]) return;
-      car().w[wheelIndex][6] = $('wheelSteer').checked ? 1 : 0;
+      const on = $('wheelSteer').checked ? 1 : 0;
+      car().w[wheelIndex][6] = on;
+      mirrorWheelValue(wheelIndex, 6, on);
       mark(); renderWheels();
       commit();
     });
@@ -402,58 +542,74 @@ const EditorApp = (() => {
     });
   }
 
-  /** Клонирует выбранные или текущее колесо. */
+  /** Клонирует выбранные колёса; копия живёт отдельно, не в паре. */
   function cloneWheels() {
     const c = car();
-    const ids = EditorView.hasLayer('wheels')
-      ? (c.w || []).map((_, i) => i)
-      : (EditorView.selectedWheels().length ? EditorView.selectedWheels() : [wheelIndex]);
+    if (!c.w) c.w = [];
+    let ids = EditorView.selectedWheels();
+    if (!ids.length && c.w[wheelIndex]) ids = [wheelIndex];
+    const created = [];
     ids.forEach((i) => {
       const w = c.w[i];
       if (!w) return;
       const copy = w.slice();
-      copy[0] += 2;
-      copy[1] += 2;
+      copy[0] += 3;
+      copy[1] += 3;
       c.w.push(EditorData.normWheel(copy));
+      created.push(c.w.length - 1);
     });
-    wheelIndex = c.w.length - 1;
+    if (!created.length) {
+      setText('status', 'Сначала выберите колесо на холсте или в списке.');
+      return;
+    }
+    wheelIndex = created[created.length - 1];
     EditorView.pickWheel(wheelIndex, false);
+    created.slice(0, -1).forEach((i) => EditorView.pickWheel(i, true));
     fillFields();
     commitNow();
+    setText('status', created.length > 1
+      ? 'Склонированы колёса. Каждое двигается и настраивается отдельно.'
+      : 'Склонировано колесо. Двигайте и настраивайте его отдельно от исходного.');
   }
 
-  /** Клонирует выбранные или текущую трубу нитро. */
+  /** Клонирует выбранные трубы нитро — каждая струя сама по себе. */
   function cloneNitro() {
     const c = car();
     if (!c.nitro) c.nitro = [];
-    const ids = EditorView.hasLayer('nitro')
-      ? c.nitro.map((_, i) => i)
-      : (EditorView.selectedNitro().length ? EditorView.selectedNitro() : [nitroIndex]);
+    let ids = EditorView.selectedNitro();
+    if (!ids.length && c.nitro[nitroIndex]) ids = [nitroIndex];
+    const created = [];
     ids.forEach((i) => {
       const n = c.nitro[i];
       if (!n) return;
       const copy = n.slice();
-      copy[0] += 2;
-      copy[1] += 2;
+      copy[0] += 3;
+      copy[1] += 3;
       c.nitro.push(EditorData.normJet(copy));
+      created.push(c.nitro.length - 1);
     });
-    nitroIndex = c.nitro.length - 1;
-    EditorView.pickNitro(nitroIndex, false);
-    fillFields();
-    commitNow();
-  }
-
-  /** Клонирует выбранный слой: колёса и/или нитро. */
-  function cloneSelected() {
-    const kind = EditorView.focusKind();
-    const wheels = EditorView.hasLayer('wheels') || kind === 'wheel';
-    const nitro = EditorView.hasLayer('nitro') || kind === 'nitro';
-    if (!wheels && !nitro) {
-      $('status').textContent = 'Кузов и броню нельзя клонировать — выберите колёса или нитро.';
+    if (!created.length) {
+      setText('status', 'Сначала выберите трубу нитро на холсте или в списке.');
       return;
     }
-    if (wheels) cloneWheels();
-    if (nitro) cloneNitro();
+    nitroIndex = created[created.length - 1];
+    EditorView.pickNitro(nitroIndex, false);
+    created.slice(0, -1).forEach((i) => EditorView.pickNitro(i, true));
+    fillFields();
+    commitNow();
+    setText('status', created.length > 1
+      ? 'Склонированы трубы нитро. Каждую правьте отдельно.'
+      : 'Склонирована труба нитро. Двигайте и меняйте длину отдельно.');
+  }
+
+  /** Клонирует то, что в фокусе: трубу нитро или колесо. */
+  function cloneSelected() {
+    const kind = EditorView.focusKind();
+    if (kind === 'nitro') { cloneNitro(); return; }
+    if (kind === 'wheel') { cloneWheels(); return; }
+    if (EditorView.selectedNitro().length) { cloneNitro(); return; }
+    if (EditorView.selectedWheels().length) { cloneWheels(); return; }
+    setText('status', 'Выберите колесо или трубу нитро — кузов клонировать не нужно.');
   }
 
   /** Кнопки панели и файлы. */
@@ -489,7 +645,7 @@ const EditorApp = (() => {
       pack.cars[carIndex] = EditorData.factory(carIndex);
       wheelIndex = 0; nitroIndex = 0; fillFields(); EditorView.clearCache(); commitNow();
     };
-    $('gameBtn').onclick = () => { location.href = 'rnr.html'; };
+    $('gameBtn').onclick = () => goToGame('');
     $('addWheel').onclick = () => {
       car().w.push(EditorData.normWheel([18, 12, 12, 6, 0, 1, 1]));
       wheelIndex = car().w.length - 1; fillFields(); commitNow();
@@ -551,12 +707,11 @@ const EditorApp = (() => {
       selectCar(next); commitNow();
     };
     $('snapToggle').onchange = () => EditorView.setSnap($('snapToggle').checked);
+    $('marksToggle').onchange = () => applyMarks($('marksToggle').checked);
+    $('wheelMirror').onchange = () => EditorView.setMirrorWheels($('wheelMirror').checked);
     $('playToggle').onchange = () => EditorView.setPlay($('playToggle').checked);
     $('testToggle').onchange = () => EditorView.setTest($('testToggle').checked);
-    $('testDriveBtn').onclick = () => {
-      EditorData.save(pack);
-      location.href = 'rnr.html?lab=1&car=' + carIndex;
-    };
+    $('testDriveBtn').onclick = () => goToGame('?lab=1&car=' + carIndex);
     $('yawRange').oninput = () => EditorView.setYaw(Number($('yawRange').value) * Math.PI / 180);
     $('zoomOutBtn').onclick = () => EditorView.zoomBy(0.85);
     $('zoomInBtn').onclick = () => EditorView.zoomBy(1.18);
@@ -565,11 +720,22 @@ const EditorApp = (() => {
     $('undoBtn').onclick = undo;
     $('redoBtn').onclick = redo;
     window.addEventListener('keydown', (e) => {
-      const key = e.key.toLowerCase();
+      const key = (e.key || '').toLowerCase();
       if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && key === 'd') return;
       if (key === 'z' && e.shiftKey) { e.preventDefault(); redo(); return; }
       if (key === 'z') { e.preventDefault(); undo(); return; }
-      if (key === 'y') { e.preventDefault(); redo(); }
+      if (key === 'y') { e.preventDefault(); redo(); return; }
+      if (key === 'd') { e.preventDefault(); cloneSelected(); }
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+      const k = e.key;
+      if (k === 'h' || k === 'H' || k === 'р' || k === 'Р') {
+        e.preventDefault();
+        applyMarks(!EditorView.marksOn());
+      }
     });
   }
 
@@ -598,14 +764,28 @@ const EditorApp = (() => {
         $('bodyY').value = car().body.y.toFixed(2);
         fillLock = false;
       },
-      onSelect: () => { try { fillFields(); } catch (err) { console.error(err); renderLayers(); } },
-      onHover: (p) => { $('coordReadout').textContent = 'X ' + p.x.toFixed(1) + ' · Y ' + p.y.toFixed(1); },
+      onSelect: () => { try { refreshSel(); } catch (err) { console.error(err); } },
+      onHover: (p, hoverW, hoverN) => {
+        $('coordReadout').textContent = 'X ' + p.x.toFixed(1) + ' · Y ' + p.y.toFixed(1);
+        followHover(hoverW, hoverN);
+      },
       onZoom: (label) => { $('zoomReadout').textContent = label; },
       onDragEnd: () => commitNow()
     });
     fillFields();
+    applyMarks(loadMarksPref(), true);
     commit();
     syncHistoryBtns();
+    const warn = $('originWarn');
+    if (warn && location.protocol === 'file:') {
+      warn.hidden = false;
+      warn.textContent = 'Лаборатория открыта как файл. Игра не увидит настройки. Запустите editor.bat — тот же адрес, что у start.bat (порт 8765).';
+    }
+    const flushSave = () => { flushCommit(); persist(true); };
+    window.addEventListener('pagehide', flushSave);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushSave();
+    });
     try {
       const n = parseInt(new URLSearchParams(location.search).get('car') || '', 10);
       if (!isNaN(n) && EditorData.indices(pack).indexOf(n) >= 0) selectCar(n);
