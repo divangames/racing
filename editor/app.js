@@ -5,7 +5,7 @@
 
 const EditorApp = (() => {
   const $ = (id) => document.getElementById(id);
-  let pack = EditorData.load();
+  let pack = {version: 3, cars: {}};
   let carIndex = 0;
   let wheelIndex = 0;
   let nitroIndex = 0;
@@ -138,15 +138,32 @@ const EditorApp = (() => {
     setText('saveState', 'Есть несохранённые изменения');
   }
 
-  /** Сохраняет пакет в браузер. */
+  /** Сохраняет пакет в браузер и в папку машины. */
   function persist(silent) {
     clearTimeout(persistTimer);
     persistTimer = null;
     try {
+      const c = pack.cars[carIndex];
+      if (c) {
+        EditorData.ensureStack(c);
+        EditorData.syncVisibleFromStack(c);
+        c.rev = Date.now();
+      }
       EditorData.save(pack);
       dirty = false;
       setText('saveState', 'Сохранено в браузере');
-      if (!silent) setText('status', 'Игра на этом адресе подхватит колёса, нитро, броню и характеристики.');
+      if (c && carIndex < EditorData.STOCK) {
+        EditorData.pushDisk(carIndex, c).then((ok) => {
+          if (ok) setText('saveState', 'Сохранено в файл и браузер');
+          if (!silent) {
+            setText('status', ok
+              ? 'Игра читает assets/data/cars/' + EditorData.folderId(carIndex) + '/car.json и этот же пакет в браузере.'
+              : 'В браузере есть. Чтобы писать файлы, запустите editor.bat заново (сервер с записью).');
+          }
+        });
+      } else if (!silent) {
+        setText('status', 'Игра на этом адресе подхватит колёса, нитро, броню и характеристики.');
+      }
       return true;
     } catch (err) {
       console.error(err);
@@ -249,17 +266,19 @@ const EditorApp = (() => {
     box.addEventListener('change', (e) => {
       const inp = e.target;
       if (!inp || inp.type !== 'checkbox') return;
-      const name = inp.getAttribute('data-layer');
-      if (!name) return;
+      const id = inp.getAttribute('data-stack-id');
+      if (!id) return;
       const c = car();
-      c.visible = c.visible || {};
-      c.visible[name] = inp.checked;
+      EditorData.ensureStack(c);
+      const L = (c.stack || []).find((x) => x.id === id);
+      if (!L) return;
+      L.on = inp.checked;
+      EditorData.syncVisibleFromStack(c);
       mark();
       commitNow();
       persist(true);
       EditorView.draw();
-      const ru = EditorData.LAYER_RU[name] || name;
-      setText('status', inp.checked ? 'Слой «' + ru + '» включён.' : 'Слой «' + ru + '» скрыт.');
+      setText('status', inp.checked ? 'Слой «' + EditorData.layerTitle(L, c) + '» включён.' : 'Слой «' + EditorData.layerTitle(L, c) + '» скрыт.');
     });
     box.addEventListener('click', (e) => {
       const mv = e.target.closest('[data-dir]');
@@ -272,50 +291,51 @@ const EditorApp = (() => {
       if (e.target.closest('input')) return;
       const row = e.target.closest('[data-layer-row]');
       if (!row) return;
-      const name = row.getAttribute('data-layer-row');
-      EditorView.pickLayer(name, e.ctrlKey || e.metaKey);
-      const ru = EditorData.LAYER_RU[name] || name;
-      setText('status', 'Слой «' + ru + '». Тащите на холсте. ↑ — наверх, ↓ — вниз.');
+      const id = row.getAttribute('data-layer-row');
+      EditorView.pickLayer(id, e.ctrlKey || e.metaKey);
+      const c = car();
+      const L = (c.stack || []).find((x) => x.id === id);
+      setText('status', 'Слой «' + EditorData.layerTitle(L, c) + '». Тащите на холсте. ↑ — наверх, ↓ — вниз. Клон — новый слой рядом.');
       renderLayers();
       EditorView.draw();
     });
   }
 
-  /** Слои: сверху вниз, верхний рисуется поверх. */
+  /** Слои как в Figma: сверху списка — поверх на холсте. Клон = отдельная строка. */
   function renderLayers() {
     const c = car();
-    if (!Array.isArray(c.layers) || !c.layers.length) c.layers = EditorData.LAYERS.slice();
-    c.visible = c.visible || {};
-    EditorData.LAYERS.forEach((n) => { if (c.visible[n] == null) c.visible[n] = true; });
+    EditorData.ensureStack(c);
     const box = $('layers');
     if (!box) return;
-    const covers = ['body', 'armor'];
-    box.innerHTML = c.layers.slice().reverse().map((name) => {
-      const i = c.layers.indexOf(name);
-      const buried = (name === 'wheels' || name === 'nitro') &&
-        c.layers.slice(i + 1).some((n) => covers.indexOf(n) >= 0);
-      const ru = EditorData.LAYER_RU[name] || name;
-      const hint = buried && c.visible[name] !== false ? ' <i class="hint">под кузовом</i>' : '';
-      const hidden = c.visible[name] === false;
+    const bodyAt = c.stack.findIndex((L) => L.type === 'body');
+    box.innerHTML = c.stack.slice().reverse().map((L) => {
+      const i = c.stack.indexOf(L);
+      const under = bodyAt >= 0 && i < bodyAt && (L.type === 'wheel' || L.type === 'nitro');
+      const over = bodyAt >= 0 && i > bodyAt && (L.type === 'wheel' || L.type === 'nitro');
+      const hint = under ? ' <i class="hint">под кузовом</i>' : (over ? ' <i class="hint">над кузовом</i>' : '');
+      const hidden = L.on === false;
       const checked = hidden ? '' : ' checked';
-      const on = EditorView.hasLayer(name) ? ' is-on' : '';
+      const on = EditorView.hasLayer(L.id) ? ' is-on' : '';
       const off = hidden ? ' is-off' : '';
-      return '<div class="layer-row' + on + off + '" data-layer-row="' + name + '">' +
-        '<input class="check" type="checkbox" data-layer="' + name + '" aria-label="' + ru + '"' + checked + '>' +
+      const ru = EditorData.layerTitle(L, c);
+      return '<div class="layer-row' + on + off + '" data-layer-row="' + L.id + '">' +
+        '<input class="check" type="checkbox" data-stack-id="' + L.id + '" aria-label="' + ru + '"' + checked + '>' +
         '<span>' + ru + hint + '</span>' +
         '<button type="button" data-i="' + i + '" data-dir="-1" title="Ниже">↓</button>' +
         '<button type="button" data-i="' + i + '" data-dir="1" title="Выше">↑</button></div>';
     }).join('');
   }
 
-  /** Переставляет слой. */
+  /** Переставляет слой стека. */
   function moveLayer(i, d) {
     const c = car();
+    EditorData.ensureStack(c);
     const n = i + d;
-    if (n < 0 || n >= c.layers.length) return;
-    const t = c.layers[i];
-    c.layers[i] = c.layers[n];
-    c.layers[n] = t;
+    if (n < 0 || n >= c.stack.length) return;
+    const t = c.stack[i];
+    c.stack[i] = c.stack[n];
+    c.stack[n] = t;
+    EditorData.syncVisibleFromStack(c);
     mark();
     renderLayers();
     commit();
@@ -542,7 +562,7 @@ const EditorApp = (() => {
     });
   }
 
-  /** Клонирует выбранные колёса; копия живёт отдельно, не в паре. */
+  /** Клонирует выбранные колёса; копия — новый слой рядом с исходным. */
   function cloneWheels() {
     const c = car();
     if (!c.w) c.w = [];
@@ -550,13 +570,8 @@ const EditorApp = (() => {
     if (!ids.length && c.w[wheelIndex]) ids = [wheelIndex];
     const created = [];
     ids.forEach((i) => {
-      const w = c.w[i];
-      if (!w) return;
-      const copy = w.slice();
-      copy[0] += 3;
-      copy[1] += 3;
-      c.w.push(EditorData.normWheel(copy));
-      created.push(c.w.length - 1);
+      const ni = EditorData.cloneWheelLayer(c, i);
+      if (ni >= 0) created.push(ni);
     });
     if (!created.length) {
       setText('status', 'Сначала выберите колесо на холсте или в списке.');
@@ -568,11 +583,11 @@ const EditorApp = (() => {
     fillFields();
     commitNow();
     setText('status', created.length > 1
-      ? 'Склонированы колёса. Каждое двигается и настраивается отдельно.'
-      : 'Склонировано колесо. Двигайте и настраивайте его отдельно от исходного.');
+      ? 'Новые слои колёс. Каждое двигается отдельно; порядок — стрелками в списке.'
+      : 'Новый слой колеса рядом с исходным. Поднимите или опустите относительно кузова.');
   }
 
-  /** Клонирует выбранные трубы нитро — каждая струя сама по себе. */
+  /** Клонирует трубы нитро: каждая — свой слой (над или под кузовом как исходная). */
   function cloneNitro() {
     const c = car();
     if (!c.nitro) c.nitro = [];
@@ -580,13 +595,8 @@ const EditorApp = (() => {
     if (!ids.length && c.nitro[nitroIndex]) ids = [nitroIndex];
     const created = [];
     ids.forEach((i) => {
-      const n = c.nitro[i];
-      if (!n) return;
-      const copy = n.slice();
-      copy[0] += 3;
-      copy[1] += 3;
-      c.nitro.push(EditorData.normJet(copy));
-      created.push(c.nitro.length - 1);
+      const ni = EditorData.cloneNitroLayer(c, i);
+      if (ni >= 0) created.push(ni);
     });
     if (!created.length) {
       setText('status', 'Сначала выберите трубу нитро на холсте или в списке.');
@@ -598,8 +608,8 @@ const EditorApp = (() => {
     fillFields();
     commitNow();
     setText('status', created.length > 1
-      ? 'Склонированы трубы нитро. Каждую правьте отдельно.'
-      : 'Склонирована труба нитро. Двигайте и меняйте длину отдельно.');
+      ? 'Новые слои нитро. Поднимите трубу над кузовом или опустите под него.'
+      : 'Новый слой нитро рядом с исходным — тот же уровень относительно кузова.');
   }
 
   /** Клонирует то, что в фокусе: трубу нитро или колесо. */
@@ -615,7 +625,14 @@ const EditorApp = (() => {
   /** Кнопки панели и файлы. */
   function bindActions() {
     $('saveBtn').onclick = () => { flushCommit(); persist(); };
-    $('loadBtn').onclick = () => { pack = EditorData.load(); selectCar(carIndex); commitNow(); $('status').textContent = 'Загружено из браузера.'; };
+    $('loadBtn').onclick = () => {
+      EditorData.hydrateFromDisk().then(() => {
+        pack = EditorData.load();
+        selectCar(carIndex);
+        commitNow();
+        $('status').textContent = 'Загружено с диска и из браузера.';
+      });
+    };
     $('exportBtn').onclick = () => {
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([JSON.stringify(pack, null, 2)], {type: 'application/json'}));
@@ -647,25 +664,24 @@ const EditorApp = (() => {
     };
     $('gameBtn').onclick = () => goToGame('');
     $('addWheel').onclick = () => {
-      car().w.push(EditorData.normWheel([18, 12, 12, 6, 0, 1, 1]));
-      wheelIndex = car().w.length - 1; fillFields(); commitNow();
+      wheelIndex = EditorData.appendWheel(car(), [18, 12, 12, 6, 0, 1, 1], wheelIndex);
+      fillFields(); commitNow();
     };
     $('cloneWheel').onclick = () => cloneWheels();
     $('delWheel').onclick = () => {
       if (!car().w.length) return;
       car().w.splice(wheelIndex, 1);
+      EditorData.reindexStack(car(), 'wheel', wheelIndex);
       wheelIndex = Math.max(0, car().w.length - 1); fillFields(); commitNow();
     };
     $('mirrorWheel').onclick = () => {
       const w = car().w[wheelIndex]; if (!w) return;
       const copy = w.slice(); copy[1] = -copy[1];
-      car().w.push(copy); wheelIndex = car().w.length - 1; fillFields(); commitNow();
+      wheelIndex = EditorData.appendWheel(car(), copy, wheelIndex);
+      fillFields(); commitNow();
     };
     $('addNitro').onclick = () => {
-      const c = car();
-      if (!c.nitro) c.nitro = [];
-      c.nitro.push(EditorData.normJet([-26, 0, 9, 1.5]));
-      nitroIndex = c.nitro.length - 1;
+      nitroIndex = EditorData.appendNitro(car(), [-26, 0, 9, 1.5], nitroIndex);
       EditorView.pickNitro(nitroIndex, false);
       fillFields(); commitNow();
     };
@@ -674,7 +690,7 @@ const EditorApp = (() => {
       const c = car();
       const n = c.nitro && c.nitro[nitroIndex]; if (!n) return;
       const copy = n.slice(); copy[1] = -copy[1];
-      c.nitro.push(copy); nitroIndex = c.nitro.length - 1;
+      nitroIndex = EditorData.appendNitro(c, copy, nitroIndex);
       EditorView.pickNitro(nitroIndex, false);
       fillFields(); commitNow();
     };
@@ -682,6 +698,7 @@ const EditorApp = (() => {
       const c = car();
       if (!c.nitro || !c.nitro.length) return;
       c.nitro.splice(nitroIndex, 1);
+      EditorData.reindexStack(c, 'nitro', nitroIndex);
       nitroIndex = Math.max(0, c.nitro.length - 1);
       fillFields(); commitNow();
     };
@@ -740,7 +757,9 @@ const EditorApp = (() => {
   }
 
   /** Старт редактора. */
-  function start() {
+  async function start() {
+    try { await EditorData.hydrateFromDisk(); } catch (err) { console.error(err); }
+    pack = EditorData.load();
     try { bindFields(); } catch (err) { console.error(err); }
     try { bindActions(); } catch (err) { console.error(err); }
     try { bindLayerPanel(); } catch (err) { console.error(err); }

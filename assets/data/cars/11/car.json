@@ -1,0 +1,151 @@
+{
+  "rev": 2,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -18.2,
+      -11.6,
+      11,
+      5,
+      0,
+      1,
+      0
+    ],
+    [
+      -18.2,
+      11.6,
+      11,
+      5,
+      0,
+      1,
+      0
+    ],
+    [
+      16.2,
+      -11.6,
+      11,
+      5,
+      0,
+      1,
+      1
+    ],
+    [
+      16.2,
+      11.6,
+      11,
+      5,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -27.2,
+      -6.4,
+      10,
+      1.55
+    ],
+    [
+      -27.2,
+      6.4,
+      10,
+      1.55
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«БРИЧКА»",
+    "price": 800,
+    "top": 0.9,
+    "acc": 0.9,
+    "crn": 0.99,
+    "hp": 80,
+    "col": "#d45a1a",
+    "col2": "#2c2c30",
+    "hov": false,
+    "traits": [
+      "ПУЛЯ: стреляет прямо",
+      "ПЫЛЕСОС: тянет деньги, ремонт и ускорение рядом",
+      "КУПОЛ: ульта — щит 10 сек от всего урона"
+    ]
+  },
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ]
+}

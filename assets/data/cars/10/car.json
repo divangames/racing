@@ -1,0 +1,151 @@
+{
+  "rev": 2,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -16.2,
+      -12.2,
+      11,
+      5,
+      0,
+      1,
+      0
+    ],
+    [
+      -16.2,
+      12.2,
+      11,
+      5,
+      0,
+      1,
+      0
+    ],
+    [
+      16.4,
+      -12.2,
+      11,
+      5,
+      0,
+      1,
+      1
+    ],
+    [
+      16.4,
+      12.2,
+      11,
+      5,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -26.2,
+      -6.8,
+      10,
+      1.6
+    ],
+    [
+      -26.2,
+      6.8,
+      10,
+      1.6
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ЖЕРЕБЕЦ»",
+    "price": 25000,
+    "top": 1.26,
+    "acc": 1.2,
+    "crn": 1.14,
+    "hp": 118,
+    "col": "#c41e2a",
+    "col2": "#5a1018",
+    "hov": false,
+    "traits": [
+      "МИНИГАН: 50 патронов, шкала — магазин, перегрев после опустошения",
+      "СКАЧОК: прыжок как с трамплина вместо нитро",
+      "ТАБУН: ульта отталкивает и сбрасывает скорость рядом"
+    ]
+  },
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ]
+}

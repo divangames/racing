@@ -1,0 +1,151 @@
+{
+  "rev": 2,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -15.8,
+      -12.5,
+      12,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      -15.8,
+      12.5,
+      12,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      14.6,
+      -11.6,
+      12,
+      8,
+      0,
+      1,
+      1
+    ],
+    [
+      14.6,
+      11.6,
+      12,
+      8,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -27,
+      -7.2,
+      14,
+      3.3
+    ],
+    [
+      -27,
+      7.2,
+      14,
+      3.3
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ФАНТОМ»",
+    "price": 18000,
+    "top": 1.3,
+    "acc": 1.22,
+    "crn": 1.25,
+    "hp": 85,
+    "col": "#3a2a5c",
+    "col2": "#1a1028",
+    "hov": false,
+    "traits": [
+      "МАСКИРОВКА: невидимость 3 сек (G)",
+      "ФАЗА: проходит сквозь мины",
+      "ХИЩНИК: ракеты быстрее"
+    ]
+  },
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ]
+}

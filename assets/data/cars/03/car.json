@@ -1,0 +1,151 @@
+{
+  "rev": 2,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -16.5,
+      -10.5,
+      13,
+      9,
+      0,
+      0.5,
+      0
+    ],
+    [
+      -16.5,
+      10.5,
+      13,
+      9,
+      0,
+      0.5,
+      0
+    ],
+    [
+      13.5,
+      -10,
+      13,
+      9,
+      0,
+      0.5,
+      1
+    ],
+    [
+      13.5,
+      10,
+      13,
+      9,
+      0,
+      0.5,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -26.4,
+      -8,
+      10,
+      1.9
+    ],
+    [
+      -26.4,
+      8,
+      10,
+      1.9
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ШРЕДЕР»",
+    "price": 7500,
+    "top": 1.16,
+    "acc": 1.12,
+    "crn": 1.12,
+    "hp": 105,
+    "col": "#37c94f",
+    "col2": "#1c7a2e",
+    "hov": false,
+    "traits": [
+      "ХВАТКА: +12% поворот",
+      "РЕГЕН: +2 корпуса в секунду",
+      "МИНЁР: мины мощнее и шире"
+    ]
+  },
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ]
+}

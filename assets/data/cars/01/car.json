@@ -1,0 +1,175 @@
+{
+  "rev": 2,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -15.5,
+      -11.4,
+      12,
+      4,
+      0,
+      1,
+      0
+    ],
+    [
+      -15.5,
+      11.4,
+      12,
+      4,
+      0,
+      1,
+      0
+    ],
+    [
+      14.2,
+      -11.4,
+      12,
+      4,
+      0,
+      1,
+      1
+    ],
+    [
+      14.2,
+      11.4,
+      12,
+      4,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -26,
+      -6.4,
+      8,
+      1.35
+    ],
+    [
+      -26,
+      -3.2,
+      8,
+      1.35
+    ],
+    [
+      -26,
+      3.2,
+      8,
+      1.35
+    ],
+    [
+      -26,
+      6.4,
+      8,
+      1.35
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "n2",
+      "type": "nitro",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "n3",
+      "type": "nitro",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ГРЯЗЕВОЙ ДЬЯВОЛ»",
+    "price": 0,
+    "top": 0.98,
+    "acc": 1.04,
+    "crn": 1.08,
+    "hp": 100,
+    "col": "#d24a22",
+    "col2": "#7e2a12",
+    "hov": false,
+    "traits": [
+      "ТАРАН: двойной урон при столкновениях",
+      "ВСЕДОХОД: меньше штраф бездорожья",
+      "РАМА: +20 корпуса"
+    ]
+  },
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ]
+}

@@ -299,6 +299,10 @@ async function bootGo(){
  const tick=setInterval(bootPaint,250);
  const dog=setTimeout(()=>bootFinish(),8000);
  try{
+  if(typeof EditorData!=='undefined'&&EditorData.hydrateFromDisk){
+   await EditorData.hydrateFromDisk();
+   reloadEditorCars();
+  }
   await bootDiscoverAllMapTiles();
   if(!BOOT.ready){
    const files=BOOT.jobs.filter(j=>!j.done);
@@ -754,7 +758,10 @@ function editorCarConfig(idx){
 /** Снова читает лабораторию: соседняя вкладка, возврат из редактора, тот же origin. */
 function reloadEditorCars(){
  EDITOR_CARS=readEditorCars();
- Object.keys(EDITOR_CARS).forEach((k)=>repairEditorSteer(EDITOR_CARS[k]));
+ Object.keys(EDITOR_CARS).forEach((k)=>{
+  repairEditorSteer(EDITOR_CARS[k]);
+  if(typeof EditorData!=='undefined'&&EditorData.ensureStack)EditorData.ensureStack(EDITOR_CARS[k]);
+ });
  if(EDITOR_BODY_IMAGES&&EDITOR_BODY_IMAGES.clear)EDITOR_BODY_IMAGES.clear();
  if(CAR_HIT_CACHE){for(const k in CAR_HIT_CACHE)delete CAR_HIT_CACHE[k];}
  applyEditorCars();
@@ -1271,6 +1278,14 @@ function loadSlots(){
 }
 function saveSlots(){
  try{localStorage.setItem(SLOTS_KEY,JSON.stringify(slots));}catch(e){}
+}
+/** Стирает один слот; текущая карьера и остальные слоты не трогаются. */
+function clearSaveSlot(i){
+ if(!slots||!slots[i])return false;
+ slots[i]=null;
+ try{localStorage.removeItem(SLOTS_KEY+'_'+i);}catch(e){}
+ saveSlots();
+ return true;
 }
 loadSlots();
 let save=null;
@@ -2958,6 +2973,10 @@ function drawCar(c,r,sc){
   if(editorCfg&&Array.isArray(editorCfg.w)&&editorCfg.w.length){
    const list=editorCfg.w;
    list.forEach((q,i)=>{
+    if(stack){
+     const L=stack.find(x=>x.type==='wheel'&&x.ref===i);
+     if(L&&L.on===false)return;
+    }
     const steer=editorWheelSteers(q,i,list)?r.wheelAngle:0;
     const ww2=isFinite(+q[2])?+q[2]:12,wh2=isFinite(+q[3])?+q[3]:8;
     wheel(q[0],q[1],(+q[4]||0)+steer,ww2,wh2,q[5]);
@@ -3004,7 +3023,7 @@ function drawCar(c,r,sc){
  const armLvl=racerArmLvl(r);
  const bodyOffset=editorCfg&&editorCfg.body||{};
  const vis=editorCfg&&editorCfg.visible;
- // Урал: кузов → броня → колёса в колодцах → нитро. Иначе слой из лаборатории.
+ const stack=editorCfg&&Array.isArray(editorCfg.stack)&&editorCfg.stack.length?editorCfg.stack:null;
  const uralLayers=['shadow','wheels','nitro','body','armor'];
  const defaultLayers=idx===6?uralLayers:['shadow','wheels','nitro','body','armor'];
  const rawLayers=editorCfg&&Array.isArray(editorCfg.layers)?editorCfg.layers:null;
@@ -3036,7 +3055,10 @@ function drawCar(c,r,sc){
   };
   const pipes=editorCfg&&Array.isArray(editorCfg.nitro)&&editorCfg.nitro.length?editorCfg.nitro:null;
   if(pipes){
-   pipes.forEach((p)=>jet(+p[0]||0,+p[1]||0,+p[2]||9,+p[3]||1.5));
+   pipes.forEach((p,i)=>{
+    if(stack&&editorCfg.stack.some(L=>L.type==='nitro'&&L.ref===i&&L.on===false))return;
+    jet(+p[0]||0,+p[1]||0,+p[2]||9,+p[3]||1.5);
+   });
    return;
   }
   if(idx===0){ // Грязевой дьявол: 4 малых трубы, как Camaro
@@ -3078,7 +3100,41 @@ function drawCar(c,r,sc){
    c.fillStyle='rgba(53,224,255,'+pulse+')';
    c.beginPath();c.ellipse(-4,0,32,16,0,0,TAU);c.fill();
   }
-  // Слои снизу вверх. Урал: кузов, броня, колёса в колодцах, нитро.
+  // Слои снизу вверх: стек лаборатории (каждое колесо и труба — свой слой).
+  if(stack){
+   let saws=false;
+   const jetOnce=(p)=>{
+    if(!(r.nitro>0)||!p)return;
+    const x=+p[0]||0,y=+p[1]||0,len=+p[2]||9,half=+p[3]||1.5;
+    const flick=len+Math.random()*len*.35;
+    c.fillStyle='#35e0ff';
+    c.beginPath();c.moveTo(x,y-half);c.lineTo(x-flick,y);c.lineTo(x,y+half);c.closePath();c.fill();
+    c.fillStyle='#fff';
+    c.beginPath();c.moveTo(x,y-half*.4);c.lineTo(x-flick*.55,y);c.lineTo(x,y+half*.4);c.closePath();c.fill();
+   };
+   for(let li=0;li<stack.length;li++){
+    const L=stack[li];
+    if(!L||L.on===false)continue;
+    if(L.type==='shadow'||L.type==='guides')continue;
+    if(L.type==='wheel'){
+     if(!r.car.hov&&editorCfg.w&&editorCfg.w[L.ref]){
+      const q=editorCfg.w[L.ref];
+      const steer=editorWheelSteers(q,L.ref,editorCfg.w)?r.wheelAngle:0;
+      const ww2=isFinite(+q[2])?+q[2]:12,wh2=isFinite(+q[3])?+q[3]:8;
+      wheel(q[0],q[1],(+q[4]||0)+steer,ww2,wh2,q[5]);
+     }
+     if(idx===2)saws=true;
+     continue;
+    }
+    if(L.type==='nitro'){
+     jetOnce(editorCfg.nitro&&editorCfg.nitro[L.ref]);
+     continue;
+    }
+    if(L.type==='body'){paintCarImg(bodyImg);continue;}
+    if(L.type==='armor'){paintCarImg(armorImg);continue;}
+   }
+   if(saws)drawShredderSaws();
+  }else{
   for(let li=0;li<layerOrder.length;li++){
    const name=layerOrder[li];
    if(name==='shadow'||name==='guides')continue;
@@ -3103,6 +3159,7 @@ function drawCar(c,r,sc){
    }
   }
   if(!hasNitroLayer&&idx===6)drawNitro();
+  }
   c.restore();
   c.restore();
   return;
@@ -4027,7 +4084,7 @@ function drawTitle(){
   if(sel){panel(g,W/2-220,y-24,440,42,'rgba(255,157,46,.15)','#ff9d2e');
    txt(g,'▸',W/2-196,y-3,24,'#ff9d2e');}
   txt(g,t,W/2,y-3,sel?28:22,sel?'#ffd23f':'#8f88a0','center');});
- if(resetArm)txt(g,'ТОЧНО СБРОСИТЬ? ENTER — ДА, СТРЕЛКИ — ОТМЕНА',W/2,titleY0+items.length*titleStep+6,18,'#ff3d2e','center');
+ if(resetArm)txt(g,'СБРОС ТЕКУЩЕЙ КАРЬЕРЫ. СЛОТЫ НЕ ТРОГАЕМ. ENTER — ДА',W/2,titleY0+items.length*titleStep+6,16,'#ff3d2e','center');
  g._titleY0=titleY0;g._titleStep=titleStep;
  txt(g,'ENTER — выбрать • M — музыка '+(settings.sound.musicOn?'ВКЛ':'ВЫКЛ'),W/2,H-26,15,'#6f6880','center',F_B);
  g._titleItems=items;
@@ -4081,7 +4138,7 @@ function drawSlotSelect(){
   }
  }
  
- txt(g,'← → — выбор • ENTER — подтвердить • ESC — отмена',W/2,H-30,16,'#6f6880','center',F_B);
+ txt(g,'← → — выбор • ENTER — подтвердить • DELETE — стереть слот • ESC — отмена',W/2,H-30,15,'#6f6880','center',F_B);
 }
 function prettyKey(code){
  return code
@@ -5585,6 +5642,11 @@ function press(c,k){
   if(c==='ArrowUp'){slotSelectIndex=(slotSelectIndex+5)%10;sClick();}
   if(c==='ArrowDown'){slotSelectIndex=(slotSelectIndex+5)%10;sClick();}
   if(c==='Escape'){if(slotReturn==='title')enterTitle();else state=slotReturn;sClick();return;}
+  if(c==='Backspace'||c==='Delete'){
+   if(clearSaveSlot(slotSelectIndex))sClick();
+   else sHit();
+   return;
+  }
   if(c==='Enter'||c==='Space'){
    if(slotSelectMode==='load'){
     if(slots[slotSelectIndex]){
@@ -5844,24 +5906,8 @@ function press(c,k){
    else if(it&&it.startsWith('СБРОС')){
     if(!resetArm){resetArm=true;sClick();}
     else{
-     try{
-      localStorage.removeItem(SKEY);
-      localStorage.removeItem(SLOTS_KEY);
-      localStorage.removeItem(SETTINGS_KEY);
-      for(let i=0;i<10;i++)localStorage.removeItem(SLOTS_KEY+'_'+i);
-     }catch(e){}
-     save=null;slots=new Array(10).fill(null);saveSlots();
-     settings={
-      graphics:{resolution:0,particles:'high',skids:true,weather:true,shake:true,showFps:false},
-      controls:{
-       up:DEFAULT_CONTROLS.up.slice(),down:DEFAULT_CONTROLS.down.slice(),
-       left:DEFAULT_CONTROLS.left.slice(),right:DEFAULT_CONTROLS.right.slice(),
-       fire:DEFAULT_CONTROLS.fire.slice(),nitro:DEFAULT_CONTROLS.nitro.slice(),ult:DEFAULT_CONTROLS.ult.slice(),
-       pause:DEFAULT_CONTROLS.pause.slice()
-      },
-      sound:{music:50,sfx:80,musicOn:true,sfxOn:true}
-     };
-     saveSettings();applyAudioSettings();applyResolution();
+     try{localStorage.removeItem(SKEY);}catch(e){}
+     save=null;
      resetArm=false;sBoom();
     }
    }

@@ -1,0 +1,151 @@
+{
+  "rev": 2,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -14,
+      -9.6,
+      12,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      -14,
+      9.6,
+      12,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      17,
+      -9.6,
+      12,
+      8,
+      0,
+      1,
+      1
+    ],
+    [
+      17,
+      9.6,
+      12,
+      8,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -24,
+      -6.6,
+      9,
+      1.55
+    ],
+    [
+      -24,
+      6.6,
+      9,
+      1.55
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ЧЁРНЫЙ МОЛОТ»",
+    "price": 20000,
+    "top": 0.9,
+    "acc": 0.85,
+    "crn": 0.9,
+    "hp": 180,
+    "col": "#1a1a1a",
+    "col2": "#8b0000",
+    "hov": false,
+    "traits": [
+      "ТАРАН: тройной урон + отбрасывание",
+      "БРОНЯ: -50% урона от мин/ракет",
+      "МОНОЛИТ: +70 корпуса"
+    ]
+  },
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ]
+}

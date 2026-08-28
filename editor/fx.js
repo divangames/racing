@@ -25,7 +25,7 @@ const EditorFx = (() => {
     ctx.fill();
   }
 
-  /** Все выходы нитро и рамка выбранных. */
+  /** Все выходы нитро и рамка выбранных. only — одна труба. */
   function drawNitro(ctx, jets, opts) {
     const t = opts.time || 0;
     const live = !!opts.live;
@@ -33,6 +33,7 @@ const EditorFx = (() => {
     const multi = opts.multi || [];
     const layerOn = !!opts.layerOn;
     (jets || []).forEach((p, i) => {
+      if (opts.only != null && i !== opts.only) return;
       jet(ctx, p[0], p[1], p[2], p[3], t, live);
       const chosen = i === sel || multi.indexOf(i) >= 0 || layerOn;
       if (opts.marks === false) return;

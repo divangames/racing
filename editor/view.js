@@ -188,29 +188,19 @@ const EditorView = (() => {
     return im;
   }
 
-  /** Слой включён. */
+  /** Слой-группа включён (старый visible). */
   function layerOn(car, name) {
     return !(car.visible && car.visible[name] === false);
   }
 
-  /** Слой перекрыт кузовом или бронёй, которые рисуются позже. */
-  function buriedUnder(layers, name, covers) {
-    const i = layers.indexOf(name);
-    if (i < 0) return false;
-    return layers.slice(i + 1).some((n) => covers.indexOf(n) >= 0);
+  /** Id слоя колеса или трубы. */
+  function stackIdOf(car, type, ref) {
+    if (!car || !car.stack) return null;
+    const L = car.stack.find((x) => x.type === type && x.ref === ref);
+    return L ? L.id : null;
   }
 
-  /** Рисует слой по имени. */
-  function drawLayer(car, name) {
-    if (name === 'shadow') drawShadow(car);
-    else if (name === 'wheels') drawWheels(car);
-    else if (name === 'nitro') drawNitro(car);
-    else if (name === 'body') drawBody(car, false);
-    else if (name === 'armor') drawArmor(car);
-    else if (name === 'guides') drawGuides(car);
-  }
-
-  /** Рисует всю сцену. */
+  /** Рисует всю сцену по стеку: снизу вверх, как в Figma. */
   function draw() {
     if (!canvas || !ctx) return;
     const r = canvas.getBoundingClientRect();
@@ -223,22 +213,29 @@ const EditorView = (() => {
     drawGrid();
     const car = getCar();
     if (!car) { ctx.restore(); return; }
-    const layers = car.layers || EditorData.LAYERS;
-    layers.forEach((name) => {
-      if (!layerOn(car, name)) return;
-      drawLayer(car, name);
-    });
-    const covers = ['body', 'armor'];
-    if (layerOn(car, 'nitro') && (layerOn(car, 'body') || layerOn(car, 'armor')) && buriedUnder(layers, 'nitro', covers)) {
-      ctx.save();
-      ctx.globalAlpha = 0.7;
-      drawNitro(car);
-      ctx.restore();
+    EditorData.ensureStack(car);
+    if (car.stats && car.stats.hov && !(car.w && car.w.length)) {
+      ctx.fillStyle = 'rgba(53,224,255,.18)';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 32, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
-    if (layerOn(car, 'body') && !bodyReady()) {
-      ctx.fillStyle = '#ffd23f';
-      ctx.font = '4px Arial';
-      ctx.fillText('Нет спрайта кузова', -22, 0);
+    (car.stack || []).forEach((L) => {
+      if (L.on === false) return;
+      if (L.type === 'shadow') drawShadow(car);
+      else if (L.type === 'wheel') drawOneWheel(car, L.ref);
+      else if (L.type === 'nitro') drawOneNitro(car, L.ref);
+      else if (L.type === 'body') drawBody(car, false);
+      else if (L.type === 'armor') drawArmor(car);
+      else if (L.type === 'guides') drawGuides(car);
+    });
+    if (EditorData.stackItemOn(car, 'body', undefined) !== false && !bodyReady()) {
+      const bodyL = (car.stack || []).find((x) => x.type === 'body');
+      if (!bodyL || bodyL.on !== false) {
+        ctx.fillStyle = '#ffd23f';
+        ctx.font = '4px Arial';
+        ctx.fillText('Нет спрайта кузова', -22, 0);
+      }
     }
     ctx.restore();
   }
@@ -323,49 +320,46 @@ const EditorView = (() => {
     ctx.fill();
   }
 
-  /** Колёса: спрайт, руль в тесте, рамка выбора. */
-  function drawWheels(car) {
-    if (car.stats && car.stats.hov && !(car.w && car.w.length)) {
-      ctx.fillStyle = 'rgba(53,224,255,.18)';
-      ctx.beginPath();
-      ctx.ellipse(0, 0, 32, 16, 0, 0, Math.PI * 2);
-      ctx.fill();
-      return;
-    }
+  /** Одно колесо в порядке стека. */
+  function drawOneWheel(car, i) {
+    const w = car.w && car.w[i];
+    if (!w) return;
+    const {dw, dh} = wheelSize(w);
     const sel = getWheel();
-    (car.w || []).forEach((w, i) => {
-      const {dw, dh} = wheelSize(w);
-      ctx.save();
-      ctx.translate(w[0], w[1]);
-      ctx.rotate(w[4] + (w[6] ? testSteer : 0));
-      const frame = ((Math.floor(spin) % 8) + 8) % 8;
-      ctx.imageSmoothingEnabled = true;
-      if (sprite && sprite.complete && sprite.naturalWidth) {
-        const srcW = sprite.naturalWidth / 8;
-        const srcH = sprite.naturalHeight;
-        ctx.drawImage(sprite, frame * srcW, 0, srcW, srcH, -dw / 2, -dh / 2, dw, dh);
-      } else {
-        ctx.fillStyle = '#111';
-        ctx.fillRect(-dw / 2, -dh / 2, dw, dh);
-      }
-      if (showMarks && (i === sel || wheelSel.indexOf(i) >= 0 || layerSel.indexOf('wheels') >= 0)) {
-        ctx.strokeStyle = i === sel ? '#35e0ff' : '#7af0ff';
-        ctx.lineWidth = i === sel ? 0.7 : 0.45;
-        ctx.strokeRect(-dw / 2, -dh / 2, dw, dh);
-      }
-      if (showMarks) drawWheelHub(i === sel || wheelSel.indexOf(i) >= 0, i === hoverW);
-      ctx.restore();
-    });
+    const sid = stackIdOf(car, 'wheel', i);
+    const chosen = i === sel || wheelSel.indexOf(i) >= 0 || layerSel.indexOf(sid) >= 0 || layerSel.indexOf('wheels') >= 0;
+    ctx.save();
+    ctx.translate(w[0], w[1]);
+    ctx.rotate(w[4] + (w[6] ? testSteer : 0));
+    const frame = ((Math.floor(spin) % 8) + 8) % 8;
+    ctx.imageSmoothingEnabled = true;
+    if (sprite && sprite.complete && sprite.naturalWidth) {
+      const srcW = sprite.naturalWidth / 8;
+      const srcH = sprite.naturalHeight;
+      ctx.drawImage(sprite, frame * srcW, 0, srcW, srcH, -dw / 2, -dh / 2, dw, dh);
+    } else {
+      ctx.fillStyle = '#111';
+      ctx.fillRect(-dw / 2, -dh / 2, dw, dh);
+    }
+    if (showMarks && chosen) {
+      ctx.strokeStyle = i === sel ? '#35e0ff' : '#7af0ff';
+      ctx.lineWidth = i === sel ? 0.7 : 0.45;
+      ctx.strokeRect(-dw / 2, -dh / 2, dw, dh);
+    }
+    if (showMarks) drawWheelHub(chosen, i === hoverW);
+    ctx.restore();
   }
 
-  /** Выходы нитро: в тесте — живые струи. */
-  function drawNitro(car) {
+  /** Одна труба нитро в порядке стека. */
+  function drawOneNitro(car, i) {
+    const sid = stackIdOf(car, 'nitro', i);
     EditorFx.drawNitro(ctx, car.nitro || [], {
       time: now,
       live: testing,
       sel: getNitro(),
       multi: nitroSel,
-      layerOn: layerSel.indexOf('nitro') >= 0,
+      only: i,
+      layerOn: layerSel.indexOf(sid) >= 0 || layerSel.indexOf('nitro') >= 0,
       hover: hoverN,
       marks: showMarks
     });
@@ -397,7 +391,12 @@ const EditorView = (() => {
 
   /** Что двигаем: кузов, колёса, трубы. */
   function moveSet(car) {
-    const body = layerSel.indexOf('body') >= 0 || layerSel.indexOf('armor') >= 0 || layerSel.indexOf('shadow') >= 0;
+    EditorData.ensureStack(car);
+    const picked = (car.stack || []).filter((L) => layerSel.indexOf(L.id) >= 0);
+    const body = picked.some((L) => L.type === 'body' || L.type === 'armor' || L.type === 'shadow') ||
+      layerSel.indexOf('body') >= 0 || layerSel.indexOf('armor') >= 0 || layerSel.indexOf('shadow') >= 0;
+    const fromW = picked.filter((L) => L.type === 'wheel').map((L) => L.ref);
+    const fromN = picked.filter((L) => L.type === 'nitro').map((L) => L.ref);
     const allW = layerSel.indexOf('wheels') >= 0;
     const allN = layerSel.indexOf('nitro') >= 0;
     if (!layerSel.length) {
@@ -409,8 +408,8 @@ const EditorView = (() => {
     }
     return {
       body: body,
-      wheels: allW ? (car.w || []).map((_, i) => i) : (wheelSel.length ? wheelSel.slice() : (lastFocus === 'wheel' ? [getWheel()] : [])),
-      nitros: allN ? (car.nitro || []).map((_, i) => i) : (nitroSel.length ? nitroSel.slice() : (lastFocus === 'nitro' ? [getNitro()] : []))
+      wheels: allW ? (car.w || []).map((_, i) => i) : (fromW.length ? fromW : (wheelSel.length ? wheelSel.slice() : [])),
+      nitros: allN ? (car.nitro || []).map((_, i) => i) : (fromN.length ? fromN : (nitroSel.length ? nitroSel.slice() : []))
     };
   }
 
@@ -478,22 +477,42 @@ const EditorView = (() => {
     };
   }
 
-  /** Выбор слоя: Ctrl добавляет, иначе заменяет. */
-  function pickLayer(name, add) {
+  /** Выбор слоя стека: Ctrl добавляет, иначе заменяет. */
+  function pickLayer(id, add) {
+    const car = getCar && getCar();
+    if (car) EditorData.ensureStack(car);
+    const L = car && (car.stack || []).find((x) => x.id === id);
     if (!add) {
-      wheelSel = [];
-      nitroSel = [];
-      layerSel = layerSel.length === 1 && layerSel[0] === name ? [] : [name];
-    } else if (layerSel.indexOf(name) >= 0) layerSel = layerSel.filter((n) => n !== name);
-    else layerSel = layerSel.concat(name);
-    if (layerSel.indexOf('body') >= 0 || layerSel.indexOf('armor') >= 0 || layerSel.indexOf('shadow') >= 0) lastFocus = 'body';
-    if (layerSel.indexOf('wheels') >= 0) lastFocus = 'wheel';
-    if (layerSel.indexOf('nitro') >= 0) lastFocus = 'nitro';
+      if (!L || L.type !== 'wheel') wheelSel = [];
+      if (!L || L.type !== 'nitro') nitroSel = [];
+      layerSel = layerSel.length === 1 && layerSel[0] === id ? [] : [id];
+    } else if (layerSel.indexOf(id) >= 0) layerSel = layerSel.filter((n) => n !== id);
+    else layerSel = layerSel.concat(id);
+    if (!L) {
+      if (id === 'body' || id === 'armor' || id === 'shadow') lastFocus = 'body';
+      if (id === 'wheels') lastFocus = 'wheel';
+      if (id === 'nitro') lastFocus = 'nitro';
+      return;
+    }
+    if (L.type === 'body' || L.type === 'armor' || L.type === 'shadow') lastFocus = 'body';
+    if (L.type === 'wheel') {
+      lastFocus = 'wheel';
+      setWheel(L.ref);
+      wheelSel = add && wheelSel.indexOf(L.ref) >= 0 ? wheelSel : (add ? wheelSel.concat(L.ref) : [L.ref]);
+    }
+    if (L.type === 'nitro') {
+      lastFocus = 'nitro';
+      setNitro(L.ref);
+      nitroSel = add && nitroSel.indexOf(L.ref) >= 0 ? nitroSel : (add ? nitroSel.concat(L.ref) : [L.ref]);
+    }
   }
 
   /** Выбор колеса: Ctrl добавляет в набор. */
   function pickWheel(i, add) {
-    if (!add) layerSel = layerSel.filter((n) => n !== 'wheels');
+    const car = getCar && getCar();
+    const sid = car ? stackIdOf(car, 'wheel', i) : null;
+    if (!add) layerSel = sid ? [sid] : [];
+    else if (sid && layerSel.indexOf(sid) < 0) layerSel = layerSel.concat(sid);
     setWheel(i);
     lastFocus = 'wheel';
     if (!add) { wheelSel = [i]; return; }
@@ -505,7 +524,10 @@ const EditorView = (() => {
 
   /** Выбор трубы нитро: Ctrl добавляет в набор. */
   function pickNitro(i, add) {
-    if (!add) layerSel = layerSel.filter((n) => n !== 'nitro');
+    const car = getCar && getCar();
+    const sid = car ? stackIdOf(car, 'nitro', i) : null;
+    if (!add) layerSel = sid ? [sid] : [];
+    else if (sid && layerSel.indexOf(sid) < 0) layerSel = layerSel.concat(sid);
     setNitro(i);
     lastFocus = 'nitro';
     if (!add) { nitroSel = [i]; return; }

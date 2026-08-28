@@ -1,0 +1,90 @@
+{
+  "rev": 2,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [],
+  "nitro": [
+    [
+      -26,
+      -5.2,
+      9,
+      1.5
+    ],
+    [
+      -26,
+      5.2,
+      9,
+      1.5
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«АЭРО-КЛИНОК»",
+    "price": 15000,
+    "top": 1.24,
+    "acc": 1.18,
+    "crn": 1.28,
+    "hp": 92,
+    "col": "#c9cdd6",
+    "col2": "#8a93a6",
+    "hov": true,
+    "traits": [
+      "ХОВЕР: не тормозит вне трассы, не скользит по маслу",
+      "ФАЗА: старт гонки с 1 щитом",
+      "ИМПУЛЬС: ракеты быстрее и чаще"
+    ]
+  },
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ]
+}

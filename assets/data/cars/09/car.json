@@ -1,0 +1,175 @@
+{
+  "rev": 2,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -16.5,
+      -10,
+      9.4,
+      4.17,
+      0,
+      1,
+      0
+    ],
+    [
+      -16.5,
+      10,
+      9.4,
+      4.17,
+      0,
+      1,
+      0
+    ],
+    [
+      16.5,
+      -10,
+      9.4,
+      4.17,
+      0,
+      1,
+      1
+    ],
+    [
+      16.5,
+      10,
+      9.4,
+      4.17,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -25.8,
+      -6.63,
+      9,
+      1.35
+    ],
+    [
+      -25.9,
+      -4.37,
+      9,
+      1.35
+    ],
+    [
+      -25.8,
+      5.13,
+      9,
+      1.35
+    ],
+    [
+      -25.7,
+      6.92,
+      9,
+      1.35
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "n2",
+      "type": "nitro",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "n3",
+      "type": "nitro",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ШПИЛЬКА»",
+    "price": 0,
+    "top": 1.06,
+    "acc": 0.97,
+    "crn": 1.08,
+    "hp": 100,
+    "col": "#ff5db1",
+    "col2": "#8a2458",
+    "hov": false,
+    "traits": [
+      "ТАРАН: двойной урон при столкновениях",
+      "ВСЕДОХОД: меньше штраф бездорожья",
+      "РАМА: +20 корпуса"
+    ]
+  },
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ]
+}

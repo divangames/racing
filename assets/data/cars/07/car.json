@@ -1,0 +1,181 @@
+{
+  "rev": 2,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "scale": 1.65,
+    "armor": 0
+  },
+  "w": [
+    [
+      -41.4,
+      -13.5,
+      10.4,
+      5.1,
+      0,
+      1,
+      0
+    ],
+    [
+      -41.4,
+      13.5,
+      10.4,
+      5.1,
+      0,
+      1,
+      0
+    ],
+    [
+      -30.2,
+      -13.5,
+      10.4,
+      5.1,
+      0,
+      1,
+      0
+    ],
+    [
+      -30.2,
+      13.5,
+      10.4,
+      5.1,
+      0,
+      1,
+      0
+    ],
+    [
+      37.6,
+      -13.4,
+      10.4,
+      5.1,
+      0,
+      1,
+      1
+    ],
+    [
+      37.6,
+      13.4,
+      10.4,
+      5.1,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -25.08,
+      -10.725,
+      11,
+      1.8
+    ],
+    [
+      -25.08,
+      11.219999999999999,
+      11,
+      1.8
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "w4",
+      "type": "wheel",
+      "on": true,
+      "ref": 4
+    },
+    {
+      "id": "w5",
+      "type": "wheel",
+      "on": true,
+      "ref": 5
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«УРАЛ»",
+    "price": 0,
+    "top": 0.98,
+    "acc": 0.97,
+    "crn": 1.08,
+    "hp": 120,
+    "col": "#7fb2ff",
+    "col2": "#2a4a7a",
+    "hov": false,
+    "traits": [
+      "ТАРАН: двойной урон при столкновениях",
+      "ВСЕДОХОД: меньше штраф бездорожья",
+      "РАМА: +20 корпуса"
+    ]
+  },
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ]
+}

@@ -86,13 +86,176 @@ const EditorData = (() => {
     return src.map(normJet);
   }
 
-  /** Вставляет слой, если его ещё нет. */
-  function ensureLayer(layers, name, before) {
-    if (layers.indexOf(name) >= 0) return layers;
-    const i = layers.indexOf(before);
-    if (i >= 0) layers.splice(i, 0, name);
-    else layers.push(name);
-    return layers;
+  const DISK_REV = 2;
+  let diskCars = {};
+
+  /** Код папки слота: 01 … */
+  function folderId(i) { return String(i + 1).padStart(2, '0'); }
+
+  /** Уникальный id слоя. */
+  function newLayerId(prefix) {
+    return prefix + Date.now().toString(36) + Math.floor(Math.random() * 4096).toString(36);
+  }
+
+  /** Подпись слоя для списка как в Figma. */
+  function layerTitle(L, car) {
+    if (!L) return '';
+    if (L.type === 'wheel') {
+      const w = car && car.w && car.w[L.ref];
+      return 'Колесо ' + ((L.ref | 0) + 1) + (w && w[6] ? ' · руль' : '');
+    }
+    if (L.type === 'nitro') return 'Нитро ' + ((L.ref | 0) + 1);
+    return LAYER_RU[L.type] || L.type;
+  }
+
+  /** Стек слоёв: каждый клон — отдельная строка, порядок снизу вверх. */
+  function ensureStack(car) {
+    if (!car) return car;
+    if (Array.isArray(car.stack) && car.stack.length) {
+      car.stack.forEach((L) => {
+        if (!L.id) L.id = newLayerId('l');
+        if (L.on == null) L.on = true;
+      });
+      return car;
+    }
+    const vis = car.visible || {};
+    const order = (car.layers && car.layers.length) ? car.layers : LAYERS.slice();
+    const stack = [];
+    order.forEach((name) => {
+      const on = vis[name] !== false;
+      if (name === 'wheels') {
+        (car.w || []).forEach((_, i) => stack.push({id: 'w' + i, type: 'wheel', on: on, ref: i}));
+      } else if (name === 'nitro') {
+        (car.nitro || []).forEach((_, i) => stack.push({id: 'n' + i, type: 'nitro', on: on, ref: i}));
+      } else if (name === 'shadow' || name === 'body' || name === 'armor' || name === 'guides') {
+        stack.push({id: name, type: name, on: on});
+      }
+    });
+    const addMissing = (type, list, prefix) => {
+      (list || []).forEach((_, i) => {
+        if (stack.some((L) => L.type === type && L.ref === i)) return;
+        const layer = {id: prefix + i, type: type, on: true, ref: i};
+        const bodyAt = stack.findIndex((L) => L.type === 'body');
+        if (bodyAt >= 0) stack.splice(bodyAt, 0, layer);
+        else stack.push(layer);
+      });
+    };
+    addMissing('wheel', car.w, 'w');
+    addMissing('nitro', car.nitro, 'n');
+    car.stack = stack;
+    if (car.rev == null) car.rev = DISK_REV;
+    return car;
+  }
+
+  /** Слой этого колеса / трубы включён. */
+  function stackItemOn(car, type, ref) {
+    ensureStack(car);
+    const hit = (car.stack || []).find((L) => L.type === type && L.ref === ref);
+    if (hit) return hit.on !== false;
+    if (type === 'wheel') return !(car.visible && car.visible.wheels === false);
+    if (type === 'nitro') return !(car.visible && car.visible.nitro === false);
+    return true;
+  }
+
+  /** Клон колеса: новая запись и новый слой сразу над исходным. */
+  function cloneWheelLayer(car, i) {
+    ensureStack(car);
+    if (!car.w || !car.w[i]) return -1;
+    const copy = normWheel(car.w[i].slice());
+    copy[0] += 3;
+    copy[1] += 3;
+    car.w.push(copy);
+    const ni = car.w.length - 1;
+    const layer = {id: newLayerId('w'), type: 'wheel', on: true, ref: ni};
+    const at = car.stack.findIndex((L) => L.type === 'wheel' && L.ref === i);
+    if (at >= 0) car.stack.splice(at + 1, 0, layer);
+    else car.stack.push(layer);
+    return ni;
+  }
+
+  /** Клон нитро: новая труба и отдельный слой (над или под кузовом — как у исходной). */
+  function cloneNitroLayer(car, i) {
+    ensureStack(car);
+    if (!car.nitro || !car.nitro[i]) return -1;
+    const copy = normJet(car.nitro[i].slice());
+    copy[0] += 3;
+    copy[1] += 3;
+    car.nitro.push(copy);
+    const ni = car.nitro.length - 1;
+    const layer = {id: newLayerId('n'), type: 'nitro', on: true, ref: ni};
+    const at = car.stack.findIndex((L) => L.type === 'nitro' && L.ref === i);
+    if (at >= 0) car.stack.splice(at + 1, 0, layer);
+    else car.stack.push(layer);
+    return ni;
+  }
+
+  /** Сдвигает ref после удаления. */
+  function reindexStack(car, type, removed) {
+    car.stack = (car.stack || []).filter((L) => !(L.type === type && L.ref === removed));
+    car.stack.forEach((L) => {
+      if (L.type === type && L.ref > removed) L.ref -= 1;
+    });
+    syncVisibleFromStack(car);
+  }
+
+  /** Вставляет слой рядом с исходным или под кузов. */
+  function insertNear(car, layer, type, nearRef) {
+    const at = nearRef != null ? car.stack.findIndex((L) => L.type === type && L.ref === nearRef) : -1;
+    if (at >= 0) {
+      car.stack.splice(at + 1, 0, layer);
+      return;
+    }
+    const bodyAt = car.stack.findIndex((L) => L.type === 'body');
+    if (bodyAt >= 0) car.stack.splice(bodyAt, 0, layer);
+    else car.stack.push(layer);
+  }
+
+  /** Новое колесо = новый слой. */
+  function appendWheel(car, raw, nearRef) {
+    ensureStack(car);
+    if (!car.w) car.w = [];
+    car.w.push(normWheel(raw));
+    const ni = car.w.length - 1;
+    insertNear(car, {id: newLayerId('w'), type: 'wheel', on: true, ref: ni}, 'wheel', nearRef);
+    return ni;
+  }
+
+  /** Новая труба нитро = новый слой (над или под кузовом — как у соседа). */
+  function appendNitro(car, raw, nearRef) {
+    ensureStack(car);
+    if (!car.nitro) car.nitro = [];
+    car.nitro.push(normJet(raw));
+    const ni = car.nitro.length - 1;
+    insertNear(car, {id: newLayerId('n'), type: 'nitro', on: true, ref: ni}, 'nitro', nearRef);
+    return ni;
+  }
+
+  /** Видимость групп для старого кода игры. */
+  function syncVisibleFromStack(car) {
+    if (!car || !Array.isArray(car.stack)) return car;
+    car.visible = car.visible || {};
+    ['shadow', 'body', 'armor', 'guides'].forEach((t) => {
+      const L = car.stack.find((x) => x.type === t);
+      if (L) car.visible[t] = L.on !== false;
+    });
+    car.visible.wheels = car.stack.some((L) => L.type === 'wheel' && L.on !== false);
+    car.visible.nitro = car.stack.some((L) => L.type === 'nitro' && L.on !== false);
+    return car;
+  }
+
+  /** JSON для папки assets/data/cars/NN (без dataURL корпуса). */
+  function fileCar(car) {
+    ensureStack(car);
+    return {
+      rev: car.rev || DISK_REV,
+      body: clone(car.body),
+      w: clone(car.w || []),
+      nitro: clone(car.nitro || []),
+      stack: clone(car.stack),
+      stats: clone(car.stats),
+      visible: clone(car.visible || {}),
+      layers: clone(car.layers || LAYERS)
+    };
   }
 
   /** Нормализует массив колеса до семи чисел. */
@@ -136,15 +299,17 @@ const EditorData = (() => {
       [-16, -11, 12, 6, 0, 1, 0], [-16, 11, 12, 6, 0, 1, 0],
       [16, -11, 12, 6, 0, 1, 1], [16, 11, 12, 6, 0, 1, 1]
     ];
-    return {
+    const car = {
       custom: !stock,
       body: {x: 0, y: 0, scale: stock && i === 6 ? 1.65 : 1, armor: 0},
       w: wheels,
       nitro: defaultNitro(stock ? i : 3),
       layers: (stock && i === 6 ? URAL_LAYERS : LAYERS).slice(),
       visible: {shadow: true, wheels: true, nitro: true, body: true, armor: true, guides: true},
-      stats: st
+      stats: st,
+      rev: DISK_REV
     };
+    return ensureStack(car);
   }
 
   /** Старый стек Урала: колёса поверх кузова. */
@@ -176,9 +341,13 @@ const EditorData = (() => {
       if (isOldUralStack(layers)) layers = URAL_LAYERS.slice();
       if (isOldUralLayout(wheels)) wheels = URAL_WHEELS.map(normWheel);
     }
-    ensureLayer(layers, 'nitro', 'body');
     LAYERS.forEach((n) => { if (!layers.includes(n)) layers.push(n); if (vis[n] == null) vis[n] = true; });
-    return Object.assign(base, saved, {body, visible: vis, stats, w: wheels, nitro, layers});
+    const out = Object.assign(base, saved, {
+      body, visible: vis, stats, w: wheels, nitro, layers,
+      rev: saved.rev != null ? saved.rev : (base.rev || DISK_REV)
+    });
+    if (!(Array.isArray(saved.stack) && saved.stack.length)) delete out.stack;
+    return ensureStack(out);
   }
 
   /** Читает localStorage с запасными ключами. */
@@ -190,34 +359,71 @@ const EditorData = (() => {
     return null;
   }
 
-  /** Загружает пакет настроек. */
-  function load() {
-    const empty = {version: 2, cars: {}};
-    try {
-      const raw = readRaw();
-      if (!raw) return empty;
-      const parsed = JSON.parse(raw);
-      const cars = {};
-      Object.keys(parsed.cars || {}).forEach((k) => {
-        cars[k] = mergeCar(Number(k), parsed.cars[k]);
-      });
-      return {version: 2, cars};
-    } catch (e) {
-      return empty;
+  /** Подгружает заводские JSON из assets/data/cars. */
+  async function hydrateFromDisk() {
+    diskCars = {};
+    const jobs = [];
+    for (let i = 0; i < STOCK; i++) {
+      const url = 'assets/data/cars/' + folderId(i) + '/car.json';
+      jobs.push(
+        fetch(url, {cache: 'no-store'}).then((r) => r.ok ? r.json() : null).then((j) => {
+          if (j) diskCars[i] = j;
+        }).catch(() => {})
+      );
     }
+    await Promise.all(jobs);
   }
 
-  /** Сохраняет пакет настроек. */
+  /** Диск + браузер: свежие правки (rev) перекрывают файл. */
+  function load() {
+    let ls = {};
+    try {
+      const raw = readRaw();
+      if (raw) ls = JSON.parse(raw).cars || {};
+    } catch (e) {}
+    const cars = {};
+    const ids = {};
+    for (let i = 0; i < STOCK; i++) ids[i] = true;
+    Object.keys(diskCars).forEach((k) => { ids[Number(k)] = true; });
+    Object.keys(ls).forEach((k) => { ids[Number(k)] = true; });
+    Object.keys(ids).map(Number).filter((n) => !isNaN(n)).sort((a, b) => a - b).forEach((i) => {
+      const d = diskCars[i] || diskCars[String(i)];
+      const s = ls[i] || ls[String(i)];
+      let c = factory(i);
+      if (d) c = mergeCar(i, d);
+      const dRev = (d && d.rev) || 0;
+      const sRev = (s && s.rev) || 0;
+      if (s && (sRev >= dRev || !d)) c = mergeCar(i, s);
+      cars[i] = c;
+    });
+    return {version: 3, cars};
+  }
+
+  /** Пишет пакет в браузер. */
   function save(data) {
     Object.keys(data.cars || {}).forEach((k) => {
       const car = data.cars[k];
       if (!car || !Array.isArray(car.w)) return;
       car.w = restoreSteer(car.w.map(normWheel), factory(Number(k)).w);
+      ensureStack(car);
+      syncVisibleFromStack(car);
     });
     const json = JSON.stringify(data);
     localStorage.setItem(KEY, json);
     try { localStorage.setItem(KEY + '.ts', String(Date.now())); } catch (err) {}
     return json.length;
+  }
+
+  /** Пишет car.json на диск через локальный сервер. */
+  function pushDisk(slot, car) {
+    car.rev = Date.now();
+    const payload = fileCar(car);
+    payload.rev = car.rev;
+    return fetch('/__save-car', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({slot: slot, car: payload})
+    }).then((r) => r.ok).catch(() => false);
   }
 
     /** Список индексов: сток 0–10 плюс кастомы. */
@@ -238,5 +444,5 @@ const EditorData = (() => {
     return [String(i + 1).padStart(2, '0'), n];
   }
 
-  return {KEY, STOCK, NAMES, STATS, LAYERS, URAL_LAYERS, LAYER_RU, clone, factory, mergeCar, load, save, indices, label, normWheel, restoreSteer, normJet, defaultNitro};
+  return {KEY, STOCK, NAMES, STATS, LAYERS, URAL_LAYERS, LAYER_RU, DISK_REV, clone, factory, mergeCar, load, save, indices, label, normWheel, restoreSteer, normJet, defaultNitro, ensureStack, stackItemOn, cloneWheelLayer, cloneNitroLayer, reindexStack, appendWheel, appendNitro, syncVisibleFromStack, layerTitle, fileCar, hydrateFromDisk, pushDisk, folderId};
 })();

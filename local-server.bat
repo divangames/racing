@@ -13,11 +13,11 @@ if errorlevel 1 (
   echo Starting http://127.0.0.1:%PORT%/
   where py >nul 2>&1
   if not errorlevel 1 (
-    start "RNR http 8765" /min /d "%ROOT%" py -3 -m http.server %PORT%
+    start "RNR http 8765" /min /d "%ROOT%" py -3 "%ROOT%\tools\rnr-http.py"
   ) else (
     where python >nul 2>&1
     if not errorlevel 1 (
-      start "RNR http 8765" /min /d "%ROOT%" python -m http.server %PORT%
+      start "RNR http 8765" /min /d "%ROOT%" python "%ROOT%\tools\rnr-http.py"
     ) else (
       echo Python not found. Opening file.
       start "" "%ROOT%\%PAGE%"
