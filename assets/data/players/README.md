@@ -8,7 +8,10 @@ assets/data/players/NN/
   NN_Player_fullbody.webp / _fullbody.webp  рост
   comics/                 кадры интро (1.png или 01.webp)
   NN_Имя.md               сюжет
+  voice/                  реплики (lines.json) и MP3, по три дубля
 ```
+
+Голоса: `VOICE.md`. Ведущий арены — `host/voice/`, не гонщик.
 
 | Папка | Файл сюжета | Персонаж |
 |-------|-------------|----------|

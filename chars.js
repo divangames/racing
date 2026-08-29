@@ -2,7 +2,7 @@
 //
 // Гонщики: общий список для игры и лаборатории
 // Новый персонаж — папка assets/data/players/NN:
-// портрет NN_Player, рост NN_Player_fullbody, comics/, файл сюжета.
+// портрет NN_Player, рост NN_Player_fullbody, comics/, voice/, файл сюжета.
 //
 ////////////////////////////////////////////////////////
 'use strict';
@@ -48,6 +48,11 @@ function playerDir(i) {
 /** Кадры интро: assets/data/players/NN/comics/. */
 function playerComicsDir(i) {
   return playerDir(i) + 'comics/';
+}
+
+/** Реплики и MP3: assets/data/players/NN/voice/. */
+function playerVoiceDir(i) {
+  return playerDir(i) + 'voice/';
 }
 
 /** Портрет или рост: несколько имён в папке NN, webp затем png. */

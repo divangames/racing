@@ -11,9 +11,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
- html,body{margin:0;height:100%;background:#050409;overflow:hidden}
+ html,body{margin:0;height:100%;background:#12101a;overflow:hidden}
  body{display:flex;align-items:center;justify-content:center}
- canvas{display:block;background:#050409}
+ body::before{
+  content:"";position:fixed;inset:-45%;pointer-events:none;z-index:0;
+  opacity:.055;
+  background:repeating-linear-gradient(-29.8deg,transparent 0 29px,#e8a23a 29px 38px);
+  animation:bootStripeShift 2.375s linear infinite
+ }
+ canvas{display:block;position:relative;z-index:1;background:#12101a}
  canvas:focus{outline:none}
  #boot-screen{
   position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
@@ -91,7 +97,7 @@
  @media (prefers-reduced-motion:reduce){
   .boot-fill{box-shadow:none}
   .boot-prompt{animation:none}
-  .boot-stripes,.boot-logo{animation:none}
+  .boot-stripes,.boot-logo,body::before{animation:none}
   #boot-screen.is-out{transition:none}
  }
 </style>
@@ -118,6 +124,7 @@
 <script src="music.js"></script>
 <script src="sounds.js"></script>
 <script src="chars.js"></script>
+<script src="voice.js"></script>
 <script src="editor/data.js"></script>
 <script>
 'use strict';
@@ -603,8 +610,12 @@ function drawAnnounceToast(c,msg,cx,top,viewWidth){
  c.restore();
 }
 function fm(n){return '$'+String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
+/** Букмекерский кэф: ×1.20 */
+function fmtOdds(k){return '×'+Number(k).toFixed(2);}
 const PLAYABLE_IDS=CHARS.map((c,i)=>c.npc?null:i).filter(i=>i!=null);
 const PLAYABLE_N=PLAYABLE_IDS.length;
+const BULL_IDX=4;
+const FIELD_AI=3;
 ////////////////////////////////////////////////////////
 //
 // Личные скилы гонщиков: ур.1…6
@@ -1497,13 +1508,16 @@ const PRIZE=[480,300,180,70,0,0];
 const PRIZE_DIV_GROWTH=.28;
 function prizeDivMult(div){return 1+PRIZE_DIV_GROWTH*Math.max(0,(div||1)-1);}
 const BET_TABLE=[
- {name:'БЕЗ СТАВКИ',mult:1,cost:0,col:'#58ff6b'},
- {name:'СТАВКА $350 ×1.5',mult:1.5,cost:350,col:'#ffd23f'},
- {name:'СТАВКА $900 ×2',mult:2,cost:900,col:'#ff6b4a'}
+ {name:'БЕЗ СТАВКИ',cost:0,col:'#58ff6b'},
+ {name:'$350',cost:350,col:'#ffd23f'},
+ {name:'$900',cost:900,col:'#ff6b4a'}
 ];
+/** Кэф на карточке — победа; 2 и 3 место считаются от него. */
+const BET_PLACE_MUL=[1,.55,.3];
+let raceBoard=null;
 const RESULTS_BOARD=4;
 const RESULTS_STAGGER=0.95;
-const LINES_START=['ДАМЫ И ГОСПОДА, ЗАВОДИТЕ МОТОРЫ!','СЕГОДНЯ БУДЕТ ЖАРКО, ФОЛКС!','ТОЛПА РЕВЁТ — ГОНЩИКИ НА СТАРТЕ!','ПРИСТЕГНИТЕСЬ. НАЧИНАЕТСЯ РОК!','ОНИ НЕ ЗНАЮТ, ЧТО ИХ ЖДЁТ!','БЕНЗИН В КРОВИ, АД В СЕРДЦЕ!','СМОТРИТЕ И ЗАПОМИНАЙТЕ!','ШЕСТЬ ГОНЩИКОВ. ОДИН ПОБЕДИТЕЛЬ!'];
+const LINES_START=['ДАМЫ И ГОСПОДА, ЗАВОДИТЕ МОТОРЫ!','СЕГОДНЯ БУДЕТ ЖАРКО, ФОЛКС!','ТОЛПА РЕВЁТ — ГОНЩИКИ НА СТАРТЕ!','ПРИСТЕГНИТЕСЬ. НАЧИНАЕТСЯ РОК!','ОНИ НЕ ЗНАЮТ, ЧТО ИХ ЖДЁТ!','БЕНЗИН В КРОВИ, АД В СЕРДЦЕ!','СМОТРИТЕ И ЗАПОМИНАЙТЕ!','БЫК НА СТАРТЕ. ОДИН ПОБЕДИТЕЛЬ!'];
 const LINES_DIE=['РАЗНЕСЁН В ХЛАМ!','ЭТО БЫЛО ЖЕСТОКО!','МИНУС ОДНА МАШИНА!','В СОРОК ПЕРВОМ СЕЗОНЕ ТАКОГО НЕ БЫЛО!','ОТВЕРНИСЬ, МАЛЫШ!','ТАК ИМ И НАДО!','КТО СЛЕДУЮЩИЙ?!','ЧИСТИЛЬЩИК ВЫШЕЛ НА РАБОТУ!'];
 const LINES_LEAD=['ВЫХОДИТ В ЛИДЕРЫ!','ПЕДАЛЬ В ПОЛ!','НИКТО НЕ МОЖЕТ ЕГО ДОГНАТЬ!','КОРОЛЬ ТРАССЫ!','АБСОЛЮТНОЕ ДОМИНИРОВАНИЕ!','ЭТО ПРОСТО НЕЧЕСТНО!'];
 ////////////////////////////////////////////////////////
@@ -1596,7 +1610,7 @@ const ACHIEVEMENTS=[
  {id:'killer',name:'УБИЙЦА',desc:'Разобрать десять чужих корыт за одну гонку',icon:2},
  {id:'millionaire',name:'МИЛЛИОНЕР',desc:'Накопить $50 000 — пока остальные жрут пыль',icon:3},
  {id:'collector',name:'КОЛЛЕКЦИОНЕР',desc:'Собрать пять тачек и превратить гараж в склад металлолома',icon:4},
- {id:'risky',name:'РИСКОВЫЙ',desc:'Поставить ×2 и уехать с добычей, а не в канаву',icon:5},
+ {id:'risky',name:'РИСКОВЫЙ',desc:'Поставить $900 и сорвать кэф, а не сжечь кассу',icon:5},
  {id:'master',name:'МАСТЕР',desc:'Взять все пять трасс — пустошь теперь знает хозяина',icon:6},
  {id:'full_garage',name:'ПОЛНЫЙ ГАРАЖ',desc:'Вкачать все улучшения до упора, пока мотор не заорёт',icon:7},
  {id:'shortcut_master',name:'МАСТЕР СРЕЗОВ',desc:'Прорубить пять секретных срезов и послать маршрут к чёрту',icon:8}
@@ -1887,6 +1901,10 @@ function updateView(){
  viewW=cv.width/viewS;
  viewH=cv.height/viewS;
 }
+/** Левый верх сцены в игровых единицах — включая поля ультраширокого холста. */
+function stageX0(){return -viewOX/viewS;}
+/** Верх сцены в игровых единицах. */
+function stageY0(){return -viewOY/viewS;}
 ////////////////////////////////////////////////////////
 //
 // Зум камеры в гонке: 1.75 дальше, 2.2 ближе
@@ -2173,6 +2191,7 @@ function audioInit(){if(AU.ctx)return;const AC=window.AudioContext||window.webki
  AU.music=c.createGain();AU.music.connect(AU.master);
  applyAudioSettings();
  if(window.SFX&&SFX.preload)SFX.preload();
+ if(typeof voicePreload==='function')voicePreload();
  noiseBuf=c.createBuffer(1,c.sampleRate*1.2,c.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
  AU.engO=c.createOscillator();AU.engO.type='sawtooth';AU.engO2=c.createOscillator();AU.engO2.type='square';
  AU.engF=c.createBiquadFilter();AU.engF.type='lowpass';AU.engF.frequency.value=700;
@@ -2416,7 +2435,8 @@ function makeRacer(ch,car,isP,lvl,slot,opts){
  const dmgMul=1+(chIdx===2?skillVal(2,skillLvl):0);
  const racer={ch,car,isP,st,chIdx,skillLvl,dmgMul,x:0,y:0,ang:0,spd:0,hp:st.maxhp,maxhp:st.maxhp,shield:0,wheelAngle:0,wheelRot:0,
   bolt:0,nitro:0,invuln:0,bubble:0,cloak:0,cdN:0,cdW:0,cdU:0,buffDmg:1,buffArmor:1,buffDmgT:0,berserk:0,slow:0,drone:0,dead:false,respawnT:0,
-  z:0,vz:0,air:false,jumpCd:0,jumpSpd:0,lat:0,susp:0,steerFlt:0,handbrake:false,lvl:lvl,
+  z:0,vz:0,air:false,jumpCd:0,jumpSpd:0,lat:0,susp:0,steerFlt:0,handbrake:false,
+  bob:0,bobVel:0,rockAmp:0,rockT:0,landStun:0,lvl:lvl,
   dmgDealt:0,kills:0,jumps:0,pickups:0,moneyGot:0,lapStart:0,bestLap:0,lastLap:0,
   nitLvl:isP?((save.tuning[car.idx]&&save.tuning[car.idx].nit)||0):((lvl&&lvl.nit)||0),
   wepAmmo:0,wepOver:0,
@@ -2430,8 +2450,29 @@ function makeRacer(ch,car,isP,lvl,slot,opts){
 // Мины, масло, бусты и трамплины на сплайне трассы
 //
 ////////////////////////////////////////////////////////
+/** Два трамплина на прямых полигона, не у старта. */
+function placeLabRamps(T){
+ const S=T.S,N=T.N;
+ if(!S||!N)return[];
+ const want=[0.26,0.74];
+ const ramps=[];
+ want.forEach((u)=>{
+  const aim=Math.floor(u*N)%N;
+  let best=aim,bk=1e9;
+  const span=Math.max(12,Math.floor(N*0.06));
+  for(let d=-span;d<=span;d++){
+   const i=(aim+d+N)%N;
+   if(i<24||i>N-24)continue;
+   const k=S[i].k;
+   if(k<bk){bk=k;best=i;}
+  }
+  if(ramps.some((q)=>Math.min(Math.abs(q.i-best),N-Math.abs(q.i-best))<36))return;
+  ramps.push({i:best,x:S[best].x,y:S[best].y,ang:S[best].ang});
+ });
+ return ramps;
+}
 function placeTrackHazards(T,seed){
- if(T&&T.lab)return{pads:[],ramps:[],mines:[],oils:[],picks:[]};
+ if(T&&T.lab)return{pads:[],ramps:placeLabRamps(T),mines:[],oils:[],picks:[]};
  const S=T.S,N=T.N,Rz=mulberry(seed);
  const valid=i=>i>80&&i<N-80;
  const pads=[],mines=[],oils=[];
@@ -2478,6 +2519,115 @@ function makeTrackPattern(T,tIdx){
  for(let i=0;i<140;i++){tq.fillStyle=trnd()<.5?T.theme.dark:'#00000022';const s=2+trnd()*4;tq.fillRect(trnd()*128,trnd()*128,s,s);}
  T.pat=g.createPattern(tile,'repeat');
 }
+/** Перемешать копию массива. */
+function shuffleCopy(src){
+ const a=src.slice();
+ for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=a[i];a[i]=a[j];a[j]=t;}
+ return a;
+}
+/** Сила участника для букмекера: кузов, тюнинг, навык пилота. */
+function specPower(sp,div){
+ const st=stats(sp.ch,sp.car,sp.lvl,sp.isP?undefined:{spd:0,crn:0,grt:0},sp.isP?0:div);
+ return st.top*.38+st.acc*.2+st.maxhp*.65+(sp.skill||.8)*90+(sp.isBoss?14:0)+(sp.isP?6:0);
+}
+/** Кэфы 1/2/3: фаворит дешевле, аутсайдер дороже. */
+function computeFieldOdds(specs,div){
+ const powers=specs.map(s=>specPower(s,div));
+ const mean=powers.reduce((a,b)=>a+b,0)/Math.max(1,powers.length);
+ const temp=Math.max(32,mean*.11);
+ const ex=powers.map(p=>Math.exp((p-mean)/temp));
+ const sum=ex.reduce((a,b)=>a+b,0);
+ const house=.14;
+ return specs.map((_,i)=>{
+  const pWin=ex[i]/Math.max(1e-6,sum);
+  const k1=clamp(Math.round((1/Math.max(.08,pWin))*(1-house)*100)/100,1.2,9);
+  return{
+   k1,
+   k2:Math.round(k1*BET_PLACE_MUL[1]*100)/100,
+   k3:Math.round(k1*BET_PLACE_MUL[2]*100)/100
+  };
+ });
+}
+/** Кузова для сетки: не чужие личные и не текущая машина игрока. */
+function fieldFreeCars(){
+ const out=[];
+ for(let i=0;i<CARS.length;i++){
+  const c=CARS[i];if(!c)continue;
+  if(i===save.car)continue;
+  if(c.owner!=null&&c.owner!==save.char)continue;
+  out.push(i);
+ }
+ return shuffleCopy(out.length?out:[...Array(CARS.length).keys()].filter(i=>i!==save.car));
+}
+/** Сетка: игрок, Бык-босс, три случайных ИИ. Сюжетных пилотов в заезде нет. */
+function planRaceField(div){
+ const tun=save.tuning[save.car]||blankTune();
+ const specs=[{id:0,isP:true,ch:CHARS[save.char],car:CARS[save.car],lvl:tun,slot:4,skill:1,isBoss:false}];
+ const cars=fieldFreeCars();
+ const bull=CHARS[BULL_IDX];
+ const bci=cars[0]|0;
+ specs.push({id:1,isP:false,ch:bull,car:CARS[bci],lvl:aiBossTune(div),slot:0,skill:aiDriveSkill(div,true),isBoss:true});
+ const rest=cars.filter(i=>i!==bci);
+ const aiPool=shuffleCopy(AIDRV);
+ for(let i=0;i<FIELD_AI&&i<aiPool.length;i++){
+  const ci=rest.length?rest[i%rest.length]:bci;
+  specs.push({id:specs.length,isP:false,ch:aiPool[i],car:CARS[ci],lvl:aiFillerTune(div),slot:1+i,skill:aiDriveSkill(div,false),isBoss:false});
+ }
+ return specs;
+}
+/** Сетка заезда до старта: те же пилоты, что выедут на трассу. */
+function makeRaceBoard(){
+ const div=1+((save.race/TRACKDEFS.length)|0);
+ raceDiv=div;
+ const specs=planRaceField(div);
+ return{div,specs,odds:computeFieldOdds(specs,div),pick:0};
+}
+/** Максимальный индекс ставки, который тянет касса. */
+function betAffordMax(){
+ let m=0;
+ for(let i=0;i<BET_TABLE.length;i++)if(save.cash>=BET_TABLE[i].cost)m=i;
+ return m;
+}
+/** Снимает выбор, если на ставку не хватает. */
+function clampBetAfford(){
+ if(!save)return;
+ const i=save.bet|0;
+ if(!BET_TABLE[i]||save.cash<BET_TABLE[i].cost){
+  const n=betAffordMax();
+  if(save.bet!==n){save.bet=n;persist();}
+ }
+}
+/** Листает только доступные по кассе суммы. */
+function cycleBet(dir){
+ if(!save)return;
+ const n=BET_TABLE.length;
+ let i=save.bet|0;
+ for(let s=0;s<n;s++){
+  i=(i+dir+n)%n;
+  if(save.cash>=BET_TABLE[i].cost){save.bet=i;persist();sClick();return;}
+ }
+ sHit();
+}
+/** Выплата за место 0/1/2 от кэфа победы. */
+function betPayoutFor(stake,odds,place){
+ if(!stake||!odds||place<0||place>2)return 0;
+ const k=place===0?odds.k1:place===1?odds.k2:odds.k3;
+ return Math.round(stake*k);
+}
+function enterPreRace(){
+ clampBetAfford();
+ if(!raceBoard)raceBoard=makeRaceBoard();
+ state='prerace';sClick();
+}
+/** Касса покрывает выбранную сумму — списываем и едем. */
+function confirmPreRace(){
+ clampBetAfford();
+ const cost=BET_TABLE[save.bet|0].cost;
+ if(cost>0&&save.cash<cost){sHit();garMsg='НЕ ХВАТАЕТ НА СТАВКУ';garMsgT=2.2;return;}
+ if(cost>0){save.cash-=cost;persist();}
+ raceTrackOverride=null;
+ buildRace();
+}
 function buildRace(){
  const tIdx=labTest?0:(raceTrackOverride!=null?raceTrackOverride:save.race%TRACKDEFS.length);
  const div=labTest?1:(1+((save.race/TRACKDEFS.length)|0));
@@ -2490,41 +2640,32 @@ function buildRace(){
  const S=T.S,N=T.N,Rz=mulberry(100+tIdx*13+(save.race||0)*7);
  const racers=[];
  const pl=makeRacer(CHARS[save.char],CARS[save.car],true,save.tuning[save.car]||{arm:0,eng:0,tir:0,shk:0,nit:0},5);
- racers.push(pl);
- if(!labTest){
- // Три босса — остальные игровые гонщики; один слот — Борис Бык вместо рандома; ещё один ИИ
- const chosenChar=save.char;
- const others=PLAYABLE_IDS.filter(i=>i!==chosenChar);
- for(let i=others.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=others[i];others[i]=others[j];others[j]=t;}
- const bosses=others.slice(0,3);
- const aiPool=AIDRV.slice();for(let i=aiPool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=aiPool[i];aiPool[i]=aiPool[j];aiPool[j]=t;}
- const busyCars=new Set([CHARS_CARS[chosenChar],save.car]);
- bosses.forEach(b=>busyCars.add(CHARS_CARS[b]));
- const freeCars=[];for(let i=0;i<CARS.length;i++)if(!busyCars.has(i))freeCars.push(i);
- for(let i=freeCars.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=freeCars[i];freeCars[i]=freeCars[j];freeCars[j]=t;}
- for(let i=0;i<bosses.length;i++){
-  const chIdx=bosses[i],ch=CHARS[chIdx];
-  const ci=CHARS_CARS[chIdx];
-  const lv=aiBossTune(div);
-  const ai=makeRacer(ch,CARS[ci],false,lv,i);
-  ai.aiCol=ch.col;
-  ai.skill=aiDriveSkill(div,true);
-  ai.isBoss=true;
-  racers.push(ai);
+ if(!labTest&&raceBoard&&raceBoard.specs&&raceBoard.specs.length){
+  racers.length=0;
+  for(const sp of raceBoard.specs){
+   const r=makeRacer(sp.ch,sp.car,!!sp.isP,sp.lvl,sp.slot);
+   r.aiCol=sp.ch.col;
+   if(!sp.isP)r.skill=sp.skill;
+   r.isBoss=!!sp.isBoss;
+   r.fieldId=sp.id;
+   racers.push(r);
+  }
+ }else{
+  racers.push(pl);
+  if(!labTest){
+   const specs=planRaceField(div);
+   racers.length=0;
+   for(const sp of specs){
+    const r=makeRacer(sp.ch,sp.car,!!sp.isP,sp.lvl,sp.slot);
+    r.aiCol=sp.ch.col;
+    if(!sp.isP)r.skill=sp.skill;
+    r.isBoss=!!sp.isBoss;
+    r.fieldId=sp.id;
+    racers.push(r);
+   }
+  }
  }
- const fillers=CHARS.filter(c=>c.npc);
- for(let i=0;i<aiPool.length&&fillers.length<2;i++)fillers.push(aiPool[i]);
- for(let i=0;i<fillers.length;i++){
-  if(freeCars.length===0)break;
-  const drv=fillers[i];
-  const ci=freeCars[i%freeCars.length];
-  const lv=aiFillerTune(div);
-  const ai=makeRacer(drv,CARS[ci],false,lv,bosses.length+i);
-  ai.aiCol=drv.col;
-  ai.skill=aiDriveSkill(div,false);
-  racers.push(ai);
- }
- }
+ const racePl=racers.find(r=>r.isP)||pl;
  for(const r of racers){
   const gi=(N-6-Math.floor(r.slot/2)*12+N)%N,p=S[gi],lat=(r.slot%2?38:-38);
   r.x=p.x+p.nx*lat;r.y=p.y+p.ny*lat;r.ang=p.ang;r.trackIdx=gi;
@@ -2534,14 +2675,19 @@ function buildRace(){
  for(const p of S){mnx=Math.min(mnx,p.x);mny=Math.min(mny,p.y);mxx=Math.max(mxx,p.x);mxy=Math.max(mxy,p.y);}
  const ms=Math.min(128/(mxx-mnx),134/(mxy-mny));
  const weather=labTest?WEATHER[0]:WEATHER[(Math.random()*WEATHER.length)|0];
- R={T,S,N,div,tIdx,racers,pl,pads,ramps,mines,oils,picks,shots:[],parts:[],floats:[],scorch:[],skids:[],shocks:[],spikes:[],
+ R={T,S,N,div,tIdx,racers,pl:racePl,pads,ramps,mines,oils,picks,shots:[],parts:[],floats:[],scorch:[],skids:[],shocks:[],spikes:[],
   time:0,phase:'count',countT:4.6,msg:null,shake:0,sx:0,sy:0,cam:{x:0,y:0},order:racers.slice(),
   over:false,overT:0,firstDone:null,endTimer:null,hintT:labTest?0:(save.race===0?9:0),prize:null,quip:'',
   map:{pts:S.filter((p,i)=>i%3===0).map(p=>[(p.x-mnx)*ms,(p.y-mny)*ms]),ms,mnx,mny,mw:(mxx-mnx)*ms,mh:(mxy-mny)*ms},
   bet:save.bet,
+  betStake:labTest?0:(BET_TABLE[save.bet|0].cost||0),
+  betPick:(raceBoard&&raceBoard.pick)|0,
+  betOdds:(!labTest&&raceBoard&&raceBoard.odds)?raceBoard.odds[raceBoard.pick]:null,
+  betName:(!labTest&&raceBoard&&raceBoard.specs[raceBoard.pick])?(raceBoard.specs[raceBoard.pick].ch.short||raceBoard.specs[raceBoard.pick].ch.name):'',
   weather,weatherParts:[],
   shortcuts:(labTest?[]:(SHORTCUTS[tIdx]||[])).map(s=>({...s,used:false,glow:0}))};
- P=pl;state='race';paused=false;resetHudFx();
+ P=racePl;state='race';paused=false;resetHudFx();
+ if(typeof voiceReset==='function')voiceReset();
  if(labTest)announce('ПОЛИГОН · ЗАМЕР КРУГА. ESC — В ЛАБОРАТОРИЮ',true);
 }
 function restartRace(){if(!R||R.over)return;persist();buildRace();}
@@ -2599,16 +2745,23 @@ function dmgRacer(r,d,killer){
  if(killer&&killer.isP)killer.dmgDealt+=d;
  d*=(1-r.ch.grt*.05);r.hp-=d;
  if(r.isP&&!R.demo)doShake(4);
- if(r.hp<=0)killRacer(r,killer);else if(!R.demo)sHit();}
+ if(r.hp<=0)killRacer(r,killer);
+ else{
+  if(!R.demo)sHit();
+  if(killer&&typeof voiceSay==='function')voiceSay(r,'hit',{chance:.38,gap:6});
+ }
+}
 function killRacer(r,killer){
- r.dead=true;r.respawnT=2.6;r.spd=0;r.lat=0;r.susp=0;r.steerFlt=0;boom(r.x,r.y,true);
+ r.dead=true;r.respawnT=2.6;r.spd=0;r.lat=0;r.susp=0;r.steerFlt=0;r.bob=0;r.bobVel=0;r.rockAmp=0;r.landStun=0;boom(r.x,r.y,true);
  if(killer&&killer.isP)killer.kills++;
  if(R.demo){titleFollowKiller(killer);return;}
  if(r.isP)doShake(18);sBoom();
  const kn=killer&&killer!==r?racerTag(killer):'';
- announce(racerTag(r)+' '+LINES_DIE[(Math.random()*LINES_DIE.length)|0]+(kn?' ВИНОВНИК: '+kn:''));}
+ announce(racerTag(r)+' '+LINES_DIE[(Math.random()*LINES_DIE.length)|0]+(kn?' ВИНОВНИК: '+kn:''));
+ if(killer&&killer!==r&&typeof voiceSay==='function')voiceSay(killer,'kill',{chance:.72,gap:5});}
 function respawn(r){const S=R.S,N=R.N,i=(r.trackIdx-10+N)%N,p=S[i];
  r.x=p.x+p.nx*r.aiLane*.5;r.y=p.y+p.ny*r.aiLane*.5;r.ang=p.ang;r.spd=0;r.lat=0;r.susp=0;r.steerFlt=0;
+ r.bob=0;r.bobVel=0;r.rockAmp=0;r.rockT=0;r.landStun=0;
  r.hp=r.maxhp;r.dead=false;r.invuln=2.2;r.bolt=0;r.nitro=0;r.bubble=0;r.z=0;r.vz=0;r.air=false;r.jumpCd=0;r.jumpSpd=0;
  resetWepMag(r);
  if(r.car.idx===3)r.shield=1;}
@@ -2625,7 +2778,8 @@ function useNitro(r){if(r.dead||r.cdN>0)return;
   if(r.isP&&!R.demo){fl(r.x,r.y,'ПРЫЖОК!','#7df9ff');swp('sine',280,720,.22,.2);}
   return;
  }
- r.nitro=1.6+(r.nitLvl||0)*0.12;if(!R.demo)swp('sawtooth',150,500,.4,.2);}
+ r.nitro=1.6+(r.nitLvl||0)*0.12;if(!R.demo)swp('sawtooth',150,500,.4,.2);
+ if(typeof voiceSay==='function')voiceSay(r,'nitro',{chance:r.isP?1:.45,gap:8});}
 function fireWeapon(r){if(r.dead||r.cdW>0)return;const ab=carAbil(r.car.idx).weapon;
  if(ab.type==='minigun'){
   if((r.wepOver||0)>0||(r.wepAmmo|0)<=0)return;
@@ -2688,6 +2842,10 @@ function mineExplode(m,owner){
 function finishRacer(r){
  r.finished=true;r.finishTime=R.time;
  if(!R.firstDone){R.firstDone=r;announce(racerTag(r)+' ФИНИШИРУЕТ ПЕРВЫМ!',true);}
+ if(typeof voiceSay==='function'){
+  if(R.firstDone===r)voiceSay(r,'win',{force:true,gap:0});
+  else if(r.isP)voiceSay(r,'lose',{force:true,gap:0});
+ }
  if(r.isP){announce('ФИНИШ! РУЛЬ СВОБОДЕН — РАЗВОРАЧИВАЙСЯ!',true);sWin();}
  else announce(r.ch.name+' ФИНИШИРУЕТ ('+fmtT(r.finishTime)+')');}
 function fmtT(t){const m=(t/60)|0,s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1);}
@@ -2707,27 +2865,29 @@ function showResults(){
   return;
  }
  const divMult=prizeDivMult(R.div);
- const betMults=BET_TABLE.map(b=>b.mult);
- const betCosts=BET_TABLE.map(b=>b.cost);
  R.place=ord.indexOf(P);
- const won=R.place<=2;
- const betIdx=R.bet||0;
- const betMult=won?betMults[betIdx]:1;
- if(!won&&betCosts[betIdx]>0){
-  save.cash=Math.max(0,save.cash-betCosts[betIdx]);
+ R.prize=ord.map((r,i)=>Math.round(PRIZE[i]*divMult));
+ save.cash+=R.prize[R.place];
+ let betPay=0,betPlace=-1;
+ if((R.betStake||0)>0&&R.betOdds){
+  const tgt=R.racers.find(r=>(r.fieldId|0)===(R.betPick|0))||(R.betPick===0?P:null);
+  betPlace=tgt?ord.indexOf(tgt):-1;
+  betPay=betPayoutFor(R.betStake,R.betOdds,betPlace);
+  if(betPay>0)save.cash+=betPay;
  }
- R.prize=ord.map((r,i)=>Math.round(PRIZE[i]*divMult*(r===P?betMult:1)));
- save.cash+=R.prize[R.place];persist();
- if(won&&betIdx>0){
-  R.quip='СТАВКА СЫГРАЛА! ×'+betMult+' К ПРИЗУ! ЛЕГЕНДА!';
- }else if(!won&&betCosts[betIdx]>0){
-  R.quip='СТАВКА НЕ СЫГРАЛА... НО ЕСТЬ СЛЕДУЮЩИЙ РАЗ!';
+ R.betPay=betPay;
+ persist();
+ if((R.betStake||0)>0){
+  R.quip=betPay>0
+   ?('СТАВКА СЫГРАЛА: '+fmtOdds(betPlace===0?R.betOdds.k1:betPlace===1?R.betOdds.k2:R.betOdds.k3)+' на '+(R.betName||'пилота')+' · +'+fm(betPay))
+   :('СТАВКА СГОРЕЛА. '+(R.betName||'ПИЛОТ')+' ВНЕ ПОДИУМА.');
  }else{
   R.quip=R.place===0?pickLine(LINES_WIN_1):
    R.place===1?pickLine(LINES_WIN_2):
    R.place===2?pickLine(LINES_WIN_3):
    pickLine(LINES_LOSE);
  }
+ raceBoard=null;
  fillAnnouncerQueue();
  R.order=ord;
  {const rec=save.records[R.tIdx]||(save.records[R.tIdx]={bestLap:0,bestPlace:99});
@@ -2756,7 +2916,7 @@ function checkAchievements(){
  if((P.kills||0)>=10)grant('killer');
  if(save.cash>=50000)grant('millionaire');
  if(Object.keys(save.carOwned||{}).length>=5)grant('collector');
- if(R.place<=2&&R.bet===2)grant('risky');
+ if((R.betStake||0)>0&&(R.betPay||0)>0&&R.bet===2)grant('risky');
  if(R.place===0){
   save.tracksWon[R.tIdx]=true;
   if(Object.keys(save.tracksWon).length>=TRACKDEFS.length)grant('master');
@@ -2787,9 +2947,22 @@ function stepVehicle(r,th,steer,dt,hb){
  r.handbrake=hand;
  if(r.lat==null)r.lat=0;
  if(r.susp==null)r.susp=0;
+ if(r.bob==null)r.bob=0;
+ if(r.bobVel==null)r.bobVel=0;
+ if(r.rockAmp==null)r.rockAmp=0;
+ if(r.rockT==null)r.rockT=0;
+ if(r.landStun==null)r.landStun=0;
  let long=r.spd,lat=r.lat;
  const shk=(r.lvl&&r.lvl.shk)||0;
- if(r.susp>0)r.susp=Math.max(0,r.susp-dt*(2.6+shk*.55));
+ if(r.susp>0)r.susp=Math.max(0,r.susp-dt*(1.15+shk*.35));
+ if(r.landStun>0)r.landStun=Math.max(0,r.landStun-dt);
+ if(r.rockAmp>0){
+  r.rockT+=dt*(18-shk);
+  r.rockAmp=Math.max(0,r.rockAmp-dt*(0.9+shk*.25));
+ }
+ r.bobVel+=-r.bob*36*dt-r.bobVel*3.4*dt;
+ r.bob+=r.bobVel*dt;
+ if(Math.abs(r.bob)<0.35&&Math.abs(r.bobVel)<1.2&&r.susp<=0){r.bob=0;r.bobVel=0;}
  ////////////////////////////////////////////////////////
  //
  // Продольная: инерция, тормоз, ручник (не мгновенный стоп)
@@ -2797,10 +2970,11 @@ function stepVehicle(r,th,steer,dt,hb){
  ////////////////////////////////////////////////////////
  const roll=r.air?0.1:(hand?2.15:(th===0?0.22:0.12));
  long*=Math.exp(-roll*dt);
+ const gas=r.landStun>0?0.14:1;
  if(!r.air){
   if(th>0){
    const want=top*th;
-   if(long<want)long=Math.min(want,long+acc*dt);
+   if(long<want)long=Math.min(want,long+acc*dt*gas);
    else long+=clamp(want-long,-acc*.35*dt,acc*.35*dt);
   }else if(th<0){
    if(long>18)long+=th*(520+grip*50)*dt;
@@ -2887,8 +3061,14 @@ function stepVehicle(r,th,steer,dt,hb){
   r.z+=r.vz*dt;
   if(r.z<=0&&r.vz<0){
    r.z=0;r.vz=0;r.air=false;
-   const impact=clamp(Math.abs(r.jumpSpd||r.spd)/260,.3,1.15);
-   r.susp=Math.min(1,(r.susp||0)+.42+impact*.48);
+   const impact=clamp(Math.abs(r.jumpSpd||r.spd)/240,.35,1.2);
+   const soft=1-shk*.12;
+   r.susp=Math.min(1,.82+impact*.22);
+   r.bob=12+impact*10;
+   r.bobVel=-70*impact;
+   r.rockAmp=(introReduceMotion?0:.18+impact*.12)*soft;
+   r.rockT=0;
+   r.landStun=(.34+impact*.16)*soft;
    for(const o of R.racers){if(o===r||o.dead||o.air)continue;
     if(obbOverlap(carObb(r),carObb(o))){
      const fdmg=(18+r.jumpSpd*0.06)*(1-(o.lvl&&o.lvl.shk||0)*0.05)*(r.dmgMul||1);
@@ -2897,13 +3077,13 @@ function stepVehicle(r,th,steer,dt,hb){
     }
    }
    // Потеря скорости на ударе; амортизаторы съедают штраф
-   r.spd*=(1-Math.max(0.012,(0.11-shk*0.015)*impact));
+   r.spd*=(1-Math.max(0.02,(0.2-shk*0.028)*impact));
    r.lat=(r.lat||0)*(0.62+grip*0.2);
    const selfDmg=Math.max(0,10-shk*1.5);
    if(selfDmg>0)dmgRacer(r,selfDmg,null);
    landDust(r,impact);
-   spark(r.x,r.y,'rgba(140,110,70,.55)',6,90);
-   if(r.isP){doShake(4+impact*4);swp('triangle',90,35,.2,.3);}
+   spark(r.x,r.y,'rgba(140,110,70,.55)',8,110);
+   if(r.isP){doShake(5+impact*5);swp('triangle',90,35,.2,.3);}
   }
  }
  if(off&&Math.abs(r.spd)>70&&Math.random()<dt*30)
@@ -2981,6 +3161,7 @@ function advanceIdx(r){
     r.hp=Math.min(r.maxhp,r.hp+30);
     r.cdN=0;r.cdW=0;r.cdU=0;resetWepMag(r);
    }
+   if(r.lap===raceLaps-1&&typeof voiceSay==='function')voiceSay(r,'last_lap',{chance:r.isP?1:.4,gap:20});
   }
  }
  else if(r.trackIdx<N*.25&&best>N*.75)r.lap--;
@@ -3028,7 +3209,8 @@ function resolveRaceContact(dt){
    if(b.car.idx===0){dA*=2;dB*=.5;}
    dA*=(a.dmgMul||1);dB*=(b.dmgMul||1);
    dmgRacer(a,dA,b);dmgRacer(b,dB,a);
-   spark((a.x+b.x)/2,(a.y+b.y)/2,'#ffd23f',6,160);}
+   spark((a.x+b.x)/2,(a.y+b.y)/2,'#ffd23f',6,160);
+   if(typeof voiceSay==='function')voiceSay(a.spd>=b.spd?a:b,'ram',{chance:.42,gap:6});}
   a.spd*=.97;b.spd*=.97;}
  for(let i=R.shots.length-1;i>=0;i--){const s=R.shots[i];
   if(s.rocket){
@@ -3182,7 +3364,7 @@ function updRace(dt){
  if(R.phase==='count'){
   const prev=R.countT;R.countT-=dt;
   for(const b of[4,3,2,1])if(prev>b&&R.countT<=b)sBeep(b===1?880:440);
-  if(R.countT<=0){R.phase='go';for(const rr2 of R.racers)rr2.lapStart=R.time;announce(labTest?'ПОЛИГОН · ЗАМЕР КРУГА. ESC — В ЛАБОРАТОРИЮ':LINES_START[(Math.random()*LINES_START.length)|0],true);sGo();}
+  if(R.countT<=0){R.phase='go';for(const rr2 of R.racers)rr2.lapStart=R.time;announce(labTest?'ПОЛИГОН · ЗАМЕР КРУГА. ESC — В ЛАБОРАТОРИЮ':LINES_START[(Math.random()*LINES_START.length)|0],true);sGo();if(typeof voiceOnStart==='function')voiceOnStart();}
   return;}
  if(R.phase==='done'){R.doneT-=dt;
   for(const r of R.racers)if(!r.dead)stepVehicle(r,0,0,dt);
@@ -3221,7 +3403,9 @@ function updRace(dt){
  const leader=R.order[0];
  if(!R.leadChk)R.leadChk=leader;
  if(leader!==R.leadChk&&!leader.finished){R.leadChk=leader;
-  if(!labTest&&Math.random()<.7)announce(racerTag(leader)+' '+LINES_LEAD[(Math.random()*LINES_LEAD.length)|0]);}}
+  if(!labTest&&Math.random()<.7)announce(racerTag(leader)+' '+LINES_LEAD[(Math.random()*LINES_LEAD.length)|0]);
+  if(typeof voiceSay==='function')voiceSay(leader,'lead',{chance:.85,gap:8});}
+ if(typeof voiceOnChase==='function')voiceOnChase();}
 /** Руль из лаборатории: флаг [6] на носу; если флаг потерян — колёса с большим +X. */
 function editorWheelSteers(q,i,list){
  if(!q||!list||!list.length)return false;
@@ -3402,17 +3586,18 @@ function drawCar(c,r,sc){
  const bodyS=editorCfg&&editorCfg.body&&editorCfg.body.scale!=null?editorCfg.body.scale:(idx===6?1.65:1);
  c.save();c.translate(r.x,r.y);
  drawCarGroundShadow(c,r,bodyS);
- // МАШИНА: поднимается на z и растёт с высотой
- c.translate(0,-z);
- c.translate(0,(r.susp||0)*1.7);
+ // МАШИНА: поднимается на z; после посадки — подпрыгивание кузова
+ c.translate(0,-z+(r.bob||0));
  c.rotate(r.ang);
  const lift=(sc||1)*(1+(z/46)*0.25);
  c.scale(lift,lift);
+ const suspVis=r.susp||0;
+ const rockVis=introReduceMotion?0:(r.rockAmp||0)*Math.sin(r.rockT||0);
  // Колесо — один общий спрайт-лист, растянутый под конкретную машину.
  const wheel=(wx,wy,steer,ww,wh,mult)=>{
   const sc=mult!=null&&isFinite(+mult)&&+mult>0?+mult:1;
-  const poke=1+(r.susp||0)*.22;
-  c.save();c.translate(wx,wy*poke);c.rotate(steer);
+  const poke=wy*(1+suspVis*0.05);
+  c.save();c.translate(wx,poke);c.rotate(steer);
   c.imageSmoothingEnabled=true;
   const frame=((Math.floor(r.wheelRot*.5)%WHEEL_FRAME_COUNT)+WHEEL_FRAME_COUNT)%WHEEL_FRAME_COUNT;
   const dw=Math.max(0.4,(isFinite(+ww)?+ww:12)*sc),dh=Math.max(0.4,(isFinite(+wh)?+wh:8)*sc);
@@ -3514,6 +3699,7 @@ function drawCar(c,r,sc){
   const bx=isFinite(+bodyOffset.sx)&&+bodyOffset.sx>0?+bodyOffset.sx:1;
   const by=isFinite(+bodyOffset.sy)&&+bodyOffset.sy>0?+bodyOffset.sy:1;
   c.save();c.translate((bodyOffset.x||0)+(ox||0),(bodyOffset.y||0)+(oy||0));
+  if(rockVis)c.rotate(rockVis);
   c.drawImage(im,-iw*s*bx/2,-ih*s*by/2,iw*s*bx,ih*s*by);
   c.restore();
   return true;
@@ -4267,6 +4453,7 @@ function drawHUD(){
   }
   if(r.finished)txt(g,'✓',packX+packW-10,y,10,'#58ff6b','center',F_B);
  });
+ if(typeof drawHudVoiceBarks==='function')drawHudVoiceBarks(g,packX,packY,packW,fx);
  }
  const weatherOn=settings.graphics.weather&&R.weather&&R.weather.parts>0;
  panel(g,HW/2-96,12,192,weatherOn?48:36,'rgba(10,8,14,.82)','#3a3548',12);
@@ -4297,14 +4484,15 @@ function drawHUD(){
     txt(g,'простая трасса · замер круга',HW/2,262,16,'#9a9a9a','center',F_B);
     txt(g,'ПРИГОТОВЬТЕСЬ...',HW/2,310,18,'#e8c547','center');
    }else{
-    panel(g,HW/2-330,150,660,240,'rgba(14,11,20,.92)','#ff9d2e');
+    panel(g,HW/2-330,150,660,R.betStake?268:240,'rgba(14,11,20,.92)','#ff9d2e');
     txt(g,'ЭТАП '+(save.race+1)+' — '+DIVN[Math.min(3,R.div-1)],HW/2,186,20,'#ff9d2e','center');
     txt(g,R.T.name,HW/2,226,40,'#ffd23f','center');
     txt(g,'ПРИЗОВОЙ ФОНД',HW/2,262,15,'#9a93a8','center',F_B);
     const mult=prizeDivMult(R.div);
     txt(g,PRIZE.map((p,i)=>(i+1)+':$'+Math.round(p*mult)).join('   '),HW/2,290,15,'#e8e2d0','center',F_B);
     txt(g,R.div>1?'ДИВИЗИОН '+R.div:'ПЕРВАЯ ГОНКА СЕЗОНА',HW/2,330,16,'#58ff6b','center',F_B);
-    txt(g,'ПРИГОТОВЬТЕСЬ...',HW/2,364,18,'#fff','center');
+    if((R.betStake||0)>0&&R.betOdds)txt(g,'СТАВКА '+fm(R.betStake)+' · '+(R.betName||'')+'  1:'+fmtOdds(R.betOdds.k1)+'  2:'+fmtOdds(R.betOdds.k2)+'  3:'+fmtOdds(R.betOdds.k3),HW/2,352,13,'#ffd23f','center',F_B);
+    txt(g,'ПРИГОТОВЬТЕСЬ...',HW/2,R.betStake?378:364,18,'#fff','center');
    }
   }else{
    const n=Math.ceil(ct),f=ct-(n-1);
@@ -5284,9 +5472,77 @@ function drawTrackPick(){
  });
  txt(g,'← → ↑ ↓ — плитка • ENTER — старт • ESC — назад',W/2,H-28,14,'#6f6880','center',F_B);
 }
+////////////////////////////////////////////////////////
+//
+// Выбор гонщика: живая hazard-лента и пепел как на загрузке
+//
+////////////////////////////////////////////////////////
+let charSelAsh=null,charSelAshT=0,charSelAshKey='';
+/** Диагональные полоски на всю ширину холста, не только 1280. */
+function drawHazardStripes(c){
+ const x0=stageX0(),x1=x0+viewW,yBand=stageY0()+30;
+ const step=48,spd=16;
+ const shift=introReduceMotion?0:((gt*spd)%step);
+ c.fillStyle='rgba(255,157,46,.06)';
+ for(let x=x0-40-step;x<x1+40;x+=step){
+  c.save();c.translate(x+shift,yBand);c.rotate(-.5);c.fillRect(0,0,20,90);c.restore();
+ }
+}
+/** Частица пепла или угля в координатах всей сцены. */
+function makeCharSelFlake(fromTop){
+ const x0=stageX0(),y0=stageY0();
+ const ember=Math.random()<.28;
+ return{
+  x:x0+Math.random()*viewW,
+  y:fromTop?y0-12-Math.random()*viewH*0.2:y0+Math.random()*viewH,
+  vx:(Math.random()-.5)*.35,
+  vy:.28+Math.random()*.55,
+  s:ember?1.2+Math.random()*2.2:.7+Math.random()*1.8,
+  a:.18+Math.random()*.45,
+  rot:Math.random()*Math.PI,
+  vr:(Math.random()-.5)*.04,
+  ph:Math.random()*Math.PI*2,
+  ember
+ };
+}
+/** Пепел по всему холсту, включая боковые поля. */
+function drawCharSelAsh(c){
+ if(introReduceMotion)return;
+ const key=viewW+'x'+viewH;
+ if(!charSelAsh||charSelAshKey!==key){
+  const n=Math.max(64,Math.min(160,Math.round(viewW*viewH/12000)));
+  charSelAsh=[];
+  charSelAshKey=key;
+  for(let i=0;i<n;i++)charSelAsh.push(makeCharSelFlake(false));
+  charSelAshT=gt;
+ }
+ const dt=Math.min(.05,Math.max(0,gt-charSelAshT));
+ charSelAshT=gt;
+ const x0=stageX0(),y0=stageY0();
+ c.save();
+ for(const p of charSelAsh){
+  p.ph+=dt*1.4;
+  p.x+=p.vx+Math.sin(p.ph)*0.35;
+  p.y+=p.vy*(1+Math.sin(p.ph*0.5)*0.12);
+  p.rot+=p.vr;
+  if(p.y>y0+viewH+16||p.x<x0-20||p.x>x0+viewW+20){
+   const n2=makeCharSelFlake(true);
+   p.x=n2.x;p.y=n2.y;p.vx=n2.vx;p.vy=n2.vy;p.s=n2.s;p.a=n2.a;p.ember=n2.ember;p.rot=n2.rot;p.vr=n2.vr;p.ph=n2.ph;
+  }
+  c.save();
+  c.translate(p.x,p.y);
+  c.rotate(p.rot);
+  c.globalAlpha=p.a;
+  c.fillStyle=p.ember?'#e8a23a':'#8a7a6a';
+  c.fillRect(-p.s*.5,-p.s*1.4,p.s,p.s*2.6);
+  c.restore();
+ }
+ c.restore();
+}
 function drawCharSel(){
- g.fillStyle='#12101a';g.fillRect(0,0,W,H);
- for(let x=-40;x<W+40;x+=48){g.fillStyle='rgba(255,157,46,.06)';g.save();g.translate(x,30);g.rotate(-.5);g.fillRect(0,0,20,90);g.restore();}
+ g.fillStyle='#12101a';
+ g.fillRect(stageX0(),stageY0(),viewW,viewH);
+ drawHazardStripes(g);
  txt(g,'ВЫБЕРИ ГОНЩИКА',W/2,64,40,'#ffd23f','center');
   g._charCards=[];
   g._bioBtns=[];
@@ -5313,6 +5569,7 @@ function drawCharSel(){
   g._bioBtns.push({x:bbx,y:bby,w:bbw,h:bbh,idx});
   g._charCards.push({x,y,w:cw,h,idx});});
  txt(g,'← → — выбор • ENTER / «ВЫБРАТЬ» — досье • в досье ENTER — взять гонщика',W/2,H-28,14,'#6f6880','center',F_B);
+ drawCharSelAsh(g);
 }
 ////////////////////////////////////////////////////////
 //
@@ -5322,7 +5579,7 @@ function drawCharSel(){
 function drawBio(){
  if(bioOpen<0)return;
  const ch=CHARS[bioOpen];
- g.fillStyle='rgba(5,4,9,.88)';g.fillRect(0,0,W,H);
+ g.fillStyle='rgba(5,4,9,.88)';g.fillRect(stageX0(),stageY0(),viewW,viewH);
  const px=W/2-470,py=36,pw=940,ph=648;
  panel(g,px,py,pw,ph,'rgba(14,11,22,.97)',ch.col,0);
  g.save();
@@ -6143,30 +6400,98 @@ function drawGym(){
  txt(g,'↑ ↓  выбор   ·   ENTER / «+»  качать   ·   ESC  в гараж',W/2,H-28,13,'#6f6880','center',F_B);
  drawHubToast();
 }
+/** Портрет в списке ставок: аватар или цветной круг, если файла нет. */
+function drawBetFace(ch,cx,cy,size){
+ const img=avatarImage(ch);
+ if(img){drawLeaderAvatar(g,ch,cx,cy,size,1.22);return;}
+ g.fillStyle=(ch&&ch.col)||'#5a5468';
+ g.beginPath();g.arc(cx,cy,size/2,0,TAU);g.fill();
+ txt(g,((ch&&ch.short)||'?').charAt(0),cx,cy+1,Math.max(12,size*.34),'#0c0a12','center',F_D);
+}
 function drawPreRace(){
- g.fillStyle='rgba(5,4,9,.92)';g.fillRect(0,0,W,H);
- panel(g,W/2-400,120,800,480,'rgba(16,13,24,.97)','#ff9d2e');
- 
- txt(g,'ЭТАП '+(save.race+1),W/2,160,24,'#ff9d2e','center');
- txt(g,TRACKDEFS[save.race%TRACKDEFS.length].name,W/2,200,36,'#ffd23f','center');
- txt(g,'ДИВИЗИОН '+DIVN[Math.min(3,((save.race/TRACKDEFS.length)|0))],W/2,240,18,'#9a93a8','center',F_B);
- const rec0=save.records&&save.records[save.race%TRACKDEFS.length];
- if(rec0&&(rec0.bestLap||(rec0.bestPlace!=null&&rec0.bestPlace<99)))txt(g,'РЕКОРДЫ ТРАССЫ: КРУГ '+(rec0.bestLap?fmtT(rec0.bestLap):'—')+'  •  МЕСТО '+(rec0.bestPlace<99?(rec0.bestPlace+1):'—'),W/2,272,14,'#9a93a8','center',F_B);
- txt(g,'ВЫБЕРИТЕ СТАВКУ:',W/2,300,20,'#e8e2d0','center');
- 
- BET_TABLE.forEach((b,i)=>{
-  const sel=save.bet===i;
-  const canAfford=save.cash>=b.cost;
-  const y=340+i*60;
-  
-  panel(g,W/2-300,y,600,50,sel?'rgba(255,157,46,.2)':'rgba(20,17,28,.7)',sel?'#ffd23f':'#3a3548');
-  txt(g,b.name,W/2-250,y+25,18,canAfford?b.col:'#6f6880','left',F_B);
-  if(b.cost>0)txt(g,'-$'+b.cost,W/2+250,y+25,16,canAfford?'#ff3d2e':'#5a5468','right');
-  if(sel)txt(g,'✓',W/2+280,y+25,20,'#58ff6b','right');
+ if(!raceBoard)raceBoard=makeRaceBoard();
+ clampBetAfford();
+ const board=raceBoard;
+ const reduce=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+ const pick=board.pick|0;
+ const who=board.specs[pick];
+ const od=board.odds[pick];
+ const cost=BET_TABLE[save.bet|0].cost;
+ const track=TRACKDEFS[save.race%TRACKDEFS.length];
+ const divI=((save.race/TRACKDEFS.length)|0);
+ const accent=who.isBoss?'#ff9d2e':(who.isP?'#ffd23f':'#35e0ff');
+ drawHubBackdrop(who.isBoss?'rgba(196,90,26,.06)':'rgba(255,210,63,.04)');
+ drawHubHeader('СТАРТ','этап '+(save.race+1)+'  ·  '+track.name+'  ·  '+DIVN[Math.min(3,divI)],accent);
+ const STAGE=300,GAP=22,foot=548;
+ const left=HUB_PAD,top=HUB_TOP,stageH=foot-top;
+ const rightX=left+STAGE+GAP,rightW=W-HUB_PAD-rightX;
+ const tag=who.isP?'ТЫ':(who.isBoss?'БОСС':'ПЕЛОТОН');
+ drawPilotStage(left,top,STAGE,stageH,who.ch,{title:who.ch.short||who.ch.name,sub:who.car.name+'  ·  '+tag,subCol:accent});
+ drawHubCard(rightX,top,rightW,stageH,accent);
+ txt(g,'НА КОГО СТАВИМ',rightX+26,top+26,12,'#8f88a0','left',F_B);
+ txt(g,fmtOdds(od.k1),rightX+26,top+72,44,accent,'left',F_D);
+ txt(g,'победа',rightX+26,top+98,12,'#6f6880','left',F_B);
+ const chip=(label,val,x,y,w,col)=>{
+  rr(g,x,y,w,44,10);g.fillStyle='rgba(8,6,12,.55)';g.fill();
+  g.strokeStyle=col+'44';g.lineWidth=1;g.stroke();
+  txt(g,label,x+14,y+16,11,'#6f6880','left',F_B);
+  txt(g,fmtOdds(val),x+14,y+34,16,col,'left',F_D);
+ };
+ const cw=(rightW-64)/2;
+ chip('2 МЕСТО',od.k2,rightX+26,top+114,cw,'#d8d4e0');
+ chip('3 МЕСТО',od.k3,rightX+38+cw,top+114,cw,'#e09a5a');
+ const listY=top+172,listH=foot-top-188;
+ const n=board.specs.length,rowH=listH/n;
+ g._preHits=[];
+ board.specs.forEach((sp,i)=>{
+  const y=listY+i*rowH,h=rowH-6;
+  const sel=i===pick;
+  const hot=mx>rightX+14&&mx<rightX+rightW-14&&my>y&&my<y+h;
+  const ac=sp.isBoss?'#ff9d2e':(sp.isP?'#ffd23f':'#c8c0d4');
+  rr(g,rightX+14,y,rightW-28,h,12);
+  g.fillStyle=sel?'rgba(255,210,63,.12)':(hot?'rgba(255,255,255,.05)':'rgba(8,6,12,.35)');
+  g.fill();
+  if(sel){g.strokeStyle=ac;g.lineWidth=1.6;g.stroke();g.fillStyle=ac;g.fillRect(rightX+14,y+10,3,h-20);}
+  g._preHits.push({act:'pick',id:i,x:rightX+14,y,w:rightW-28,h});
+  const av=Math.min(52,h-16);
+  drawBetFace(sp.ch,rightX+48,y+h/2,av);
+  txt(g,sp.ch.short||sp.ch.name,rightX+84,y+h/2-8,sel?17:15,sel?'#fff':'#e8e2d0','left',F_B);
+  txt(g,(sp.isP?'ты  ·  ':sp.isBoss?'босс  ·  ':'')+sp.car.name,rightX+84,y+h/2+12,11,sel?ac:'#7a7388','left',F_B);
+  txt(g,fmtOdds(board.odds[i].k1),rightX+rightW-36,y+h/2,sel?22:18,ac,'right',F_D);
  });
- 
- txt(g,'↑ ↓ — выбор • ENTER — В БОЙ',W/2,560,16,'#6f6880','center',F_B);
- if(garMsgT>0){g.globalAlpha=Math.min(1,garMsgT);txt(g,garMsg,W/2,100,18,'#ffd23f','center');g.globalAlpha=1;}
+ const barY=foot+14;
+ txt(g,'СУММА',HUB_PAD,barY+6,11,'#6f6880','left',F_B);
+ BET_TABLE.forEach((b,i)=>{
+  const can=save.cash>=b.cost,sel=(save.bet|0)===i;
+  const bw=132,bh=40,x=HUB_PAD+i*(bw+10),y=barY+16;
+  panel(g,x,y,bw,bh,sel&&can?'rgba(255,210,63,.16)':(can?'rgba(16,13,22,.9)':'rgba(10,8,14,.7)'),sel?(can?'#ffd23f':'#5a5468'):(can?'#3a3548':'#2a2630'),8);
+  txt(g,b.name,x+bw/2,y+20,15,can?b.col:'#4a4554','center',F_B);
+  g._preHits.push({act:'stake',i,x,y,w:bw,h:bh,locked:!can});
+ });
+ const pays=[betPayoutFor(cost,od,0),betPayoutFor(cost,od,1),betPayoutFor(cost,od,2)];
+ const pcols=['#ffd23f','#d8d4e0','#e09a5a'];
+ const px=W/2-20;
+ if(cost>0){
+  txt(g,'ВЫПЛАТА',px,barY+6,11,'#6f6880','left',F_B);
+  ['1','2','3'].forEach((lb,i)=>{
+   txt(g,lb+'  '+fm(pays[i]),px+i*118,barY+36,18,pcols[i],'left',F_D);
+  });
+ }else txt(g,'без ставки — только приз за место',px,barY+34,14,'#6f6880','left',F_B);
+ const cta='ENTER  —  В БОЙ';
+ g.font='15px '+F_D;
+ const ctaW=Math.ceil(g.measureText(cta).width)+40;
+ const ctaX=W-HUB_PAD-ctaW,ctaY=barY+14;
+ rr(g,ctaX,ctaY,ctaW,36,8);g.fillStyle=accent+'22';g.fill();
+ g.strokeStyle=accent+'99';g.lineWidth=1.5;g.stroke();
+ txt(g,cta,ctaX+ctaW/2,ctaY+18,15,accent,'center',F_B,false);
+ g._preHits.push({act:'go',x:ctaX,y:ctaY,w:ctaW,h:36});
+ txt(g,'← →  пилот   ·   ↑ ↓  сумма   ·   ESC  гараж',W/2,H-18,12,'#6f6880','center',F_B);
+ if(!reduce&&who.isBoss){
+  g.globalAlpha=.08+.04*Math.sin(gt*2.2);
+  g.strokeStyle='#c45a1a';g.lineWidth=2;
+  rr(g,left-2,top-2,STAGE+4,stageH+4,18);g.stroke();g.globalAlpha=1;
+ }
+ drawHubToast();
 }
 ////////////////////////////////////////////////////////
 //
@@ -6270,7 +6595,7 @@ function drawResults(){
  }
  const rec=save.records&&save.records[R.tIdx];
  txt(g,'РЕКОРД ТРАССЫ: круг '+(rec&&rec.bestLap?fmtT(rec.bestLap):'—')+' · лучшее место '+(rec&&rec.bestPlace<99?(rec.bestPlace+1):'—')+(R.newRecLap?'  ·  НОВЫЙ РЕКОРД!':''),W/2,recY,13,R.newRecLap?'#58ff6b':'#9a93a8','center',F_B);
- txt(g,'БАЛАНС: '+fm(save.cash),W/2,recY+26,22,'#ffd23f','center');
+ txt(g,'БАЛАНС: '+fm(save.cash)+((R.betStake||0)>0?(((R.betPay||0)>0?'  ·  ставка +':'  ·  ставка −')+fm((R.betPay||0)>0?R.betPay:R.betStake)):''),W/2,recY+26,22,'#ffd23f','center');
  if(R&&R.msg)drawAnnounceToast(g,R.msg,W/2,8,W);
  txt(g,labTest?'ENTER — В ЛАБОРАТОРИЮ':'ENTER — В ГАРАЖ',W/2,enterY,15,'#ff9d2e','center');
 }
@@ -6315,7 +6640,10 @@ function press(c,k){
    else if(it==='ДОСТИЖЕНИЯ'){openAchievements('race');}
    else if(it==='РЕСТАРТ ГОНКИ')restartRace();
    else if(it==='ВЫБОР ТРАССЫ')enterTrackPick('race');
-   else{paused=false;if(labTest)exitLabTest();else{raceTrackOverride=null;state='garage';}}
+   else{paused=false;if(labTest)exitLabTest();else{
+    if(R&&R.betStake&&R.phase==='count'){save.cash+=R.betStake;persist();}
+    raceBoard=null;raceTrackOverride=null;state='garage';
+   }}
    sClick();}
   return;}
  if(state==='race'&&c==='KeyR'){restartRace();return;}
@@ -6578,10 +6906,17 @@ function press(c,k){
   return;
  }
  if(state==='prerace'){
-  if(c==='ArrowUp'){save.bet=(save.bet+2)%3;persist();sClick();}
-  if(c==='ArrowDown'){save.bet=(save.bet+1)%3;persist();sClick();}
+  if(c==='ArrowLeft'||c==='ArrowRight'){
+   if(raceBoard&&raceBoard.specs.length){
+    const n=raceBoard.specs.length;
+    raceBoard.pick=((raceBoard.pick|0)+(c==='ArrowRight'?1:n-1))%n;
+    sClick();
+   }
+  }
+  if(c==='ArrowUp')cycleBet(-1);
+  if(c==='ArrowDown')cycleBet(1);
   if(c==='Escape'){state='garage';sClick();}
-  if(c==='Enter'||c==='Space'){raceTrackOverride=null;buildRace();}
+  if(c==='Enter'||c==='Space')confirmPreRace();
   return;
  }
  if(state==='title'){
@@ -6638,7 +6973,7 @@ function press(c,k){
   if(c==='ArrowDown'){tuningSel=(tuningSel+1)%rows;sClick();}
   if(c==='KeyA'){enterAutopark();sClick();}
   if(c==='KeyE'){openLabWarn();sClick();return;}
-  if(c==='Space'||(c==='Enter'&&tuningSel===7)){state='prerace';sClick();}
+  if(c==='Space'||(c==='Enter'&&tuningSel===7)){enterPreRace();return;}
   else if(c==='Enter'){
    if(tuningSel===6){enterAutopark();sClick();}
    else garageAction(0,tuningSel);
@@ -6647,7 +6982,7 @@ function press(c,k){
  }}
 function garageAction(col,row){
  if(row===6){enterAutopark();sClick();return;}
- if(row===7){state='prerace';sClick();return;}
+ if(row===7){enterPreRace();return;}
  if(row===5){gymSel=0;state='gym';sClick();return;}
  if(col===0){
   const tuningKeys=['arm','eng','tir','shk','nit'];
@@ -6761,6 +7096,18 @@ cv.addEventListener('mousedown',e=>{
     }else pickParkSel(b.i);
     return;
    }
+  }
+ }
+ else if(state==='prerace'&&g._preHits){
+  for(const b of g._preHits){
+   if(x<b.x||x>b.x+b.w||y<b.y||y>b.y+b.h)continue;
+   if(b.act==='pick'){raceBoard.pick=b.id;sClick();}
+   else if(b.act==='stake'){
+    if(b.locked){sHit();garMsg='НЕ ХВАТАЕТ НА СТАВКУ';garMsgT=2.2;}
+    else{save.bet=b.i;persist();sClick();}
+   }
+   else if(b.act==='go')confirmPreRace();
+   return;
   }
  }
  else if(state==='help')enterTitle();});
