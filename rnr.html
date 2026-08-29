@@ -460,7 +460,7 @@ const PLAYABLE_N=PLAYABLE_IDS.length;
 //
 ////////////////////////////////////////////////////////
 const SKILL_MAX=6;
-const SKILL_COSTS=[100000,250000,500000,1000000,2000000];
+const SKILL_COSTS=[150000,400000,800000,1600000,3200000];
 const SKILL_META=[
  {n:'РЕМОНТ-ДРОН',d:'авто-лечение'},
  {n:'ФОРСАЖ-КЛАПАН',d:'нитро-кд'},
@@ -497,10 +497,56 @@ function SKILL_DESC(chIdx,lvl){
 let raceDiv=1;
 ////////////////////////////////////////////////////////
 //
+// Баланс ИИ: дивизион растёт раз в 5 трасс, тюнинг отстаёт от игрока
+//
+////////////////////////////////////////////////////////
+/** Тюнинг босса: в 1 дивизионе сток, к 6 — не выше V. */
+function aiBossTune(div){
+ const t=Math.max(0,(div|0)-1);
+ return{
+  arm:Math.min(5,t),
+  eng:Math.min(5,t),
+  tir:Math.min(4,Math.floor(t*.75)),
+  shk:Math.min(3,Math.floor(t*.4)),
+  nit:Math.min(2,Math.max(0,Math.floor((t-1)*.5)))
+ };
+}
+/** Заполнители сетки: на шаг слабее боссов, без нитро-бака. */
+function aiFillerTune(div){
+ const t=Math.max(0,(div|0)-2);
+ return{
+  arm:Math.min(3,t),
+  eng:Math.min(3,t),
+  tir:Math.min(2,Math.max(0,t-1)),
+  shk:Math.min(2,Math.max(0,Math.floor(t*.4))),
+  nit:0
+ };
+}
+/** Уровень личного скила ИИ: не открывает максимум вместе с дивизионом. */
+function aiSkillLvl(div){
+ return clamp(1+Math.floor(Math.max(0,(div|0)-1)*.4),1,4);
+}
+/** Ловкость пилотажа: ранняя сетка ошибается, поздняя не становится читами. */
+function aiDriveSkill(div,boss){
+ const d=Math.max(0,(div|0)-1);
+ if(boss)return clamp(.7+Math.random()*.2+d*.05,.7,1.12);
+ return clamp(.52+Math.random()*.18+d*.04,.5,.95);
+}
+/** Гандикап кузова ИИ: танки не сносят сток в первом сезоне. */
+function aiPerfScale(div){
+ const d=Math.max(0,(div|0)-1);
+ return{
+  hp:clamp(.78+d*.04,.78,.96),
+  spd:clamp(.90+d*.025,.90,1),
+  acc:clamp(.88+d*.03,.88,1)
+ };
+}
+////////////////////////////////////////////////////////
+//
 // Прокачка базы гонщика: скорость / поворот / броня
 //
 ////////////////////////////////////////////////////////
-const STAT_COSTS=[100000,250000,500000];
+const STAT_COSTS=[150000,400000,800000];
 const STAT_NAME={spd:'СКОРОСТЬ',crn:'ПОВОРОТ',grt:'БРОНЯ'};
 function charEff(i){
  const ch=CHARS[i];
@@ -708,15 +754,15 @@ function confirmCharPick(idx){
 const CARS=[
  {name:'«ГРЯЗЕВОЙ ДЬЯВОЛ»',owner:0,price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d24a22',col2:'#7e2a12',hov:false,
   traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
- {name:'«V8 ПЕРЕХВАТЧИК»',owner:null,price:3000,top:1.1,acc:1.07,crn:1.02,hp:125,col:'#2f7de0',col2:'#164a8c',hov:false,
+ {name:'«V8 ПЕРЕХВАТЧИК»',owner:null,price:8500,top:1.1,acc:1.07,crn:1.02,hp:125,col:'#2f7de0',col2:'#164a8c',hov:false,
   traits:['ПРОБОЙ: пушки наносят 18 урона','ФОРСАЖ: нитро 1.6x вместо 1.45x','НАДДУВ: +15% разгон']},
- {name:'«ШРЕДЕР»',owner:null,price:7500,top:1.16,acc:1.12,crn:1.12,hp:105,col:'#37c94f',col2:'#1c7a2e',hov:false,
+ {name:'«ШРЕДЕР»',owner:null,price:22000,top:1.16,acc:1.12,crn:1.12,hp:105,col:'#37c94f',col2:'#1c7a2e',hov:false,
   traits:['ХВАТКА: +12% поворот','РЕГЕН: +2 корпуса в секунду','МИНЁР: мины мощнее и шире']},
- {name:'«АЭРО-КЛИНОК»',owner:null,price:15000,top:1.24,acc:1.18,crn:1.28,hp:92,col:'#c9cdd6',col2:'#8a93a6',hov:true,
+ {name:'«АЭРО-КЛИНОК»',owner:null,price:40000,top:1.24,acc:1.18,crn:1.28,hp:92,col:'#c9cdd6',col2:'#8a93a6',hov:true,
   traits:['ХОВЕР: не тормозит вне трассы, не скользит по маслу','ФАЗА: старт гонки с 1 щитом','ИМПУЛЬС: ракеты быстрее и чаще']},
- {name:'«ЧЁРНЫЙ МОЛОТ»',owner:null,price:20000,top:0.9,acc:0.85,crn:0.9,hp:180,col:'#1a1a1a',col2:'#8b0000',hov:false,
+ {name:'«ЧЁРНЫЙ МОЛОТ»',owner:null,price:68000,top:0.9,acc:0.85,crn:0.9,hp:180,col:'#1a1a1a',col2:'#8b0000',hov:false,
   traits:['ТАРАН: тройной урон + отбрасывание','БРОНЯ: -50% урона от мин/ракет','МОНОЛИТ: +70 корпуса']},
- {name:'«ФАНТОМ»',owner:null,price:18000,top:1.3,acc:1.22,crn:1.25,hp:85,col:'#3a2a5c',col2:'#1a1028',hov:false,
+ {name:'«ФАНТОМ»',owner:null,price:52000,top:1.3,acc:1.22,crn:1.25,hp:85,col:'#3a2a5c',col2:'#1a1028',hov:false,
   traits:['МАСКИРОВКА: невидимость 3 сек (G)','ФАЗА: проходит сквозь мины','ХИЩНИК: ракеты быстрее']},
  {name:'«УРАЛ»',owner:3,price:0,top:0.98,acc:0.97,crn:1.08,hp:120,col:'#7fb2ff',col2:'#2a4a7a',hov:false,
   traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
@@ -724,7 +770,7 @@ const CARS=[
   traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
  {name:'«ШПИЛЬКА»',owner:2,price:0,top:1.06,acc:0.97,crn:1.08,hp:100,col:'#ff5db1',col2:'#8a2458',hov:false,
   traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
- {name:'«ЖЕРЕБЕЦ»',owner:null,price:25000,top:1.26,acc:1.20,crn:1.14,hp:118,col:'#c41e2a',col2:'#5a1018',hov:false,
+ {name:'«ЖЕРЕБЕЦ»',owner:null,price:90000,top:1.26,acc:1.20,crn:1.14,hp:118,col:'#c41e2a',col2:'#5a1018',hov:false,
   traits:['МИНИГАН: 50 патронов, шкала — магазин, перегрев после опустошения','СКАЧОК: прыжок как с трамплина вместо нитро','ТАБУН: ульта отталкивает и сбрасывает скорость рядом']},
  {name:'«БРИЧКА»',owner:5,price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d45a1a',col2:'#2c2c30',hov:false,
   traits:['ПУЛЯ: стреляет прямо','ПЫЛЕСОС: тянет деньги, ремонт и ускорение рядом','КУПОЛ: ульта — щит 10 сек от всего урона']},
@@ -799,7 +845,8 @@ function applyEditorCars(){
    if(s.acc!=null)car.acc=+s.acc;
    if(s.crn!=null)car.crn=+s.crn;
    if(s.hp!=null)car.hp=+s.hp;
-   if(s.price!=null)car.price=+s.price;
+   // Сток: цена карьеры из CARS. Лаборатория не откатывает баланс старым localStorage.
+   if(s.price!=null&&car.custom)car.price=+s.price;
    if(s.col)car.col=s.col;
    if(s.col2)car.col2=s.col2;
    if(s.hov!=null)car.hov=!!s.hov;
@@ -1119,15 +1166,15 @@ const CAR_ABIL=[
 ];
 const CAR_UNLOCK=[
  {race:0,name:'ГРЯЗЕВОЙ ДЬЯВОЛ'},
- {race:2,name:'V8 ПЕРЕХВАТЧИК'},
- {race:4,name:'ШРЕДЕР'},
- {race:6,name:'АЭРО-КЛИНОК'},
- {race:8,name:'ЧЁРНЫЙ МОЛОТ'},
- {race:10,name:'ФАНТОМ'},
+ {race:5,name:'V8 ПЕРЕХВАТЧИК'},
+ {race:9,name:'ШРЕДЕР'},
+ {race:13,name:'АЭРО-КЛИНОК'},
+ {race:20,name:'ЧЁРНЫЙ МОЛОТ'},
+ {race:17,name:'ФАНТОМ'},
  {race:0,name:'УРАЛ'},
  {race:0,name:'КУРЬЕР'},
  {race:0,name:'ШПИЛЬКА'},
- {race:12,name:'ЖЕРЕБЕЦ'},
+ {race:24,name:'ЖЕРЕБЕЦ'},
  {race:0,name:'БРИЧКА'}
 ];
 function carUnlocked(idx){
@@ -1295,7 +1342,14 @@ const SHORTCUTS={
  3:[{entry:[700,800],exit:[2800,1000],radius:95,bonus:240,name:'ЛЕДЯНОЙ МОСТ'}],
  4:[{entry:[1000,1100],exit:[2900,1600],radius:80,bonus:210,name:'ЛАВОВЫЙ ТОННЕЛЬ'}]
 };
-const PRIZE=[700,450,280,100,0,0];
+const PRIZE=[480,300,180,70,0,0];
+const PRIZE_DIV_GROWTH=.28;
+function prizeDivMult(div){return 1+PRIZE_DIV_GROWTH*Math.max(0,(div||1)-1);}
+const BET_TABLE=[
+ {name:'БЕЗ СТАВКИ',mult:1,cost:0,col:'#58ff6b'},
+ {name:'СТАВКА $350 ×1.5',mult:1.5,cost:350,col:'#ffd23f'},
+ {name:'СТАВКА $900 ×2',mult:2,cost:900,col:'#ff6b4a'}
+];
 const RESULTS_BOARD=4;
 const RESULTS_STAGGER=0.95;
 const LINES_START=['ДАМЫ И ГОСПОДА, ЗАВОДИТЕ МОТОРЫ!','СЕГОДНЯ БУДЕТ ЖАРКО, ФОЛКС!','ТОЛПА РЕВЁТ — ГОНЩИКИ НА СТАРТЕ!','ПРИСТЕГНИТЕСЬ. НАЧИНАЕТСЯ РОК!','ОНИ НЕ ЗНАЮТ, ЧТО ИХ ЖДЁТ!','БЕНЗИН В КРОВИ, АД В СЕРДЦЕ!','СМОТРИТЕ И ЗАПОМИНАЙТЕ!','ШЕСТЬ ГОНЩИКОВ. ОДИН ПОБЕДИТЕЛЬ!'];
@@ -1389,7 +1443,7 @@ const ACHIEVEMENTS=[
  {id:'first_win',name:'ПЕРВАЯ ПОБЕДА',desc:'Разорвать стартовую клетку и забрать первый трофей',icon:0},
  {id:'perfect',name:'БЕЗ ЦАРАПИН',desc:'Протащить полный бак и броню через ад — ни одной царапины',icon:1},
  {id:'killer',name:'УБИЙЦА',desc:'Разобрать десять чужих корыт за одну гонку',icon:2},
- {id:'millionaire',name:'МИЛЛИОНЕР',desc:'Накопить $10 000 — пока остальные жрут пыль',icon:3},
+ {id:'millionaire',name:'МИЛЛИОНЕР',desc:'Накопить $50 000 — пока остальные жрут пыль',icon:3},
  {id:'collector',name:'КОЛЛЕКЦИОНЕР',desc:'Собрать пять тачек и превратить гараж в склад металлолома',icon:4},
  {id:'risky',name:'РИСКОВЫЙ',desc:'Поставить ×2 и уехать с добычей, а не в канаву',icon:5},
  {id:'master',name:'МАСТЕР',desc:'Взять все пять трасс — пустошь теперь знает хозяина',icon:6},
@@ -1420,7 +1474,7 @@ loadSlots();
 let save=null;
 function blankSkillsMap(){const o={};for(let i=0;i<CHARS.length;i++)o[i]=1;return o;}
 function blankCstatsMap(){const o={};for(let i=0;i<CHARS.length;i++)o[i]={spd:0,crn:0,grt:0};return o;}
-function newSave(){return{cash:1200,char:0,car:charCarIdx(0),
+function newSave(){return{cash:800,char:0,car:charCarIdx(0),
  tuning:allTunes(),
  carOwned:{[charCarIdx(0)]:true},skills:blankSkillsMap(),
  cstats:blankCstatsMap(),
@@ -1524,7 +1578,7 @@ function initTitleRace(){
   const car=CARS[ci[i]%CARS.length];
   const ch=CHARS[i%CHARS.length];
   const lv={arm:2,eng:3,tir:2,shk:1,nit:2};
-  const r=makeRacer(ch,car,false,lv,i);
+  const r=makeRacer(ch,car,false,lv,i,{noAiScale:true});
   r.aiCol=ch.col;
   r.skill=1.05+Math.random()*0.35;
   const gi=(N-6-Math.floor(i/2)*12+N)%N,p=S[gi],lat=(i%2?38:-38);
@@ -1731,7 +1785,7 @@ function partN(n){
  return Math.max(1,Math.round(n*m));
 }
 function doShake(v){if(settings.graphics.shake)R.shake=Math.min(14,R.shake+v);}
-function stats(ch,car,lvl,cs){const chIdx=CHARS.indexOf(ch);
+function stats(ch,car,lvl,cs,aiDiv){const chIdx=CHARS.indexOf(ch);
  if(cs===undefined)cs=(chIdx>=0&&save&&save.cstats&&save.cstats[chIdx])||null;
  const spd=(ch.spd||3)+((cs&&cs.spd)||0),crn=(ch.crn||3)+((cs&&cs.crn)||0),grt=(ch.grt||3)+((cs&&cs.grt)||0);
  const hpBonus=car.idx===0?20:0;
@@ -1744,13 +1798,15 @@ function stats(ch,car,lvl,cs){const chIdx=CHARS.indexOf(ch);
  let grip=clamp(.5+(car.idx===3?.42:0)+(car.idx===3?0:lvl.tir)*.055+crn*.038,.48,1.2);
  // Янот: острее вход и раньше занос — дрифт, а не танк.
  if(chIdx===5){turn*=1.1;grip=clamp(grip*0.84,.42,1.2);}
- return{
-  maxhp:Math.round((car.hp+hpBonus+lvl.arm*22)*(1+grt*.04)),
-  top:330*car.top*(1+lvl.eng*.055)*(1+spd*.03),
-  acc:300*car.acc*accM*(1+lvl.eng*.08),
-  crn:turn,
-  sharp:clamp((turn-2.15)/3.05,0,1),
-  grip,off};}
+ let maxhp=Math.round((car.hp+hpBonus+lvl.arm*22)*(1+grt*.04));
+ let top=330*car.top*(1+lvl.eng*.055)*(1+spd*.03);
+ let acc=300*car.acc*accM*(1+lvl.eng*.08);
+ if(aiDiv>0){
+  const p=aiPerfScale(aiDiv);
+  maxhp=Math.round(maxhp*p.hp);
+  top*=p.spd;acc*=p.acc;
+ }
+ return{maxhp,top,acc,crn:turn,sharp:clamp((turn-2.15)/3.05,0,1),grip,off};}
 const AU={ctx:null};
 loadSettings();
 if(!settings.graphics)settings.graphics={resolution:0,particles:'high',skids:true,weather:true,shake:true,showFps:false,cameraZoom:CAM_ZOOM_DEF};
@@ -2201,10 +2257,11 @@ function racerTag(r){
  if(r&&r.ch)return r.ch.short||r.ch.name;
  return (save&&CHARS[save.char]&&CHARS[save.char].short)||'';
 }
-function makeRacer(ch,car,isP,lvl,slot){
- const st=stats(ch,car,lvl,isP?undefined:{spd:0,crn:0,grt:0});
+function makeRacer(ch,car,isP,lvl,slot,opts){
+ const damp=(!isP&&!(opts&&opts.noAiScale))?raceDiv:0;
+ const st=stats(ch,car,lvl,isP?undefined:{spd:0,crn:0,grt:0},damp);
  const chIdx=CHARS.indexOf(ch);
- const skillLvl=isP?((save.skills&&save.skills[chIdx])||1):clamp(raceDiv,1,SKILL_MAX);
+ const skillLvl=isP?((save.skills&&save.skills[chIdx])||1):aiSkillLvl(raceDiv);
  const dmgMul=1+(chIdx===2?skillVal(2,skillLvl):0);
  const racer={ch,car,isP,st,chIdx,skillLvl,dmgMul,x:0,y:0,ang:0,spd:0,hp:st.maxhp,maxhp:st.maxhp,shield:0,wheelAngle:0,wheelRot:0,
   bolt:0,nitro:0,invuln:0,bubble:0,cloak:0,cdN:0,cdW:0,cdU:0,buffDmg:1,buffArmor:1,buffDmgT:0,berserk:0,slow:0,drone:0,dead:false,respawnT:0,
@@ -2246,13 +2303,13 @@ function placeTrackHazards(T,seed){
  for(const m of mines){const p=S[m.i];m.x=p.x+p.nx*m.lat;m.y=p.y+p.ny*m.lat;}
  for(const o of oils){const p=S[o.i];o.x=p.x+p.nx*o.lat;o.y=p.y+p.ny*o.lat;}
  for(const pd of pads){const p=S[pd.i];pd.x=p.x;pd.y=p.y;pd.ang=p.ang;pd.cool=0;}
- const types=['money','money','money','money','money','money','money','wrench','wrench','wrench','wrench','wep','wep','wep','wep','ult','ult','ult','nit','nit','nit','shield','shield','bolt','bolt','ult','ult','ult','ult','ult'];
+ const types=['money','money','money','wrench','wrench','wrench','wrench','wep','wep','wep','wep','ult','ult','ult','nit','nit','nit','shield','shield','bolt','bolt','ult','ult','ult','ult','ult'];
  const picks=[];
  for(let j=0;j<types.length;j++){
   let i=60+((Rz()*(N-120))|0),tr=0;
   while(picks.some(p=>Math.abs(p.i-i)<16)&&tr++<20)i=60+((Rz()*(N-120))|0);
   const lat=(Rz()*2-1)*(ROADW-32),p=S[i];
-  picks.push({i,type:types[j],x:p.x+p.nx*lat,y:p.y+p.ny*lat,alive:true,rt:0,val:(1+((Rz()*6)|0))*50});}
+  picks.push({i,type:types[j],x:p.x+p.nx*lat,y:p.y+p.ny*lat,alive:true,rt:0,val:20+((Rz()*4)|0)*10});}
  return{pads,ramps,mines,oils,picks};
 }
 function makeTrackPattern(T,tIdx){
@@ -2297,14 +2354,10 @@ function buildRace(){
  for(let i=0;i<bosses.length;i++){
   const chIdx=bosses[i],ch=CHARS[chIdx];
   const ci=CHARS_CARS[chIdx];
-  const armLvl=Math.min(6,Math.floor(div*1.2));
-  const engLvl=Math.min(6,Math.floor(div*1.0));
-  const tirLvl=Math.min(6,Math.floor(div*0.8));
-  const shkLvl=Math.min(3,Math.floor(div*0.5));
-  const lv={arm:armLvl,eng:engLvl,tir:tirLvl,shk:shkLvl,nit:Math.min(3,Math.floor(div*0.4))};
+  const lv=aiBossTune(div);
   const ai=makeRacer(ch,CARS[ci],false,lv,i);
   ai.aiCol=ch.col;
-  ai.skill=.9+Math.random()*.3+(div-1)*.12;
+  ai.skill=aiDriveSkill(div,true);
   ai.isBoss=true;
   racers.push(ai);
  }
@@ -2314,10 +2367,10 @@ function buildRace(){
   if(freeCars.length===0)break;
   const drv=fillers[i];
   const ci=freeCars[i%freeCars.length];
-  const lv={arm:Math.min(3,div-1),eng:Math.min(3,div-1),tir:Math.min(2,div-1),shk:1,nit:0};
+  const lv=aiFillerTune(div);
   const ai=makeRacer(drv,CARS[ci],false,lv,bosses.length+i);
   ai.aiCol=drv.col;
-  ai.skill=.7+Math.random()*.4+(div-1)*.1;
+  ai.skill=aiDriveSkill(div,false);
   racers.push(ai);
  }
  }
@@ -2502,9 +2555,9 @@ function showResults(){
   state='results';
   return;
  }
- const divMult=1+.6*(R.div-1);
- const betMults=[1,1.5,2];
- const betCosts=[0,200,500];
+ const divMult=prizeDivMult(R.div);
+ const betMults=BET_TABLE.map(b=>b.mult);
+ const betCosts=BET_TABLE.map(b=>b.cost);
  R.place=ord.indexOf(P);
  const won=R.place<=2;
  const betIdx=R.bet||0;
@@ -2550,7 +2603,7 @@ function checkAchievements(){
  if(R.place===0)grant('first_win');
  if(R.place<=2&&P.hp>=P.maxhp*.95)grant('perfect');
  if((P.kills||0)>=10)grant('killer');
- if(save.cash>=10000)grant('millionaire');
+ if(save.cash>=50000)grant('millionaire');
  if(Object.keys(save.carOwned||{}).length>=5)grant('collector');
  if(R.place<=2&&R.bet===2)grant('risky');
  if(R.place===0){
@@ -2574,8 +2627,8 @@ function stepVehicle(r,th,steer,dt,hb){
  mult=Math.min(mult,1.6);
  let top=r.st.top*(off?r.st.off:1)*mult;
  if(!r.isP){
-  top*=1+.05*Math.min(3,(R.div||1)-1);
-  const deficit=(P&&R.N)?(P.prog-r.prog)/R.N:0;top*=1+clamp(deficit*.4,-.06,.1);}
+  top*=1+.03*Math.min(2,(R.div||1)-1);
+  const deficit=(P&&R.N)?(P.prog-r.prog)/R.N:0;top*=1+clamp(deficit*.28,-.05,.06);}
  const acc=r.st.acc;
  const hov=!!r.car.hov;
  const grip=clamp((r.st.grip||.7)*(off?.72:1),.42,1.2);
@@ -4097,7 +4150,7 @@ function drawHUD(){
     txt(g,'ЭТАП '+(save.race+1)+' — '+DIVN[Math.min(3,R.div-1)],HW/2,186,20,'#ff9d2e','center');
     txt(g,R.T.name,HW/2,226,40,'#ffd23f','center');
     txt(g,'ПРИЗОВОЙ ФОНД',HW/2,262,15,'#9a93a8','center',F_B);
-    const mult=1+.6*(R.div-1);
+    const mult=prizeDivMult(R.div);
     txt(g,PRIZE.map((p,i)=>(i+1)+':$'+Math.round(p*mult)).join('   '),HW/2,290,15,'#e8e2d0','center',F_B);
     txt(g,R.div>1?'ДИВИЗИОН '+R.div:'ПЕРВАЯ ГОНКА СЕЗОНА',HW/2,330,16,'#58ff6b','center',F_B);
     txt(g,'ПРИГОТОВЬТЕСЬ...',HW/2,364,18,'#fff','center');
@@ -5722,12 +5775,17 @@ function drawCarDetail(){
  txt(g,cta,W-HUB_PAD-ctaW/2,H-32,14,ctaCol,'center',F_B,false);
  txt(g,'ESC  назад в автопарк',HUB_PAD,H-32,13,'#6f6880','left',F_B);
 }
+////////////////////////////////////////////////////////
+//
+// Цены тюнинга: первый уровень — выбор после 1–2 побед, VI — поздняя карьера
+//
+////////////////////////////////////////////////////////
 const UP_COSTS={
-arm:[350,600,950,1400,2000,2800],
-eng:[450,750,1150,1700,2400,3300],
-tir:[300,520,800,1200,1750,2500],
-shk:[280,480,700,940,1200,1500],
-nit:[400,700,1000,1400,1900,2500]
+arm:[700,1300,2300,4000,6800,11000],
+eng:[900,1600,2800,4800,8000,13000],
+tir:[600,1100,2000,3500,6000,9800],
+shk:[550,1000,1800,3100,5200,8500],
+nit:[800,1450,2500,4200,7000,11500]
 };
 const UP_INFO={
  arm:{n:'БРОНЯ',d:'+25 корпус / ур.'},
@@ -5945,13 +6003,7 @@ function drawPreRace(){
  if(rec0&&(rec0.bestLap||(rec0.bestPlace!=null&&rec0.bestPlace<99)))txt(g,'РЕКОРДЫ ТРАССЫ: КРУГ '+(rec0.bestLap?fmtT(rec0.bestLap):'—')+'  •  МЕСТО '+(rec0.bestPlace<99?(rec0.bestPlace+1):'—'),W/2,272,14,'#9a93a8','center',F_B);
  txt(g,'ВЫБЕРИТЕ СТАВКУ:',W/2,300,20,'#e8e2d0','center');
  
- const bets=[
-  {name:'БЕЗ СТАВКИ',mult:1,cost:0,col:'#58ff6b'},
-  {name:'СТАВКА $200 ×1.5',mult:1.5,cost:200,col:'#ffd23f'},
-  {name:'СТАВКА $500 ×2',mult:2,cost:500,col:'#ff6b4a'}
- ];
- 
- bets.forEach((b,i)=>{
+ BET_TABLE.forEach((b,i)=>{
   const sel=save.bet===i;
   const canAfford=save.cash>=b.cost;
   const y=340+i*60;
