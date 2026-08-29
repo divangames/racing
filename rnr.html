@@ -3149,18 +3149,7 @@ function stepVehicle(r,th,steer,dt,hb){
    const selfDmg=Math.max(0,10-shk*1.5);
    if(selfDmg>0)dmgRacer(r,selfDmg,null);
    landDust(r,impact);
-   if(!(r.car&&r.car.hov)){
-    if(vfxLive())RnRVfx.scrape(r.x,r.y,impact,r.ang);
-    else{
-     const n=partN(10+impact*16);
-     const lx=-Math.sin(r.ang),ly=Math.cos(r.ang);
-     for(let i=0;i<n;i++){
-      const side=i%2?1:-1;
-      const a=r.ang+Math.PI+rnd(-0.65,0.65),s=rnd(90,260)*impact;
-      R.parts.push({x:r.x+lx*side*10,y:r.y+ly*side*10,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:rnd(.1,.28),col:['#ffd23f','#fff','#ff9d2e'][i%3],sz:rnd(1.4,3.2)});
-     }
-    }
-   }
+   landSparks(r,impact);
    if(r.isP){doShake(5+impact*5);swp('triangle',90,35,.2,.3);}
   }
  }
@@ -3630,6 +3619,122 @@ function getCarShadowGfx(idx){
  CAR_SHADOW_GFX[key]=gfx;
  return gfx;
 }
+////////////////////////////////////////////////////////
+//
+// Контур альфы кузова (как paintCarImg) — искры посадки с края
+//
+////////////////////////////////////////////////////////
+const CAR_LAND_CONTOUR={};
+/** Точки края спрайта в локали кузова: lx/ly и нормаль наружу. */
+function getCarLandContour(idx){
+ const im=carBodyMaskImg(idx);
+ if(!bodyMaskReady(im))return null;
+ const cfg=editorCarConfig(idx);
+ const body=cfg&&cfg.body||{};
+ const bodyS=carBodyScale(idx);
+ const sx=isFinite(+body.sx)&&+body.sx>0?+body.sx:1;
+ const sy=isFinite(+body.sy)&&+body.sy>0?+body.sy:1;
+ const key=idx+'|'+(im.src||'')+'|'+im.naturalWidth+'x'+im.naturalHeight+'|'+bodyS+'|'+sx+'|'+sy+'|'+(body.x||0)+'|'+(body.y||0);
+ if(CAR_LAND_CONTOUR[key])return CAR_LAND_CONTOUR[key];
+ const iw=im.naturalWidth,ih=im.naturalHeight;
+ const maxSide=88,scImg=maxSide/Math.max(iw,ih);
+ const tw=Math.max(10,Math.round(iw*scImg)),th=Math.max(10,Math.round(ih*scImg));
+ const c=document.createElement('canvas');
+ c.width=tw;c.height=th;
+ const g=c.getContext('2d',{willReadFrequently:true});
+ if(!g)return null;
+ g.drawImage(im,0,0,tw,th);
+ const data=g.getImageData(0,0,tw,th).data;
+ const T=32;
+ const aAt=(x,y)=>{
+  if(x<0||y<0||x>=tw||y>=th)return 0;
+  return data[(y*tw+x)*4+3];
+ };
+ const s=60/Math.max(iw,ih)*bodyS;
+ const pts=[];
+ for(let y=0;y<th;y++){
+  for(let x=0;x<tw;x++){
+   if(aAt(x,y)<T)continue;
+   const eL=aAt(x-1,y)<T,eR=aAt(x+1,y)<T,eU=aAt(x,y-1)<T,eD=aAt(x,y+1)<T;
+   if(!(eL||eR||eU||eD))continue;
+   let nx=0,ny=0;
+   if(eR)nx+=1;if(eL)nx-=1;if(eD)ny+=1;if(eU)ny-=1;
+   const nl=Math.hypot(nx,ny)||1;
+   nx/=nl;ny/=nl;
+   const u=(x+0.5)/tw,v=(y+0.5)/th;
+   pts.push({
+    lx:(body.x||0)+(u-0.5)*iw*s*sx,
+    ly:(body.y||0)+(v-0.5)*ih*s*sy,
+    nx,ny
+   });
+  }
+ }
+ if(!pts.length)return null;
+ CAR_LAND_CONTOUR[key]=pts;
+ return pts;
+}
+/** Запас: периметр хитбокса, если спрайт ещё не готов. */
+function getCarObbContour(r){
+ const h=carHitHalf(r);
+ const cfg=editorCarConfig(r.car.idx);
+ const ox=(cfg&&cfg.body&&cfg.body.x)||0;
+ const oy=(cfg&&cfg.body&&cfg.body.y)||0;
+ const hw=h.hw,hh=h.hh,pts=[],n=14;
+ const edge=(x0,y0,x1,y1,nx,ny)=>{
+  for(let i=0;i<n;i++){
+   const t=i/n;
+   pts.push({lx:ox+x0+(x1-x0)*t,ly:oy+y0+(y1-y0)*t,nx,ny});
+  }
+ };
+ edge(-hw,-hh,hw,-hh,0,-1);edge(hw,-hh,hw,hh,1,0);
+ edge(hw,hh,-hw,hh,0,1);edge(-hw,hh,-hw,-hh,-1,0);
+ return pts;
+}
+/** Локаль кузова → мир, как drawCar в момент касания (lift, bob). */
+function carSparkWorld(r,lx,ly){
+ const z=r.z||0,bob=r.bob||0,lift=1+(z/46)*0.25;
+ const ca=Math.cos(r.ang),sa=Math.sin(r.ang);
+ const px=lx*lift,py=ly*lift;
+ return{x:r.x+ca*px-sa*py,y:r.y+sa*px+ca*py-z+bob};
+}
+/** Нормаль локали → мир (без масштаба). */
+function carSparkNrm(r,nx,ny){
+ const ca=Math.cos(r.ang),sa=Math.sin(r.ang);
+ return{nx:ca*nx-sa*ny,ny:sa*nx+ca*ny};
+}
+/** Искры с контура альфы: в 10 раз мельче, в 5 раз гуще прежнего скрежета. */
+function landSparks(r,impact){
+ if(!R||!R.parts||(r.car&&r.car.hov))return;
+ if(typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ const local=getCarLandContour(r.car.idx);
+ const src=(local&&local.length)?local:getCarObbContour(r);
+ const k=clamp(impact,.35,1.2);
+ const want=partN(Math.round(630*k));
+ const nPts=Math.min(src.length,200);
+ if(nPts<1)return;
+ const step=src.length/nPts;
+ const rim=[];
+ for(let i=0;i<nPts;i++){
+  const p=src[(i*step)|0];
+  const w=carSparkWorld(r,p.lx,p.ly);
+  const n=carSparkNrm(r,p.nx,p.ny);
+  rim.push({x:w.x,y:w.y,nx:n.nx,ny:n.ny});
+ }
+ const per=Math.max(1,Math.round(want/rim.length));
+ if(vfxLive()&&typeof RnRVfx.scrapeRim==='function'&&RnRVfx.scrapeRim(rim,per))return;
+ const cols=['#ffd23f','#fff','#ff9d2e'];
+ for(let i=0;i<rim.length;i++){
+  const p=rim[i];
+  const tx=-p.ny,ty=p.nx;
+  for(let j=0;j<per;j++){
+   const jit=rnd(-0.35,0.35);
+   const s=rnd(80,240)*k;
+   const dx=p.nx+tx*jit,dy=p.ny+ty*jit;
+   const L=Math.hypot(dx,dy)||1;
+   R.parts.push({x:p.x,y:p.y,vx:dx/L*s,vy:dy/L*s,t:rnd(.08,.22),col:cols[(i+j)%3],sz:rnd(0.225,0.525),rim:1});
+  }
+ }
+}
 /** Тень на земле: силуэт кузова, в полёте меньше и бледнее. */
 function drawCarGroundShadow(c,r,bodyS){
  const idx=r.car.idx,z=r.z||0;
@@ -3904,7 +4009,6 @@ function drawCar(c,r,sc){
   }
   // Слои снизу вверх: стек лаборатории (каждое колесо и труба — свой слой).
   if(stack){
-   let saws=false;
    const jetOnce=(p)=>{
     if(!(r.nitro>0)||!p)return;
     const x=+p[0]||0,y=+p[1]||0,len=+p[2]||9,half=+p[3]||1.5;
@@ -3925,17 +4029,18 @@ function drawCar(c,r,sc){
       const ww2=isFinite(+q[2])?+q[2]:12,wh2=isFinite(+q[3])?+q[3]:8;
       wheel(q[0],q[1],(+q[4]||0)+steer,ww2,wh2,q[5]);
      }
-     if(idx===2)saws=true;
      continue;
     }
     if(L.type==='nitro'){
      jetOnce(editorCfg.nitro&&editorCfg.nitro[L.ref]);
      continue;
     }
-    if(L.type==='body'){paintCarImg(bodyImg);continue;}
+    if(L.type==='body'){
+     if(idx===2)drawShredderSaws();
+     paintCarImg(bodyImg);continue;
+    }
     if(L.type==='armor'){paintCarImg(armorImg,bodyOffset.ax||0,bodyOffset.ay||0);continue;}
    }
-   if(saws)drawShredderSaws();
   }else{
   for(let li=0;li<layerOrder.length;li++){
    const name=layerOrder[li];
@@ -4288,7 +4393,10 @@ function drawRaceArena(){
   drawCarShield(g,r);
   if(r.isP)drawPlayerRaceTag(g,r);};
  for(const r of order)drawR(r);
- if(!vfxLive())for(const p of R.parts){g.globalAlpha=clamp(p.t*2,0,1);g.fillStyle=p.col;g.beginPath();g.arc(p.x,p.y,p.sz,0,TAU);g.fill();}
+ for(const p of R.parts){
+  if(vfxLive()&&!p.rim)continue;
+  g.globalAlpha=clamp(p.t*2,0,1);g.fillStyle=p.col;g.beginPath();g.arc(p.x,p.y,p.sz,0,TAU);g.fill();
+ }
  g.globalAlpha=1;
  for(const f of R.floats){g.globalAlpha=clamp(1.4-f.t,0,1);txt(g,f.txt,f.x,f.y-f.t*40,20,f.col,'center',F_D);}
  g.globalAlpha=1;
@@ -4718,16 +4826,12 @@ function drawPortrait(c,ch,cx,cy,s){
 //
 ////////////////////////////////////////////////////////
 /** Рисует NN_Player_fullbody, вписанный по высоте, ноги к низу кадра. */
-function drawFullbodyFit(c,img,x,y,w,h){
+function drawFullbodyFit(c,img,x,y,w,h,scale){
  const iw=img.naturalWidth,ih=img.naturalHeight;
- const sc=Math.min(w/iw,h/ih);
+ const sc=Math.min(w/iw,h/ih)*(scale||1);
  const dw=iw*sc,dh=ih*sc;
  c.drawImage(img,x+(w-dw)/2,y+h-dh,dw,dh);
 }
-/**
- * Левая витрина гонщика для гаража и тренажёрки.
- * plaque: {title, sub, subCol}
- */
 /**
  * Левая витрина гонщика для гаража и тренажёрки.
  * plaque: {title, sub, subCol}
@@ -4749,20 +4853,6 @@ function drawPilotStage(x,y,w,h,ch,plaque){
  spot.addColorStop(0,'rgba(255,248,230,.16)');
  spot.addColorStop(1,'rgba(0,0,0,0)');
  g.fillStyle=spot;g.fillRect(x,y,w,h);
- const pad=10,floor=74;
- const fx=x+pad,fy=y+18,fw=w-pad*2,fh=h-floor-8;
- const feetY=fy+fh;
- const rx=Math.min(fw*0.46,w*0.40),ry=20;
- g.fillStyle='#ffffff';
- g.beginPath();g.ellipse(x+w/2,feetY,rx,ry,0,0,TAU);g.fill();
- if(img){
-  g.save();
-  if(!reduce){g.translate(x+w/2,feetY);g.scale(1+Math.sin(gt*1.15)*0.008,1+Math.sin(gt*1.15)*0.008);g.translate(-(x+w/2),-feetY);}
-  drawFullbodyFit(g,img,fx,fy,fw,fh);
-  g.restore();
- }else{
-  drawPortrait(g,ch,x+w/2,y+h*0.38,1.35);
- }
  const vig=g.createLinearGradient(x,y,x+w,y);
  vig.addColorStop(0,'rgba(6,5,10,.45)');vig.addColorStop(.18,'rgba(6,5,10,0)');
  vig.addColorStop(.82,'rgba(6,5,10,0)');vig.addColorStop(1,'rgba(6,5,10,.45)');
@@ -4770,11 +4860,29 @@ function drawPilotStage(x,y,w,h,ch,plaque){
  g.fillStyle='rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',.85)';
  g.fillRect(x,y,4,h);
  g.restore();
+ const pad=8,plaqueH=58,standLift=34;
+ const fx=x+pad,fy=y-52,fw=w-pad*2,fh=h-plaqueH-standLift+52;
+ const feetY=fy+fh;
+ g.save();
+ g.beginPath();g.rect(x,y-80,w,h-plaqueH+80);g.clip();
+ g.fillStyle='rgba(0,0,0,.42)';
+ g.beginPath();g.ellipse(x+w/2,feetY,w*.48,32,0,0,TAU);g.fill();
+ g.strokeStyle='rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',.35)';g.lineWidth=1.4;
+ g.beginPath();g.ellipse(x+w/2,feetY,w*.48,32,0,0,TAU);g.stroke();
+ if(img){
+  g.save();
+  if(!reduce){g.translate(x+w/2,feetY);g.scale(1+Math.sin(gt*1.15)*0.008,1+Math.sin(gt*1.15)*0.008);g.translate(-(x+w/2),-feetY);}
+  drawFullbodyFit(g,img,fx,fy+14,fw,fh,1.02);
+  g.restore();
+ }else{
+  drawPortrait(g,ch,x+w/2,y+h*0.38,1.35);
+ }
+ g.restore();
  if(!plaque)return;
- const py=y+h-52;
- panel(g,x+12,py,w-24,42,'rgba(12,10,18,.88)','rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',.4)',10);
- txt(g,plaque.title,x+w/2,py+15,15,ch.col||'#ffd23f','center',F_B);
- if(plaque.sub)txt(g,plaque.sub,x+w/2,py+32,11,plaque.subCol||'#9a93a8','center',F_B);
+ const py=y+h-plaqueH;
+ panel(g,x+12,py,w-24,46,'rgba(12,10,18,.88)','rgba('+rgb[0]+','+rgb[1]+','+rgb[2]+',.4)',10);
+ txt(g,plaque.title,x+w/2,py+16,15,ch.col||'#ffd23f','center',F_B);
+ if(plaque.sub)txt(g,plaque.sub,x+w/2,py+34,11,plaque.subCol||'#9a93a8','center',F_B);
 }
 /** Аватар в списке лидеров: файл или пустой слот, без рамки. */
 function drawLeaderAvatar(c,ch,cx,cy,size,zoom){

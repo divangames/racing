@@ -23,6 +23,7 @@ import {
 } from 'three.quarks';
 
 const AIM_UP = new THREE.Vector3(0, 1, 0);
+const CONE_AXIS = new THREE.Vector3(0, 0, 1);
 const AIM_DIR = new THREE.Vector3();
 
 /** Мягкий спрайт: ядро белое, край прозрачный. */
@@ -99,7 +100,7 @@ function burstSystem(p) {
     emissionOverTime: new ConstantValue(0),
     emissionBursts: [{
       time: 0,
-      count: new ConstantValue(p.count || 24),
+      count: new ConstantValue(p.count === undefined ? 24 : p.count),
       cycle: 1,
       interval: 0.01,
       probability: 1
@@ -140,6 +141,28 @@ function makePool(factory, n, scene, batch) {
       }
       ps.emitter.updateMatrixWorld(true);
       ps.restart();
+    },
+    /** Точки контура кузова: конус вдоль нормали альфы (ось ConeEmitter = +Z). */
+    fireRim(pts, per) {
+      if (!pts || !pts.length) return false;
+      const ps = items[i++ % items.length];
+      ps.restart();
+      const nEach = Math.max(1, per | 0);
+      const cap = Math.min(pts.length, 220);
+      const step = pts.length / cap;
+      for (let k = 0; k < cap; k++) {
+        const p = pts[(k * step) | 0];
+        if (!p) continue;
+        ps.emitter.position.set(p.x, -p.y, 0);
+        AIM_DIR.set(p.nx, -p.ny, 0);
+        if (AIM_DIR.lengthSq() < 1e-10) AIM_DIR.set(1, 0, 0);
+        else AIM_DIR.normalize();
+        ps.emitter.quaternion.setFromUnitVectors(CONE_AXIS, AIM_DIR);
+        ps.emitter.updateMatrixWorld(true);
+        ps.normalMatrix.getNormalMatrix(ps.emitter.matrixWorld);
+        ps.spawn(nEach, ps.emissionState, ps.emitter.matrixWorld);
+      }
+      return true;
     }
   };
 }
@@ -312,19 +335,19 @@ export function buildPools(scene, batch, map, streakMap) {
   }), 12, scene, batch);
 
   const scrape = makePool(() => burstSystem({
-    count: 14,
-    duration: 0.5,
-    life: new IntervalValue(0.06, 0.22),
-    speed: new IntervalValue(80, 260),
-    size: new IntervalValue(2, 5),
-    shape: new ConeEmitter({ radius: 5, angle: 0.7, thickness: 1, arc: Math.PI * 2 }),
+    count: 0,
+    duration: 0.45,
+    life: new IntervalValue(0.05, 0.18),
+    speed: new IntervalValue(70, 220),
+    size: new IntervalValue(0.325, 0.85),
+    shape: new ConeEmitter({ radius: 0, angle: 0.28, thickness: 1, arc: Math.PI * 2 }),
     color: new ConstantColor(new Vector4(1, 0.78, 0.28, 1)),
     mat: sparkMat,
     renderMode: RenderMode.StretchedBillBoard,
-    speedFactor: 0.45,
-    lengthFactor: 2.8,
+    speedFactor: 0.2,
+    lengthFactor: 0.45,
     behaviors: [fadeSize()]
-  }), 10, scene, batch);
+  }), 8, scene, batch);
 
   const trail = makePool(() => burstSystem({
     count: 4,

@@ -19,7 +19,8 @@ const api = {
   nitro() { return false; },
   smoke() { return false; },
   trail() { return false; },
-  scrape() { return false; }
+  scrape() { return false; },
+  scrapeRim() { return false; }
 };
 
 window.RnRVfx = api;
@@ -171,6 +172,12 @@ try {
     }
     if ((impact || 0) > 0.75) pools.scrape.fire(x, y, ang);
     return true;
+  };
+
+  /** Искры посадки: спавн с точек силуэта, разлёт по нормали альфы. */
+  api.scrapeRim = function (pts, per) {
+    if (!api.ok || !pools.scrape || typeof pools.scrape.fireRim !== 'function') return false;
+    return !!pools.scrape.fireRim(pts, per);
   };
 
   api.smoke = function (x, y) {
