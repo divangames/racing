@@ -5,14 +5,6 @@
 //
 ////////////////////////////////////////////////////////
 
-/** Голос имени на выборе гонщика: Медведь, Ерш, Бегемотик, Башкир. */
-var VOICE_TRACKS = [
- 'https://ikrinka24.com/ROCK/voice/01_Player.mp3',
- 'https://ikrinka24.com/ROCK/voice/02_Player.mp3',
- 'https://ikrinka24.com/ROCK/voice/03_Player.mp3',
- 'https://ikrinka24.com/ROCK/voice/04_Player.mp3'
-];
-
 var MUSIC_TRACKS = {
  main: [
   'https://ikrinka24.com/ROCK/music/main/0.mp3'

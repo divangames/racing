@@ -256,7 +256,7 @@ async function bootBind(img,blob){
 /** Если fetch недоступен (file://), грузим как обычный Image. */
 function bootImgTag(img,url){
  return new Promise(resolve=>{
-  const t=setTimeout(()=>done(false),12000);
+  const t=setTimeout(()=>done(false),2500);
   const done=ok=>{clearTimeout(t);img.onload=null;img.onerror=null;resolve(ok);};
   img.onload=()=>done(img.naturalWidth>0||/\.svg(\?|$)/i.test(url));
   img.onerror=()=>done(false);
@@ -265,26 +265,30 @@ function bootImgTag(img,url){
 }
 async function bootRunJob(job){
  if(job.done||BOOT.giveUp){job.done=true;return;}
- const remote=(job.urls||[]).some(u=>/^https?:\/\//i.test(u));
- const ac=typeof AbortController==='function'?new AbortController():null;
- const timer=setTimeout(()=>{if(ac)ac.abort();},remote?4000:8000);
- try{
-  for(const url of job.urls){
-   if(BOOT.giveUp)break;
-   try{
-    const blob=await bootFetchUrl(url,job,ac&&ac.signal);
-    if(blob===false)continue;
-    if(!blob)continue;
-    if(job.img)await bootBind(job.img,blob);
-    job.done=true;
-    if(job.got<job.total)job.got=job.total;
-    bootPaint();
-    return;
-   }catch(e){}
-  }
- }finally{clearTimeout(timer);}
- // Прямой Image.src: file://, сбой fetch и свежий файл после 404 в кэше
- if(job.img&&!BOOT.giveUp){
+ const fileProto=typeof location!=='undefined'&&location.protocol==='file:';
+ let needImg=!job.img?false:fileProto;
+ if(!fileProto){
+  const remote=(job.urls||[]).some(u=>/^https?:\/\//i.test(u));
+  const ac=typeof AbortController==='function'?new AbortController():null;
+  const timer=setTimeout(()=>{if(ac)ac.abort();},remote?4000:8000);
+  try{
+   for(const url of job.urls){
+    if(BOOT.giveUp)break;
+    try{
+     const blob=await bootFetchUrl(url,job,ac&&ac.signal);
+     if(blob===false)continue;
+     if(!blob)continue;
+     if(job.img)await bootBind(job.img,blob);
+     job.done=true;
+     if(job.got<job.total)job.got=job.total;
+     bootPaint();
+     return;
+    }catch(e){needImg=!!job.img;}
+   }
+  }finally{clearTimeout(timer);}
+ }
+ // Image только для file:// или сбоя сети — не для HTTP 404 (иначе 2.5 с × URL)
+ if(job.img&&!BOOT.giveUp&&needImg){
   for(const url of job.urls){
    if(BOOT.giveUp)break;
    const ok=await bootImgTag(job.img,url);
@@ -358,7 +362,7 @@ function bootFinish(){
 function bootAcceptGate(){
  if(BOOT.started||BOOT.ready)return;
  if(BOOT.gateRaf){cancelAnimationFrame(BOOT.gateRaf);BOOT.gateRaf=0;}
- if(!AU.ctx)audioInit();
+ try{if(!AU.ctx)audioInit();}catch(e){console.error(e);}
  const el=bootEls();
  if(el.root){el.root.classList.remove('is-gate');el.root.classList.add('is-load');}
  if(el.heading)el.heading.textContent='ЗАГРУЗКА';
@@ -1862,12 +1866,40 @@ function normalizeControls(){
    settings.controls[k]=DEFAULT_CONTROLS[k].slice();
  }
 }
+/** Старый JSON настроек без sound/graphics не должен ронять старт (audioInit). */
+function normalizeSettings(){
+ if(!settings||typeof settings!=='object'||Array.isArray(settings)){
+  settings={
+   graphics:{resolution:0,particles:'high',skids:true,weather:true,shake:true,showFps:false,cameraZoom:2},
+   controls:{
+    up:['KeyW','ArrowUp'],down:['KeyS','ArrowDown'],
+    left:['KeyA','ArrowLeft'],right:['KeyD','ArrowRight'],
+    fire:['KeyZ','KeyP'],nitro:['KeyX','BracketLeft'],ult:['KeyC','BracketRight'],
+    handbrake:['Space'],pause:['Escape']
+   },
+   sound:{music:50,sfx:80,musicOn:true,sfxOn:true}
+  };
+  return;
+ }
+ if(!settings.graphics||typeof settings.graphics!=='object')
+  settings.graphics={resolution:0,particles:'high',skids:true,weather:true,shake:true,showFps:false,cameraZoom:2};
+ else if(settings.graphics.cameraZoom==null)settings.graphics.cameraZoom=2;
+ if(!settings.sound||typeof settings.sound!=='object')
+  settings.sound={music:50,sfx:80,musicOn:true,sfxOn:true};
+ else{
+  if(settings.sound.music==null)settings.sound.music=50;
+  if(settings.sound.sfx==null)settings.sound.sfx=80;
+  if(settings.sound.musicOn==null)settings.sound.musicOn=true;
+  if(settings.sound.sfxOn==null)settings.sound.sfxOn=true;
+ }
+ normalizeControls();
+}
 function loadSettings(){
  try{
   const s=localStorage.getItem(SETTINGS_KEY);
   if(s){settings=JSON.parse(s);}
  }catch(e){}
- normalizeControls();
+ normalizeSettings();
 }
 function saveSettings(){
  try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}catch(e){}
@@ -1931,14 +1963,17 @@ function nudgeCameraZoom(dir){
 function visW(){return viewW/raceZoom();}
 function visH(){return viewH/raceZoom();}
 function applyAudioSettings(){
- if(!AU.ctx)return;
- AU.sfx.gain.value=settings.sound.sfx/100*.9;
- const mv=(settings.sound.music/100)*.42;
- if(AU.music)AU.music.gain.value=mv;
- MUSIC.setVolume(settings.sound.music/100);
- if(introAudio)introAudio.volume=(settings.sound.music||50)/100;
- if(voiceEl)voiceEl.volume=(settings.sound.sfx||80)/100;
- if(!settings.sound.sfxOn)stopCharVoice();
+ if(!AU.ctx||!settings||!settings.sound)return;
+ try{
+  if(AU.sfx)AU.sfx.gain.value=settings.sound.sfx/100*.9;
+  const mv=(settings.sound.music/100)*.42;
+  if(AU.music)AU.music.gain.value=mv;
+  if(typeof MUSIC!=='undefined'&&MUSIC.setVolume)MUSIC.setVolume(settings.sound.music/100);
+  if(introAudio)introAudio.volume=(settings.sound.music||50)/100;
+  if(voiceEl)voiceEl.volume=(settings.sound.sfx||80)/100;
+  if(typeof VOICE!=='undefined'&&VOICE.audio)VOICE.audio.volume=Math.max(0,Math.min(1,((settings.sound.sfx||80)/100)*0.92));
+  if(!settings.sound.sfxOn&&typeof stopCharVoice==='function')stopCharVoice();
+ }catch(e){console.error(e);}
  if(state==='intro'){
   MUSIC.stop();CHIP.stop();
   if(introAudio){
@@ -2118,29 +2153,18 @@ const MUSIC={
 };
 ////////////////////////////////////////////////////////
 //
-// Голос имени выбранного гонщика
+// Голос имени: случайный дубль name из lines.json гонщика
 //
 ////////////////////////////////////////////////////////
 let voiceEl=null,voiceIdx=-1;
 function playCharVoice(idx){
- if(!settings.sound.sfxOn)return;
- const src=(window.VOICE_TRACKS||[])[idx];
- if(!src)return;
- if(!voiceEl){
-  voiceEl=new Audio();
-  voiceEl.preload='auto';
-  voiceEl.referrerPolicy='no-referrer';
- }
- try{voiceEl.pause();}catch(e){}
  voiceIdx=idx;
- voiceEl.src=src;
- voiceEl.currentTime=0;
- voiceEl.volume=(settings.sound.sfx||80)/100;
- voiceEl.play().catch(()=>{});
+ if(typeof voiceSayName==='function')voiceSayName(idx);
 }
 function stopCharVoice(){
- if(voiceEl){try{voiceEl.pause();voiceEl.currentTime=0;}catch(e){}}
  voiceIdx=-1;
+ if(typeof voiceStopName==='function')voiceStopName();
+ if(voiceEl){try{voiceEl.pause();voiceEl.currentTime=0;}catch(e){}}
 }
 /** Фокус карточки гонщика и произношение имени. */
 function pickChar(i){
@@ -2198,7 +2222,7 @@ function audioInit(){if(AU.ctx)return;const AC=window.AudioContext||window.webki
  AU.engG=c.createGain();AU.engG.gain.value=0;
  AU.engO.connect(AU.engF);AU.engO2.connect(AU.engF);AU.engF.connect(AU.engG);AU.engG.connect(AU.sfx);
  AU.engO.start();AU.engO2.start();
- const mc=musicCat();lastMusicCat=mc;MUSIC.play(mc);
+ try{const mc=musicCat();lastMusicCat=mc;if(typeof MUSIC!=='undefined'&&MUSIC.play)MUSIC.play(mc);}catch(e){console.error(e);}
 }
 function swp(type,f0,f1,d,v,dest){if(!AU.ctx)return;if(!settings.sound.sfxOn&&(dest===undefined||dest===AU.sfx))return;const c=AU.ctx,o=c.createOscillator(),gn=c.createGain();
  o.type=type;o.frequency.setValueAtTime(f0,c.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),c.currentTime+d);
@@ -2438,7 +2462,7 @@ function makeRacer(ch,car,isP,lvl,slot,opts){
   z:0,vz:0,air:false,jumpCd:0,jumpSpd:0,lat:0,susp:0,steerFlt:0,handbrake:false,
   bob:0,bobVel:0,rockAmp:0,rockT:0,landStun:0,lvl:lvl,
   dmgDealt:0,kills:0,jumps:0,pickups:0,moneyGot:0,lapStart:0,bestLap:0,lastLap:0,
-  nitLvl:isP?((save.tuning[car.idx]&&save.tuning[car.idx].nit)||0):((lvl&&lvl.nit)||0),
+  nitLvl:isP?((save&&save.tuning&&save.tuning[car.idx]&&save.tuning[car.idx].nit)||0):((lvl&&lvl.nit)||0),
   wepAmmo:0,wepOver:0,
   trackIdx:0,lap:-1,prog:0,finished:false,finishTime:0,
   aiLane:0,laneT:0,stuckT:0,revT:0,smokeT:0,slot};
@@ -2841,12 +2865,13 @@ function mineExplode(m,owner){
   if(d<rad)dmgRacer(r,dmg,owner);}}
 function finishRacer(r){
  r.finished=true;r.finishTime=R.time;
+ r.pitSide=null;
  if(!R.firstDone){R.firstDone=r;announce(racerTag(r)+' ФИНИШИРУЕТ ПЕРВЫМ!',true);}
  if(typeof voiceSay==='function'){
   if(R.firstDone===r)voiceSay(r,'win',{force:true,gap:0});
   else if(r.isP)voiceSay(r,'lose',{force:true,gap:0});
  }
- if(r.isP){announce('ФИНИШ! РУЛЬ СВОБОДЕН — РАЗВОРАЧИВАЙСЯ!',true);sWin();}
+ if(r.isP){announce('ФИНИШ! КАТИСЬ К КРАЮ, НЕ МЕШАЙ ОСТАЛЬНЫМ',true);sWin();}
  else announce(r.ch.name+' ФИНИШИРУЕТ ('+fmtT(r.finishTime)+')');}
 function fmtT(t){const m=(t/60)|0,s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1);}
 /** Круг на полигоне: сотые, чтобы сравнить машины. */
@@ -2981,7 +3006,7 @@ function stepVehicle(r,th,steer,dt,hb){
    else long=Math.max(-top*.35,long+acc*.42*th*dt);
   }
  }
- if(r.finished)long*=Math.exp(-2.4*dt);
+ if(r.finished)long*=Math.exp(-0.48*dt);
  ////////////////////////////////////////////////////////
  //
  // Вираж: руль догоняет вход, кузов кренится; «Поворот» острит
@@ -3043,7 +3068,7 @@ function stepVehicle(r,th,steer,dt,hb){
  r.x+=(fx*long-fy*lat)*dt;r.y+=(fy*long+fx*lat)*dt;
  r.x=clamp(r.x,20,R.T.w-20);r.y=clamp(r.y,20,R.T.h-20);
  // ТРАМПЛИН: прыжок. Высота/дальность зависят от скорости (баланс).
- if(!r.air){
+ if(!r.air&&!r.finished){
   for(const rp of R.ramps){
    if(Math.hypot(r.x-rp.x,r.y-rp.y)<46&&Math.abs(r.spd)>140){
     r.air=true;
@@ -3128,7 +3153,9 @@ function stepVehicle(r,th,steer,dt,hb){
 function advanceIdx(r){
  const S=R.S,N=R.N;let best=r.trackIdx,bd=1e18;
  for(let k=-4;k<=26;k++){const i=(r.trackIdx+k+N)%N,dx=r.x-S[i].x,dy=r.y-S[i].y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=i;}}
- if(r.trackIdx>N*.75&&best<N*.25){r.lap++;
+ if(r.trackIdx>N*.75&&best<N*.25){
+  if(r.finished){r.trackIdx=best;r.prog=r.lap*N+best;return;}
+  r.lap++;
   const lt=R.time-r.lapStart;r.lastLap=lt;r.lapStart=R.time;if(r.isP&&r.lap>=1&&(!r.bestLap||lt<r.bestLap))r.bestLap=lt;
   if(labTest){
    if(r.isP&&r.lap>=1){
@@ -3194,24 +3221,60 @@ function aiThink(r,dt){
  if(S[(r.trackIdx+30)%N].k<.004&&!r.nitro&&r.cdN<=0&&Math.random()<dt*(R.demo?.55:.25)*r.skill)useNitro(r);
  if(r.cdU<=0&&(bestT&&bd<300||r.hp<r.maxhp*.4)&&Math.random()<dt*(R.demo?.9:.5)*r.skill)useUlt(r);
 }
+/** После финиша: катимся, тормозим, уходим к обочине, объезжаем других. */
+function finishDrive(r){
+ const S=R.S,p=S[r.trackIdx];
+ if(r.pitSide==null){
+  const lat=(r.x-p.x)*p.nx+(r.y-p.y)*p.ny;
+  r.pitSide=lat>=0?1:-1;
+ }
+ const look=(r.trackIdx+10)%R.N,q=S[look];
+ const edge=(ROADW-32)*r.pitSide;
+ const tx=q.x+q.nx*edge,ty=q.y+q.ny*edge;
+ const want=Math.atan2(ty-r.y,tx-r.x);
+ let steer=clamp(angDiff(want,r.ang)*2.6,-1,1);
+ const sp=Math.abs(r.spd);
+ let th=sp>110?-0.28:(sp>45?-0.12:0);
+ for(const o of R.racers){
+  if(o===r||o.dead)continue;
+  const dx=o.x-r.x,dy=o.y-r.y,d=Math.hypot(dx,dy);
+  if(d<1||d>120)continue;
+  const ahead=Math.cos(r.ang)*dx+Math.sin(r.ang)*dy;
+  if(ahead<-20||ahead>95)continue;
+  const side=Math.sin(Math.atan2(dy,dx)-r.ang)>0?-1:1;
+  steer+=side*clamp((110-d)/70,0.35,1.1);
+  if(ahead>6&&sp>30)th=-0.55;
+ }
+ return{th,st:clamp(steer,-1,1)};
+}
 function resolveRaceContact(dt){
  const Rc=R.racers;
  for(let i=0;i<Rc.length;i++)for(let j=i+1;j<Rc.length;j++){
-  const a=Rc[i],b=Rc[j];if(a.dead||b.dead||a.finished||b.finished||a.air||b.air)continue;
+  const a=Rc[i],b=Rc[j];if(a.dead||b.dead||a.air||b.air)continue;
   const hit=obbOverlap(carObb(a),carObb(b));
   if(!hit)continue;
-  const push=hit.pen/2;
+  const push=Math.max(hit.pen/2,1.15);
   a.x-=hit.nx*push;a.y-=hit.ny*push;b.x+=hit.nx*push;b.y+=hit.ny*push;
   const rel=Math.abs(a.spd-b.spd);
-  if(rel>60){
+  const atLine=!!(a.finished||b.finished);
+  if(!atLine&&rel>60){
    let dA=rel*.015+1,dB=rel*.015+1;
    if(a.car.idx===0){dB*=2;dA*=.5;}
    if(b.car.idx===0){dA*=2;dB*=.5;}
    dA*=(a.dmgMul||1);dB*=(b.dmgMul||1);
    dmgRacer(a,dA,b);dmgRacer(b,dB,a);
    spark((a.x+b.x)/2,(a.y+b.y)/2,'#ffd23f',6,160);
-   if(typeof voiceSay==='function')voiceSay(a.spd>=b.spd?a:b,'ram',{chance:.42,gap:6});}
-  a.spd*=.97;b.spd*=.97;}
+   if(typeof voiceSay==='function')voiceSay(a.spd>=b.spd?a:b,'ram',{chance:.42,gap:6});
+  }else if(atLine){
+   const ra=-Math.sin(a.ang),rb=Math.cos(a.ang);
+   const sa=-Math.sin(b.ang),sb=Math.cos(b.ang);
+   a.lat=clamp((a.lat||0)+(hit.nx*ra+hit.ny*rb)*28,-140,140);
+   b.lat=clamp((b.lat||0)-(hit.nx*sa+hit.ny*sb)*28,-140,140);
+   a.spd*=.985;b.spd*=.985;
+   if(rel>50)spark((a.x+b.x)/2,(a.y+b.y)/2,'rgba(200,190,170,.45)',4,80);
+  }
+  if(!atLine){a.spd*=.97;b.spd*=.97;}
+ }
  for(let i=R.shots.length-1;i>=0;i--){const s=R.shots[i];
   if(s.rocket){
    let bestTarget=null,bestDist=1e9;
@@ -3367,7 +3430,13 @@ function updRace(dt){
   if(R.countT<=0){R.phase='go';for(const rr2 of R.racers)rr2.lapStart=R.time;announce(labTest?'ПОЛИГОН · ЗАМЕР КРУГА. ESC — В ЛАБОРАТОРИЮ':LINES_START[(Math.random()*LINES_START.length)|0],true);sGo();if(typeof voiceOnStart==='function')voiceOnStart();}
   return;}
  if(R.phase==='done'){R.doneT-=dt;
-  for(const r of R.racers)if(!r.dead)stepVehicle(r,0,0,dt);
+  for(const r of R.racers){
+   if(r.dead)continue;
+   const d=finishDrive(r);
+   stepVehicle(r,d.th,d.st,dt);
+   advanceIdx(r);
+  }
+  resolveRaceContact(dt);
   if(R.doneT<=0)showResults();return;}
  const ctrl=settings.controls;
  const any=(arr)=>arr&&arr.some(k=>keys[k]);
@@ -3375,9 +3444,16 @@ function updRace(dt){
  const kHb=any(ctrl.handbrake);
  for(const r of R.racers){
   if(r.dead){r.respawnT-=dt;if(r.respawnT<=0)respawn(r);continue;}
-  if(r.finished){ // финишировал: тормозим, игрок может разворачиваться
-   if(r.isP)stepVehicle(r,0,(kRight?1:0)-(kLeft?1:0),dt,kHb);
-   else stepVehicle(r,0,0,dt,false);
+  if(r.finished){
+   const d=finishDrive(r);
+   let th=d.th,st=d.st;
+   if(r.isP){
+    st=clamp(st+(kRight?1:0)-(kLeft?1:0),-1,1);
+    if(kDown)th=-1;
+    else if(kUp)th=Math.max(th,0);
+   }
+   stepVehicle(r,th,st,dt,r.isP&&kHb);
+   advanceIdx(r);
    continue;}
   if(r.isP){
    const th=(kUp?1:0)-(kDown?1:0);
@@ -5570,6 +5646,10 @@ function drawCharSel(){
   g._charCards.push({x,y,w:cw,h,idx});});
  txt(g,'← → — выбор • ENTER / «ВЫБРАТЬ» — досье • в досье ENTER — взять гонщика',W/2,H-28,14,'#6f6880','center',F_B);
  drawCharSelAsh(g);
+ if(typeof drawCharNameBark==='function'&&g._charCards){
+  const card=g._charCards.find(function(b){return b.idx===selChar;});
+  if(card)drawCharNameBark(g,card);
+ }
 }
 ////////////////////////////////////////////////////////
 //

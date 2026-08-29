@@ -19,7 +19,10 @@ const VOICE = {
  lastAny: {},
  skipFile: {},
  audio: null,
- ready: false
+ objectUrl: null,
+ ready: false,
+ nameBark: null,
+ nameGen: 0
 };
 
 /** Индекс гонщика в CHARS, иначе -1. */
@@ -67,6 +70,21 @@ function voicePickTake(bank, cueId) {
  return cue.takes[(Math.random() * cue.takes.length) | 0];
 }
 
+/** Дубли события в случайном порядке. */
+function voiceShuffleTakes(bank, cueId) {
+ if (!bank || !bank.cues) return [];
+ const cue = bank.cues.find(function (c) { return c.id === cueId; });
+ if (!cue || !cue.takes) return [];
+ const takes = cue.takes.slice();
+ for (let i = takes.length - 1; i > 0; i--) {
+  const j = (Math.random() * (i + 1)) | 0;
+  const tmp = takes[i];
+  takes[i] = takes[j];
+  takes[j] = tmp;
+ }
+ return takes;
+}
+
 /** Сброс выносок на новый заезд. */
 function voiceReset() {
  VOICE.shown = [];
@@ -95,31 +113,176 @@ function voiceMark(r, cue) {
  VOICE.lastAny[voiceCharIdx(r) + ':any'] = t;
 }
 
-/** Играет MP3, если файл не пустой. */
-function voicePlayFile(url) {
- if (!url || VOICE.skipFile[url]) return;
- const snd = typeof settings !== 'undefined' && settings && settings.sound;
- if (!snd || snd.sfxOn === false) return;
+/** Останавливает текущий MP3 реплики. */
+function voiceStopAudio() {
+ if (VOICE.fetchAc) {
+  try { VOICE.fetchAc.abort(); } catch (e) {}
+  VOICE.fetchAc = null;
+ }
  try {
   if (VOICE.audio) { VOICE.audio.pause(); VOICE.audio.src = ''; }
  } catch (e) {}
- const a = new Audio();
- let bad = false;
- const fail = function () {
-  if (bad) return;
-  bad = true;
-  VOICE.skipFile[url] = true;
+ VOICE.audio = null;
+ if (VOICE.objectUrl) {
+  try { URL.revokeObjectURL(VOICE.objectUrl); } catch (e) {}
+  VOICE.objectUrl = null;
+ }
+}
+
+/** Играет MP3, если файл не пустой заглушкой. onFail — нет звука, onOk — пошёл. */
+function voicePlayFile(url, onFail, onOk) {
+ const miss = function () {
+  if (typeof onFail === 'function') onFail();
  };
- a.preload = 'auto';
- a.referrerPolicy = 'no-referrer';
- a.volume = Math.max(0, Math.min(1, ((snd.sfx || 80) / 100) * 0.92));
- a.addEventListener('error', fail);
- a.addEventListener('canplaythrough', function () {
-  if (bad) return;
-  a.play().catch(fail);
- }, { once: true });
- a.src = url;
- VOICE.audio = a;
+ if (!url || VOICE.skipFile[url]) { miss(); return; }
+ const snd = typeof settings !== 'undefined' && settings && settings.sound;
+ if (!snd || snd.sfxOn === false) { miss(); return; }
+ voiceStopAudio();
+ const ac = typeof AbortController === 'function' ? new AbortController() : null;
+ VOICE.fetchAc = ac;
+ fetch(url, { cache: 'no-cache', signal: ac && ac.signal }).then(function (res) {
+  if (!res.ok) throw new Error('http');
+  return res.blob();
+ }).then(function (blob) {
+  if (ac && VOICE.fetchAc !== ac) return false;
+  if (!blob || blob.size < 400) throw new Error('empty');
+  const a = new Audio();
+  const href = URL.createObjectURL(blob);
+  VOICE.objectUrl = href;
+  a.preload = 'auto';
+  a.volume = Math.max(0, Math.min(1, ((snd.sfx || 80) / 100) * 0.92));
+  a.addEventListener('error', function () {
+   VOICE.skipFile[url] = true;
+   miss();
+  }, { once: true });
+  a.src = href;
+  VOICE.audio = a;
+  return a.play().then(function () { return true; });
+ }).then(function (ok) {
+  if (ok !== true) return;
+  if (typeof onOk === 'function') onOk();
+ }).catch(function (err) {
+  if (err && err.name === 'AbortError') return;
+  if (ac && VOICE.fetchAc !== ac) return;
+  VOICE.skipFile[url] = true;
+  miss();
+ });
+}
+
+/** Выноска текста на выборе гонщика. */
+function voiceSetNameBark(chIdx, take) {
+ const ch = typeof CHARS !== 'undefined' ? CHARS[chIdx] : null;
+ VOICE.nameBark = {
+  text: String((take && take.text) || ''),
+  col: (ch && ch.col) || '#ffd23f',
+  t0: (typeof performance !== 'undefined' ? performance.now() : Date.now()),
+  idx: chIdx
+ };
+}
+
+/** Выбор гонщика: случайный дубль события name из lines.json. */
+function voiceSayName(chIdx) {
+ const gen = ++VOICE.nameGen;
+ VOICE.nameBark = null;
+ voiceStopAudio();
+ if (chIdx == null || chIdx < 0) return;
+ voicePreload();
+ let waits = 0;
+ const go = function () {
+  if (gen !== VOICE.nameGen) return;
+  const bank = VOICE.banks[chIdx];
+  if (!bank) {
+   waits++;
+   if (waits > 40) return;
+   setTimeout(go, 50);
+   return;
+  }
+  const takes = voiceShuffleTakes(bank, 'name');
+  if (!takes.length) return;
+  const dir = voiceDirOf(chIdx);
+  const snd = typeof settings !== 'undefined' && settings && settings.sound;
+  const muted = !snd || snd.sfxOn === false;
+  const tryAt = function (i) {
+   if (gen !== VOICE.nameGen) return;
+   if (i >= takes.length) {
+    voiceSetNameBark(chIdx, takes[(Math.random() * takes.length) | 0]);
+    return;
+   }
+   const take = takes[i];
+   if (muted || !take.file) {
+    voiceSetNameBark(chIdx, take);
+    return;
+   }
+   voicePlayFile(dir + take.file, function () {
+    tryAt(i + 1);
+   }, function () {
+    if (gen !== VOICE.nameGen) return;
+    voiceSetNameBark(chIdx, take);
+   });
+  };
+  tryAt(0);
+ };
+ go();
+}
+
+/** Сброс голоса имени при уходе с экрана. */
+function voiceStopName() {
+ VOICE.nameGen++;
+ VOICE.nameBark = null;
+ voiceStopAudio();
+}
+
+/** Выноска реплики на карточке выбранного гонщика. */
+function drawCharNameBark(c, card) {
+ const s = VOICE.nameBark;
+ if (!s || !s.text || !card || s.idx !== card.idx) return;
+ const age = ((typeof performance !== 'undefined' ? performance.now() : Date.now()) - s.t0) / 1000;
+ if (age > 5.4) return;
+ let a = 1;
+ if (age < 0.12) a = age / 0.12;
+ else if (age > 4.7) a = Math.max(0, (5.4 - age) / 0.7);
+ if (a <= 0.02) return;
+ const size = 13;
+ const lineH = 16;
+ const padX = 12;
+ const padY = 9;
+ const maxW = Math.max(120, card.w - 28);
+ const lines = (typeof layoutLines === 'function' ? layoutLines(c, s.text, maxW, size, F_B) : [s.text]).slice(0, 3);
+ let tw = 0;
+ c.font = size + 'px ' + F_B;
+ for (let li = 0; li < lines.length; li++) tw = Math.max(tw, c.measureText(lines[li]).width);
+ const bw = Math.min(card.w - 16, Math.ceil(tw) + padX * 2);
+ const bh = lines.length * lineH + padY * 2;
+ const bx = card.x + (card.w - bw) / 2;
+ const by = card.y + 8;
+ c.save();
+ c.globalAlpha = a;
+ c.fillStyle = 'rgba(10,8,14,.94)';
+ rr(c, bx, by, bw, bh, 10);
+ c.fill();
+ c.strokeStyle = s.col;
+ c.lineWidth = 1.6;
+ rr(c, bx, by, bw, bh, 10);
+ c.stroke();
+ const shine = c.createLinearGradient(bx, by, bx, by + 10);
+ shine.addColorStop(0, 'rgba(255,244,220,.14)');
+ shine.addColorStop(1, 'rgba(255,244,220,0)');
+ c.fillStyle = shine;
+ rr(c, bx + 1, by + 1, bw - 2, 9, 8);
+ c.fill();
+ c.fillStyle = s.col;
+ c.beginPath();
+ c.moveTo(bx + bw / 2 - 6, by + bh);
+ c.lineTo(bx + bw / 2 + 6, by + bh);
+ c.lineTo(bx + bw / 2, by + bh + 7);
+ c.closePath();
+ c.fill();
+ const tx = bx + bw / 2;
+ const ty = by + padY + lineH * 0.5;
+ for (let li = 0; li < lines.length; li++) {
+  txt(c, lines[li], tx, ty + li * lineH, size, '#f4efe4', 'center', F_B);
+ }
+ c.restore();
 }
 
 /** Ставит выноску. opts: delay, chance, force, gap. */
@@ -284,9 +447,12 @@ if (typeof window !== 'undefined') {
  window.voicePreload = voicePreload;
  window.voiceReset = voiceReset;
  window.voiceSay = voiceSay;
+ window.voiceSayName = voiceSayName;
+ window.voiceStopName = voiceStopName;
  window.voiceOnStart = voiceOnStart;
  window.voiceOnChase = voiceOnChase;
  window.drawHudVoiceBarks = drawHudVoiceBarks;
+ window.drawCharNameBark = drawCharNameBark;
 }
 
 voiceBoot();
