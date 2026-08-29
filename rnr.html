@@ -18,19 +18,35 @@
  #boot-screen{
   position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
   padding:max(24px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
-  background:#050409;color:#ffd23f;
+  background:linear-gradient(180deg,#1a1424 0%,#0a0812 50%,#050409 100%);
+  color:#ffd23f;
   font-family:"Russo One",Impact,sans-serif;
  }
- #boot-screen::before{
-  content:"";position:absolute;inset:0;pointer-events:none;opacity:.05;
-  background:repeating-linear-gradient(-52deg,transparent,transparent 46px,#ff9d2e 46px,#ff9d2e 58px);
+ .boot-stripes,.boot-ash,.boot-vignette{
+  position:absolute;inset:0;pointer-events:none
  }
- .boot-box{position:relative;width:min(560px,86vw);text-align:center}
+ .boot-stripes{
+  inset:-45%;
+  opacity:.055;
+  background:repeating-linear-gradient(-29.8deg,transparent 0 29px,#e8a23a 29px 38px);
+  animation:bootStripeShift 2.375s linear infinite
+ }
+ .boot-vignette{
+  background:radial-gradient(ellipse at 50% 42%,rgba(0,0,0,0) 18%,rgba(3,2,8,.55) 100%)
+ }
+ .boot-ash{width:100%;height:100%}
+ .boot-box{position:relative;width:min(640px,90vw);text-align:center;z-index:1}
+ .boot-logo{
+  display:block;width:min(470px,78vw);height:auto;margin:0 auto 8px;
+  filter:drop-shadow(0 8px 18px rgba(0,0,0,.65));
+  transform:rotate(-.7deg);
+  animation:bootLogoSway 5.2s ease-in-out infinite
+ }
  .boot-kicker{
   margin:0 0 10px;font-family:"Chakra Petch","Segoe UI",sans-serif;
   font-size:clamp(11px,1.6vw,13px);letter-spacing:.32em;color:#8f88a0;text-transform:uppercase
  }
- .boot-title{margin:0 0 28px;font-size:clamp(28px,6vw,44px);line-height:1.05;text-shadow:0 4px 0 #000,0 0 24px rgba(255,157,46,.35)}
+ .boot-title{margin:8px 0 18px;font-size:clamp(22px,4.2vw,34px);line-height:1.05;text-shadow:0 4px 0 #000,0 0 24px rgba(255,157,46,.35)}
  .boot-status{margin:0 0 14px;font-family:"Chakra Petch","Segoe UI",sans-serif;font-size:clamp(13px,2vw,16px);color:#c8c2d4}
  .boot-track{
   position:relative;height:16px;background:#16121c;border:2px solid #ff9d2e;
@@ -42,6 +58,17 @@
   box-shadow:0 0 16px rgba(255,157,46,.45)
  }
  .boot-pct{margin:12px 0 0;font-size:clamp(18px,3vw,22px)}
+ .boot-prompt{
+  margin:8px 0 0;font-family:"Russo One",Impact,sans-serif;
+  font-size:clamp(22px,3.6vw,34px);letter-spacing:.04em;color:#ffd23f;
+  text-shadow:0 4px 0 #000,0 0 22px rgba(255,157,46,.9);
+  animation:bootBlink 1.05s step-end infinite
+ }
+ .boot-load{display:none}
+ #boot-screen.is-gate{cursor:pointer}
+ #boot-screen.is-gate .boot-title{display:none}
+ #boot-screen.is-load .boot-prompt{display:none}
+ #boot-screen.is-load .boot-load{display:block}
  .boot-vpn{
   display:none;margin:22px 0 0;padding:14px 16px;
   font-family:"Chakra Petch","Segoe UI",sans-serif;font-size:clamp(13px,2vw,15px);line-height:1.45;
@@ -49,21 +76,42 @@
  }
  .boot-vpn.is-on{display:block}
  #boot-screen.is-out{opacity:0;pointer-events:none;transition:opacity .35s ease}
+ @keyframes bootBlink{
+  0%,64%{opacity:1}
+  65%,100%{opacity:0}
+ }
+ @keyframes bootStripeShift{
+  from{transform:translateX(0)}
+  to{transform:translateX(38px)}
+ }
+ @keyframes bootLogoSway{
+  0%,100%{transform:rotate(-.7deg)}
+  50%{transform:rotate(.35deg)}
+ }
  @media (prefers-reduced-motion:reduce){
   .boot-fill{box-shadow:none}
+  .boot-prompt{animation:none}
+  .boot-stripes,.boot-logo{animation:none}
   #boot-screen.is-out{transition:none}
  }
 </style>
 </head>
 <body>
-<div id="boot-screen" role="status" aria-live="polite">
+<div id="boot-screen" class="is-gate" role="status" aria-live="polite">
+ <div class="boot-stripes" aria-hidden="true"></div>
+ <canvas id="boot-ash" class="boot-ash" aria-hidden="true"></canvas>
+ <div class="boot-vignette" aria-hidden="true"></div>
  <div class="boot-box">
   <p class="boot-kicker">Колесница войны</p>
-  <h1 class="boot-title">ЗАГРУЗКА</h1>
-  <p id="boot-status" class="boot-status">Собираем трассу…</p>
-  <div class="boot-track" aria-hidden="true"><span id="boot-fill" class="boot-fill"></span></div>
-  <p id="boot-pct" class="boot-pct">0%</p>
-  <p id="boot-vpn" class="boot-vpn">Загрузка идёт слишком долго. Если включён VPN — отключите его и обновите страницу: музыка и шрифты часто не проходят через туннель.</p>
+  <img class="boot-logo" src="assets/image/game-logo.webp" alt="Колесница войны" width="470" decoding="async" fetchpriority="high">
+  <h1 id="boot-heading" class="boot-title">ЗАГРУЗКА</h1>
+  <p id="boot-prompt" class="boot-prompt">Нажмите любую кнопку</p>
+  <div id="boot-load" class="boot-load">
+   <p id="boot-status" class="boot-status">Собираем трассу…</p>
+   <div class="boot-track" aria-hidden="true"><span id="boot-fill" class="boot-fill"></span></div>
+   <p id="boot-pct" class="boot-pct">0%</p>
+   <p id="boot-vpn" class="boot-vpn">Загрузка идёт слишком долго. Если включён VPN — отключите его и обновите страницу: музыка и шрифты часто не проходят через туннель.</p>
+  </div>
  </div>
 </div>
 <canvas id="cv" width="1280" height="720" tabindex="0"></canvas>
@@ -102,10 +150,10 @@ function panelPath(c,x,y,w,h,sk=14){c.beginPath();c.moveTo(x+sk,y);c.lineTo(x+w,
 function txt(c,t,x,y,size,col,align='left',font=F_D,stroke=true){c.font=size+'px '+font;c.textAlign=align;c.textBaseline='middle';if(stroke){c.lineWidth=Math.max(2,size/9);c.strokeStyle='#000';c.strokeText(t,x,y);}c.fillStyle=col;c.fillText(t,x,y);}
 ////////////////////////////////////////////////////////
 //
-// Стартовая загрузка: реальный прогресс по байтам, без запуска игры
+// Старт: жест → загрузка с музыкой меню → главное меню
 //
 ////////////////////////////////////////////////////////
-const BOOT={ready:false,started:false,giveUp:false,jobs:[],t0:0,vpnShown:false,els:null};
+const BOOT={ready:false,started:false,giveUp:false,jobs:[],t0:0,vpnShown:false,els:null,gateRaf:0};
 /** Ставит картинку в очередь: пробуем URL по порядку, считаем байты. */
 function bootEnqueue(img,urls){
  BOOT.jobs.push({img,urls:(urls||[]).filter(Boolean),got:0,total:0,done:false});
@@ -118,6 +166,7 @@ function bootEls(){
  if(BOOT.els)return BOOT.els;
  BOOT.els={
   root:document.getElementById('boot-screen'),
+  heading:document.getElementById('boot-heading'),
   fill:document.getElementById('boot-fill'),
   pct:document.getElementById('boot-pct'),
   status:document.getElementById('boot-status'),
@@ -275,7 +324,10 @@ function bootFinish(){
  const hide=()=>{
   if(!el.root)return;
   el.root.classList.add('is-out');
-  const drop=()=>{if(el.root&&el.root.parentNode)el.root.parentNode.removeChild(el.root);};
+  const drop=()=>{
+   BOOT.fxLive=false;
+   if(el.root&&el.root.parentNode)el.root.parentNode.removeChild(el.root);
+  };
   const reduce=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(reduce)drop();
   else setTimeout(drop,380);
@@ -285,7 +337,8 @@ function bootFinish(){
  setTimeout(()=>{
   try{
    if(labTest)startLabTest();
-   else initTitleRace();
+   else enterTitle();
+   if(cv&&cv.focus)cv.focus();
   }catch(e){
    console.error(e);
    if(labTest){try{location.href='Editor.html';}catch(err){}}
@@ -293,6 +346,104 @@ function bootFinish(){
   }
   requestAnimationFrame(frame);
  },40);
+}
+/** Жест игрока: музыка меню и очередь файлов. */
+function bootAcceptGate(){
+ if(BOOT.started||BOOT.ready)return;
+ if(BOOT.gateRaf){cancelAnimationFrame(BOOT.gateRaf);BOOT.gateRaf=0;}
+ if(!AU.ctx)audioInit();
+ const el=bootEls();
+ if(el.root){el.root.classList.remove('is-gate');el.root.classList.add('is-load');}
+ if(el.heading)el.heading.textContent='ЗАГРУЗКА';
+ try{bootGo();}catch(e){console.error(e);bootFinish();}
+}
+/** Геймпад на экране «любая кнопка». */
+function bootPollGate(){
+ if(BOOT.started||BOOT.ready)return;
+ if(typeof navigator!=='undefined'&&navigator.getGamepads){
+  const pads=navigator.getGamepads();
+  for(const p of pads){
+   if(!p||!p.buttons)continue;
+   for(const b of p.buttons){
+    if(b&&b.pressed){bootAcceptGate();return;}
+   }
+  }
+ }
+ BOOT.gateRaf=requestAnimationFrame(bootPollGate);
+}
+////////////////////////////////////////////////////////
+//
+// Пепел на заставке: лёгкие угли, без blur
+//
+////////////////////////////////////////////////////////
+function bootFxStart(){
+ const root=document.getElementById('boot-screen');
+ const cnv=document.getElementById('boot-ash');
+ if(!root||!cnv)return;
+ const reduce=typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+ if(reduce){cnv.style.display='none';return;}
+ const ctx=cnv.getContext('2d');
+ if(!ctx)return;
+ BOOT.fxLive=true;
+ let w=0,h=0,dpr=1;
+ const flakes=[];
+ /** Подгоняет холст пепла под окно. */
+ function fitAsh(){
+  dpr=Math.min(2,window.devicePixelRatio||1);
+  w=root.clientWidth||innerWidth;
+  h=root.clientHeight||innerHeight;
+  cnv.width=(w*dpr)|0;
+  cnv.height=(h*dpr)|0;
+  cnv.style.width=w+'px';
+  cnv.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+ }
+ /** Одна частица пепла или угля. */
+ function makeFlake(fromTop){
+  const ember=Math.random()<.28;
+  return{
+   x:Math.random()*w,
+   y:fromTop?-12-Math.random()*h*0.2:Math.random()*h,
+   vx:(Math.random()-.5)*.35,
+   vy:.28+Math.random()*.55,
+   s:ember?1.2+Math.random()*2.2:.7+Math.random()*1.8,
+   a:.18+Math.random()*.45,
+   rot:Math.random()*Math.PI,
+   vr:(Math.random()-.5)*.04,
+   ph:Math.random()*Math.PI*2,
+   ember
+  };
+ }
+ fitAsh();
+ const n=Math.max(48,Math.min(90,Math.round(w*h/18000)));
+ for(let i=0;i<n;i++)flakes.push(makeFlake(false));
+ addEventListener('resize',fitAsh);
+ let last=performance.now();
+ /** Кадр пепла, пока жива заставка. */
+ function tick(now){
+  if(!BOOT.fxLive||!root.parentNode)return;
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  ctx.clearRect(0,0,w,h);
+  for(const p of flakes){
+   p.ph+=dt*1.4;
+   p.x+=p.vx+Math.sin(p.ph)*0.35;
+   p.y+=p.vy*(1+Math.sin(p.ph*0.5)*0.12);
+   p.rot+=p.vr;
+   if(p.y>h+16||p.x<-20||p.x>w+20){
+    const n2=makeFlake(true);
+    p.x=n2.x;p.y=n2.y;p.vx=n2.vx;p.vy=n2.vy;p.s=n2.s;p.a=n2.a;p.ember=n2.ember;
+   }
+   ctx.save();
+   ctx.translate(p.x,p.y);
+   ctx.rotate(p.rot);
+   ctx.globalAlpha=p.a;
+   ctx.fillStyle=p.ember?'#e8a23a':'#8a7a6a';
+   ctx.fillRect(-p.s*.5,-p.s*1.4,p.s,p.s*2.6);
+   ctx.restore();
+  }
+  requestAnimationFrame(tick);
+ }
+ requestAnimationFrame(tick);
 }
 async function bootGo(){
  if(BOOT.started)return;
@@ -6124,7 +6275,7 @@ function drawResults(){
  txt(g,labTest?'ENTER — В ЛАБОРАТОРИЮ':'ENTER — В ГАРАЖ',W/2,enterY,15,'#ff9d2e','center');
 }
 addEventListener('keydown',e=>{
- if(!BOOT.ready){e.preventDefault();return;}
+ if(!BOOT.ready){e.preventDefault();bootAcceptGate();return;}
  if(!AU.ctx)audioInit();
  const gameCodes=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD',
   'KeyZ','KeyX','KeyC','KeyP','BracketLeft','BracketRight',
@@ -6544,7 +6695,7 @@ cv.addEventListener('wheel',e=>{
  else nudgeParkSel(dir);
 },{passive:false});
 cv.addEventListener('mousedown',e=>{
- if(!BOOT.ready)return;
+ if(!BOOT.ready){bootAcceptGate();return;}
  if(!AU.ctx)audioInit();
  cv.focus();
  const r=cv.getBoundingClientRect();
@@ -6616,7 +6767,6 @@ cv.addEventListener('mousedown',e=>{
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>{if(state==='race'||state==='garage'||state==='title'||state==='press')e.preventDefault();});
 addEventListener('popstate',e=>{if(state==='race'){e.preventDefault();try{history.pushState(null,'',location.href);}catch(err){}}});
-try{bootGo();}catch(e){console.error(e);bootFinish();}
 try{history.pushState(null,'',location.href);}catch(err){}
 let last=performance.now(),fpsSmooth=60;
 function frame(now){
@@ -6689,7 +6839,21 @@ function frame(now){
   g.fillText(Math.round(fpsSmooth)+' FPS',10,20);
  }
  requestAnimationFrame(frame);}
-try{bootGo();}catch(e){console.error(e);bootFinish();}
+bootFxStart();
+if(labTest){
+ const el=bootEls();
+ if(el.root){el.root.classList.remove('is-gate');el.root.classList.add('is-load');}
+ try{bootGo();}catch(e){console.error(e);bootFinish();}
+}else{
+ const gateRoot=document.getElementById('boot-screen');
+ if(gateRoot)gateRoot.addEventListener('pointerdown',e=>{e.preventDefault();bootAcceptGate();});
+ addEventListener('pointerdown',e=>{
+  if(BOOT.started||BOOT.ready)return;
+  e.preventDefault();
+  bootAcceptGate();
+ },{passive:false});
+ bootPollGate();
+}
 window.addEventListener('pageshow',()=>reloadEditorCars());
 window.addEventListener('storage',e=>{
  if(!e.key||e.key===EDITOR_STORAGE_KEY||e.key===EDITOR_STORAGE_KEY+'.ts')reloadEditorCars();
