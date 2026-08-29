@@ -159,7 +159,7 @@ function bootMime(url,header){
  return h||'application/octet-stream';
 }
 async function bootFetchUrl(url,job,signal){
- const res=await fetch(url,{cache:'force-cache',signal});
+ const res=await fetch(url,{cache:'no-cache',signal});
  // 404 на хосте — сразу следующий URL, без 14 с ожидания Image.onerror
  if(!res.ok)return false;
  const cl=+res.headers.get('Content-Length')||0;
@@ -200,7 +200,7 @@ async function bootBind(img,blob){
 /** Если fetch недоступен (file://), грузим как обычный Image. */
 function bootImgTag(img,url){
  return new Promise(resolve=>{
-  const t=setTimeout(()=>done(false),2500);
+  const t=setTimeout(()=>done(false),12000);
   const done=ok=>{clearTimeout(t);img.onload=null;img.onerror=null;resolve(ok);};
   img.onload=()=>done(img.naturalWidth>0||/\.svg(\?|$)/i.test(url));
   img.onerror=()=>done(false);
@@ -210,27 +210,25 @@ function bootImgTag(img,url){
 async function bootRunJob(job){
  if(job.done||BOOT.giveUp){job.done=true;return;}
  const remote=(job.urls||[]).some(u=>/^https?:\/\//i.test(u));
- const fileProto=location.protocol==='file:';
  const ac=typeof AbortController==='function'?new AbortController():null;
  const timer=setTimeout(()=>{if(ac)ac.abort();},remote?4000:8000);
- let netFail=false;
  try{
   for(const url of job.urls){
    if(BOOT.giveUp)break;
    try{
     const blob=await bootFetchUrl(url,job,ac&&ac.signal);
     if(blob===false)continue;
-    if(!blob){netFail=true;continue;}
+    if(!blob)continue;
     if(job.img)await bootBind(job.img,blob);
     job.done=true;
     if(job.got<job.total)job.got=job.total;
     bootPaint();
     return;
-   }catch(e){netFail=true;}
+   }catch(e){}
   }
  }finally{clearTimeout(timer);}
- // Image.src только для file:// или сбоя сети, не для явного 404
- if(job.img&&(fileProto||netFail)&&!BOOT.giveUp){
+ // Прямой Image.src: file://, сбой fetch и свежий файл после 404 в кэше
+ if(job.img&&!BOOT.giveUp){
   for(const url of job.urls){
    if(BOOT.giveUp)break;
    const ok=await bootImgTag(job.img,url);
@@ -454,7 +452,8 @@ function drawAnnounceToast(c,msg,cx,top,viewWidth){
  c.restore();
 }
 function fm(n){return '$'+String(n).replace(/\B(?=(\d{3})+(?!\d))/g,' ');}
-const PLAYABLE_N=CHARS.filter(c=>!c.npc).length;
+const PLAYABLE_IDS=CHARS.map((c,i)=>c.npc?null:i).filter(i=>i!=null);
+const PLAYABLE_N=PLAYABLE_IDS.length;
 ////////////////////////////////////////////////////////
 //
 // Личные скилы гонщиков: ур.1…6
@@ -467,23 +466,33 @@ const SKILL_META=[
  {n:'ФОРСАЖ-КЛАПАН',d:'нитро-кд'},
  {n:'АГРЕССИЯ',d:'урон'},
  {n:'МИННЫЙ ИММУНИТЕТ',d:'пропуск мин'},
+ {n:'—',d:''},
+ {n:'НАВИГАТОР',d:'стрелки линии'},
 ];
 function skillT(lvl){return clamp((lvl-1)/(SKILL_MAX-1),0,1);}
 function skillVal(chIdx,lvl){
  const t=skillT(lvl);
- if(chIdx===0)return lerp(10,2,t);
- if(chIdx===1)return lerp(0.05,0.15,t);
- if(chIdx===2)return lerp(0.02,0.15,t);
- if(chIdx===3)return lerp(0.10,1.0,t);
- return 0;
+ switch(chIdx){
+  case 0:return lerp(10,2,t);
+  case 1:return lerp(0.05,0.15,t);
+  case 2:return lerp(0.02,0.15,t);
+  case 3:return lerp(0.10,1.0,t);
+  case 4:return 0;
+  case 5:return lerp(5,12,t);
+  default:return 0;
+ }
 }
 function SKILL_DESC(chIdx,lvl){
  const v=skillVal(chIdx,lvl);
- if(chIdx===0)return 'полное лечение за '+v.toFixed(1)+'с';
- if(chIdx===1)return 'нитро-кд −'+Math.round(v*100)+'%';
- if(chIdx===2)return 'урон +'+Math.round(v*100)+'%';
- if(chIdx===3)return 'пропуск мин '+Math.round(v*100)+'%';
- return '';
+ switch(chIdx){
+  case 0:return 'полное лечение за '+v.toFixed(1)+'с';
+  case 1:return 'нитро-кд −'+Math.round(v*100)+'%';
+  case 2:return 'урон +'+Math.round(v*100)+'%';
+  case 3:return 'пропуск мин '+Math.round(v*100)+'%';
+  case 4:return '';
+  case 5:return 'стрелки линии, '+Math.round(v)+' впереди';
+  default:return '';
+ }
 }
 let raceDiv=1;
 ////////////////////////////////////////////////////////
@@ -499,7 +508,7 @@ function charEff(i){
  return{spd:ch.spd+cs.spd,crn:ch.crn+cs.crn,grt:ch.grt+cs.grt};
 }
 function upgradeCharStat(i,key){
- if(!save.cstats)save.cstats={0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}};
+ if(!save.cstats)save.cstats=blankCstatsMap();
  const ch=CHARS[i];
  const cs=save.cstats[i]||(save.cstats[i]={spd:0,crn:0,grt:0});
  const maxAdd=5-ch[key];
@@ -514,7 +523,7 @@ function upgradeCharStat(i,key){
 //
 ////////////////////////////////////////////////////////
 function buyGym(idx){
- if(!save.cstats)save.cstats={0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}};
+ if(!save.cstats)save.cstats=blankCstatsMap();
  const chI=save.char;
  if(idx<3){
   upgradeCharStat(chI,['spd','crn','grt'][idx]);
@@ -528,16 +537,14 @@ function buyGym(idx){
 }
 ////////////////////////////////////////////////////////
 //
-// Аватары: 01_Player.webp …, иначе .png, один раз
+// Аватары: players/NN/NN_Player.webp …, иначе .png
 //
 ////////////////////////////////////////////////////////
-const AVATAR_EXT=['webp','png'];
 /** Набор аватаров: суффикс '' — портрет, '_fullbody' — рост. webp → png. */
 function loadPlayerImgs(suffix){
  return CHARS.map((_,i)=>{
   const img=new Image();
-  const base='assets/image/avatars/'+String(i+1).padStart(2,'0')+'_Player'+suffix;
-  bootEnqueue(img,AVATAR_EXT.map(ext=>base+'.'+ext));
+  bootEnqueue(img,playerImgUrls(i,suffix));
   return img;
  });
 }
@@ -549,9 +556,9 @@ const FULLBODIES=loadPlayerImgs('_fullbody');
 // Сначала 01.webp…, иначе 1.png…
 //
 ////////////////////////////////////////////////////////
-/** Подгрузка кадров папки комикса. */
-function loadIntroImgs(folder,count){
- const base='assets/image/comics/'+folder+'/';
+/** Подгрузка кадров интро из папки гонщика. */
+function loadIntroImgs(chI,count){
+ const base=playerComicsDir(chI);
  return Array.from({length:count},(_,i)=>{
   const n=i+1,img=new Image();
   bootEnqueue(img,[base+String(n).padStart(2,'0')+'.webp',base+n+'.png']);
@@ -561,7 +568,7 @@ function loadIntroImgs(folder,count){
 const CHAR_INTROS=[
  {
   name:'МЕДВЕДЬ',col:'#ffd23f',
-  imgs:loadIntroImgs('Bear',7),
+  imgs:loadIntroImgs(0,7),
   scenes:[
    {img:0,text:'Нам сказали: «Обычная операция, Медведь. Зайди, зачисти и возвращайся». Когда военные говорят «обычная», это обычно значит: горит всё, кроме твоей задницы.'},
    {img:1,text:'Потом приказ изменили. Наш маршрут заменили на координаты настоящей мясорубки. Но моя машина решила, что командование — идиоты, и вытащила меня оттуда. Умная железка. Жаль, что не могла ещё и рапорт за меня написать.'},
@@ -574,7 +581,7 @@ const CHAR_INTROS=[
  },
  {
   name:'ЕРШ',col:'#9dff4a',
-  imgs:loadIntroImgs('Ersh',6),
+  imgs:loadIntroImgs(1,6),
   scenes:[
    {img:0,text:'Я был курьером. Возил чужие посылки, чужие секреты и чужие проблемы — за деньги, которых всегда не хватало. Сильным меня не назовёшь. Зато я был быстрым, злым и достаточно тупым, чтобы снова соглашаться на опасную работу.'},
    {img:1,text:'Однажды мне дали обычную доставку: забрать чёрный контейнер и не задавать вопросов. Я, конечно, задал. Внутри лежал список участников смертельной гонки и расчёты, кому из них позволят дожить до финиша. Честный спорт, мать его.'},
@@ -588,7 +595,7 @@ const CHAR_INTROS=[
  },
  {
   name:'БЕГЕМОТИК',col:'#ff5db1',
-  imgs:loadIntroImgs('Begemotik',6),
+  imgs:loadIntroImgs(2,6),
   scenes:[
    {img:0,text:'Я всегда смеялась, когда всё шло по пизде. Не потому что весело — просто страх охуевал от такой реакции и не успевал меня догнать.'},
    {img:1,text:'Командир орал: «Не возвращаться!» А я послала его приказ нахуй и развернулась обратно. Если человек остался в огне — это не “потери”, это тот, кого ты обязан вытащить.'},
@@ -600,7 +607,7 @@ const CHAR_INTROS=[
  },
  {
   name:'БАШКИР',col:'#7fb2ff',
-  imgs:loadIntroImgs('Bashkir',7),
+  imgs:loadIntroImgs(3,7),
   scenes:[
    {img:0,text:'Я дважды похоронил сына и его жену. А потом эта чёртова коробка сказала мне: я хоронил их зря. Они живы. И кто-то, сука, всё это время держал их в клетке.'},
    {img:1,text:'Медведь приехал за убийцами и курил так, будто дым мог забить запах прошлого. Я смотрел на него из тени и уже знал: мы оба идём в одну бойню. Только наши дети приехали туда раньше нас.'},
@@ -719,7 +726,7 @@ const CARS=[
   traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
  {name:'«ЖЕРЕБЕЦ»',owner:null,price:25000,top:1.26,acc:1.20,crn:1.14,hp:118,col:'#c41e2a',col2:'#5a1018',hov:false,
   traits:['МИНИГАН: 50 патронов, шкала — магазин, перегрев после опустошения','СКАЧОК: прыжок как с трамплина вместо нитро','ТАБУН: ульта отталкивает и сбрасывает скорость рядом']},
- {name:'«БРИЧКА»',owner:null,price:800,top:0.90,acc:0.90,crn:0.99,hp:80,col:'#d45a1a',col2:'#2c2c30',hov:false,
+ {name:'«БРИЧКА»',owner:5,price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d45a1a',col2:'#2c2c30',hov:false,
   traits:['ПУЛЯ: стреляет прямо','ПЫЛЕСОС: тянет деньги, ремонт и ускорение рядом','КУПОЛ: ульта — щит 10 сек от всего урона']},
 ];
 CARS.forEach((c,i)=>c.idx=i);
@@ -729,7 +736,7 @@ CARS.forEach((c,i)=>c.idx=i);
 // Медведь → Дьявол, Ерш → V8, Бегемотик → Шредер, Башкир → Молот
 //
 ////////////////////////////////////////////////////////
-const CHARS_CARS={0:0,1:1,2:2,3:4};
+const CHARS_CARS={0:0,1:1,2:2,3:4,5:10};
 // Настройки из визуального редактора. Они общие для Editor.html и игры.
 const EDITOR_STORAGE_KEY='rnr.carEditor.v1';
 let EDITOR_CARS={};
@@ -809,6 +816,18 @@ function applyEditorCars(){
   CARS.push(car);patch(car);
  });
  CARS.forEach((c,i)=>c.idx=i);
+ applySignatureOwners();
+}
+/** Личные кузова канона: лаборатория не должна сбрасывать их в магазин. */
+const SIGNATURE_OWNERS={0:0,6:3,7:1,8:2,10:5};
+function applySignatureOwners(){
+ Object.keys(SIGNATURE_OWNERS).forEach((k)=>{
+  const i=+k,o=SIGNATURE_OWNERS[k];
+  if(!CARS[i])return;
+  CARS[i].owner=o;
+  CARS[i].price=0;
+  if(i===10){CARS[i].top=0.98;CARS[i].acc=1.04;CARS[i].crn=1.08;CARS[i].hp=100;}
+ });
 }
 reloadEditorCars();
 /** Параметры выезда из лаборатории: ?lab=1&car=индекс */
@@ -827,7 +846,7 @@ function exitLabTest(){location.href='Editor.html'+(save&&save.car!=null?('?car=
 function startLabTest(){
  if(!labTest)return;
  if(!save)save=newSave();
- if(save.char==null||!CHARS[save.char])save.char=0;
+ if(save.char==null||!CHARS[save.char]||CHARS[save.char].npc)save.char=0;
  save.car=CARS[LAB_CAR]?LAB_CAR:0;
  save.carOwned=save.carOwned||{};
  save.carOwned[save.car]=true;
@@ -843,11 +862,12 @@ function carBarPips(val,lo,hi){
 }
 ////////////////////////////////////////////////////////
 //
-// Личные машины: Медведь 01, Ерш 08, Бегемотик 09, Башкир 07
+// Личные машины: Медведь 01, Ерш 08, Бегемотик 09, Башкир 07, Янот 11 «Бричка»
 // Чужие личные в магазине только смотреть
 //
 ////////////////////////////////////////////////////////
-const CHAR_DATIVE=['Медведю','Ершу','Бегемотику','Башкиру'];
+const CHAR_DATIVE=['Медведю','Ершу','Бегемотику','Башкиру','Борису Быку','Янот'];
+function charDative(i){return CHAR_DATIVE[i]||((CHARS[i]&&CHARS[i].name)||'гонщику');}
 /** Индекс личной машины гонщика (после правок лаборатории). */
 function charCarIdx(chI){const i=CARS.findIndex(c=>c&&c.owner===chI);return i>=0?i:0;}
 /** Чей это личный кузов, или null для магазина. */
@@ -1398,10 +1418,12 @@ function clearSaveSlot(i){
 }
 loadSlots();
 let save=null;
+function blankSkillsMap(){const o={};for(let i=0;i<CHARS.length;i++)o[i]=1;return o;}
+function blankCstatsMap(){const o={};for(let i=0;i<CHARS.length;i++)o[i]={spd:0,crn:0,grt:0};return o;}
 function newSave(){return{cash:1200,char:0,car:charCarIdx(0),
  tuning:allTunes(),
- carOwned:{[charCarIdx(0)]:true},skills:{0:1,1:1,2:1,3:1},
- cstats:{0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}},
+ carOwned:{[charCarIdx(0)]:true},skills:blankSkillsMap(),
+ cstats:blankCstatsMap(),
  bet:0,race:0,achievements:{},tracksWon:{},shortcutsUsed:0,dev:0,records:{}};}
 let saveFlash=0,garMsg='',garMsgT=0;
 function persist(slotIndex){
@@ -1433,6 +1455,7 @@ function loadSave(slotIndex){
    if(!save.tuning[i])save.tuning[i]=blankTune();
    if(save.tuning[i].nit==null)save.tuning[i].nit=0;
   }
+  if(save.char==null||!CHARS[save.char]||CHARS[save.char].npc)save.char=0;
   if(save.dev==null)save.dev=0;
   if(!save.carOwned)save.carOwned={};
   const own=charCarIdx(typeof save.char==='number'?save.char:0);
@@ -1442,10 +1465,13 @@ function loadSave(slotIndex){
    if(!save.dev&&c.owner!=null&&c.owner!==save.char)delete save.carOwned[i];
   });
   if(save.car==null||!CARS[save.car]||isForeignSignature(save.car))save.car=own;
-  if(!save.skills)save.skills={0:1,1:1,2:1,3:1};
-  for(const k in save.skills)if(save.skills[k]==null)save.skills[k]=1;
-  if(!save.cstats)save.cstats={0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}};
-  for(const k in save.cstats){save.cstats[k].spd=save.cstats[k].spd||0;save.cstats[k].crn=save.cstats[k].crn||0;save.cstats[k].grt=save.cstats[k].grt||0;}
+  if(!save.skills)save.skills=blankSkillsMap();
+  for(let i=0;i<CHARS.length;i++)if(save.skills[i]==null)save.skills[i]=1;
+  if(!save.cstats)save.cstats=blankCstatsMap();
+  for(let i=0;i<CHARS.length;i++){
+   if(!save.cstats[i])save.cstats[i]={spd:0,crn:0,grt:0};
+   save.cstats[i].spd=save.cstats[i].spd||0;save.cstats[i].crn=save.cstats[i].crn||0;save.cstats[i].grt=save.cstats[i].grt||0;
+  }
   if(typeof save.bet!=='number')save.bet=0;
   if(!save.achievements)save.achievements={};
   if(!save.tracksWon)save.tracksWon={};
@@ -1714,17 +1740,17 @@ function stats(ch,car,lvl,cs){const chIdx=CHARS.indexOf(ch);
  let off=Math.min(.86,.4+lvl.shk*.085+grt*.01);
  if(car.idx===0)off=Math.min(.92,off+.15);
  if(car.idx===3)off=1;
- const turn=2.5*car.crn*crnM*(1+(car.idx===3?0:lvl.tir)*.07)*(1+crn*.05);
+ let turn=2.5*car.crn*crnM*(1+(car.idx===3?0:lvl.tir)*.07)*(1+crn*.05);
+ let grip=clamp(.5+(car.idx===3?.42:0)+(car.idx===3?0:lvl.tir)*.055+crn*.038,.48,1.2);
+ // Янот: острее вход и раньше занос — дрифт, а не танк.
+ if(chIdx===5){turn*=1.1;grip=clamp(grip*0.84,.42,1.2);}
  return{
   maxhp:Math.round((car.hp+hpBonus+lvl.arm*22)*(1+grt*.04)),
   top:330*car.top*(1+lvl.eng*.055)*(1+spd*.03),
   acc:300*car.acc*accM*(1+lvl.eng*.08),
   crn:turn,
-  // 0 — широкий вираж и запаздывание руля, 1 — острый вход (прокачка «Поворот»)
   sharp:clamp((turn-2.15)/3.05,0,1),
-  // Сцепление: шины и навык управления душат занос, не скорость поворота
-  grip:clamp(.5+(car.idx===3?.42:0)+(car.idx===3?0:lvl.tir)*.055+crn*.038,.48,1.2),
-  off};}
+  grip,off};}
 const AU={ctx:null};
 loadSettings();
 if(!settings.graphics)settings.graphics={resolution:0,particles:'high',skids:true,weather:true,shake:true,showFps:false,cameraZoom:CAM_ZOOM_DEF};
@@ -1893,12 +1919,20 @@ function stopCharVoice(){
 }
 /** Фокус карточки гонщика и произношение имени. */
 function pickChar(i){
- const n=PLAYABLE_N;
- selChar=((i%n)+n)%n;
+ if(PLAYABLE_IDS.indexOf(i)<0)return;
+ selChar=i;
+ playCharVoice(selChar);
+}
+/** Соседняя карточка на экране выбора. */
+function wrapPlayable(d){
+ const n=PLAYABLE_N;if(!n)return;
+ let p=PLAYABLE_IDS.indexOf(selChar);if(p<0)p=0;
+ selChar=PLAYABLE_IDS[((p+d)%n+n)%n];
  playCharVoice(selChar);
 }
 /** Экран выбора гонщика: произнести имя текущего. */
 function enterCharSel(){
+ if(PLAYABLE_IDS.indexOf(selChar)<0)selChar=PLAYABLE_IDS[0]||0;
  state='char';
  bioOpen=-1;
  playCharVoice(selChar);
@@ -2252,8 +2286,9 @@ function buildRace(){
  if(!labTest){
  // Три босса — остальные игровые гонщики; один слот — Борис Бык вместо рандома; ещё один ИИ
  const chosenChar=save.char;
- const bosses=[];
- for(let i=0;i<PLAYABLE_N;i++){if(i!==chosenChar)bosses.push(i);}
+ const others=PLAYABLE_IDS.filter(i=>i!==chosenChar);
+ for(let i=others.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=others[i];others[i]=others[j];others[j]=t;}
+ const bosses=others.slice(0,3);
  const aiPool=AIDRV.slice();for(let i=aiPool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=aiPool[i];aiPool[i]=aiPool[j];aiPool[j]=t;}
  const busyCars=new Set([CHARS_CARS[chosenChar],save.car]);
  bosses.forEach(b=>busyCars.add(CHARS_CARS[b]));
@@ -2273,9 +2308,7 @@ function buildRace(){
   ai.isBoss=true;
   racers.push(ai);
  }
- const fillers=[];
- const boris=CHARS.find(c=>c.npc);
- if(boris)fillers.push(boris);
+ const fillers=CHARS.filter(c=>c.npc);
  for(let i=0;i<aiPool.length&&fillers.length<2;i++)fillers.push(aiPool[i]);
  for(let i=0;i<fillers.length;i++){
   if(freeCars.length===0)break;
@@ -3536,6 +3569,26 @@ function drawFinishZone(c,p0){
  tower(-edge,-1);tower(edge,1);
  c.save();c.strokeStyle='#1d1a20';c.lineWidth=3;c.beginPath();for(let i=0;i<=12;i++){const t=i/12,y=-edge+t*edge*2,x=-35+Math.sin(t*Math.PI)*34+Math.sin(phase+t*4)*3;if(i===0)c.moveTo(x,y);else c.lineTo(x,y);}c.stroke();for(let i=1;i<12;i+=2){const t=i/12,y=-edge+t*edge*2,x=-35+Math.sin(t*Math.PI)*34+Math.sin(phase+t*4)*3;const col=i%4===1?'#bd4434':i%4===3?'#d9b65a':'#e8e0c8';c.fillStyle=col;c.beginPath();c.moveTo(x-2,y);c.lineTo(x+22,y+4);c.lineTo(x+9,y+22+Math.sin(phase*1.4+i)*3);c.closePath();c.fill();}c.restore();c.restore();
 }
+/** Пассивка Янот: стрелки по сплайну впереди, чтобы не срезать линию. */
+function drawYanotGuide(){
+ if(!R||!P||P.chIdx!==5||P.dead)return;
+ const S=R.S,N=R.N;if(!S||!N)return;
+ const n=Math.max(4,Math.round(skillVal(5,P.skillLvl||1)));
+ const step=Math.max(8,Math.round(lerp(16,9,skillT(P.skillLvl||1))));
+ const mot=hudMotionOk();
+ for(let k=1;k<=n;k++){
+  const p=S[(P.trackIdx+k*step)%N];
+  const fade=1-k/(n+1);
+  const pulse=mot?(.55+.45*Math.sin(gt*4.2+k*.7)):1;
+  g.save();g.translate(p.x,p.y);g.rotate(p.ang);
+  g.globalAlpha=clamp(fade*pulse,.18,.85);
+  g.fillStyle='#f0c230';
+  g.beginPath();g.moveTo(20,0);g.lineTo(7,-8);g.lineTo(7,-3);g.lineTo(-14,-3);
+  g.lineTo(-14,3);g.lineTo(7,3);g.lineTo(7,8);g.closePath();g.fill();
+  g.restore();
+ }
+ g.globalAlpha=1;
+}
 function drawRaceWorld(){
  const z=raceZoom();
  g.setTransform(viewS*z,0,0,viewS*z,0,0);
@@ -3567,6 +3620,7 @@ function drawRaceArena(){
  if(T.lab)drawLabWorldGrid(R.cam.x-64,R.cam.y-64,vw+128,vh+128);
  else fillMapTileWorld(R.cam.x-64,R.cam.y-64,vw+128,vh+128,T);
  g.drawImage(T.img,0,0);
+ drawYanotGuide();
  // Следы от шин (два отдельных следа + протектор)
  g.lineCap='round';
  if(R.skids)for(const s of R.skids){
@@ -4074,15 +4128,35 @@ function drawHUD(){
 function avatarImage(ch){
  const idx=CHARS.indexOf(ch);
  const img=idx>=0?AVATARS[idx]:null;
- if(img&&img.complete&&img.naturalWidth>0)return img;
- return null;
+ if(!img)return null;
+ if(img.complete&&img.naturalWidth>0)return img;
+ kickPlayerImg(img,idx,'');
+ return (img.complete&&img.naturalWidth>0)?img:null;
 }
 /** Ростовой спрайт гонщика или null, пока файл не готов. */
 function fullbodyImage(ch){
  const idx=CHARS.indexOf(ch);
  const img=idx>=0?FULLBODIES[idx]:null;
- if(img&&img.complete&&img.naturalWidth>0)return img;
- return null;
+ if(!img)return null;
+ if(img.complete&&img.naturalWidth>0)return img;
+ kickPlayerImg(img,idx,'_fullbody');
+ return (img.complete&&img.naturalWidth>0)?img:null;
+}
+/** Если загрузчик не привязал файл — пробуем URL из папки гонщика напрямую. */
+function kickPlayerImg(img,i,suffix){
+ if(!img||img._kick)return;
+ img._kick=true;
+ const urls=playerImgUrls(i,suffix);
+ let n=0;
+ const next=()=>{
+  if(n>=urls.length)return;
+  const url=urls[n++];
+  const probe=new Image();
+  probe.onload=()=>{if(probe.naturalWidth>0)img.src=url;};
+  probe.onerror=next;
+  probe.src=url;
+ };
+ next();
 }
 /** RGB из #hex для заливок сцены пилота. */
 function hexToRgb(hex){
@@ -4213,12 +4287,13 @@ function drawLevelPips(c,x,y,lvl,max,col){
 //
 ////////////////////////////////////////////////////////
 function drawSkillBlock(c,x,y,w,chIdx,lvl){
+ const meta=SKILL_META[chIdx];if(!meta)return;
  const h=70;
  panel(c,x,y,w,h,'rgba(180,120,255,.14)','#c89bff',8);
  txt(c,'СКИЛЛ',x+14,y+15,13,'#e0c8ff','left',F_B);
  txt(c,'ур.'+lvl+'/'+SKILL_MAX,x+w-14,y+15,13,'#f2eef8','right',F_B);
  statPipsN(c,x+14,y+27,lvl,SKILL_MAX,'#d4b0ff');
- txt(c,SKILL_META[chIdx].n,x+14,y+46,12,'#f6f0ff','left',F_B);
+ txt(c,meta.n,x+14,y+46,12,'#f6f0ff','left',F_B);
  txt(c,SKILL_DESC(chIdx,lvl),x+14,y+60,11,'#d8d0e8','left',F_B);
 }
 ////////////////////////////////////////////////////////
@@ -5008,32 +5083,32 @@ function drawTrackPick(){
 function drawCharSel(){
  g.fillStyle='#12101a';g.fillRect(0,0,W,H);
  for(let x=-40;x<W+40;x+=48){g.fillStyle='rgba(255,157,46,.06)';g.save();g.translate(x,30);g.rotate(-.5);g.fillRect(0,0,20,90);g.restore();}
- txt(g,'ВЫБЕРИ ГОНЩИКА',W/2,64,46,'#ffd23f','center');
+ txt(g,'ВЫБЕРИ ГОНЩИКА',W/2,64,40,'#ffd23f','center');
   g._charCards=[];
   g._bioBtns=[];
- const cw=278,gap=20,x0=(W-4*cw-3*gap)/2;
- CHARS.slice(0,PLAYABLE_N).forEach((ch,i)=>{
-  const x=x0+i*(cw+gap),sel=i===selChar,y=sel?100:112,h=sel?542:528;
+ const n=PLAYABLE_N,gap=12,cw=Math.min(248,(W-72-(n-1)*gap)/n),x0=(W-n*cw-(n-1)*gap)/2;
+ PLAYABLE_IDS.forEach((idx,slot)=>{
+  const ch=CHARS[idx],x=x0+slot*(cw+gap),sel=idx===selChar,y=sel?96:108,h=sel?548:534;
   panel(g,x,y,cw,h,sel?'rgba(255,157,46,.12)':'rgba(20,17,28,.9)',sel?'#ffd23f':'#3a3548');
-  drawPortrait(g,ch,x+cw/2,y+128,1.15);
+  drawPortrait(g,ch,x+cw/2,y+118,cw>220?1.05:0.88);
   const nick=ch.name!==ch.short?ch.short:'';
-  txt(g,ch.name,x+cw/2,y+(nick?248:258),22,ch.col,'center');
-  if(nick)txt(g,nick,x+cw/2,y+274,20,'#fff','center');
-  const pipX=x+128;
-  const eff=charEff(i);
+  txt(g,ch.name,x+cw/2,y+(nick?232:242),cw>220?20:16,ch.col,'center');
+  if(nick)txt(g,nick,x+cw/2,y+256,16,'#fff','center');
+  const pipX=x+Math.min(118,cw-92);
+  const eff=charEff(idx);
   const bars=[['СКОРОСТЬ',eff.spd,'#ff6b4a'],['ПОВОРОТ',eff.crn,'#35e0ff'],['БРОНЯ',eff.grt,'#58ff6b']];
-  bars.forEach((b,bi)=>{txt(g,b[0],x+22,y+286+bi*28,13,'#c4bdce','left',F_B);
-   statPips(g,pipX,y+280+bi*28,b[1],b[2]);});
-  const slvlC=(save&&save.skills&&save.skills[i])||1;
-  drawSkillBlock(g,x+12,y+368,cw-24,i,slvlC);
-  wrapText(g,ch.bio,x+cw/2,y+456,cw-40,16,12,'#e8e2d0',F_B);
-  const bbx=x+cw/2-70,bby=y+h-44,bbw=140,bbh=30;
+  bars.forEach((b,bi)=>{txt(g,b[0],x+14,y+278+bi*26,12,'#c4bdce','left',F_B);
+   statPips(g,pipX,y+272+bi*26,b[1],b[2]);});
+  const slvlC=(save&&save.skills&&save.skills[idx])||1;
+  drawSkillBlock(g,x+8,y+358,cw-16,idx,slvlC);
+  wrapText(g,ch.bio,x+cw/2,y+448,cw-28,15,11,'#e8e2d0',F_B);
+  const bbx=x+cw/2-64,bby=y+h-42,bbw=128,bbh=28;
   const hot=mx>bbx&&mx<bbx+bbw&&my>bby&&my<bby+bbh;
   panel(g,bbx,bby,bbw,bbh,(sel||hot)?'rgba(53,224,255,.15)':'rgba(20,17,28,.9)',(sel||hot)?'#35e0ff':'#3a3548',8);
-  txt(g,'ВЫБРАТЬ',x+cw/2,bby+bbh/2,13,(sel||hot)?'#35e0ff':'#c8c2d4','center',F_B);
-  g._bioBtns.push({x:bbx,y:bby,w:bbw,h:bbh,idx:i});
-  g._charCards.push({x,y,w:cw,h,idx:i});});
- txt(g,'← → — выбор • ENTER / «ВЫБРАТЬ» — досье • в досье ENTER — взять гонщика',W/2,H-28,15,'#6f6880','center',F_B);
+  txt(g,'ВЫБРАТЬ',x+cw/2,bby+bbh/2,12,(sel||hot)?'#35e0ff':'#c8c2d4','center',F_B);
+  g._bioBtns.push({x:bbx,y:bby,w:bbw,h:bbh,idx});
+  g._charCards.push({x,y,w:cw,h,idx});});
+ txt(g,'← → — выбор • ENTER / «ВЫБРАТЬ» — досье • в досье ENTER — взять гонщика',W/2,H-28,14,'#6f6880','center',F_B);
 }
 ////////////////////////////////////////////////////////
 //
@@ -5265,7 +5340,7 @@ function carSelStatus(i,owned){
  if(o!=null){
   if(o===save.char)return{t:save.car===i?'ТВОЯ • ТЕКУЩАЯ':'ТВОЯ МАШИНА',col:'#58ff6b'};
   if(isDev())return{t:save.car===i?'DEV • ТЕКУЩАЯ':'DEV • МОЖНО ВЗЯТЬ',col:'#ffd23f'};
-  return{t:'Автомобиль принадлежит: '+CHAR_DATIVE[o],col:'#c8c0d4'};
+  return{t:'Автомобиль принадлежит: '+charDative(o),col:'#c8c0d4'};
  }
  if(owned)return{t:save.car===i?'ТЕКУЩАЯ':'В ПАРКЕ',col:'#58ff6b'};
  const car=CARS[i];
@@ -5632,7 +5707,7 @@ function drawCarDetail(){
  }
 
  let cta='ESC  назад',ctaCol='#6f6880';
- if(foreign){cta='принадлежит: '+CHAR_DATIVE[carOwnerIdx(autoparkSel)];ctaCol='#c8c0d4';}
+ if(foreign){cta='принадлежит: '+charDative(carOwnerIdx(autoparkSel));ctaCol='#c8c0d4';}
  else if(same){cta='ЭТО ТВОЯ МАШИНА';ctaCol='#58ff6b';}
  else if(owned){cta='ENTER  —  ПЕРЕСЕСТЬ';ctaCol='#35e0ff';}
  else{
@@ -5797,7 +5872,7 @@ function drawGarage(){
 ////////////////////////////////////////////////////////
 function drawGym(){
  const chI=save.char,ch=CHARS[chI];
- if(!save.cstats)save.cstats={0:{spd:0,crn:0,grt:0},1:{spd:0,crn:0,grt:0},2:{spd:0,crn:0,grt:0},3:{spd:0,crn:0,grt:0}};
+ if(!save.cstats)save.cstats=blankCstatsMap();
  const cs=save.cstats[chI]||(save.cstats[chI]={spd:0,crn:0,grt:0});
  const eff=charEff(chI);
  const lvl=save.skills[chI]||1;
@@ -6252,8 +6327,8 @@ function press(c,k){
    else if(c==='Escape'){bioOpen=-1;sClick();}
    return;
   }
-  if(c==='ArrowLeft'){pickChar(selChar-1);sClick();}
-  if(c==='ArrowRight'){pickChar(selChar+1);sClick();}
+  if(c==='ArrowLeft'){wrapPlayable(-1);sClick();}
+  if(c==='ArrowRight'){wrapPlayable(1);sClick();}
   if(c==='Enter'||c==='KeyB'){bioOpen=selChar;sClick();}
   return;
  }

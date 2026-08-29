@@ -1,11 +1,13 @@
 ////////////////////////////////////////////////////////
 //
 // Гонщики: общий список для игры и лаборатории
-// Новый персонаж — запись сюда и аватар NN_Player. Лаборатория
-// сама подхватит лишние файлы аватаров без правки этого списка.
+// Новый персонаж — папка assets/data/players/NN:
+// портрет NN_Player, рост NN_Player_fullbody, comics/, файл сюжета.
 //
 ////////////////////////////////////////////////////////
 'use strict';
+
+const PLAYERS_ROOT = 'assets/data/players/';
 
 const CHARS = [
   {name:'МЕДВЕДЬ',short:'МЕДВЕДЬ',spd:3,crn:3,grt:3,col:'#ffd23f',skin:'#eab98a',hair:'#2b2119',
@@ -22,12 +24,46 @@ const CHARS = [
    bioFull:'Огромный, как шкаф, и спокойный, как удав. Выживает там, где все взрываются, потому что его машина — танк, обшитый ещё одним танком. Ест металл, пьёт бензин, сука. Не гонится за первым местом — первое место само к нему приезжает, когда он таранит всех, кто был впереди.'},
   {name:'БОРИС БЫК',short:'БЫК',spd:4,crn:3,grt:4,col:'#c45a1a',skin:'#d4a07a',hair:'#1a120c',npc:true,
    bio:'Рога в капот. Не тормозит — бодает.',
-   bioFull:'Борис Бык не здоровается и не уступает. Идёт в лоб, как будто трасса ему должна. Если он сзади — это не гонка, это родео: сейчас забодает и не заметит.'}
+   bioFull:'Борис Бык не здоровается и не уступает. Идёт в лоб, как будто трасса ему должна. Если он сзади — это не гонка, это родео: сейчас забодает и не заметит.'},
+  {name:'ЯНОТ',short:'ЯНОТ',spd:3,crn:5,grt:2,col:'#f0c230',skin:'#e8b898',hair:'#d4b07a',
+   bio:'Дрифт до дыма. Стрелки на асфальте — её линия, тебя не обгонят.',
+   bioFull:'Янот — совершеннолетняя любовница Медведя. Он бросил её ради спецоперации и потерял всех; она не забыла. На трассе держит машину боком, как будто асфальт ей должен. Пока без комикса: сразу к «Бричке».'}
 ];
+
+/** Номер папки: индекс 0 → 01. */
+function charPad(i) {
+  return String((i | 0) + 1).padStart(2, '0');
+}
 
 /** Стем портрета: индекс 0 → 01_Player. */
 function charAvatarStem(i) {
-  return String((i | 0) + 1).padStart(2, '0') + '_Player';
+  return charPad(i) + '_Player';
+}
+
+/** Папка гонщика NN. */
+function playerDir(i) {
+  return PLAYERS_ROOT + charPad(i) + '/';
+}
+
+/** Кадры интро: assets/data/players/NN/comics/. */
+function playerComicsDir(i) {
+  return playerDir(i) + 'comics/';
+}
+
+/** Портрет или рост: несколько имён в папке NN, webp затем png. */
+function playerImgUrls(i, suffix) {
+  const dir = playerDir(i);
+  const nn = charPad(i);
+  const stem = charAvatarStem(i);
+  const names = suffix === '_fullbody'
+    ? [stem + '_fullbody', nn + '_fullbody', '_fullbody', 'fullbody']
+    : [stem, nn];
+  const urls = [];
+  names.forEach(function (name) {
+    urls.push(dir + name + '.webp');
+    urls.push(dir + name + '.png');
+  });
+  return urls;
 }
 
 /** Хозяин слота: 0…99 или null (магазин). */

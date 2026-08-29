@@ -741,10 +741,10 @@ const EditorApp = (() => {
         art.className = 'owner-art';
         const img = document.createElement('img');
         img.alt = p.name;
-        img.src = 'assets/image/avatars/' + p.file + '.webp';
+        img.src = (typeof playerDir === 'function' ? playerDir(p.id) : ('assets/data/players/' + String(p.id + 1).padStart(2, '0') + '/')) + p.file + '.webp';
         img.onerror = function () {
           this.onerror = null;
-          this.src = 'assets/image/avatars/' + p.file + '.png';
+          this.src = (typeof playerDir === 'function' ? playerDir(p.id) : ('assets/data/players/' + String(p.id + 1).padStart(2, '0') + '/')) + p.file + '.png';
         };
         art.appendChild(img);
         b.appendChild(art);
@@ -763,7 +763,7 @@ const EditorApp = (() => {
     const hint = $('ownerHint');
     if (!hint) return;
     if (cur == null) {
-      hint.textContent = 'Стоит в магазине. Личным станет у любого гонщика из игры — список растёт сам с новыми аватарами.';
+      hint.textContent = 'Стоит в магазине. Личным станет у любого гонщика из игры — список растёт с папками в assets/data/players.';
       return;
     }
     const p = pilots.find((x) => x.id === cur);

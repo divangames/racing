@@ -35,7 +35,7 @@ const EditorData = (() => {
     {name:'«КУРЬЕР»',owner:1,price:0,top:1.06,acc:1.04,crn:0.99,hp:80,col:'#9dff4a',col2:'#3a7a18',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
     {name:'«ШПИЛЬКА»',owner:2,price:0,top:1.06,acc:0.97,crn:1.08,hp:100,col:'#ff5db1',col2:'#8a2458',hov:false,traits:['ТАРАН: двойной урон при столкновениях','ВСЕДОХОД: меньше штраф бездорожья','РАМА: +20 корпуса']},
     {name:'«ЖЕРЕБЕЦ»',owner:null,price:25000,top:1.26,acc:1.20,crn:1.14,hp:118,col:'#c41e2a',col2:'#5a1018',hov:false,traits:['МИНИГАН: 50 патронов, шкала — магазин, перегрев после опустошения','СКАЧОК: прыжок как с трамплина вместо нитро','ТАБУН: ульта отталкивает и сбрасывает скорость рядом']},
-    {name:'«БРИЧКА»',owner:null,price:800,top:0.90,acc:0.90,crn:0.99,hp:80,col:'#d45a1a',col2:'#2c2c30',hov:false,traits:['ПУЛЯ: стреляет прямо','ПЫЛЕСОС: тянет деньги, ремонт и ускорение рядом','КУПОЛ: ульта — щит 10 сек от всего урона']}
+    {name:'«БРИЧКА»',owner:5,price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d45a1a',col2:'#2c2c30',hov:false,traits:['ПУЛЯ: стреляет прямо','ПЫЛЕСОС: тянет деньги, ремонт и ускорение рядом','КУПОЛ: ульта — щит 10 сек от всего урона']}
   ];
   const LAYOUTS = [
     [[-15.5,-11.4,12,4,0,1,0],[-15.5,11.4,12,4,0,1,0],[14.2,-11.4,12,4,0,1,1],[14.2,11.4,12,4,0,1,1]],
@@ -64,6 +64,14 @@ const EditorData = (() => {
     return String((i | 0) + 1).padStart(2, '0') + '_Player';
   }
 
+  /** Путь к портрету в папке гонщика. */
+  function avatarUrl(i, ext, suffix) {
+    const nn = String((i | 0) + 1).padStart(2, '0');
+    const stem = (typeof charAvatarStem === 'function' ? charAvatarStem(i) : avatarStem(i)) + (suffix || '');
+    const dir = (typeof playerDir === 'function') ? playerDir(i) : ('assets/data/players/' + nn + '/');
+    return dir + stem + '.' + ext;
+  }
+
   /** Карточки хозяев из CHARS (все, включая NPC). */
   function pilotsFromChars() {
     const list = (typeof CHARS !== 'undefined' && Array.isArray(CHARS)) ? CHARS : [];
@@ -83,17 +91,19 @@ const EditorData = (() => {
 
   setPilots(pilotsFromChars());
 
-  /** Номера NN из листинга папки аватаров. */
-  function idsFromAvatarListing(html) {
+  /** Номера NN из листинга папок гонщиков. */
+  function idsFromPlayersListing(html) {
     const ids = {};
-    const re = /(\d{2})_Player(?!_fullbody)\.(?:webp|png)/gi;
+    const reDir = /href=["'](\d{2})\/["']/gi;
+    const reFile = /(\d{2})_Player(?!_fullbody)/gi;
     let m;
-    while ((m = re.exec(html || ''))) ids[Number(m[1]) - 1] = true;
+    while ((m = reDir.exec(html || ''))) ids[Number(m[1]) - 1] = true;
+    while ((m = reFile.exec(html || ''))) ids[Number(m[1]) - 1] = true;
     return Object.keys(ids).map(Number).filter((n) => n >= 0 && n <= 99).sort((a, b) => a - b);
   }
 
   /** Есть ли портрет webp/png. */
-  function avatarFileExists(stem) {
+  function avatarFileExists(i) {
     return new Promise((resolve) => {
       let done = false;
       const finish = (ok) => { if (done) return; done = true; resolve(!!ok); };
@@ -103,9 +113,9 @@ const EditorData = (() => {
         const im2 = new Image();
         im2.onload = () => finish(true);
         im2.onerror = () => finish(false);
-        im2.src = 'assets/image/avatars/' + stem + '.png';
+        im2.src = avatarUrl(i, 'png');
       };
-      im.src = 'assets/image/avatars/' + stem + '.webp';
+      im.src = avatarUrl(i, 'webp');
       setTimeout(() => finish(false), 2500);
     });
   }
@@ -116,8 +126,8 @@ const EditorData = (() => {
     pilotsFromChars().forEach((p) => { byId[p.id] = p; });
     let listed = [];
     try {
-      const res = await fetch('assets/image/avatars/?rnr=pilots');
-      if (res.ok) listed = idsFromAvatarListing(await res.text());
+      const res = await fetch('assets/data/players/?rnr=pilots');
+      if (res.ok) listed = idsFromPlayersListing(await res.text());
     } catch (err) {}
     listed.forEach((id) => {
       if (byId[id]) return;
@@ -132,7 +142,7 @@ const EditorData = (() => {
     let miss = 0;
     for (let i = start; i < 40 && miss < 3; i++) {
       if (byId[i]) { miss = 0; continue; }
-      const ok = await avatarFileExists(avatarStem(i));
+      const ok = await avatarFileExists(i);
       if (ok) {
         byId[i] = {id: i, name: 'ГОНЩИК ' + String(i + 1).padStart(2, '0'), file: avatarStem(i), extra: true};
         miss = 0;
@@ -450,7 +460,7 @@ const EditorData = (() => {
     const stats = Object.assign(base.stats, saved.stats || {});
     if (typeof saved.name === 'string' && !saved.stats) stats.name = saved.name;
     if (saved && 'owner' in saved && !('owner' in (saved.stats || {}))) stats.owner = saved.owner;
-    if (!('owner' in stats)) stats.owner = defaultOwner(i);
+    if (!('owner' in stats) || stats.owner == null) stats.owner = defaultOwner(i);
     let wheels = restoreSteer(Array.isArray(saved.w) ? saved.w.map(normWheel) : base.w, base.w);
     const nitro = saved.nitro != null ? (Array.isArray(saved.nitro) ? saved.nitro.map(normJet) : []) : base.nitro;
     let layers = Array.isArray(saved.layers) && saved.layers.length ? saved.layers.slice() : base.layers.slice();
