@@ -386,7 +386,7 @@ function bootPollGate(){
   for(const p of pads){
    if(!p||!p.buttons)continue;
    for(const b of p.buttons){
-    if(b&&b.pressed){bootAcceptGate();return;}
+    if(b&&b.pressed&&(b.value||0)>0.55){bootAcceptGate();return;}
    }
   }
  }
@@ -1727,6 +1727,13 @@ function bindTitleSim(){
  R=titleSim;P=titleFocus||(titleSim&&titleSim.racers[0])||null;
 }
 function unbindTitleSim(){R=titleHoldR;P=titleHoldP;}
+/** Демо на фоне не должно оставлять R/P на ИИ, если отрисовка упала. */
+function withTitleSim(fn){
+ if(!titleSim||typeof fn!=='function')return;
+ bindTitleSim();
+ try{fn();}
+ finally{unbindTitleSim();}
+}
 /** Живой лидер пака — запасной объект камеры. */
 function titleAliveLead(){
  if(!titleSim)return null;
@@ -1786,47 +1793,44 @@ function updRaceFx(dt){
  if(R.floats)for(let i=R.floats.length-1;i>=0;i--){const f=R.floats[i];f.t+=dt;if(f.t>1.4)R.floats.splice(i,1);}
 }
 function updateTitleRace(dt){
- if(!titleSim)return;
- bindTitleSim();
- R.time+=dt;
- updRaceFx(dt);
- for(const r of R.racers){
-  if(r.dead){r.respawnT-=dt;if(r.respawnT<=0)respawn(r);continue;}
-  aiThink(r,dt);stepVehicle(r,r.ith,r.ist,dt);advanceIdx(r);
- }
- resolveRaceContact(dt);
- for(const m of R.mines){
-  if(!m.dead)continue;
-  m.deadT=(m.deadT||0)+dt;
-  if(m.deadT>7){m.dead=false;m.deadT=0;}
- }
- titleFocusHold-=dt;
- if(!titleFocus||titleFocus.dead)titleFocus=titleAliveLead();
- P=titleFocus||P;
- const f=titleFocus||titleAliveLead();
- if(f){
-  const snap=titleFocusHold>0?(1-Math.pow(.00008,dt)):(1-Math.pow(.001,dt));
-  const look=.22;
-  titleCam.x=lerp(titleCam.x,f.x+Math.cos(f.ang)*f.spd*look,snap);
-  titleCam.y=lerp(titleCam.y,f.y+Math.sin(f.ang)*f.spd*look,snap);
- }
- unbindTitleSim();
+ withTitleSim(()=>{
+  R.time+=dt;
+  updRaceFx(dt);
+  for(const r of R.racers){
+   if(r.dead){r.respawnT-=dt;if(r.respawnT<=0)respawn(r);continue;}
+   aiThink(r,dt);stepVehicle(r,r.ith,r.ist,dt);advanceIdx(r);
+  }
+  resolveRaceContact(dt);
+  for(const m of R.mines){
+   if(!m.dead)continue;
+   m.deadT=(m.deadT||0)+dt;
+   if(m.deadT>7){m.dead=false;m.deadT=0;}
+  }
+  titleFocusHold-=dt;
+  if(!titleFocus||titleFocus.dead)titleFocus=titleAliveLead();
+  const f=titleFocus||titleAliveLead();
+  if(f){
+   const snap=titleFocusHold>0?(1-Math.pow(.00008,dt)):(1-Math.pow(.001,dt));
+   const look=.22;
+   titleCam.x=lerp(titleCam.x,f.x+Math.cos(f.ang)*f.spd*look,snap);
+   titleCam.y=lerp(titleCam.y,f.y+Math.sin(f.ang)*f.spd*look,snap);
+  }
+ });
 }
 function drawTitleRace(){
- if(!titleSim)return;
- bindTitleSim();
- const z=raceZoom();
- const vw=W/z,vh=H/z;
- R.cam.x=titleCam.x-vw/2;R.cam.y=titleCam.y-vh/2;R.sx=0;R.sy=0;
- g.save();
- g.beginPath();g.rect(0,0,W,H);g.clip();
- g.translate(W/2,H/2);g.scale(z,z);g.translate(-titleCam.x,-titleCam.y);
- drawRaceArena();
- if(window.RnRVfx&&RnRVfx.ok)RnRVfx.blit('title',g);
- g.restore();
- unbindTitleSim();
+ withTitleSim(()=>{
+  const z=raceZoom();
+  const vw=W/z,vh=H/z;
+  R.cam.x=titleCam.x-vw/2;R.cam.y=titleCam.y-vh/2;R.sx=0;R.sy=0;
+  g.save();
+  g.beginPath();g.rect(0,0,W,H);g.clip();
+  g.translate(W/2,H/2);g.scale(z,z);g.translate(-titleCam.x,-titleCam.y);
+  drawRaceArena();
+  if(window.RnRVfx&&RnRVfx.ok)RnRVfx.blit('title',g);
+  g.restore();
+ });
 }
-function enterTitle(){state='title';initTitleRace();}
+function enterTitle(){if(typeof clearKeys==='function')clearKeys();state='title';initTitleRace();}
 ////////////////////////////////////////////////////////
 //
 // Стартовый экран до меню: гонка на фоне, мигающий призыв
@@ -1834,7 +1838,7 @@ function enterTitle(){state='title';initTitleRace();}
 ////////////////////////////////////////////////////////
 function dismissPressStart(){
  if(state!=='press')return;
- state='title';
+ enterTitle();
  sClick();
 }
 /** Кнопка геймпада на стартовом экране считается «любой кнопкой». */
@@ -1844,7 +1848,7 @@ function pollPressStartPad(){
  for(const p of pads){
   if(!p||!p.buttons)continue;
   for(const b of p.buttons){
-   if(b&&b.pressed){
+   if(b&&b.pressed&&(b.value||0)>0.55){
     if(!AU.ctx)audioInit();
     dismissPressStart();
     return;
@@ -1869,12 +1873,26 @@ const DEFAULT_CONTROLS={
  fire:['KeyZ','KeyP'],nitro:['KeyX','BracketLeft'],ult:['KeyC','BracketRight'],
  handbrake:['Space'],pause:['Escape']
 };
+/** Ctrl/Alt/пробел больше не стреляют — старый сейв иначе глушит Z/X/C. */
+function abilityBindsLookLegacy(arr){
+ if(!arr||!arr.length)return true;
+ const modern=new Set(['KeyZ','KeyP','KeyX','KeyC','BracketLeft','BracketRight']);
+ if(arr.some(k=>modern.has(k)))return false;
+ const legacy=new Set(['ControlLeft','ControlRight','AltLeft','AltRight','Space','ShiftLeft','ShiftRight']);
+ return arr.every(k=>legacy.has(k));
+}
 /** Подставляет новые действия, если в сейве настроек их ещё нет. */
 function normalizeControls(){
  if(!settings.controls)settings.controls={};
  for(const k of Object.keys(DEFAULT_CONTROLS)){
   if(!settings.controls[k]||!settings.controls[k].length)
    settings.controls[k]=DEFAULT_CONTROLS[k].slice();
+ }
+ if(abilityBindsLookLegacy(settings.controls.fire)){
+  settings.controls.fire=DEFAULT_CONTROLS.fire.slice();
+  settings.controls.nitro=DEFAULT_CONTROLS.nitro.slice();
+  settings.controls.ult=DEFAULT_CONTROLS.ult.slice();
+  try{saveSettings();}catch(e){}
  }
 }
 /** Старый JSON настроек без sound/graphics не должен ронять старт (audioInit). */
@@ -2472,6 +2490,43 @@ function submitCheat(){
  cheatMsgT=3;
 }
 const keys={};
+////////////////////////////////////////////////////////
+//
+// Клавиатура: код клавиши, без залипания после меню и Alt+Tab
+//
+////////////////////////////////////////////////////////
+function isEnter(c){return c==='Enter'||c==='NumpadEnter';}
+function isConfirm(c){return isEnter(c)||c==='Space';}
+function isBack(c){return c==='Escape';}
+function codeFromEvent(e){
+ if(e&&e.code)return e.code;
+ const k=e&&e.key;
+ if(k==='Enter')return'Enter';
+ if(k==='Escape'||k==='Esc')return'Escape';
+ if(k===' '||k==='Spacebar')return'Space';
+ if(k==='ArrowUp'||k==='Up')return'ArrowUp';
+ if(k==='ArrowDown'||k==='Down')return'ArrowDown';
+ if(k==='ArrowLeft'||k==='Left')return'ArrowLeft';
+ if(k==='ArrowRight'||k==='Right')return'ArrowRight';
+ return k||'';
+}
+function clearKeys(){
+ for(const k in keys)keys[k]=false;
+}
+function ctrlHeld(name){
+ const arr=settings&&settings.controls&&settings.controls[name];
+ return !!(arr&&arr.some(k=>keys[k]));
+}
+function blockBrowserKeys(e,code){
+ const gameCodes=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Enter','NumpadEnter','KeyW','KeyA','KeyS','KeyD',
+  'KeyZ','KeyX','KeyC','KeyP','BracketLeft','BracketRight',
+  'ControlLeft','ControlRight','AltLeft','AltRight','ShiftLeft','ShiftRight','Tab','Escape',
+  'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','Backquote','Backspace'];
+ const modAny=e.ctrlKey||e.altKey||e.metaKey;
+ if(code==='Space'||code==='Enter'||code==='NumpadEnter'||code==='Escape'||gameCodes.includes(code))e.preventDefault();
+ if(code==='Tab'||(code.startsWith('F')&&code!=='F12'&&code!=='KeyF'))e.preventDefault();
+ if(modAny&&(code.startsWith('Key')||code.startsWith('Arrow')||code.startsWith('Digit')))e.preventDefault();
+}
 /** Имя гонщика на табличках и в репликах комментатора — без «ВЫ». */
 function racerTag(r){
  if(r&&r.ch)return r.ch.short||r.ch.name;
@@ -2736,7 +2791,7 @@ function buildRace(){
   betName:(!labTest&&raceBoard&&raceBoard.specs[raceBoard.pick])?(raceBoard.specs[raceBoard.pick].ch.short||raceBoard.specs[raceBoard.pick].ch.name):'',
   weather,weatherParts:[],
   shortcuts:(labTest?[]:(SHORTCUTS[tIdx]||[])).map(s=>({...s,used:false,glow:0}))};
- P=racePl;state='race';paused=false;resetHudFx();
+ P=racePl;state='race';paused=false;resetHudFx();clearKeys();
  if(typeof voiceReset==='function')voiceReset();
  if(labTest)announce('ПОЛИГОН · ЗАМЕР КРУГА. ESC — В ЛАБОРАТОРИЮ',true);
 }
@@ -3489,10 +3544,8 @@ function updRace(dt){
   }
   resolveRaceContact(dt);
   if(R.doneT<=0)showResults();return;}
- const ctrl=settings.controls;
- const any=(arr)=>arr&&arr.some(k=>keys[k]);
- const kUp=any(ctrl.up),kDown=any(ctrl.down),kLeft=any(ctrl.left),kRight=any(ctrl.right);
- const kHb=any(ctrl.handbrake);
+ const kUp=ctrlHeld('up'),kDown=ctrlHeld('down'),kLeft=ctrlHeld('left'),kRight=ctrlHeld('right');
+ const kHb=ctrlHeld('handbrake');
  for(const r of R.racers){
   if(r.dead){r.respawnT-=dt;if(r.respawnT<=0)respawn(r);continue;}
   if(r.finished){
@@ -3509,9 +3562,9 @@ function updRace(dt){
   if(r.isP){
    const th=(kUp?1:0)-(kDown?1:0);
    const st=(kRight?1:0)-(kLeft?1:0);
-   if(any(ctrl.fire)&&r.cdW<=0)fireWeapon(r);
-   if(any(ctrl.nitro)&&r.cdN<=0)useNitro(r);
-   if(any(ctrl.ult)&&r.cdU<=0)useUlt(r);
+   if(ctrlHeld('fire')&&r.cdW<=0)fireWeapon(r);
+   if(ctrlHeld('nitro')&&r.cdN<=0)useNitro(r);
+   if(ctrlHeld('ult')&&r.cdU<=0)useUlt(r);
    stepVehicle(r,th,st,dt,kHb);
   }else{aiThink(r,dt);stepVehicle(r,r.ith,r.ist,dt);}
   advanceIdx(r);}
@@ -5199,11 +5252,15 @@ function openSettings(from){
  settingsState='main';
  settingsTab=0;
  settingsZoomDrag=false;
+ controlCaptureKey=null;captureBackup=null;
+ clearKeys();
  ensureTitlePreview();
  state='settings';
 }
 function leaveSettings(){
+ controlCaptureKey=null;captureBackup=null;
  settingsState='main';settingsTab=0;settingsZoomDrag=false;
+ clearKeys();
  if(settingsReturn==='title')enterTitle();
  else state=settingsReturn;
 }
@@ -5695,6 +5752,7 @@ function enterTrackPick(from){
  trackPickReturn=from||'title';
  const cur=raceTrackOverride!=null?raceTrackOverride:(save?save.race%TRACKDEFS.length:0);
  trackPickSel=((cur%TRACKDEFS.length)+TRACKDEFS.length)%TRACKDEFS.length;
+ clearKeys();
  state='tracks';
 }
 /** Старт гонки на выбранной трассе, минуя прегонку. */
@@ -6854,43 +6912,49 @@ function drawResults(){
  if(R&&R.msg)drawAnnounceToast(g,R.msg,W/2,8,W);
  txt(g,labTest?'ENTER — В ЛАБОРАТОРИЮ':'ENTER — В ГАРАЖ',W/2,enterY,15,'#ff9d2e','center');
 }
-addEventListener('keydown',e=>{
+function onGameKeyDown(e){
+ if(e.isComposing)return;
+ const t=e.target;
+ if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable))return;
+ const c=codeFromEvent(e);
  if(!BOOT.ready){e.preventDefault();bootAcceptGate();return;}
- if(!AU.ctx)audioInit();
- const gameCodes=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD',
-  'KeyZ','KeyX','KeyC','KeyP','BracketLeft','BracketRight',
-  'ControlLeft','ControlRight','AltLeft','AltRight','ShiftLeft','ShiftRight','Tab','Escape',
-  'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12','Backquote','Backspace'];
- const modAny=e.ctrlKey||e.altKey||e.metaKey;
- const blockAlways=gameCodes.includes(e.code)||(modAny&&(e.code.startsWith('Key')||e.code.startsWith('Arrow')||e.code.startsWith('Digit')||e.code.startsWith('F')));
- if(e.code==='Space'||blockAlways)e.preventDefault();
- if(e.code==='Tab'||e.code.startsWith('F'))e.preventDefault();
- keys[e.code]=true;
+ if(!AU.ctx)try{audioInit();}catch(err){console.error(err);}
+ blockBrowserKeys(e,c);
+ keys[c]=true;
  if(e.repeat)return;
- press(e.code,e.key);});
-addEventListener('keyup',e=>{keys[e.code]=false;});
-addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
-addEventListener('visibilitychange',()=>{if(document.hidden)for(const k in keys)keys[k]=false;});
+ try{press(c,e.key);}catch(err){console.error(err);}
+}
+function onGameKeyUp(e){
+ const c=codeFromEvent(e);
+ keys[c]=false;
+ if(c==='Space'||c==='Enter'||c==='NumpadEnter'||c==='Escape'||c==='Tab')e.preventDefault();
+}
+function onGameFocusLost(){clearKeys();}
+addEventListener('keydown',onGameKeyDown,true);
+addEventListener('keyup',onGameKeyUp,true);
+addEventListener('blur',onGameFocusLost);
+addEventListener('pagehide',onGameFocusLost);
+addEventListener('visibilitychange',()=>{if(document.hidden)clearKeys();});
 function press(c,k){
  if(state==='press'){dismissPressStart();return;}
  if(c==='KeyM'&&state!=='cheats'){if(AU.ctx){settings.sound.musicOn=!settings.sound.musicOn;saveSettings();applyAudioSettings();}return;}
  if(labWarn){
   if(c==='ArrowLeft'||c==='ArrowRight'||c==='ArrowUp'||c==='ArrowDown'){labWarnSel=labWarnSel?0:1;sClick();return;}
-  if(c==='Escape'){closeLabWarn();return;}
-  if(c==='Enter'||c==='Space'){confirmLabWarn();return;}
+  if(isBack(c)){closeLabWarn();return;}
+  if(isConfirm(c)){confirmLabWarn();return;}
   return;
  }
- if(state==='race'&&settings.controls.pause.includes(c)){
-  if(paused){paused=false;}else{paused=true;pauseMenuIndex=0;}
+ if(state==='race'&&settings.controls&&Array.isArray(settings.controls.pause)&&settings.controls.pause.includes(c)){
+  if(paused){paused=false;clearKeys();}else{paused=true;pauseMenuIndex=0;clearKeys();}
   sClick();return;}
  if(state==='race'&&paused){
   const items=pauseRaceItems();
   const n=items.length;
   if(c==='ArrowUp'){pauseMenuIndex=(pauseMenuIndex+n-1)%n;sClick();return;}
   if(c==='ArrowDown'){pauseMenuIndex=(pauseMenuIndex+1)%n;sClick();return;}
-  if(c==='Enter'||c==='Space'){
+  if(isConfirm(c)){
    const it=items[pauseMenuIndex];
-   if(it==='ПРОДОЛЖИТЬ')paused=false;
+   if(it==='ПРОДОЛЖИТЬ'){paused=false;clearKeys();}
    else if(it==='НАСТРОЙКИ'){openSettings('race');}
    else if(it==='ДОСТИЖЕНИЯ'){openAchievements('race');}
    else if(it==='РЕСТАРТ ГОНКИ')restartRace();
@@ -6908,13 +6972,13 @@ function press(c,k){
   if(c==='ArrowRight'){slotSelectIndex=(slotSelectIndex+1)%10;sClick();}
   if(c==='ArrowUp'){slotSelectIndex=(slotSelectIndex+5)%10;sClick();}
   if(c==='ArrowDown'){slotSelectIndex=(slotSelectIndex+5)%10;sClick();}
-  if(c==='Escape'){if(slotReturn==='title')enterTitle();else state=slotReturn;sClick();return;}
+  if(isBack(c)){if(slotReturn==='title')enterTitle();else state=slotReturn;sClick();return;}
   if(c==='Backspace'||c==='Delete'){
    if(clearSaveSlot(slotSelectIndex))sClick();
    else sHit();
    return;
   }
-  if(c==='Enter'||c==='Space'){
+  if(isConfirm(c)){
    if(slotSelectMode==='load'){
     if(slots[slotSelectIndex]){
      loadSave(slotSelectIndex);
@@ -6936,21 +7000,21 @@ function press(c,k){
   if(settingsState==='main'){
    if(c==='ArrowUp'){settingsTab=(settingsTab+3)%4;sClick();}
    if(c==='ArrowDown'){settingsTab=(settingsTab+1)%4;sClick();}
-   if(c==='Enter'||c==='Space'){
+   if(isConfirm(c)){
     if(settingsTab===0){settingsState='graphics';settingsTab=0;}
     else if(settingsTab===1){settingsState='sound';settingsTab=0;}
     else if(settingsTab===2){settingsState='game';settingsTab=0;}
     else leaveSettings();
     sClick();
    }
-   if(c==='Escape'){leaveSettings();sClick();return;}
+   if(isBack(c)){leaveSettings();sClick();return;}
   }
   else if(settingsState==='graphics'){
    const n=gfxOpts().length;
-   if(c==='Escape'){settingsState='main';settingsTab=0;sClick();return;}
+   if(isBack(c)){settingsState='main';settingsTab=0;sClick();return;}
    if(c==='ArrowUp'){settingsTab=(settingsTab+n-1)%n;sClick();}
    if(c==='ArrowDown'){settingsTab=(settingsTab+1)%n;sClick();}
-   if(c==='Enter'||c==='Space'){
+   if(isConfirm(c)){
     const opt=gfxOpts()[settingsTab];
     if(opt.type==='back'){settingsBack();sClick();}
     else if(opt.type!=='zoom'&&nudgeGraphics(1))sClick();
@@ -6961,10 +7025,10 @@ function press(c,k){
   }
   else if(settingsState==='sound'){
    const n=sndOpts().length;
-   if(c==='Escape'){settingsState='main';settingsTab=0;sClick();return;}
+   if(isBack(c)){settingsState='main';settingsTab=0;sClick();return;}
    if(c==='ArrowUp'){settingsTab=(settingsTab+n-1)%n;sClick();}
    if(c==='ArrowDown'){settingsTab=(settingsTab+1)%n;sClick();}
-   if(c==='Enter'||c==='Space'){
+   if(isConfirm(c)){
     if(sndOpts()[settingsTab].type==='back'){settingsState='main';settingsTab=0;sClick();}
     else if(nudgeSound(1))sClick();
    }
@@ -6974,10 +7038,10 @@ function press(c,k){
   }
   else if(settingsState==='game'){
    const n=gameOpts().length;
-   if(c==='Escape'){settingsBack();sClick();return;}
+   if(isBack(c)){settingsBack();sClick();return;}
    if(c==='ArrowUp'){settingsTab=(settingsTab+n-1)%n;sClick();}
    if(c==='ArrowDown'){settingsTab=(settingsTab+1)%n;sClick();}
-   if(c==='Enter'||c==='Space'){
+   if(isConfirm(c)){
     const opt=gameOpts()[settingsTab];
     if(opt.type==='back'){settingsBack();sClick();}
     else if(opt.to){settingsState=opt.to;settingsTab=0;sClick();}
@@ -6987,7 +7051,7 @@ function press(c,k){
    const keys_list=controlOpts();
    const n=keys_list.length;
 
-   if(c==='Escape'){
+   if(isBack(c)){
     if(controlCaptureKey){
      if(captureBackup)settings.controls[controlCaptureKey]=captureBackup;
      controlCaptureKey=null;captureBackup=null;
@@ -6997,7 +7061,7 @@ function press(c,k){
    }
 
    if(controlCaptureKey){
-    if(c==='Enter'){
+    if(isEnter(c)){
      if(settings.controls[controlCaptureKey].length===0&&captureBackup){
       settings.controls[controlCaptureKey]=captureBackup;
      }
@@ -7010,7 +7074,7 @@ function press(c,k){
      saveSettings();sClick();
      return;
     }
-    const sysKeys=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','Escape','Tab','CapsLock','Backspace'];
+    const sysKeys=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','NumpadEnter','Escape','Tab','CapsLock','Backspace'];
     if(sysKeys.includes(c))return;
 
     const arr=settings.controls[controlCaptureKey];
@@ -7030,7 +7094,7 @@ function press(c,k){
 
    if(c==='ArrowUp'){settingsTab=(settingsTab+n-1)%n;sClick();}
    if(c==='ArrowDown'){settingsTab=(settingsTab+1)%n;sClick();}
-   if(c==='Enter'||c==='Space'){
+   if(isConfirm(c)){
     const key=keys_list[settingsTab];
     if(key.type==='back'){settingsBack();sClick();}
     else if(key.key==='_reset'){resetControls();sClick();}
@@ -7045,7 +7109,7 @@ function press(c,k){
   return;
  }
  if(state==='intro'){
-  if(c==='Enter'){
+  if(isConfirm(c)||isBack(c)){
    const sc=introScenes()[introFrame];
    if(!sc){endIntro(true);return;}
    if(introCur<sc.text.length)introCur=sc.text.length;
@@ -7059,15 +7123,15 @@ function press(c,k){
   return;
  }
  if(state==='gym'){
-  if(c==='Escape'){state='garage';sClick();return;}
+  if(isBack(c)){state='garage';sClick();return;}
   if(c==='ArrowUp'){gymSel=(gymSel+3)%4;sClick();return;}
   if(c==='ArrowDown'){gymSel=(gymSel+1)%4;sClick();return;}
-  if(c==='Enter'||c==='Space'){buyGym(gymSel);return;}
+  if(isConfirm(c)){buyGym(gymSel);return;}
   return;
  }
  if(state==='tracks'){
   const n=TRACKDEFS.length,cols=3;
-  if(c==='Escape'){
+  if(isBack(c)){
    if(trackPickReturn==='race'){state='race';paused=true;}
    else if(trackPickReturn==='garage'){state='garage';garagePaused=true;}
    else enterTitle();
@@ -7077,52 +7141,52 @@ function press(c,k){
   if(c==='ArrowRight'){trackPickSel=(trackPickSel+1)%n;sClick();return;}
   if(c==='ArrowUp'){trackPickSel=(trackPickSel+n-cols)%n;sClick();return;}
   if(c==='ArrowDown'){trackPickSel=(trackPickSel+cols)%n;sClick();return;}
-  if(c==='Enter'||c==='Space'){startDevTrack(trackPickSel);return;}
+  if(isConfirm(c)){startDevTrack(trackPickSel);return;}
   return;
  }
  if(state==='cheats'){
-  if(c==='Escape'){state='title';sClick();return;}
+  if(isBack(c)){state='title';sClick();return;}
   if(c==='ArrowLeft'){cheatCur=(cheatCur+6)%7;sClick();return;}
   if(c==='ArrowRight'){cheatCur=(cheatCur+1)%7;sClick();return;}
   if(c==='ArrowUp'){cheatBuf[cheatCur]=nextChar(cheatBuf[cheatCur],1);sClick();return;}
   if(c==='ArrowDown'){cheatBuf[cheatCur]=nextChar(cheatBuf[cheatCur],-1);sClick();return;}
-  if(c==='Enter'){submitCheat();return;}
+  if(isEnter(c)){submitCheat();return;}
   if(k&&/^[a-z]$/i.test(k)){cheatBuf[cheatCur]=k.toLowerCase();cheatCur=(cheatCur+1)%7;sClick();return;}
   if(c==='Backspace'){cheatBuf[cheatCur]='a';sClick();return;}
   return;
  }
  if(state==='cameraSetup'){
   if(cameraSetupHint){
-   if(c==='Enter'||c==='Space'||c==='Escape'){finishCameraSetup();sClick();}
+   if(isConfirm(c)||isBack(c)){finishCameraSetup();sClick();}
    return;
   }
-  if(c==='Escape'){enterTitle();sClick();return;}
+  if(isBack(c)){enterTitle();sClick();return;}
   if(c==='ArrowLeft'){nudgeCameraZoom(-1);sClick();}
   if(c==='ArrowRight'){nudgeCameraZoom(1);sClick();}
-  if(c==='Enter'||c==='Space'){showCameraSetupHint();sClick();}
+  if(isConfirm(c)){showCameraSetupHint();sClick();}
   return;
  }
  if(state==='help'){enterTitle();return;}
  if(state==='achievements'){
-  if(c==='Escape'){leaveAchievements();sClick();}
+  if(isBack(c)){leaveAchievements();sClick();}
   return;
  }
  if(state==='char'){
   if(bioOpen>=0){
-   if(c==='Enter'){confirmCharPick(bioOpen);sClick();}
-   else if(c==='Escape'){bioOpen=-1;sClick();}
+   if(isConfirm(c)){confirmCharPick(bioOpen);sClick();}
+   else if(isBack(c)){bioOpen=-1;sClick();}
    return;
   }
   if(c==='ArrowLeft'){wrapPlayable(-1);sClick();}
   if(c==='ArrowRight'){wrapPlayable(1);sClick();}
-  if(c==='Enter'||c==='KeyB'){bioOpen=selChar;sClick();}
+  if(isConfirm(c)||c==='KeyB'){bioOpen=selChar;sClick();}
   return;
  }
  if(state==='car'){
   if(c==='ArrowLeft'){nudgeCarSel(-1);}
   if(c==='ArrowRight'){nudgeCarSel(1);}
-  if(c==='Escape'){enterCharSel();return;}
-  if(c==='Enter'){
+  if(isBack(c)){enterCharSel();return;}
+  if(isConfirm(c)){
    if(isForeignSignature(selCar)){sHit();return;}
    const car=CARS[selCar];
    const owned=carIsOwned(selCar);
@@ -7135,16 +7199,16 @@ function press(c,k){
  if(state==='autopark'){
   if(c==='ArrowLeft')nudgeParkSel(-1);
   if(c==='ArrowRight')nudgeParkSel(1);
-  if(c==='Escape'){state='garage';sClick();}
-  if(c==='Enter'||c==='Space'){
+  if(isBack(c)){state='garage';sClick();}
+  if(isConfirm(c)){
    if(carUnlocked(autoparkSel)){autodetailOpen=true;state='detail';sClick();}
    else sHit();
   }
   return;
  }
  if(state==='detail'){
-  if(c==='Escape'){state='autopark';autodetailOpen=false;sClick();}
-  if(c==='Enter'||c==='Space'){
+  if(isBack(c)){state='autopark';autodetailOpen=false;sClick();}
+  if(isConfirm(c)){
    const car=CARS[autoparkSel];
    const owned=carIsOwned(autoparkSel);
    if(isForeignSignature(autoparkSel)){sHit();return;}
@@ -7170,17 +7234,18 @@ function press(c,k){
   }
   if(c==='ArrowUp')cycleBet(-1);
   if(c==='ArrowDown')cycleBet(1);
-  if(c==='Escape'){state='garage';sClick();}
-  if(c==='Enter'||c==='Space')confirmPreRace();
+  if(isBack(c)){state='garage';sClick();}
+  if(isConfirm(c))confirmPreRace();
   return;
  }
  if(state==='title'){
   const n=g._titleItems?g._titleItems.length:2;
   if(c==='ArrowUp'){selTitle=(selTitle+n-1)%n;resetArm=false;sClick();}
   if(c==='ArrowDown'){selTitle=(selTitle+1)%n;resetArm=false;sClick();}
-  if(c==='Enter'||c==='Space'){
-   const items=g._titleItems;
+  if(isConfirm(c)){
+   const items=g._titleItems||[];
    const it=items[selTitle];
+   if(!it)return;
    if(it&&it.startsWith('НОВАЯ')){
     resetArm=false;save=newSave();persist();
     selChar=0;selCar=0;carConfirmed=false;enterCameraSetup();
@@ -7202,18 +7267,18 @@ function press(c,k){
    }
    sClick();
   }return;}
- if(state==='results'){if(c==='Enter'){if(labTest)exitLabTest();else state='garage';sClick();}return;}
- if(state==='garage'&&c==='Escape'){
-  if(garagePaused){garagePaused=false;}else{garagePaused=true;garagePauseIndex=0;}
+ if(state==='results'){if(isConfirm(c)){if(labTest)exitLabTest();else state='garage';sClick();}return;}
+ if(state==='garage'&&isBack(c)){
+  if(garagePaused){garagePaused=false;clearKeys();}else{garagePaused=true;garagePauseIndex=0;clearKeys();}
   sClick();return;}
  if(state==='garage'&&garagePaused){
   const items=pauseGarageItems();
   const n=items.length;
   if(c==='ArrowUp'){garagePauseIndex=(garagePauseIndex+n-1)%n;sClick();return;}
   if(c==='ArrowDown'){garagePauseIndex=(garagePauseIndex+1)%n;sClick();return;}
-  if(c==='Enter'||c==='Space'){
+  if(isConfirm(c)){
    const it=items[garagePauseIndex];
-   if(it==='ПРОДОЛЖИТЬ')garagePaused=false;
+   if(it==='ПРОДОЛЖИТЬ'){garagePaused=false;clearKeys();}
    else if(it==='СОХРАНИТЬ ИГРУ'){garagePaused=false;slotReturn='garage';state='slotSelect';slotSelectMode='save';slotSelectIndex=0;}
    else if(it==='ЗАГРУЗИТЬ ИГРУ'){garagePaused=false;slotReturn='garage';state='slotSelect';slotSelectMode='load';slotSelectIndex=0;}
    else if(it==='НАСТРОЙКИ'){openSettings('garage');}
@@ -7228,8 +7293,8 @@ function press(c,k){
   if(c==='ArrowDown'){tuningSel=(tuningSel+1)%rows;sClick();}
   if(c==='KeyA'){enterAutopark();sClick();}
   if(c==='KeyE'){openLabWarn();sClick();return;}
-  if(c==='Space'||(c==='Enter'&&tuningSel===7)){enterPreRace();return;}
-  else if(c==='Enter'){
+  if(c==='Space'||(isEnter(c)&&tuningSel===7)){enterPreRace();return;}
+  else if(isEnter(c)){
    if(tuningSel===6){enterAutopark();sClick();}
    else garageAction(0,tuningSel);
   }
