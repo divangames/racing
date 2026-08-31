@@ -25,11 +25,12 @@ var MUSIC_TRACKS = {
   musicCdn('garage/0.mp3')
  ],
  intro: [
-  // Медведь, Ерш, Бегемотик, Башкир
   musicCdn('intro/01.mp3'),
   musicCdn('intro/02.mp3'),
   musicCdn('intro/03.mp3'),
-  musicCdn('intro/04.mp3')
+  musicCdn('intro/04.mp3'),
+  '',
+  musicCdn('intro/06.mp3')
  ],
  racing: [
   musicCdn('racing/0.mp3'),
