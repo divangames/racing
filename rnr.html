@@ -135,6 +135,7 @@
 <script src="chars.js"></script>
 <script src="voice.js"></script>
 <script src="career.js"></script>
+<script src="notice.js"></script>
 <script src="editor/data.js"></script>
 <script>
 'use strict';
@@ -168,17 +169,52 @@ function panelPath(c,x,y,w,h,sk=14){c.beginPath();c.moveTo(x+sk,y);c.lineTo(x+w,
 function txt(c,t,x,y,size,col,align='left',font=F_D,stroke=true){c.font=size+'px '+font;c.textAlign=align;c.textBaseline='middle';if(stroke){c.lineWidth=Math.max(2,size/9);c.strokeStyle='#000';c.strokeText(t,x,y);}c.fillStyle=col;c.fillText(t,x,y);}
 ////////////////////////////////////////////////////////
 //
-// Старт: жест → загрузка с музыкой меню → главное меню
+// Старт: жест → полная загрузка (арт, комиксы, машины, музыка) → меню
+// Меню не открываем, пока очередь не дойдёт до конца.
 //
 ////////////////////////////////////////////////////////
-const BOOT={ready:false,started:false,giveUp:false,jobs:[],t0:0,vpnShown:false,els:null,gateRaf:0};
+const BOOT={ready:false,started:false,giveUp:false,jobs:[],t0:0,vpnShown:false,els:null,gateRaf:0,media:Object.create(null),menuMusic:false};
+/** Подпись этапа по первому URL задания. */
+function bootJobLabel(job){
+ const u=String((job&&job.urls&&job.urls[0])||job&&job.label||'');
+ if(job&&job.label)return job.label;
+ if(/comics/i.test(u))return 'Комиксы';
+ if(/\/players\//i.test(u))return 'Гонщики';
+ if(/machines\/cars|armor|_armor_/i.test(u))return 'Машины';
+ if(/wheels/i.test(u))return 'Машины';
+ if(/music|ikrinka24/i.test(u))return 'Музыка';
+ if(/textures\/map/i.test(u))return 'Карта';
+ if(/sounds|\/FX\//i.test(u))return 'Звуки';
+ if(/voice\/.*\.json/i.test(u))return 'Гонщики';
+ return 'Файлы';
+}
+/** URL из кэша загрузки (blob) или исходный. */
+function bootMediaSrc(url){
+ if(!url)return url;
+ return (BOOT.media&&BOOT.media[url])||url;
+}
+/** Кладёт скачанный файл в кэш воспроизведения. */
+function bootKeepMedia(url,blob){
+ if(!url||!blob||!blob.size)return;
+ try{
+  const prev=BOOT.media[url];
+  const href=URL.createObjectURL(blob);
+  BOOT.media[url]=href;
+  if(prev&&prev!==href)try{URL.revokeObjectURL(prev);}catch(e){}
+ }catch(e){}
+}
 /** Ставит картинку в очередь: пробуем URL по порядку, считаем байты. */
 function bootEnqueue(img,urls){
- BOOT.jobs.push({img,urls:(urls||[]).filter(Boolean),got:0,total:0,done:false});
+ const list=(urls||[]).filter(Boolean);
+ if(!list.length)return;
+ BOOT.jobs.push({img,urls:list,got:0,total:0,done:false,busy:false,ok:false,sticky:false});
 }
-/** Удалённый файл (музыка): только прогресс и кэш, без привязки к Image. */
-function bootEnqueueFetch(urls){
- BOOT.jobs.push({img:null,urls:(urls||[]).filter(Boolean),got:0,total:0,done:false});
+/** Файл без Image: музыка, SFX. sticky — не отпускаем при сбое сети. */
+function bootEnqueueFetch(urls,sticky){
+ const list=(urls||[]).filter(Boolean);
+ if(!list.length)return;
+ if(BOOT.jobs.some(j=>j.urls&&j.urls[0]===list[0]&&!j.img))return;
+ BOOT.jobs.push({img:null,urls:list,got:0,total:0,done:false,busy:false,ok:false,sticky:!!sticky,kind:'fetch'});
 }
 function bootEls(){
  if(BOOT.els)return BOOT.els;
@@ -209,8 +245,10 @@ function bootPaint(){
  const pct=Math.min(99,Math.floor(bootRatio()*100));
  if(el.fill)el.fill.style.width=pct+'%';
  if(el.pct)el.pct.textContent=pct+'%';
- if(el.status)el.status.textContent=n?('Файлы '+done+' / '+n):'Собираем трассу…';
- if(!BOOT.vpnShown&&BOOT.t0&&performance.now()-BOOT.t0>8000){
+ const wait=BOOT.jobs.find(j=>!j.done);
+ const lab=wait?bootJobLabel(wait):'Файлы';
+ if(el.status)el.status.textContent=n?(lab+' · '+done+' / '+n):'Собираем трассу…';
+ if(!BOOT.vpnShown&&BOOT.t0&&performance.now()-BOOT.t0>12000){
   BOOT.vpnShown=true;
   if(el.vpn)el.vpn.classList.add('is-on');
  }
@@ -226,7 +264,7 @@ function bootMime(url,header){
  return h||'application/octet-stream';
 }
 async function bootFetchUrl(url,job,signal){
- const res=await fetch(url,{cache:'no-cache',signal});
+ const res=await fetch(url,{cache:job&&job.sticky?'default':'no-cache',signal,mode:'cors'});
  // 404 на хосте — сразу следующий URL, без 14 с ожидания Image.onerror
  if(!res.ok)return false;
  const cl=+res.headers.get('Content-Length')||0;
@@ -267,68 +305,169 @@ async function bootBind(img,blob){
 /** Если fetch недоступен (file://), грузим как обычный Image. */
 function bootImgTag(img,url){
  return new Promise(resolve=>{
-  const t=setTimeout(()=>done(false),2500);
+  const t=setTimeout(()=>done(img.naturalWidth>0||/\.svg(\?|$)/i.test(url)),20000);
   const done=ok=>{clearTimeout(t);img.onload=null;img.onerror=null;resolve(ok);};
   img.onload=()=>done(img.naturalWidth>0||/\.svg(\?|$)/i.test(url));
   img.onerror=()=>done(false);
   img.src=url;
  });
 }
+/** Пауза между повторами сети. */
+function bootSleep(ms){
+ return new Promise(r=>setTimeout(r,ms));
+}
+/** Прогрев MP3 через Audio, если fetch режет CORS. */
+function bootAudioTag(url,job){
+ return new Promise(resolve=>{
+  const a=new Audio();
+  a.preload='auto';
+  a.referrerPolicy='no-referrer';
+  let done=false;
+  const fin=ok=>{
+   if(done)return;done=true;
+   clearTimeout(t);
+   a.oncanplaythrough=null;a.onloadeddata=null;a.onerror=null;
+   resolve(ok);
+  };
+  const t=setTimeout(()=>fin(a.readyState>=3),90000);
+  a.oncanplaythrough=()=>fin(true);
+  a.onloadeddata=()=>{if(a.readyState>=3)fin(true);};
+  a.onerror=()=>fin(false);
+  a.src=url;
+  try{a.load();}catch(e){fin(false);}
+  if(job&&!job.total){job.total=1;job.got=0.2;bootPaint();}
+ });
+}
+/** Играет тему меню, как только main готов. */
+function bootPlayMenuIfReady(){
+ if(BOOT.menuMusic||BOOT.ready)return;
+ const list=(window.MUSIC_TRACKS&&MUSIC_TRACKS.main)||[];
+ const url=list[0];
+ if(!url)return;
+ if(!BOOT.media[url])return;
+ BOOT.menuMusic=true;
+ try{
+  lastMusicCat='main';
+  if(typeof MUSIC!=='undefined'&&MUSIC.play)MUSIC.play('main');
+ }catch(e){console.error(e);}
+}
 async function bootRunJob(job){
- if(job.done||BOOT.giveUp){job.done=true;return;}
+ if(job.done)return;
  const fileProto=typeof location!=='undefined'&&location.protocol==='file:';
- let needImg=!job.img?false:fileProto;
- if(!fileProto){
-  const remote=(job.urls||[]).some(u=>/^https?:\/\//i.test(u));
-  const ac=typeof AbortController==='function'?new AbortController():null;
-  const timer=setTimeout(()=>{if(ac)ac.abort();},remote?4000:8000);
-  try{
+ let attempt=0;
+ while(!job.ok&&!BOOT.giveUp){
+  attempt++;
+  let needImg=!job.img?false:fileProto;
+  let netFail=false;
+  if(!fileProto){
+   try{
+    for(const url of job.urls){
+     if(BOOT.giveUp)break;
+     try{
+      const blob=await bootFetchUrl(url,job,undefined);
+      if(blob===false)continue;
+      if(!blob)continue;
+      if(job.img)await bootBind(job.img,blob);
+      else bootKeepMedia(url,blob);
+      job.ok=true;
+      job.done=true;
+      if(job.got<job.total)job.got=job.total;
+      bootPaint();
+      bootPlayMenuIfReady();
+      return;
+     }catch(e){
+      netFail=true;
+      needImg=!!job.img;
+     }
+    }
+   }catch(e){netFail=true;needImg=!!job.img;}
+  }
+  if(!job.ok&&job.img&&needImg){
    for(const url of job.urls){
     if(BOOT.giveUp)break;
-    try{
-     const blob=await bootFetchUrl(url,job,ac&&ac.signal);
-     if(blob===false)continue;
-     if(!blob)continue;
-     if(job.img)await bootBind(job.img,blob);
-     job.done=true;
-     if(job.got<job.total)job.got=job.total;
+    const ok=await bootImgTag(job.img,url);
+    if(ok){
+     job.ok=true;job.done=true;
+     if(!job.total){job.total=1;job.got=1;}
+     else job.got=job.total;
      bootPaint();
      return;
-    }catch(e){needImg=!!job.img;}
-   }
-  }finally{clearTimeout(timer);}
- }
- // Image только для file:// или сбоя сети — не для HTTP 404 (иначе 2.5 с × URL)
- if(job.img&&!BOOT.giveUp&&needImg){
-  for(const url of job.urls){
-   if(BOOT.giveUp)break;
-   const ok=await bootImgTag(job.img,url);
-   if(ok){
-    job.done=true;
-    if(!job.total){job.total=1;job.got=1;}
-    else job.got=job.total;
-    bootPaint();
-    return;
+    }
    }
   }
+  if(!job.ok&&!job.img){
+   for(const url of job.urls){
+    if(BOOT.giveUp)break;
+    const ok=await bootAudioTag(url,job);
+    if(ok){
+     if(!BOOT.media[url])BOOT.media[url]=url;
+     job.ok=true;job.done=true;
+     if(!job.total){job.total=1;job.got=1;}
+     else job.got=job.total;
+     bootPaint();
+     bootPlayMenuIfReady();
+     return;
+    }
+    netFail=true;
+   }
+  }
+  if(job.ok)return;
+  if(job.sticky&&netFail&&!BOOT.giveUp){
+   await bootSleep(Math.min(8000,400*attempt));
+   job.got=0;
+   continue;
+  }
+  break;
  }
  job.done=true;
  if(!job.total){job.total=1;job.got=1;}
  bootPaint();
 }
-async function bootPool(list,limit,fn){
- let i=0;
- const n=Math.max(1,Math.min(limit,list.length||1));
- await Promise.all(Array.from({length:n},async()=>{
-  while(i<list.length){const idx=i++;await fn(list[idx]);}
- }));
+/** Рабочие берут новые задания, пока открывается список тайлов карты. */
+async function bootWaitAll(limit,extras){
+ let extrasDone=false;
+ const extraP=Promise.all(extras||[]).then(function(){extrasDone=true;},function(e){console.error(e);extrasDone=true;});
+ const n=Math.max(1,limit|0);
+ const workers=Array.from({length:n},async()=>{
+  while(!BOOT.giveUp){
+   const job=BOOT.jobs.find(j=>!j.done&&!j.busy);
+   if(job){
+    job.busy=true;
+    try{await bootRunJob(job);}
+    finally{job.busy=false;}
+    continue;
+   }
+   if(extrasDone&&BOOT.jobs.every(j=>j.done))return;
+   await bootSleep(40);
+  }
+ });
+ await Promise.all(workers.concat([extraP]));
+}
+/** Каталог MP3 из music.js — обязателен до титула. */
+function bootEnqueueAudioCatalog(){
+ const tracks=window.MUSIC_TRACKS;
+ if(!tracks)return;
+ for(const cat of Object.keys(tracks)){
+  const list=tracks[cat];
+  if(!Array.isArray(list))continue;
+  for(const url of list)bootEnqueueFetch([url],true);
+ }
+}
+/** Клипы SFX: локальный файл, затем CDN. */
+function bootEnqueueSfx(){
+ if(typeof SFX_TRACKS!=='object'||!SFX_TRACKS)return;
+ for(const id of Object.keys(SFX_TRACKS)){
+  const v=SFX_TRACKS[id];
+  const urls=(Array.isArray(v)?v:[v]).filter(Boolean);
+  bootEnqueueFetch(urls,false);
+ }
 }
 function bootFontsJob(){
- const job={img:null,urls:[],got:0,total:1,done:false};
+ const job={img:null,urls:[],got:0,total:1,done:false,busy:true,ok:false,sticky:false,label:'Шрифты'};
  BOOT.jobs.push(job);
  return new Promise(resolve=>{
   let done=false;
-  const fin=()=>{if(done)return;done=true;job.done=true;job.got=1;bootPaint();resolve();};
+  const fin=()=>{if(done)return;done=true;job.done=true;job.ok=true;job.busy=false;job.got=1;bootPaint();resolve();};
   const t=setTimeout(fin,2500);
   const ready=document.fonts&&document.fonts.ready;
   if(ready)ready.then(()=>{clearTimeout(t);fin();}).catch(()=>{clearTimeout(t);fin();});
@@ -474,21 +613,19 @@ async function bootGo(){
  bootEls();
  bootPaint();
  const tick=setInterval(bootPaint,250);
- const dog=setTimeout(()=>bootFinish(),8000);
  try{
   if(typeof EditorData!=='undefined'&&EditorData.hydrateFromDisk){
    await EditorData.hydrateFromDisk();
    reloadEditorCars();
   }
-  if(!labTest)await bootDiscoverAllMapTiles();
-  if(!BOOT.ready){
-   const files=BOOT.jobs.filter(j=>!j.done);
-   const fonts=bootFontsJob();
-   bootPaint();
-   await Promise.all([fonts,bootPool(files,8,bootRunJob)]);
-  }
+  bootEnqueueAudioCatalog();
+  bootEnqueueSfx();
+  const fonts=bootFontsJob();
+  const voice=(typeof voicePreload==='function')?Promise.resolve(voicePreload()):Promise.resolve();
+  const maps=labTest?Promise.resolve():bootDiscoverAllMapTiles();
+  await bootWaitAll(8,[fonts,voice,maps]);
  }catch(e){console.error(e);}
- finally{clearInterval(tick);clearTimeout(dog);}
+ finally{clearInterval(tick);}
  bootFinish();
 }
 bootEnqueue(achIconSheet,[ACH_ICON_SHEET]);
@@ -913,7 +1050,7 @@ function startIntro(charIdx){
   introAudio=null;introAudioSrc='';
  }else if(!introAudio||introAudioSrc!==music){
   if(introAudio){try{introAudio.pause();}catch(e){}}
-  introAudio=new Audio(music);
+  introAudio=new Audio(bootMediaSrc(music));
   introAudioSrc=music;
  }
  if(introAudio){
@@ -1446,10 +1583,11 @@ async function bootDiscoverMapTiles(biome){
   const n=String(i).padStart(2,'0');
   const base='assets/image/textures/map/'+biome+'/'+n;
   const img=new Image();
-  const job={img,urls:[base+'.webp',base+'.png'],got:0,total:0,done:false};
+  const job={img,urls:[base+'.webp',base+'.png'],got:0,total:0,done:false,busy:true,ok:false,sticky:false};
   BOOT.jobs.push(job);
   bootPaint();
-  await bootRunJob(job);
+  try{await bootRunJob(job);}
+  finally{job.busy=false;}
   if(img.complete&&img.naturalWidth>0){list.push(img);miss=0;continue;}
   const ix=BOOT.jobs.indexOf(job);
   if(ix>=0)BOOT.jobs.splice(ix,1);
@@ -1846,7 +1984,12 @@ function drawTitleRace(){
   g.restore();
  });
 }
-function enterTitle(){if(typeof clearKeys==='function')clearKeys();state='title';initTitleRace();}
+function enterTitle(){
+ if(typeof clearKeys==='function')clearKeys();
+ state='title';
+ initTitleRace();
+ if(typeof clientNoticeOpenIfNeeded==='function')clientNoticeOpenIfNeeded();
+}
 ////////////////////////////////////////////////////////
 //
 // Стартовый экран до меню: гонка на фоне, мигающий призыв
@@ -2190,7 +2333,7 @@ const MUSIC={
     CHIP.start(this.curCat);
    });
   }
-  this.el.src=pick;
+  this.el.src=bootMediaSrc(pick);
   this.el.volume=(settings.sound.music||50)/100;
   const playPromise=this.el.play();
   if(playPromise){
@@ -2274,7 +2417,6 @@ function audioInit(){if(AU.ctx)return;const AC=window.AudioContext||window.webki
  AU.sfx=c.createGain();AU.sfx.connect(AU.master);
  AU.music=c.createGain();AU.music.connect(AU.master);
  applyAudioSettings();
- if(window.SFX&&SFX.preload)SFX.preload();
  if(typeof voicePreload==='function')voicePreload();
  noiseBuf=c.createBuffer(1,c.sampleRate*1.2,c.sampleRate);const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
  AU.engO=c.createOscillator();AU.engO.type='sawtooth';AU.engO2=c.createOscillator();AU.engO2.type='square';
@@ -2282,7 +2424,11 @@ function audioInit(){if(AU.ctx)return;const AC=window.AudioContext||window.webki
  AU.engG=c.createGain();AU.engG.gain.value=0;
  AU.engO.connect(AU.engF);AU.engO2.connect(AU.engF);AU.engF.connect(AU.engG);AU.engG.connect(AU.sfx);
  AU.engO.start();AU.engO2.start();
- try{const mc=musicCat();lastMusicCat=mc;if(typeof MUSIC!=='undefined'&&MUSIC.play)MUSIC.play(mc);}catch(e){console.error(e);}
+ try{
+  lastMusicCat='main';
+  BOOT.menuMusic=true;
+  if(typeof MUSIC!=='undefined'&&MUSIC.play)MUSIC.play('main');
+ }catch(e){console.error(e);}
 }
 function swp(type,f0,f1,d,v,dest){if(!AU.ctx)return;if(!settings.sound.sfxOn&&(dest===undefined||dest===AU.sfx))return;const c=AU.ctx,o=c.createOscillator(),gn=c.createGain();
  o.type=type;o.frequency.setValueAtTime(f0,c.currentTime);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),c.currentTime+d);
@@ -5189,6 +5335,7 @@ function drawTitle(){
  g._titleItems=items;
  drawVhsOverlay();
  drawLabWarn();
+ if(typeof drawClientNotice==='function')drawClientNotice();
 }
 function drawHelp(){
  g.fillStyle='#0b0a12';g.fillRect(0,0,W,H);
@@ -6979,6 +7126,7 @@ addEventListener('visibilitychange',()=>{if(document.hidden)clearKeys();});
 function press(c,k){
  if(state==='press'){dismissPressStart();return;}
  if(c==='KeyM'&&state!=='cheats'){if(AU.ctx){settings.sound.musicOn=!settings.sound.musicOn;saveSettings();applyAudioSettings();}return;}
+ if(typeof clientNoticePress==='function'&&clientNoticePress(c))return;
  if(labWarn){
   if(c==='ArrowLeft'||c==='ArrowRight'||c==='ArrowUp'||c==='ArrowDown'){labWarnSel=labWarnSel?0:1;sClick();return;}
   if(isBack(c)){closeLabWarn();return;}
@@ -7399,6 +7547,7 @@ cv.addEventListener('mousedown',e=>{
  const px=(e.clientX-r.left)*(cv.width/r.width),py=(e.clientY-r.top)*(cv.height/r.height);
  const x=(px-viewOX)/viewS,y=(py-viewOY)/viewS;
  if(labWarn){clickLabWarn(x,y);return;}
+ if(typeof clientNoticeClick==='function'&&CLIENT_NOTICE&&CLIENT_NOTICE.open){clientNoticeClick(x,y);return;}
  if(state==='intro'){press('Enter');return;}
  if(state==='press'){dismissPressStart();return;}
  if(state==='settings'){clickSettings(x,y);return;}

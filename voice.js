@@ -41,7 +41,7 @@ function voiceDirOf(chIdx) {
 
 /** Грузит один lines.json. */
 function voiceLoadJson(url, key) {
- fetch(url, { cache: 'no-cache' }).then(function (res) {
+ return fetch(url, { cache: 'no-cache' }).then(function (res) {
   if (!res.ok) return null;
   return res.json();
  }).then(function (data) {
@@ -53,13 +53,19 @@ function voiceLoadJson(url, key) {
 
 /** Качает банки всех гонщиков и ведущего. */
 function voicePreload() {
- if (VOICE.ready) return;
- VOICE.ready = true;
- if (typeof CHARS === 'undefined') return;
- for (let i = 0; i < CHARS.length; i++) {
-  voiceLoadJson(voiceDirOf(i) + 'lines.json', i);
+ if (VOICE.bootP) return VOICE.bootP;
+ if (typeof CHARS === 'undefined') {
+  VOICE.bootP = Promise.resolve();
+  return VOICE.bootP;
  }
- voiceLoadJson('assets/data/players/host/voice/lines.json', 'host');
+ VOICE.ready = true;
+ const jobs = [];
+ for (let i = 0; i < CHARS.length; i++) {
+  jobs.push(voiceLoadJson(voiceDirOf(i) + 'lines.json', i));
+ }
+ jobs.push(voiceLoadJson('assets/data/players/host/voice/lines.json', 'host'));
+ VOICE.bootP = Promise.all(jobs);
+ return VOICE.bootP;
 }
 
 /** Случайный дубль события. */

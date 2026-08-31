@@ -83,7 +83,7 @@ var SFX = {
   a.referrerPolicy='no-referrer';
   a.volume=vol;
   a.addEventListener('error',fail);
-  a.src=urls[i];
+  a.src=(typeof bootMediaSrc==='function')?bootMediaSrc(urls[i]):urls[i];
   a.play().catch(fail);
  }
 };
