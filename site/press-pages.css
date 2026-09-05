@@ -6,6 +6,7 @@
 
 .world, .roster, .fight, .shots, .invite {
   padding: 5rem var(--pad);
+  scroll-margin-top: 4.6rem;
 }
 
 .world {
@@ -24,7 +25,7 @@
 
 .world__frame img {
   width: 100%;
-  height: min(62vh, 38rem);
+  height: min(52dvh, 32rem);
   object-fit: cover;
   object-position: center 30%;
 }
@@ -68,15 +69,35 @@
   color: #120c08;
 }
 
-.roster { background: var(--void); }
+.roster {
+  background: var(--void);
+  padding-block: 3.2rem;
+}
+
+.roster .sec {
+  max-width: 48rem;
+  margin: 0 0 1.2rem;
+}
+
+.roster .sec h2 {
+  font-size: clamp(1.45rem, 2.8vw, 2.5rem);
+}
 
 .roster__layout {
   display: grid;
-  grid-template-columns: 16rem 1fr;
-  gap: 1.5rem;
+  grid-template-columns: 15.5rem minmax(0, 1fr);
+  gap: 1rem;
+  align-items: stretch;
+  height: min(68dvh, 44rem);
 }
 
-.roster__list { display: grid; gap: 0.45rem; align-content: start; }
+.roster__list {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  overflow: auto;
+  min-height: 0;
+}
 
 .pilot {
   display: grid;
@@ -117,8 +138,9 @@
 
 .dossier {
   display: grid;
-  grid-template-columns: 0.9fr 1.1fr;
-  min-height: 36rem;
+  grid-template-columns: minmax(0, 0.95fr) minmax(16rem, 1.05fr);
+  min-height: 0;
+  height: 100%;
   border: 1px solid var(--line);
   background:
     radial-gradient(ellipse at 20% 80%, rgba(255, 210, 63, 0.08), transparent 40%),
@@ -128,20 +150,32 @@
 
 .dossier__hero {
   position: relative;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  place-items: end center;
+  overflow: hidden;
   background: radial-gradient(ellipse at 50% 80%, rgba(196, 90, 24, 0.25), transparent 55%);
 }
 
 .dossier__hero img:first-child {
+  max-height: 100%;
+  max-width: 100%;
+  width: auto;
   height: 100%;
-  width: 100%;
   object-fit: contain;
   object-position: bottom center;
 }
 
 .dossier__car { display: none; }
 
-.dossier__text { padding: 2rem 1.6rem 1.6rem; align-self: center; }
-.dossier__text p { color: var(--mute); }
+.dossier__text {
+  padding: 1.4rem 1.5rem 1.3rem;
+  align-self: center;
+  overflow: auto;
+  min-height: 0;
+}
+.dossier__text p { color: var(--mute); margin: 0; }
 
 blockquote {
   margin: 1.2rem 0 0;
@@ -153,18 +187,22 @@ blockquote {
 }
 
 .comics {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(9rem, 1fr));
-  gap: 0.6rem;
-  margin-top: 1.4rem;
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
   overflow-x: auto;
+  padding-bottom: 0.35rem;
+  scroll-snap-type: x mandatory;
 }
 
 .comics img {
-  height: 11rem;
-  width: 100%;
+  flex: 0 0 auto;
+  height: min(18vh, 8.8rem);
+  width: auto;
+  max-width: 15rem;
   object-fit: cover;
   border: 1px solid var(--line);
+  scroll-snap-align: start;
 }
 
 .fight {
@@ -209,13 +247,17 @@ blockquote {
 
 .shots__grid img {
   width: 100%;
-  height: 22rem;
+  height: min(28vh, 16rem);
   object-fit: cover;
   border: 1px solid var(--line);
 }
 
 .shots__grid figure:first-child { grid-row: span 2; }
-.shots__grid figure:first-child img { height: 100%; min-height: 45rem; }
+.shots__grid figure:first-child img {
+  height: 100%;
+  min-height: min(42dvh, 24rem);
+  max-height: min(72dvh, 38rem);
+}
 
 .shots figcaption {
   margin-top: 0.55rem;
@@ -267,13 +309,15 @@ blockquote {
   .fight__grid,
   .shots__grid { grid-template-columns: 1fr; }
 
+  .roster__layout { height: auto; }
+  .dossier { height: min(78dvh, 40rem); grid-template-rows: minmax(16rem, 1fr) auto; }
+  .dossier__text { max-height: 14rem; }
+
   .shots__grid figure:first-child { grid-row: auto; }
   .shots__grid figure:first-child img,
-  .shots__grid img { height: 16rem; min-height: 0; }
+  .shots__grid img { height: 16rem; min-height: 0; max-height: none; }
 
   .nav__links { display: none; }
-  .dossier { min-height: 28rem; }
-  .comics { grid-template-columns: repeat(4, minmax(8rem, 1fr)); }
 }
 
 @media (max-width: 720px) {
@@ -281,7 +325,7 @@ blockquote {
   .hero__copy { padding-top: 6.5rem; }
   .hero__stamp { display: none; }
   .world__frame img { height: 22rem; }
-  .comics { grid-template-columns: repeat(2, 1fr); }
+  .comics img { height: 7.2rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
