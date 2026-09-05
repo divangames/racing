@@ -10,6 +10,10 @@ Desktop.ini
 node_modules/
 .idea/
 .vscode/
+Full Games/node_modules/
+Full Games/dist/
+Full Games/dist-content/
+Full Games/vendor-local/*.js
 
 # Сторонние треки и референсы не публикуются (авторские права).
 assets/music/

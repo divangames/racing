@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Лаборатория машин: визуальная правка кузовов, колёс и характеристик. -->
+<!-- Лаборатория: машины и редактор трасс. -->
 <html lang="ru">
 <head>
 <meta charset="utf-8">
@@ -11,7 +11,8 @@
 <link rel="icon" type="image/webp" href="assets/image/favicon.webp">
 <link rel="apple-touch-icon" href="assets/image/apple-touch-icon.png">
 <link rel="stylesheet" href="editor/fonts.css">
-<link rel="stylesheet" href="editor/editor.css?v=20260828v">
+<link rel="stylesheet" href="editor/editor.css?v=20260905o">
+<link rel="stylesheet" href="editor/content-browser.css?v=20260905o">
 </head>
 <body>
 <main class="app">
@@ -20,8 +21,8 @@
       <div class="eyebrow">RNR · Dev tools</div>
       <h1 class="title">Лаборатория</h1>
       <div class="app-tabs" role="tablist" aria-label="Разделы лаборатории">
-        <button type="button" class="tab is-on" role="tab" aria-selected="true">Машина</button>
-        <button type="button" class="tab" role="tab" aria-selected="false" disabled title="Редактор карты появится позже">Карта</button>
+        <button type="button" class="tab is-on" role="tab" data-tab="car" aria-selected="true">Машина</button>
+        <button type="button" class="tab" role="tab" data-tab="map" aria-selected="false">Карта</button>
       </div>
     </div>
     <nav class="top-actions" aria-label="Навигация">
@@ -29,7 +30,7 @@
       <button type="button" id="resetBtn" class="danger">Сбросить к базовым</button>
     </nav>
   </header>
-  <div class="workspace">
+  <div class="workspace" id="workCar">
     <section class="stage-card">
       <div class="stage-head">
         <div>
@@ -190,6 +191,122 @@
       </section>
     </aside>
   </div>
+  <div class="workspace workspace-map" id="workMap" hidden>
+    <section class="stage-card">
+      <div class="stage-head">
+        <div>
+          <div class="machine-name" id="mapNameRead">ТРАССА</div>
+          <p class="stage-note">Свободный — клик по объекту: гизмо двигает, крутит, удаляет. Старт/финиш — такая же клетка. Если её нет, появится «+ Старт/финиш».</p>
+        </div>
+        <div class="legend">
+          <span><i class="dot yellow"></i>старт/финиш</span>
+          <span><i class="dot cyan"></i>точка</span>
+          <span><i class="dot green"></i>пад</span>
+          <span><i class="dot orange"></i>мина</span>
+        </div>
+      </div>
+      <div class="map-stage-wrap">
+        <canvas id="mapStage" aria-label="Холст редактора трассы"></canvas>
+      </div>
+      <div class="stage-tools">
+        <div class="history-tools" role="group" aria-label="История трассы">
+          <button type="button" id="mapUndoBtn">← Назад</button>
+          <button type="button" id="mapRedoBtn">Вперёд →</button>
+        </div>
+        <button type="button" data-map-tool="pan">Панорама</button>
+        <button type="button" data-map-tool="select" class="active">Свободный</button>
+        <button type="button" data-map-tool="point">Точки</button>
+        <button type="button" data-map-tool="ramp">Трамплин</button>
+        <button type="button" data-map-tool="mine">Мина</button>
+        <button type="button" data-map-tool="oil">Масло</button>
+        <button type="button" data-map-tool="pad">Пад</button>
+        <button type="button" data-map-tool="cut">Срез</button>
+        <div class="zoom-tools">
+          <button type="button" id="mapZoomOut">−</button>
+          <button type="button" id="mapZoomRead">28%</button>
+          <button type="button" id="mapZoomIn">+</button>
+        </div>
+        <button type="button" id="mapAddStart">+ Старт/финиш</button>
+        <button type="button" id="mapFitBtn">В кадр</button>
+        <label class="file-label" style="min-height:36px">Клетка<input class="check" id="mapSnap" type="checkbox" checked></label>
+        <label class="file-label" style="min-height:36px">Объекты<input class="check" id="mapSnapObj" type="checkbox" checked></label>
+        <button type="button" id="mapTestBtn" class="primary" title="Заезд на этой петле, ESC вернёт сюда">Тест трассы</button>
+        <span id="mapCoord" class="map-status">X 0 · Y 0</span>
+        <span id="mapSaveState" class="map-status">Новая трасса</span>
+      </div>
+    </section>
+    <aside class="panel">
+      <section class="section">
+        <div class="section-title">ТРАССЫ</div>
+        <div class="car-list" id="mapList"></div>
+        <div class="actions" style="margin-top:8px">
+          <button type="button" id="mapNewBtn">+ Новая</button>
+          <button type="button" id="mapDupBtn">Копия</button>
+          <button type="button" id="mapDelBtn" class="danger">Удалить</button>
+        </div>
+        <div class="field" style="margin-top:8px">
+          <label for="mapStock">Клон стока</label>
+          <select id="mapStock"><option value="">— взять петлю из игры —</option></select>
+        </div>
+      </section>
+      <section class="section">
+        <div class="section-title">КАРТОЧКА</div>
+        <div class="field"><label for="mapName">Имя в выборе</label><input id="mapName" maxlength="42"></div>
+        <div class="field"><label for="mapId">Файл (id)</label><input id="mapId" maxlength="40" spellcheck="false"></div>
+        <label class="hint" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input class="check" id="mapPublished" type="checkbox" checked> Показать в выборе трассы</label>
+        <div class="field"><label for="mapTheme">Биом земли</label><select id="mapTheme"></select></div>
+        <div class="field"><label for="mapWeather">Погода</label><select id="mapWeather"></select></div>
+        <label class="hint" style="display:flex;gap:8px;align-items:center"><input class="check" id="mapAutoHz" type="checkbox" checked> Авто мины и трамплины (снимите, если расставили сами)</label>
+      </section>
+      <section class="section">
+        <div class="section-title">ТЕКСТУРЫ</div>
+        <p class="hint">Покрытие — материал полотна (асфальт, песок…). Свою землю кладём в текущий биом или в новую папку.</p>
+        <div class="tex-dest">
+          <label><input type="radio" name="mapTexDest" id="mapTexDestCur" value="current" checked> В текущий биом</label>
+          <label><input type="radio" name="mapTexDest" id="mapTexDestNew" value="new"> Новый биом</label>
+        </div>
+        <div class="field"><label for="mapNewBiomeId">Id нового биома</label><input id="mapNewBiomeId" maxlength="32" placeholder="ash_wastes" spellcheck="false"></div>
+        <label class="file-label">Земля PNG/WebP<input type="file" id="mapGroundFile" accept="image/png,image/webp,image/jpeg"></label>
+        <div class="field"><label for="mapRoadPick">Дорога из библиотеки</label><select id="mapRoadPick"><option value="">— сток цвета зон —</option></select></div>
+        <label class="file-label">Текстура дороги<input type="file" id="mapRoadFile" accept="image/png,image/webp,image/jpeg"></label>
+      </section>
+      <section class="section">
+        <div class="section-title">ПОКРЫТИЕ <span>доля круга 0…1</span></div>
+        <div id="mapZones" class="zone-list"></div>
+        <div class="actions" style="margin-top:8px"><button type="button" id="mapAddZone">+ Зона</button></div>
+      </section>
+      <section class="section">
+        <div class="section-title">СОХРАНЕНИЕ</div>
+        <div class="actions">
+          <button type="button" id="mapSaveBtn" class="primary">Сохранить трассу</button>
+        </div>
+        <p class="hint">Пишет JSON в assets/data/tracks. После записи трасса появляется в «Выбор трассы» (читы deliane).</p>
+      </section>
+    </aside>
+    <div id="assetDock" class="cb">
+      <aside class="cb-nav">
+        <div class="cb-nav-kicker">Контент</div>
+        <button type="button" id="assetTreeAll" class="cb-folder is-on">Все</button>
+        <div id="assetTree" class="cb-tree" role="tree"></div>
+        <button type="button" id="assetPackNew" class="cb-folder-add">+ Пак</button>
+      </aside>
+      <section class="cb-stage">
+        <div class="cb-bar">
+          <nav id="assetCrumbs" class="cb-crumbs" aria-label="Путь"></nav>
+          <input id="assetSearch" type="search" placeholder="Поиск" autocomplete="off">
+          <div class="cb-chips" role="group" aria-label="Слой">
+            <button type="button" data-asset-filter="all" class="is-on">Все</button>
+            <button type="button" data-asset-filter="under">Под машиной</button>
+            <button type="button" data-asset-filter="over">Над машиной</button>
+          </div>
+          <span id="assetCount" class="cb-count"></span>
+          <button type="button" id="assetImportBtn">Импорт</button>
+          <input id="assetFile" type="file" accept="image/png,image/webp,image/gif,image/jpeg" multiple hidden>
+        </div>
+        <div id="assetDockRow" class="cb-grid"></div>
+      </section>
+    </div>
+  </div>
 </main>
 <div id="fileNote" class="file-note" hidden role="alertdialog" aria-modal="true" aria-labelledby="fileNoteTitle">
   <div class="file-note-card" id="fileNoteCard">
@@ -199,10 +316,59 @@
     <button type="button" id="fileNoteOk" class="primary">Понятно</button>
   </div>
 </div>
+<div id="assetEdit" class="asset-edit" hidden>
+  <div class="asset-edit-card">
+    <div class="asset-edit-kicker">Объект · .oblab</div>
+    <h2 class="asset-edit-title">Редактор ассета</h2>
+    <div class="asset-edit-body">
+      <canvas id="assetEditCanvas" aria-label="Коллизия ассета"></canvas>
+      <div class="asset-edit-side">
+        <div class="field"><label for="assetEditName">Имя</label><input id="assetEditName" maxlength="42"></div>
+        <fieldset class="asset-edit-layer">
+          <legend>Слой</legend>
+          <label><input type="radio" name="assetEditLayer" id="assetEditUnder" value="under"> Под машиной</label>
+          <label><input type="radio" name="assetEditLayer" id="assetEditOver" value="over"> Над машиной</label>
+        </fieldset>
+        <p class="hint" id="assetEditUnderHint">Под машиной коллизия выключена: гонщик проезжает сверху.</p>
+        <div id="assetEditColl">
+          <label class="hint" style="display:flex;gap:8px;align-items:center"><input class="check" id="assetEditSolid" type="checkbox" checked> Столкновение</label>
+          <p class="hint">Бокс можно тянуть, масштабировать за углы, двигать вершины. «Точка» — вершина на ребре. ПКМ по точке — убрать.</p>
+          <div class="actions">
+            <button type="button" id="assetEditBox">+ Бокс</button>
+            <button type="button" id="assetEditCopy">Копия</button>
+            <button type="button" id="assetEditPoint">Точка</button>
+            <button type="button" id="assetEditDelBox">Удалить бокс</button>
+            <button type="button" id="assetEditClear">Очистить</button>
+          </div>
+        </div>
+        <div class="actions asset-edit-actions">
+          <button type="button" id="assetEditSave" class="primary">Записать</button>
+          <button type="button" id="assetEditDelete" class="danger">Удалить</button>
+          <button type="button" id="assetEditClose">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <script src="chars.js?v=20260829fb"></script>
+<script src="tracks.js?v=20260905h"></script>
+<script src="objects.js?v=20260905m"></script>
 <script src="editor/data.js?v=20260828u"></script>
 <script src="editor/fx.js?v=20260828q"></script>
 <script src="editor/view.js?v=20260828s"></script>
 <script src="editor/app.js?v=20260828v"></script>
+<script src="editor/map-data.js?v=20260905h"></script>
+<script src="editor/map-tex.js?v=20260905c"></script>
+<script src="editor/map-preview.js?v=20260905h"></script>
+<script src="editor/map-marks.js?v=20260905h"></script>
+<script src="editor/map-gizmo.js?v=20260905h"></script>
+<script src="editor/map-coll.js?v=20260905g"></script>
+<script src="editor/map-assets.js?v=20260905n"></script>
+<script src="editor/map-asset-coll.js?v=20260905m"></script>
+<script src="editor/map-asset-edit.js?v=20260905m"></script>
+<script src="editor/map-input.js?v=20260905h"></script>
+<script src="editor/map-panel.js?v=20260905m"></script>
+<script src="editor/map-view.js?v=20260905k"></script>
+<script src="editor/map-app.js?v=20260905m"></script>
 </body>
 </html>

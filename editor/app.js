@@ -1565,6 +1565,7 @@ const EditorApp = (() => {
     $('undoBtn').onclick = undo;
     $('redoBtn').onclick = redo;
     window.addEventListener('keydown', (e) => {
+      if (window.__labTab === 'map') return;
       if (!(e.ctrlKey || e.metaKey)) return;
       const code = e.code || '';
       const key = (e.key || '').toLowerCase();

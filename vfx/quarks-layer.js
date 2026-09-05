@@ -7,11 +7,15 @@
 import * as THREE from 'three';
 import { BatchedRenderer } from 'three.quarks';
 import { buildPools, makeSoftMap, makeStreakMap } from './quarks-presets.js';
+import { buildSprayPools } from './quarks-spray.js';
+import { buildWeather } from './quarks-weather.js';
 
 const api = {
   ok: false,
+  weatherOn: false,
   tick() {},
   blit() {},
+  weather() {},
   boom() { return false; },
   dust() { return false; },
   spark() { return false; },
@@ -25,7 +29,8 @@ const api = {
 
 window.RnRVfx = api;
 
-let renderer, scene, camera, batch, pools, lastDt = 0;
+let renderer, scene, camera, batch, pools, weather, lastDt = 0;
+let weatherId = 'off', weatherQ = 1;
 
 /** Ортокамера смотрит на плоскость XY (Y канваса инвертирован). */
 function applyWorldRect(left, top, right, bottom) {
@@ -88,9 +93,20 @@ try {
   camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 2000);
   batch = new BatchedRenderer();
   scene.add(batch);
-  pools = buildPools(scene, batch, makeSoftMap(), makeStreakMap());
+  const soft = makeSoftMap();
+  pools = Object.assign(
+    buildPools(scene, batch, soft, makeStreakMap()),
+    buildSprayPools(scene, batch, soft)
+  );
+  weather = buildWeather(scene, batch, soft);
 
   api.ok = true;
+
+  /** Включить пресет осадков. id: rain | snow | sand | off */
+  api.weather = function (id, q) {
+    weatherId = id || 'off';
+    weatherQ = q == null ? 1 : q;
+  };
 
   api.tick = function (dt) {
     lastDt = Math.min(0.033, Math.max(0, dt || 0));
@@ -104,6 +120,7 @@ try {
     fitBuffer(s);
     if (mode === 'title') syncTitle(s);
     else syncRace(s);
+    api.weatherOn = !!(weather && weather.sync(weatherId, weatherQ, camera));
     batch.update(lastDt);
     lastDt = 0;
     renderer.render(scene, camera);
@@ -133,9 +150,18 @@ try {
     return true;
   };
 
-  api.dust = function (x, y) {
+  /** Пыль / снег / вода из-под колёс. kind: dust | snow | water */
+  api.dust = function (x, y, ang, impact, kind) {
     if (!api.ok) return false;
-    pools.dust.fire(x, y);
+    let k = kind;
+    if (typeof impact === 'string') k = impact;
+    const pool = k === 'snow' && pools.snow
+      ? pools.snow
+      : k === 'water' && pools.water
+        ? pools.water
+        : pools.dust;
+    pool.fire(x, y, ang);
+    if (typeof impact === 'number' && impact > 0.7) pool.fire(x, y, ang);
     return true;
   };
 

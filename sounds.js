@@ -1,29 +1,46 @@
 ////////////////////////////////////////////////////////
 //
 // Каталог звуковых эффектов.
-// Менять пути только в этом файле.
-// Сначала локальный файл (GitHub Pages), затем запасной URL.
+// Файлы в assets/sounds/FX/ — те же имена, что раньше на CDN.
+// Если локального клипа нет, загрузчик берёт тот же путь с хоста.
 // Играть: SFX.play('ключ')
 //
 ////////////////////////////////////////////////////////
 
-/** Карта id → один путь или список (первый рабочий). */
+/** Корень локальных эффектов. */
+var SFX_DIR = 'assets/sounds/FX/';
+
+/** Сброс кэша браузера для запасного URL на хосте. */
+var SFX_CDN_VER = '20260904-sfx';
+
+/** Локальный путь клипа: money.mp3 → assets/sounds/FX/money.mp3. */
+function sfxFile(path) {
+ return SFX_DIR + path;
+}
+
+/** Запасной URL на CDN с тем же относительным путём. */
+function sfxCdn(path) {
+ return 'https://ikrinka24.com/ROCK/sounds/FX/' + path + '?v=' + SFX_CDN_VER;
+}
+
+/** Локальный URL и запасной CDN — в десктопе только диск. */
+function sfxSources(url) {
+ const u = String(url || '');
+ if (!u) return [];
+ if (u.indexOf(SFX_DIR) !== 0) return [u];
+ const path = u.slice(SFX_DIR.length);
+ if (typeof window !== 'undefined' && window.__RNR_DESKTOP__) return [u];
+ return [u, sfxCdn(path)];
+}
+
+/** Карта id → локальный путь или список путей. */
 var SFX_TRACKS = {
  // Поднятие денег на трассе
- money: [
-  'assets/sounds/FX/money.mp3',
-  'https://ikrinka24.com/ROCK/sounds/FX/money.mp3'
- ],
+ money: sfxFile('money.mp3'),
  // Любая покупка (машина, тренажёрка, скилл)
- buy: [
-  'assets/sounds/FX/CashBay.mp3',
-  'https://ikrinka24.com/ROCK/sounds/FX/CashBay.mp3'
- ],
+ buy: sfxFile('CashBay.mp3'),
  // Любая покупка тюнинга авто
- tune: [
-  'assets/sounds/FX/carPay.wav',
-  'https://ikrinka24.com/ROCK/sounds/FX/carPay.wav'
- ]
+ tune: sfxFile('carPay.wav')
 };
 
 ////////////////////////////////////////////////////////
@@ -38,11 +55,19 @@ var SFX = {
   if(typeof settings==='undefined'||!settings||!settings.sound)return null;
   return settings.sound;
  },
- /** Список URL для ключа. */
+ /** Список URL для ключа: локальный файл, затем хост. */
  _urls: function(id){
   const v=SFX_TRACKS[id];
   if(!v)return [];
-  return (Array.isArray(v)?v:[v]).filter(Boolean);
+  const list=(Array.isArray(v)?v:[v]).filter(Boolean);
+  const out=[];
+  for(let i=0;i<list.length;i++){
+   const src=(typeof sfxSources==='function')?sfxSources(list[i]):[list[i]];
+   for(let j=0;j<src.length;j++){
+    if(src[j])out.push(src[j]);
+   }
+  }
+  return out;
  },
  /** Прогреть все клипы из каталога. */
  preload: function(){
@@ -54,7 +79,7 @@ var SFX = {
    const a=new Audio();
    a.preload='auto';
    a.referrerPolicy='no-referrer';
-   a.src=urls[0];
+   a.src=(typeof bootMediaSrc==='function')?bootMediaSrc(urls[0]):urls[0];
    this._cache[id]=a;
   }
  },
