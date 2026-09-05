@@ -15,6 +15,15 @@
   src: url("../assets/fonts/montserrat/cyrillic-400-normal.woff2") format("woff2");
   font-weight: 400;
   font-display: swap;
+  unicode-range: U+0400-04FF, U+0500-052F;
+}
+
+@font-face {
+  font-family: Montserrat;
+  src: url("../assets/fonts/montserrat/latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0000-00FF;
 }
 
 @font-face {
@@ -22,6 +31,15 @@
   src: url("../assets/fonts/montserrat/cyrillic-700-normal.woff2") format("woff2");
   font-weight: 700;
   font-display: swap;
+  unicode-range: U+0400-04FF, U+0500-052F;
+}
+
+@font-face {
+  font-family: Montserrat;
+  src: url("../assets/fonts/montserrat/latin-700-normal.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+  unicode-range: U+0000-00FF;
 }
 
 :root {
@@ -54,8 +72,8 @@ body::before {
   pointer-events: none;
   position: fixed;
   inset: 0;
-  z-index: 40;
-  opacity: 0.09;
+  z-index: 1;
+  opacity: 0.07;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
@@ -79,7 +97,7 @@ a { color: var(--gold); }
 
 .kicker {
   margin: 0 0 0.7rem;
-  font-family: Bender, Impact, sans-serif;
+  font-family: Bender, Impact, "Arial Black", sans-serif;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--gold);
@@ -87,7 +105,7 @@ a { color: var(--gold); }
 }
 
 h1, h2, h3, .nav__brand span, .btn {
-  font-family: Bender, Impact, sans-serif;
+  font-family: Bender, Impact, "Arial Black", sans-serif;
   letter-spacing: 0.02em;
 }
 
@@ -97,7 +115,7 @@ h1, h2 {
   font-weight: 900;
 }
 
-h1 { font-size: clamp(2.2rem, 5.4vw, 5.2rem); margin: 0 0 1rem; }
+h1 { font-size: clamp(1.7rem, 4.2vw, 3.8rem); margin: 0 0 1rem; }
 h2 { font-size: clamp(1.8rem, 3.6vw, 3.4rem); margin: 0; }
 h3 { font-size: 1.35rem; margin: 0 0 0.5rem; text-transform: uppercase; }
 
@@ -141,19 +159,19 @@ h3 { font-size: 1.35rem; margin: 0 0 0.5rem; text-transform: uppercase; }
 .btn--sm { min-height: 42px; padding: 0.45rem 1rem; font-size: 0.85rem; }
 .btn--lg { min-height: 56px; padding: 0.9rem 1.8rem; font-size: 1.05rem; }
 
-.age[hidden] { display: none !important; }
-
 .age {
+  display: none;
   position: fixed;
   inset: 0;
   z-index: 70;
-  display: grid;
   place-items: center;
   padding: 1.5rem;
   background:
     radial-gradient(ellipse at 30% 20%, rgba(196, 90, 24, 0.35), transparent 50%),
     rgba(4, 3, 6, 0.94);
 }
+
+.age.is-open { display: grid; }
 
 .age__card {
   max-width: 38rem;
@@ -195,7 +213,7 @@ h3 { font-size: 1.35rem; margin: 0 0 0.5rem; text-transform: uppercase; }
 }
 
 .nav__links a {
-  color: var(--mute);
+  color: #e8dcc8;
   text-decoration: none;
   text-transform: uppercase;
   font-size: 0.78rem;
@@ -206,40 +224,41 @@ h3 { font-size: 1.35rem; margin: 0 0 0.5rem; text-transform: uppercase; }
 
 .hero {
   position: relative;
-  min-height: 100vh;
-  display: grid;
-  align-items: end;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   overflow: hidden;
 }
 
 .hero__art {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 28%;
+  z-index: 0;
+  background: #07050a url("../assets/image/press/hero.jpg") center 28% / cover no-repeat;
 }
 
 .hero__veil {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background:
-    linear-gradient(90deg, rgba(7, 5, 10, 0.92) 0%, rgba(7, 5, 10, 0.55) 42%, transparent 70%),
-    linear-gradient(180deg, transparent 40%, rgba(7, 5, 10, 0.95) 100%),
-    radial-gradient(ellipse at 70% 40%, transparent 20%, rgba(0, 0, 0, 0.45) 100%);
+    linear-gradient(90deg, rgba(7, 5, 10, 0.88) 0%, rgba(7, 5, 10, 0.42) 48%, transparent 74%),
+    linear-gradient(180deg, rgba(7, 5, 10, 0.35) 0%, transparent 28%, rgba(7, 5, 10, 0.92) 100%);
 }
 
 .hero__copy {
   position: relative;
   z-index: 2;
-  padding: 8rem var(--pad) 4rem;
+  padding: 6rem var(--pad) 2.4rem;
   max-width: 46rem;
 }
 
 .hero__logo {
-  width: min(28rem, 78vw);
-  margin: 0 0 1.2rem;
+  width: min(22rem, 72vw);
+  max-height: 22vh;
+  object-fit: contain;
+  margin: 0 0 1rem;
   filter: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.7));
 }
 
@@ -268,7 +287,7 @@ h3 { font-size: 1.35rem; margin: 0 0 0.5rem; text-transform: uppercase; }
   border: 3px solid var(--gold);
   border-radius: 50%;
   color: var(--gold);
-  font-family: Bender, Impact, sans-serif;
+  font-family: Bender, Impact, "Arial Black", sans-serif;
   font-size: 1.6rem;
   transform: rotate(-12deg);
   background: rgba(0, 0, 0, 0.35);
@@ -276,18 +295,18 @@ h3 { font-size: 1.35rem; margin: 0 0 0.5rem; text-transform: uppercase; }
 
 .tape {
   overflow: hidden;
-  border-block: 1px solid var(--line);
-  background: repeating-linear-gradient(-45deg, #ffd23f, #ffd23f 12px, #111 12px, #111 24px);
+  border-block: 7px solid transparent;
+  border-image: repeating-linear-gradient(-45deg, #ffd23f 0 8px, #111 8px 16px) 7;
+  background: #0a0708;
 }
 
 .tape__track {
   display: flex;
   gap: 2.4rem;
   padding: 0.7rem 0;
-  background: #0a0708;
   color: var(--gold);
   text-transform: uppercase;
-  font-family: Bender, Impact, sans-serif;
+  font-family: Bender, Impact, "Arial Black", sans-serif;
   letter-spacing: 0.14em;
   white-space: nowrap;
   animation: marquee 32s linear infinite;

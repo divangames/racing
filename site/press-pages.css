@@ -19,14 +19,14 @@
   margin: 0;
   border: 1px solid var(--line);
   overflow: hidden;
-  min-height: min(72vh, 46rem);
   background: #000;
 }
 
 .world__frame img {
   width: 100%;
-  height: min(72vh, 46rem);
+  height: min(62vh, 38rem);
   object-fit: cover;
+  object-position: center 30%;
 }
 
 .caption {
@@ -138,15 +138,7 @@
   object-position: bottom center;
 }
 
-.dossier__car {
-  position: absolute;
-  right: 4%;
-  bottom: 8%;
-  width: 58% !important;
-  height: auto !important;
-  filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.7));
-  transform: rotate(-8deg);
-}
+.dossier__car { display: none; }
 
 .dossier__text { padding: 2rem 1.6rem 1.6rem; align-self: center; }
 .dossier__text p { color: var(--mute); }
