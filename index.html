@@ -1,18 +1,202 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="0; url=rnr.html">
-<link rel="canonical" href="rnr.html">
-<link rel="icon" href="assets/image/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" href="assets/image/favicon-32.png" sizes="32x32">
-<link rel="icon" type="image/webp" href="assets/image/favicon.webp">
-<link rel="apple-touch-icon" href="assets/image/apple-touch-icon.png">
-<title>РОК-Н-РОЛЛ ГОНКИ</title>
-<script>location.replace('rnr.html');</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Колесница войны — смертельная гонка Divan Games</title>
+  <meta name="description" content="Колесница войны: 21+ боевые гонки сверху, комикс-кампания Чёрного Пояса, гараж, оружейка и лаборатория. Скачать клиент для Windows.">
+  <meta name="theme-color" content="#07050a">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Колесница войны">
+  <meta property="og:description" content="Приз не нужен. Нужен доступ к серверу. Смертельная арена, семья и машины-оружие.">
+  <meta property="og:image" content="assets/image/press/og.jpg">
+  <meta property="og:url" content="https://divangames.github.io/racing/">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://divangames.github.io/racing/">
+  <link rel="icon" href="assets/image/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/image/favicon-32.png" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/image/apple-touch-icon.png">
+  <link rel="stylesheet" href="site/press.css">
+  <link rel="stylesheet" href="site/press-pages.css">
 </head>
-<body style="margin:0;background:#050409;color:#ffd23f;font-family:Impact,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh">
-<p><a href="rnr.html" style="color:#ffd23f">Открыть игру</a></p>
+<body>
+  <a class="skip" href="#главное">К содержанию</a>
+
+  <div class="age" id="age" hidden>
+    <div class="age__card" role="dialog" aria-labelledby="age-title" aria-modal="true">
+      <p class="kicker">Чёрный Пояс · 21+</p>
+      <h2 id="age-title">Это не чемпионат.<br>Это заезд, после которого тебя либо выносят, либо ставят на табло.</h2>
+      <p>Жёсткое насилие, мат, война, интим совершеннолетних. Если тебе нет 21 — ворота закрыты.</p>
+      <div class="age__row">
+        <button type="button" class="btn btn--gold" id="age-yes">Мне есть 21. Открыть ворота</button>
+        <a class="btn btn--ghost" href="https://www.google.com">Уйти</a>
+      </div>
+    </div>
+  </div>
+
+  <header class="nav">
+    <a class="nav__brand" href="#hero">
+      <img src="assets/image/favicon-32.png" width="32" height="32" alt="">
+      <span>Колесница войны</span>
+    </a>
+    <nav class="nav__links" aria-label="Разделы">
+      <a href="#мир">Мир</a>
+      <a href="#гонщики">Гонщики</a>
+      <a href="#бой">Бой</a>
+      <a href="#кадры">Кадры</a>
+      <a href="#скачать">Скачать</a>
+    </nav>
+    <a class="btn btn--gold btn--sm" href="https://disk.yandex.ru/d/OBuYDJX8-evbAg" rel="noopener">Скачать</a>
+  </header>
+
+  <main id="главное">
+    <section class="hero" id="hero">
+      <img class="hero__art" src="assets/image/launcher-hero.webp" alt="Команда на свалке: рок, огонь и машины.">
+      <div class="hero__veil"></div>
+      <div class="hero__copy">
+        <p class="kicker">Divan Games · Windows · 21+</p>
+        <img class="hero__logo" src="assets/image/game-logo.webp" alt="Колесница войны">
+        <h1>Смертельная гонка,<br>где финиш — это ещё дышать.</h1>
+        <p class="hero__lead">Чёрный Пояс притворяется мёртвым. Под асфальтом гудит арена. Пушки на капоте, хлам вместо кузова, семья на стартовой решётке. Приз — отговорка. Нужен сервер.</p>
+        <div class="hero__cta">
+          <a class="btn btn--gold btn--lg" href="https://disk.yandex.ru/d/OBuYDJX8-evbAg" rel="noopener">Скачать игру</a>
+          <a class="btn btn--ghost btn--lg" href="rnr.html">Играть в браузере</a>
+        </div>
+        <p class="hero__meta">Клиент Windows · Яндекс Диск · браузерный заезд на этой же странице</p>
+      </div>
+      <div class="hero__stamp" aria-hidden="true">21+</div>
+    </section>
+
+    <div class="tape" aria-hidden="true">
+      <div class="tape__track">
+        <span>Пушки на капоте</span><span>Хлам вместо кузова</span><span>Финиш — когда ты ещё дышишь</span>
+        <span>Участие добровольное</span><span>Чёрный Пояс</span><span>Колесница войны</span>
+        <span>Пушки на капоте</span><span>Хлам вместо кузова</span><span>Финиш — когда ты ещё дышишь</span>
+        <span>Участие добровольное</span><span>Чёрный Пояс</span><span>Колесница войны</span>
+      </div>
+    </div>
+
+    <section class="world" id="мир">
+      <header class="sec">
+        <p class="kicker">Пролог</p>
+        <h2>Город, который не спит.<br>Он притворяется мёртвым.</h2>
+      </header>
+      <div class="world__stage">
+        <figure class="world__frame">
+          <img id="world-art" src="assets/data/cats/00/01.webp" alt="Кадр пролога Чёрного Пояса">
+          <figcaption class="caption" id="world-text"></figcaption>
+        </figure>
+        <ol class="world__dots" id="world-dots"></ol>
+      </div>
+    </section>
+
+    <section class="roster" id="гонщики">
+      <header class="sec">
+        <p class="kicker">Кампания</p>
+        <h2>Не пилоты. Семья, которую арена собрала в одну мясорубку.</h2>
+      </header>
+      <div class="roster__layout">
+        <aside class="roster__list" id="pilot-list" role="tablist" aria-label="Гонщики"></aside>
+        <article class="dossier" id="dossier">
+          <div class="dossier__hero">
+            <img id="dossier-full" alt="">
+            <img class="dossier__car" id="dossier-car" alt="">
+          </div>
+          <div class="dossier__text">
+            <p class="kicker" id="dossier-role"></p>
+            <h3 id="dossier-name"></h3>
+            <p id="dossier-card"></p>
+            <blockquote id="dossier-quote"></blockquote>
+          </div>
+        </article>
+      </div>
+      <div class="comics" id="comics"></div>
+    </section>
+
+    <section class="fight" id="бой">
+      <header class="sec">
+        <p class="kicker">Боевой контур</p>
+        <h2>Это не симрейс.<br>Это родео с пушками.</h2>
+      </header>
+      <ul class="fight__grid">
+        <li>
+          <span>01</span>
+          <h3>Ствол · нитро · ульта</h3>
+          <p>Z — оружие, X — нитро или прыжок, C — ульта. У каждого стока свой кит: таран, купол, мины, ненависть.</p>
+        </li>
+        <li>
+          <span>02</span>
+          <h3>Карьера на годы</h3>
+          <p>Пять единиц хлама с порога. V8 не купить за вечер. Ставки с кассы, серия побед, реванш, который не двигает календарь.</p>
+        </li>
+        <li>
+          <span>03</span>
+          <h3>Гараж и оружейка</h3>
+          <p>Броня слоями, подвеска, шины, ствол и ульта выбранной машины. Машина — персонаж, не скин.</p>
+        </li>
+        <li>
+          <span>04</span>
+          <h3>Лаборатория</h3>
+          <p>Свой кузов и своя петля: сплайн, мины, трамплины, погода, паки объектов. Ctrl+S пишет на диск.</p>
+        </li>
+        <li>
+          <span>05</span>
+          <h3>Погода как оружие</h3>
+          <p>Дождь, снег, песчаная буря, извержение. Из-под колёс — брызги и снег. Молния бьёт по холсту.</p>
+        </li>
+        <li>
+          <span>06</span>
+          <h3>Комикс, не катсцена</h3>
+          <p>Семь кадров пролога и интро каждого гонщика. Сюжет важнее экшена: кто послал отряд в ловушку.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="shots" id="кадры">
+      <header class="sec">
+        <p class="kicker">Эфир</p>
+        <h2>Вид сверху. Кровь и телеметрия в одном кадре.</h2>
+      </header>
+      <div class="shots__grid">
+        <figure>
+          <img src="assets/image/press/combat-race.png" alt="Боевой заезд Медведя в песчаной буре">
+          <figcaption>Песчаная буря. Место на табло ещё не приговор.</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/image/press/race.png" alt="Полигон с кокпитом и боевым контуром">
+          <figcaption>Полигон лаборатории. Нитро, ствол, ульта.</figcaption>
+        </figure>
+        <figure>
+          <img src="assets/image/press/lab.png" alt="Редактор трасс Лаборатория">
+          <figcaption>Лаборатория: карта, биом, мины, тест заезда.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="invite" id="скачать">
+      <div class="invite__card">
+        <p class="kicker">Приглашение было коротким</p>
+        <h2>Участие добровольное.<br>Как прыжок, когда пол уже ушёл.</h2>
+        <p>Скачай клиент с Яндекс Диска. Или открой браузерный заезд прямо здесь — тот же Чёрный Пояс, без установщика.</p>
+        <div class="hero__cta">
+          <a class="btn btn--gold btn--lg" href="https://disk.yandex.ru/d/OBuYDJX8-evbAg" rel="noopener">Скачать с Диска</a>
+          <a class="btn btn--ghost btn--lg" href="rnr.html">Открыть в браузере</a>
+        </div>
+        <ul class="invite__spec">
+          <li>Windows desktop</li>
+          <li>Офлайн, без аккаунта</li>
+          <li>WASD · Пробел · Z / X / C</li>
+          <li>Рейтинг 21+</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Divan Games · Колесница войны · не чемпионат, а арена</p>
+    <p><a href="https://github.com/divangames/racing">Исходники</a> · <a href="rnr.html">Игра</a></p>
+  </footer>
+
+  <script src="site/press.js" defer></script>
 </body>
 </html>
