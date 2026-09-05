@@ -4,14 +4,14 @@
 //
 ////////////////////////////////////////////////////////
 
-const WORLD = [
-  { img: "assets/data/players/01/comics/1.png", text: "Чёрный Пояс не спит. Он притворяется мёртвым. Заводы давно погасли, но под асфальтом ещё гудит тепло." },
-  { img: "assets/data/players/02/comics/1.png", text: "Говорят, в старых тоннелях есть круг, куда не пускают просто так. «Колесница войны». Имя как шутка — пока не увидишь ворота." },
-  { img: "assets/data/players/03/comics/1.png", text: "Это не чемпионат. Пушки на капоте. Хлам вместо кузова. Финиш — когда ты ещё дышишь, а кто-то уже нет." },
-  { img: "assets/data/players/04/comics/1.png", text: "Наверху ставят деньги на то, как красиво ты сгоришь. Военные делают вид, что этого места нет." },
-  { img: "assets/data/players/01/comics/5.png", text: "Арена читает не скорость. Страх. Долги. Того, кого ты не сможешь добить." },
-  { img: "assets/data/players/06/comics/5.png", text: "Пропуск приходит без отправителя. «Участие добровольное». Ворота закрываются за спиной." },
-  { img: "assets/data/players/01/comics/7.png", text: "Свет на решётке. Мотор уже тёплый. Садись. Газ. Посмотрим, зачем тебя сюда пустили." }
+const CATS = [
+  { img: "assets/data/cats/00/01.webp", text: "Чёрный Пояс не спит. Он притворяется мёртвым. Заводы давно погасли, но под асфальтом ещё гудит тепло." },
+  { img: "assets/data/cats/00/02.webp", text: "В старых тоннелях есть круг, куда не пускают просто так. «Колесница войны». Имя как шутка — пока не увидишь ворота." },
+  { img: "assets/data/cats/00/03.webp", text: "Это не чемпионат. Пушки на капоте. Хлам вместо кузова. Финиш — когда ты ещё дышишь, а кто-то уже нет." },
+  { img: "assets/data/cats/00/04.webp", text: "Наверху ставят деньги на то, как красиво ты сгоришь. Военные делают вид, что этого места нет." },
+  { img: "assets/data/cats/00/05.webp", text: "Арена читает не скорость. Страх. Долги. Того, кого ты не сможешь добить." },
+  { img: "assets/data/cats/00/06.webp", text: "Пропуск приходит без отправителя. «Участие добровольное». Ворота закрываются за спиной." },
+  { img: "assets/data/cats/00/07.webp", text: "Свет на решётке. Мотор уже тёплый. Садись. Газ. Посмотрим, зачем тебя сюда пустили." }
 ];
 
 const PILOTS = [
@@ -101,15 +101,15 @@ function setupWorld() {
   let timer;
 
   const paint = (next) => {
-    index = (next + WORLD.length) % WORLD.length;
-    art.src = WORLD[index].img;
-    text.textContent = WORLD[index].text;
+    index = (next + CATS.length) % CATS.length;
+    art.src = CATS[index].img;
+    text.textContent = CATS[index].text;
     [...dots.querySelectorAll("button")].forEach((btn, i) => {
       btn.classList.toggle("is-on", i === index);
     });
   };
 
-  WORLD.forEach((_, i) => {
+  CATS.forEach((_, i) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = String(i + 1).padStart(2, "0");
@@ -206,6 +206,28 @@ function setupRoster() {
   });
 }
 
+function setupShots() {
+  const reel = document.getElementById("shots-reel");
+  if (!reel) return;
+  CATS.forEach((scene, i) => {
+    const figure = document.createElement("figure");
+    figure.className = "shot";
+    const img = document.createElement("img");
+    img.src = scene.img;
+    img.alt = `Кадр пролога ${String(i + 1).padStart(2, "0")}`;
+    img.loading = "lazy";
+    const cap = document.createElement("figcaption");
+    const num = document.createElement("span");
+    num.textContent = String(i + 1).padStart(2, "0");
+    const text = document.createElement("p");
+    text.textContent = scene.text;
+    cap.append(num, text);
+    figure.append(img, cap);
+    reel.append(figure);
+  });
+}
+
 setupAgeGate();
 setupWorld();
 setupRoster();
+setupShots();

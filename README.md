@@ -25,7 +25,7 @@
 - `assets/data/tracks/` — JSON петель (`index.json` + `id.json`). Текстуры: `Textures/biomes/`, `Textures/road/`, `Textures/objects/` (POST `/__save-texture`).
 - `tools/rnr-http.py` — HTTP на порту 8765: запись машин, трасс, текстур и ассетов
 - `tools/rnr-ensure-http.py` — живой GET `/rnr.html`; мёртвый python на порту снимается и сервер стартует заново
-- `index.html` — презентация игры на GitHub Pages (скачать клиент, сюжет, гонщики; браузерный заезд — `rnr.html`)
+- `index.html` — презентация игры на GitHub Pages (скачать клиент, сюжет, гонщики)
 - `music.js` — сам читает `assets/music/{main,change,garage,intro,racing}/`. Сколько MP3 в папке, столько треков; меню/гараж/гонка играют случайно. Интро — `01.mp3`… по номеру гонщика. Подпапка `old` не берётся.
 - `sounds.js` — эффекты (`money` / `buy` / `tune`) из `assets/sounds/FX/` (те же имена: `money.mp3`, `CashBay.mp3`, `carPay.wav`). Если файла нет — тот же путь с `ikrinka24.com`.
 - `assets/data/cars/NN/` — слот машины: `car.json`, кузов `NN.webp` (иначе `.png`), контур `NN_col.svg`, броня в `armor/NN_armor_1` … `_6`. Номера папок — слоты ассетов, не порядок в меню. Стартовый хлам: `12` Тазик, `13` Каблук, `14` Жезл, `15` Козёл, `16` Борт. В карусели сначала магазин по цене, затем личные: Медведь `01`, Ерш `08`, Бегемотик `09`, Башкир `07`, Янот `11` («Бричка»). Новая машина без `owner` встаёт в магазин по цене. Хитбокс в гонке — прямоугольник спрайта кузова (как рамка в лаборатории), не SVG. Тень — силуэт по альфе кузова без брони.
@@ -62,7 +62,7 @@
 
 https://divangames.github.io/racing/
 
-Презентация — корень. Браузерный заезд — `rnr.html`. Скачать Windows-клиент: [Яндекс Диск](https://disk.yandex.ru/d/OBuYDJX8-evbAg).
+Презентация — корень. Скачать Windows-клиент: [Яндекс Диск](https://disk.yandex.ru/d/OBuYDJX8-evbAg).
 
 ## Технологии
 
