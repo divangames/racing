@@ -15,6 +15,5 @@ Full Games/dist/
 Full Games/dist-content/
 Full Games/vendor-local/*.js
 
-# Сторонние треки и референсы не публикуются (авторские права).
-assets/music/
+# Черновики озвучки и исходники не публикуются.
 assets/Материалы/
