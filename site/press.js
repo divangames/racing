@@ -206,28 +206,6 @@ function setupRoster() {
   });
 }
 
-function setupShots() {
-  const reel = document.getElementById("shots-reel");
-  if (!reel) return;
-  CATS.forEach((scene, i) => {
-    const figure = document.createElement("figure");
-    figure.className = "shot";
-    const img = document.createElement("img");
-    img.src = scene.img;
-    img.alt = `Кадр пролога ${String(i + 1).padStart(2, "0")}`;
-    img.loading = "lazy";
-    const cap = document.createElement("figcaption");
-    const num = document.createElement("span");
-    num.textContent = String(i + 1).padStart(2, "0");
-    const text = document.createElement("p");
-    text.textContent = scene.text;
-    cap.append(num, text);
-    figure.append(img, cap);
-    reel.append(figure);
-  });
-}
-
 setupAgeGate();
 setupWorld();
 setupRoster();
-setupShots();

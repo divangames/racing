@@ -16,8 +16,9 @@
   <link rel="icon" href="assets/image/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" href="assets/image/favicon-32.png" sizes="32x32">
   <link rel="apple-touch-icon" href="assets/image/apple-touch-icon.png">
-  <link rel="stylesheet" href="site/press.css?v=4">
-  <link rel="stylesheet" href="site/press-pages.css?v=4">
+  <link rel="stylesheet" href="site/press.css?v=5">
+  <link rel="stylesheet" href="site/press-pages.css?v=5">
+  <link rel="stylesheet" href="site/press-plan.css?v=5">
 </head>
 <body>
   <a class="skip" href="#главное">К содержанию</a>
@@ -43,7 +44,8 @@
       <a href="#мир">Мир</a>
       <a href="#гонщики">Гонщики</a>
       <a href="#бой">Бой</a>
-      <a href="#кадры">Кадры</a>
+      <a href="#скрины">Скрины</a>
+      <a href="#план">План</a>
       <a href="#скачать">Скачать</a>
     </nav>
     <a class="btn btn--gold btn--sm" href="https://disk.yandex.ru/d/BHvSSYPNRSt8cQ" rel="noopener">Скачать</a>
@@ -151,12 +153,81 @@
       </ul>
     </section>
 
-    <section class="shots" id="кадры">
+    <section class="shots" id="скрины">
       <header class="sec">
-        <p class="kicker">Чёрный Пояс</p>
-        <h2>Семь кадров. Кратко — зачем тебя сюда пустили.</h2>
+        <p class="kicker">Эфир</p>
+        <h2>Вид сверху. Кровь и телеметрия в одном кадре.</h2>
       </header>
-      <div class="shots__reel" id="shots-reel"></div>
+      <div class="gallery">
+        <figure class="gallery__hero">
+          <img src="assets/image/press/combat-race.png" alt="Боевой заезд Медведя в песчаной буре">
+          <figcaption>
+            <span>01 · Заезд</span>
+            <p>Песчаная буря, сетка соперников, боевой контур. Место на табло ещё не приговор.</p>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="assets/image/press/race.png" alt="Полигон с кокпитом, нитро и ультой">
+          <figcaption>
+            <span>02 · Полигон</span>
+            <p>Кокпит, целостность корпуса, ствол / нитро / ульта.</p>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="assets/image/press/lab.png" alt="Редактор трасс Лаборатория">
+          <figcaption>
+            <span>03 · Лаборатория</span>
+            <p>Своя петля: биом, погода, мины, трамплины. Ctrl+S пишет на диск.</p>
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="plan" id="план">
+      <header class="sec">
+        <p class="kicker">Статус билда</p>
+        <h2>Что уже в арене — и что ещё ревёт за воротами.</h2>
+      </header>
+      <div class="plan__cols">
+        <article class="plan__now">
+          <p class="kicker">Уже в клиенте</p>
+          <ul class="done">
+            <li>Карьера: гараж → тренажёрка → ставка → гонка → награды</li>
+            <li>Реванш и выбор уже проеханной трассы после пяти побед</li>
+            <li>Призы 1–3 места, серия ×3 / ×5 / ×8, объяснение разблокировок</li>
+            <li>Стартовый хлам, средний класс, киты ствола и ульты на стоках</li>
+            <li>Оружейка: прокачка ствола и ульты любой машины</li>
+            <li>Лаборатория кузова и карты, паки объектов, Ctrl+S на диск</li>
+            <li>Погода по биому: дождь, снег, песчаная буря, извержение</li>
+            <li>Инерция, ручник, занос, посадка с пылью и подвеской</li>
+            <li>Миникарта, лидеры, личные рекорды, статистика после финиша</li>
+            <li>Комикс-пролог Чёрного Пояса и интро каждого гонщика</li>
+            <li>Windows-клиент, лаунчер, офлайн, без аккаунта</li>
+          </ul>
+        </article>
+        <div class="plan__track">
+          <article>
+            <span>01</span>
+            <h3>Следующая версия</h3>
+            <p>Новая трасса с характером — не ещё один овал. Чемпионат из нескольких этапов с общим зачётом. Слои повреждений на остальных кузовах.</p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Режимы</h3>
+            <p>Битва насмерть на арене. Тайм-атака с призраком. Выживание. Кубок из трёх гонок. Второй игрок на одной клавиатуре.</p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Гараж и арена</h3>
+            <p>Скины, винилы, декали. Характеры ИИ. Реплики в гонке. Босс дивизиона. Диктор — голосом, не только текстом.</p>
+          </article>
+          <article>
+            <span>04</span>
+            <h3>Дальше по горизонту</h3>
+            <p>Динамическая музыка на нитро. Steam. Экспорт сейва. Реплей круга. Прятать читы в публичном билде.</p>
+          </article>
+        </div>
+      </div>
     </section>
 
     <section class="invite" id="скачать">
@@ -182,6 +253,6 @@
     <p><a href="https://github.com/divangames/racing">Исходники</a></p>
   </footer>
 
-  <script src="site/press.js?v=4" defer></script>
+  <script src="site/press.js?v=5" defer></script>
 </body>
 </html>
