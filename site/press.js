@@ -78,12 +78,16 @@ const PILOTS = [
 function setupAgeGate() {
   const layer = document.getElementById("age");
   if (!layer) return;
-  if (sessionStorage.getItem("kv-age") === "1") {
+
+  const close = () => {
     layer.classList.remove("is-open");
-  }
+    layer.setAttribute("aria-hidden", "true");
+  };
+
+  if (sessionStorage.getItem("kv-age") === "1") close();
   document.getElementById("age-yes")?.addEventListener("click", () => {
     sessionStorage.setItem("kv-age", "1");
-    layer.classList.remove("is-open");
+    close();
   });
 }
 
