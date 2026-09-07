@@ -25,7 +25,7 @@ call npm run pack:game
 if errorlevel 1 goto :fail
 
 echo Проверяю содержимое архива: настройки авто и звуки ...
-node -e "const fs=require('fs'),p=require('path');const r=p.resolve('..'),c=p.join(r,'assets','data','cars'),s=p.join(r,'assets','sounds');const cars=fs.readdirSync(c).filter(n=>/^\d+$/.test(n)&&fs.existsSync(p.join(c,n,'car.json')));let wav=0;const walk=d=>{for(const e of fs.readdirSync(d,{withFileTypes:true})){const f=p.join(d,e.name);if(e.isDirectory())walk(f);else if(e.name.toLowerCase().endsWith('.wav'))wav++;}};walk(s);if(!cars.length||!wav)throw new Error('Не найдены car.json или WAV');console.log('Машин: '+cars.length+', WAV: '+wav);"
+node tools/verify-game-content.cjs
 if errorlevel 1 goto :fail
 
 echo Архив готов. Заливка на GitHub (без прокси VPN, HTTP/1.1, IPv4).
