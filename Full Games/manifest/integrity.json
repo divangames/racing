@@ -1,13 +1,13 @@
 {
   "id": "kolesnica-voyny",
-  "version": "0.2.2.3",
-  "created": "2026-09-07T17:27:04.361Z",
+  "version": "0.2.2.4",
+  "created": "2026-09-07T17:39:27.922Z",
   "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
   "files": [
     {
       "path": "rnr.html",
-      "size": 376197,
-      "sha256": "7ed592e2963eae3e3e22b9be25ff1845fbd8bb86e3a8121088d2daa28dfaca2a"
+      "size": 376312,
+      "sha256": "3ff13d8566484a2b3f315262832f5ff6fd486c8c2afef03bfe74be04f2b11135"
     },
     {
       "path": "career.js",
@@ -36,8 +36,8 @@
     },
     {
       "path": "car-audio-voice.js",
-      "size": 15906,
-      "sha256": "3d27a24ac17e335e35c433506bfa82326e4fdacc6a15425cc2ce9b1a7b68f623"
+      "size": 16324,
+      "sha256": "735d76b6b54b2c3dfd5e548aae26a11cd36625e866d369f042d7c6705703da40"
     },
     {
       "path": "car-tires.js",

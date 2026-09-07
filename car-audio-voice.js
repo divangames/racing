@@ -289,6 +289,11 @@ function carEngineKillSlot(slot) {
 function carEngineHtmlSrc(url) {
   const raw = (typeof bootMediaSrc === 'function') ? bootMediaSrc(url) : url;
   const slash = String(raw || url || '').replace(/\\/g, '/');
+  if (!/^blob:|^data:/i.test(slash)) {
+    try {
+      if (typeof location !== 'undefined' && location.href) return new URL(slash, location.href).href;
+    } catch (err) {}
+  }
   try {
     return encodeURI(slash);
   } catch (err) {
@@ -321,6 +326,7 @@ function carEnginePlayHtml(slot, url, loop, vol, rate) {
   el.volume = loud;
   try { el.playbackRate = pitch; } catch (err) {}
   el.src = carEngineHtmlSrc(url);
+  try { el.load(); } catch (err) {}
   el.onerror = function () {
     carEngineMarkMiss(url);
     carEngineShare.buf[url] = 'bad';
@@ -331,6 +337,11 @@ function carEnginePlayHtml(slot, url, loop, vol, rate) {
     slot.voice = null;
     slot.shot = false;
     try { if (slot.live) carEngineResumeSlot(slot); } catch (err) {}
+  };
+  el.oncanplay = function () {
+    if (!slot.voice || slot.voice.el !== el || !el.paused) return;
+    const retry = el.play();
+    if (retry && typeof retry.catch === 'function') retry.catch(function () {});
   };
   slot.voice = {src: el, gain: null, pan: null, url: url, loop: !!loop, el: el};
   slot.shot = !loop;

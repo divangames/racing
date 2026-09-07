@@ -124,5 +124,5 @@
     drawHudSkillOrb(c,x+w-30,y+48,22,'УЛЬТА',key('ult'),P.cdU,kitUltCd(P,ab.ult),C.gold,fx.ready[2]);
     c.restore();
   };
-  window.RnREngine={version:'0.2.2.3',particleCount:()=>particles.length};
+  window.RnREngine={version:'0.2.2.4',particleCount:()=>particles.length};
 })();
