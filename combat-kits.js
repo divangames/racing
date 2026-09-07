@@ -106,6 +106,16 @@ function kitMortarBoom(x,y,dmg,owner,rad){
 //
 ////////////////////////////////////////////////////////
 
+/** Выстрел из кита: семпл лаборатории или синтез. */
+function kitGunSound(r, kind) {
+  if (typeof R !== 'undefined' && R.demo) {
+    if (typeof playCarWeapon === 'function') playCarWeapon(r, kind || 'wep');
+    return;
+  }
+  if (typeof playCarWeapon === 'function' && playCarWeapon(r, kind || 'wep')) return;
+  if (r.isP || (typeof nearP === 'function' && nearP(r.x, r.y, 600))) sShoot();
+}
+
 /** Стрельба Z. */
 function fireWeapon(r){
  if(r.dead||r.cdW>0)return;
@@ -116,9 +126,9 @@ function fireWeapon(r){
   r.cdW=kitWepCd(r,ab);r.wepAmmo--;
   const a=r.ang,off=(Math.random()-.5)*0.14,dmg=kitWepDmg(r,ab);
   kitPushShot(r,a+off,980,.42,dmg);
-  if(vfxLive())RnRVfx.muzzle(r.x+Math.cos(a)*28,r.y+Math.sin(a)*28,a,'minigun');
-  if(r.wepAmmo<=0){r.wepOver=kitOverheat(r,ab);if(r.isP&&!R.demo)fl(r.x,r.y,'ПЕРЕГРЕВ','#ff9d2e');}
-  if(!R.demo&&(r.isP||nearP(r.x,r.y,600)))sShoot();
+  if (vfxLive()) RnRVfx.muzzle(r.x + Math.cos(a) * 28, r.y + Math.sin(a) * 28, a, 'minigun');
+  if (r.wepAmmo <= 0) { r.wepOver = kitOverheat(r, ab); if (r.isP && !R.demo) fl(r.x, r.y, 'ПЕРЕГРЕВ', '#ff9d2e'); }
+  kitGunSound(r, 'wep');
   return;
  }
  if(t==='gatling'){
@@ -129,7 +139,7 @@ function fireWeapon(r){
   kitPushShot(r,a+off,1020,.4,dmg);
   if(r.wepHeat>=1){r.wepOver=kitOverheat(r,ab);r.wepHeat=0;if(r.isP&&!R.demo)fl(r.x,r.y,'СТВОЛ КИПИТ','#ff9d2e');}
   if(vfxLive())RnRVfx.muzzle(r.x+Math.cos(a)*28,r.y+Math.sin(a)*28,a,'gatling');
-  if(!R.demo&&(r.isP||nearP(r.x,r.y,600)))sShoot();
+  kitGunSound(r,'wep');
   return;
  }
  if(t==='nails'&&!kitSliding(r)){
@@ -141,7 +151,11 @@ function fireWeapon(r){
  const a=r.ang,dmg=kitWepDmg(r,ab);
  const noise=r.blind>0?0.28:0;
  const lv=kitLvW(r);
- if(t==='fang'){
+ if(typeof fireStarterWeapon==='function'&&fireStarterWeapon(r,ab,t,a,dmg,noise,lv)){
+  /* стартовый хлам */
+ }else if(typeof fireMidWeapon==='function'&&fireMidWeapon(r,ab,t,a,dmg,noise,lv)){
+  /* средний класс */
+ }else if(t==='fang'){
   let close=1;
   for(const o of R.racers){
    if(o===r||o.dead)continue;
@@ -209,8 +223,8 @@ function fireWeapon(r){
  }else{
   kitPushShot(r,a+noise,900,.9,dmg);
  }
- if(vfxLive()&&t!=='saw'&&t!=='spikes'&&t!=='mine'&&t!=='hook')RnRVfx.muzzle(r.x+Math.cos(a)*26,r.y+Math.sin(a)*26,a,t);
- if(!R.demo&&(r.isP||nearP(r.x,r.y,600))&&t!=='hook')sShoot();
+ if(vfxLive()&&t!=='saw'&&t!=='spikes'&&t!=='mine'&&t!=='hook'&&t!=='crowbar'&&t!=='door'&&t!=='lamp')RnRVfx.muzzle(r.x+Math.cos(a)*26,r.y+Math.sin(a)*26,a,t);
+ if(t!=='hook'&&t!=='crowbar'&&t!=='door'&&t!=='lamp')kitGunSound(r,'wep');
 }
 
 ////////////////////////////////////////////////////////
@@ -264,7 +278,10 @@ function useUlt(r){
  else if(t==='haze'){r.haze=kitUltDur(r,3.2);r.hazeRad=kitUltRad(r,118);}
  else if(t==='bubble'){r.bubble=kitUltDur(r,ab.dur||4.5);R.shocks.push({x:r.x,y:r.y,r:10,maxR:70,t:.38});spark(r.x,r.y,'#35e0ff',16,200);}
  else if(t==='shove')kitShove(r,kitUltRad(r,ab.rad||92),false);
- swp('sine',1200,400,.2,.2);if(r.isP&&!R.demo)fl(r.x,r.y,ab.name+'!','#b478ff');
+ else if(typeof useMidUlt==='function'&&useMidUlt(r,ab,t,u)){/* средний класс */}
+ else if(typeof useStarterUlt==='function')useStarterUlt(r,ab,t,u);
+ if(typeof playCarWeapon==='function'&&playCarWeapon(r,'ult')){/* семпл ульты */}
+ else swp('sine',1200,400,.2,.2);if(r.isP&&!R.demo)fl(r.x,r.y,ab.name+'!','#b478ff');
 }
 
 ////////////////////////////////////////////////////////
@@ -287,6 +304,8 @@ function tickCarKits(r,dt){
    if(Math.hypot(o.x-r.x,o.y-r.y)<(r.hazeRad||118))o.blind=Math.max(o.blind||0,0.25);
   }
  }
+ if(typeof tickStarterRacer==='function')tickStarterRacer(r,dt);
+ if(typeof tickMidRacer==='function')tickMidRacer(r,dt);
 }
 
 /** Ползучие мины «Клетки». */
@@ -313,6 +332,7 @@ function kitRamOut(r){
  let m=1;
  if(r.car.idx===0)m=2;
  if(r.car.idx===4)m=3;
+ if(r.car.idx===17)m=1.22;
  if(r.dash>0)m*=1.15;
  if(r.berserk>0)m*=1.45;
  return m;
@@ -334,17 +354,21 @@ function kitGhost(r){return (r.ghost||0)>0;}
 function kitOnShotHit(s,victim){
  if(s.plasma)victim.slow=Math.max(victim.slow||0,1.35);
  if(s.mortar)kitMortarBoom(s.x,s.y,s.dmg,s.r,s.mrad);
+ if(typeof kitStarterShotHit==='function')kitStarterShotHit(s,victim);
+ if(typeof kitMidShotHit==='function')kitMidShotHit(s,victim);
 }
 
 /** Снаряд истёк. */
 function kitOnShotExpire(s){
  if(s.mortar)kitMortarBoom(s.x,s.y,s.dmg,s.r,s.mrad);
+ if(typeof kitStarterShotExpire==='function')kitStarterShotExpire(s);
+ if(typeof kitMidShotExpire==='function')kitMidShotExpire(s);
 }
 
 /** ИИ: когда жать оружие. */
 function kitAiWantsFire(r,bestT,bd){
  const t=carAbil(r.car.idx).weapon.type;
- if(t==='saw')return bestT&&bd<70;
+ if(t==='saw'||t==='crowbar'||t==='door')return bestT&&bd<70;
  if(t==='mine'||t==='spikes'){
   if(!bestT)return false;
   const ahead=Math.cos(r.ang)*(bestT.x-r.x)+Math.sin(r.ang)*(bestT.y-r.y);
@@ -363,5 +387,11 @@ function kitShotStyle(s){
  if(s.mortar)return{fill:'#ff6b2e',core:'#ffd23f',w:14,h:8};
  if(s.nails)return{fill:'#ff5db1',core:'#fff',w:10,h:2};
  if(s.fang)return{fill:'#d24a22',core:'#ffd23f',w:14,h:3};
+ if(s.can)return{fill:'#c45c28',core:'#ff9d2e',w:12,h:8};
+ if(s.baton)return{fill:'#c8a428',core:'#fff',w:18,h:3};
+ if(s.bolts)return{fill:'#d8c45a',core:'#fff',w:6,h:6};
+ if(s.meter)return{fill:'#e8c428',core:'#fff',w:12,h:4};
+ if(s.oilcan)return{fill:'#3a3020',core:'#6a5a38',w:12,h:8};
+ if(s.dart)return{fill:'#c42838',core:'#fff',w:10,h:3};
  return{fill:'#ffd23f',core:'#fff',w:16,h:4};
 }
