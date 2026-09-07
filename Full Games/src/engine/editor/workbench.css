@@ -1,0 +1,51 @@
+/* Единый тёмный интерфейс инструментов: контраст, акценты и видимый клавиатурный фокус. */
+:root {--bg:#0c121a;--panel:#131d28;--line:#2a3a49;--muted:#a1b0be;--text:#e9eff3;--cyan:#79dce6;--yellow:#f2c66d;--radius:6px;}
+body {background:radial-gradient(ellipse at 45% 0,#1a2b39,transparent 65%),var(--bg);}
+.app {padding:18px 20px;}
+.topbar {align-items:center;padding-bottom:16px;margin-bottom:16px;border-color:#344554;}
+.eyebrow {font-size:10px;letter-spacing:.17em;color:var(--cyan);}
+.title {font-size:25px;letter-spacing:-.04em;margin:5px 0 12px;}
+.app-tabs {gap:6px;}
+button,.tab {min-height:36px;transition:background .15s,border-color .15s;}
+button {background:#1a2936;border-color:#364958;}
+button:hover {background:#283d4c;border-color:#79dce6;}
+button:active {background:#344b5b;}
+button:focus-visible,input:focus-visible,select:focus-visible {outline:2px solid #f2c66d;outline-offset:3px;}
+button.primary {background:#79dce6;color:#07171f;border-color:#79dce6;}
+button.primary:hover {background:#a2f4fa;}
+.tab.is-on {color:#09171e;background:var(--cyan);border-color:var(--cyan);}
+.stage-card,.panel {box-shadow:0 12px 35px #0003;border-color:#2a3a49;}
+.stage-card {padding:14px;}
+#stage,#mapStage {height:clamp(240px,calc(100vh - 520px),520px);min-height:220px;}
+.panel {max-height:calc(100vh - 168px);}
+.stage-head {border-bottom:1px solid var(--line);padding-bottom:12px;}
+.stage-note {color:#b0bdc7;line-height:1.6;max-width:95ch;}
+.machine-name {color:#f2c66d;letter-spacing:.035em;}
+.section-title {color:#c5d6e3;letter-spacing:.09em;}
+.stage-foot {font-variant-numeric:tabular-nums;color:var(--cyan);padding:0;}
+.studio-actions {display:flex;flex-wrap:wrap;gap:8px;padding-top:8px;}
+.studio-summary {margin-top:6px;font-size:10px;font-weight:600;letter-spacing:.05em;color:var(--cyan);line-height:1.5;}
+.studio-summary[data-valid="false"] {color:#ff8876;}
+.studio-report {font-size:11px;line-height:1.7;color:var(--muted);margin-bottom:0;}
+input,select {background-color:#0c1620;border-color:#3c5060;}
+.hint {color:#aab9c6;}
+@media(max-width:1100px) {.app{padding:10px}.workspace{grid-template-columns:minmax(0,1fr) 300px}.stage-note{font-size:10px}.legend{display:none}}
+@media(max-width:760px) {.workspace{grid-template-columns:minmax(0,1fr)}.topbar{flex-wrap:wrap}.top-actions{justify-content:flex-start}.app{padding:8px}.panel{max-height:none}}
+@media(prefers-reduced-motion:reduce) {button{transition:none}}
+.sound-pack.is-on {border-color:var(--yellow);color:#f2c66d;}
+.sound-gun {background:radial-gradient(ellipse at 10% 0,rgba(255,107,74,.1),transparent 50%),#101820;border-color:#2a3a49;}
+/* Библиотека объектов занимает нижнюю строку окна и имеет собственную прокрутку. */
+@media(min-width:761px) {
+  .workspace-map {height:calc(100dvh - 150px);min-height:0;grid-template-rows:minmax(0,1fr) minmax(150px,23vh);}
+  .workspace-map .stage-card {display:flex;flex-direction:column;overflow:auto;}
+  .workspace-map .stage-head {flex:none;padding-bottom:6px;margin-bottom:8px;}
+  .workspace-map .map-stage-wrap {flex:1;min-height:150px;}
+  .workspace-map #mapStage {height:100%;min-height:0;}
+  .workspace-map .stage-tools,.workspace-map .studio-actions {flex:none;}
+  .workspace-map .panel {max-height:100%;}
+}
+.studio-help {margin-top:6px;color:var(--muted);font-size:11px;}
+.studio-help summary {cursor:pointer;padding:4px 0;}
+.studio-help summary:focus-visible {outline:2px solid var(--yellow);outline-offset:2px;}
+.studio-diagnostics {padding-bottom:12px;}
+.studio-report {margin-top:6px;}

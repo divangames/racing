@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Неформальные подписи мастера MSI. Схема WiX 4. -->
+<WixLocalization xmlns="http://wixtoolset.org/schemas/v4/wxl" Culture="ru-RU" Codepage="1251">
+  <String Id="WixUIBack">Назад</String>
+  <String Id="WixUINext">Дальше</String>
+  <String Id="WixUICancel">Отмена</String>
+  <String Id="WixUIFinish">Готово</String>
+  <String Id="WixUIRetry">Ещё раз</String>
+  <String Id="WixUIIgnore">Пофиг, дальше</String>
+  <String Id="WixUIYes">Да</String>
+  <String Id="WixUINo">Нет</String>
+
+  <String Id="WelcomeDlgTitle">{\WixUI_Font_Bigger}Ставим [ProductName]</String>
+  <String Id="WelcomeDlgDescription">Это лаунчер, не вся игра скопом. Сейчас просто положим программу на диск  -  гонки он сам докачает, когда его откроешь.</String>
+
+  <String Id="InstallDirDlgTitle">{\WixUI_Font_Title}Куда кладём</String>
+  <String Id="InstallDirDlgDescription">Выбери папку-корень. Внутри всё равно появится Divan Games\Колесница войны  -  это не отрезать, так задумано.</String>
+  <String Id="InstallDirDlgFolderLabel">Сюда:&amp;</String>
+  <String Id="InstallDirDlgChange">&amp;Обзор...</String>
+
+  <String Id="BrowseDlgTitle">{\WixUI_Font_Title}Ну, покажи диск</String>
+  <String Id="BrowseDlgDescription">Жмёшь папку, куда положить Divan Games. Игра окажется на уровень глубже.</String>
+  <String Id="BrowseDlgPathLabel">&amp;Папка:</String>
+  <String Id="BrowseDlgComboLabel">&amp;Взгляд:</String>
+
+  <String Id="VerifyReadyDlgInstallTitle">{\WixUI_Font_Title}Поехали?</String>
+  <String Id="VerifyReadyDlgInstallText">Путь глянь на всякий и жми «Дальше». Долго не думаем.</String>
+  <String Id="VerifyReadyDlgChangeTitle">{\WixUI_Font_Title}Поправить установку</String>
+  <String Id="VerifyReadyDlgChangeText">Ок, пересоберём состав. Ничего страшного.</String>
+  <String Id="VerifyReadyDlgRepairTitle">{\WixUI_Font_Title}Починить</String>
+  <String Id="VerifyReadyDlgRepairText">Перекинем файлы заново. Если лаунчер чудил  -  это как раз оно.</String>
+  <String Id="VerifyReadyDlgRemoveTitle">{\WixUI_Font_Title}Снести</String>
+  <String Id="VerifyReadyDlgRemoveText">Лаунчер с диска уйдёт. Сохранения в профиле Windows сами не трогаем.</String>
+
+  <String Id="ProgressDlgTitleInstalling">{\WixUI_Font_Title}Копируем</String>
+  <String Id="ProgressDlgTitleRemoving">{\WixUI_Font_Title}Стираем</String>
+  <String Id="ProgressDlgTitleRepairing">{\WixUI_Font_Title}Чиним</String>
+  <String Id="ProgressDlgTitleChanging">{\WixUI_Font_Title}Правим</String>
+  <String Id="ProgressDlgTextInstalling">Можно отойти за чаем. Долго не будет.</String>
+  <String Id="ProgressDlgTextRemoving">Сейчас выкинем лаунчер с диска.</String>
+  <String Id="ProgressDlgTextRepairing">Перекладываем файлы на место.</String>
+  <String Id="ProgressDlgTextChanging">Подкручиваем установку.</String>
+
+  <String Id="ExitDialogTitle">{\WixUI_Font_Bigger}Готово</String>
+  <String Id="ExitDialogText">Ярлык «Колесница Войны» уже должен быть на рабочем столе. Открыл  -  дальше лаунчер сам разберётся с игрой.</String>
+  <String Id="ExitDialogDescription">Если ярлыка не видно, поищи в меню «Пуск» -> Divan Games.</String>
+
+  <String Id="FatalErrorTitle">{\WixUI_Font_Bigger}Сломалось</String>
+  <String Id="FatalErrorDescription">Установщик споткнулся. Закрой игру и антивирус на минуту, потом попробуй ещё раз.</String>
+  <String Id="FatalErrorText">Файлы на диск не легли. Ничего страшного  -  просто запусти MSI снова.</String>
+
+  <String Id="UserExitTitle">{\WixUI_Font_Bigger}Ок, не ставим</String>
+  <String Id="UserExitDescription">Ничего не записали. Захочешь  -  запусти установщик ещё раз.</String>
+  <String Id="UserExitText">Можно просто закрыть это окно.</String>
+
+  <String Id="CancelDlgTitle">{\WixUI_Font_Title}Стоп?</String>
+  <String Id="CancelDlgText">Прервать установку? Уже скопированное лучше не оставлять на полпути.</String>
+  <String Id="CancelDlgDescription">Да  -  выходим. Нет  -  продолжаем как ни в чём не бывало.</String>
+
+  <String Id="PrepareDlgTitle">{\WixUI_Font_Bigger}Секунду</String>
+  <String Id="PrepareDlgDescription">Считаем, сколько места нужно.</String>
+  <String Id="WaitForCostingDlg">Ещё чуть-чуть, прикидываем диск...</String>
+
+  <String Id="FilesInUseTitle">{\WixUI_Font_Title}Кто-то держит файлы</String>
+  <String Id="FilesInUseDescription">Закрой Колесницу войны и лаунчер, если они открыты  -  и жми «Ещё раз».</String>
+  <String Id="FilesInUseText">Вот кто мешает:</String>
+
+  <String Id="ErrorDlgTitle">Ошибка</String>
+  <String Id="DiskCostDlgTitle">{\WixUI_Font_Title}Место на диске</String>
+  <String Id="DiskCostDlgDescription">Глянь, хватит ли гигабайт. Лаунчер лёгкий, игра качнётся потом.</String>
+  <String Id="DiskCostDlgVolumeList">Тома</String>
+  <String Id="DiskCostDlgAvailable">Свободно</String>
+  <String Id="DiskCostDlgRequired">Нужно</String>
+  <String Id="DiskCostDlgDifference">Остаток</String>
+  <String Id="OutOfDiskDlgTitle">{\WixUI_Font_Title}Диск забит</String>
+  <String Id="OutOfDiskDlgDescription">Почисти место или поставь на другой диск.</String>
+  <String Id="OutOfDiskDlgText">Сюда лаунчер не влезет.</String>
+
+  <String Id="MaintenanceWelcomeDlgTitle">{\WixUI_Font_Bigger}Лаунчер уже стоит</String>
+  <String Id="MaintenanceWelcomeDlgDescription">Можно починить файлы, снести программу или ничего не трогать.</String>
+  <String Id="MaintenanceTypeDlgTitle">{\WixUI_Font_Title}Что делаем</String>
+  <String Id="MaintenanceTypeDlgDescription">Починить  -  перекинуть файлы. Снести  -  убрать лаунчер. Изменить  -  редко нужно.</String>
+  <String Id="MaintenanceTypeDlgRepair">&amp;Починить</String>
+  <String Id="MaintenanceTypeDlgRemove">&amp;Снести</String>
+  <String Id="MaintenanceTypeDlgChange">&amp;Изменить</String>
+
+  <String Id="InstallScopeDlgTitle">{\WixUI_Font_Title}Для кого</String>
+  <String Id="InstallScopeDlgDescription">Обычный вариант  -  для всех на этом компьютере, в C:\games.</String>
+  <String Id="InstallScopeDlgPerMachine">&amp;Для всех здесь</String>
+  <String Id="InstallScopeDlgPerUser">Только &amp;мне</String>
+  <String Id="InstallScopeDlgPerMachineDescription">Папка C:\games\Divan Games\Колесница войны. Нужны права админа  -  это нормально.</String>
+  <String Id="InstallScopeDlgPerUserDescription">В твой профиль. Другие учётки лаунчер не увидят.</String>
+</WixLocalization>

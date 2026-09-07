@@ -40,6 +40,7 @@ const CODE_DIRS = ['editor', 'vfx', 'vendor'];
 const ASSET_DIRS = [
   'assets/data',
   'assets/fonts',
+  'assets/HUD',
   'assets/image',
   'assets/machines',
   'assets/sounds',
@@ -209,10 +210,6 @@ function listContentMembers(gameRoot) {
   }
   for (const dir of [...CODE_DIRS, ...ASSET_DIRS]) {
     if (fs.existsSync(path.join(root, dir))) members.push(dir.replace(/\\/g, '/'));
-  }
-  for (let i = 0; i < CORE_SOUND_FILES.length; i++) {
-    const rel = CORE_SOUND_FILES[i];
-    if (fs.existsSync(path.join(root, rel)) && members.indexOf(rel) < 0) members.push(rel);
   }
   return members;
 }

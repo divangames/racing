@@ -1,0 +1,182 @@
+{
+  "rev": 1788704681209,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -18.5,
+      -10,
+      11,
+      8.274978356452024,
+      0,
+      1,
+      0
+    ],
+    [
+      -18.5,
+      10,
+      11,
+      8.274978356452024,
+      0,
+      1,
+      0
+    ],
+    [
+      17.5,
+      -10,
+      11,
+      8.274978356452024,
+      0,
+      1,
+      1
+    ],
+    [
+      17.5,
+      10,
+      11,
+      8.812851949621406,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -24,
+      -6,
+      8,
+      1.4
+    ],
+    [
+      -24,
+      6,
+      8,
+      1.4
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "wmtom29ik31x",
+      "type": "wheel",
+      "on": true,
+      "ref": 4
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "wmtom29ikpt",
+      "type": "wheel",
+      "on": true,
+      "ref": 5
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«КУПЕ»",
+    "owner": null,
+    "price": 2200,
+    "top": 1.04,
+    "acc": 1.02,
+    "crn": 0.98,
+    "hp": 84,
+    "col": "#c42838",
+    "col2": "#1a1a22",
+    "hov": false,
+    "traits": [
+      "ФАРА: конус слепит",
+      "ОБГОН: короткий рывок хода",
+      "СЛИК: +6% топ на асфальте"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "04 Nissan 180SX",
+    "wep": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

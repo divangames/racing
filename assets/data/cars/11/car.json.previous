@@ -1,0 +1,170 @@
+{
+  "rev": 1788704168833,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -18.2,
+      -11.6,
+      11,
+      6.850433317078123,
+      0,
+      1,
+      0
+    ],
+    [
+      -18.2,
+      11.6,
+      11,
+      6.850433317078123,
+      0,
+      1,
+      0
+    ],
+    [
+      17.5,
+      -11,
+      11,
+      8.812851949621406,
+      0,
+      1,
+      1
+    ],
+    [
+      17.5,
+      11,
+      11,
+      9.385687326346797,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -27.2,
+      -6.4,
+      10,
+      1.55
+    ],
+    [
+      -27.2,
+      6.4,
+      10,
+      1.55
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«БРИЧКА»",
+    "owner": 5,
+    "price": 0,
+    "top": 0.98,
+    "acc": 1.04,
+    "crn": 1.08,
+    "hp": 100,
+    "col": "#d45a1a",
+    "col2": "#2c2c30",
+    "hov": false,
+    "traits": [
+      "ПУЛЯ: стреляет прямо",
+      "ПЫЛЕСОС: тянет деньги, ремонт и ускорение рядом",
+      "КУПОЛ: ульта — щит 10 сек от всего урона"
+    ]
+  },
+  "owner": 5,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "04 Nissan 180SX",
+    "wep": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

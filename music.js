@@ -11,7 +11,7 @@
 var MUSIC_DIR = 'assets/music/';
 
 /** Папки плейлистов. */
-var MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing'];
+var MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load'];
 
 /** Расширения, которые берём из папки. */
 var MUSIC_EXTS = ['.mp3', '.ogg', '.wav', '.m4a'];
@@ -20,7 +20,7 @@ var MUSIC_EXTS = ['.mp3', '.ogg', '.wav', '.m4a'];
 var MUSIC_CDN_VER = '20260829-0355';
 
 /** Найденные треки: заполняет musicDiscoverAll. */
-var MUSIC_TRACKS = { main: [], change: [], garage: [], intro: [], racing: [] };
+var MUSIC_TRACKS = { main: [], change: [], garage: [], intro: [], racing: [], Load: [] };
 
 /** Состояние сканирования папок. */
 var MUSIC_SCAN = { done: false, promise: null };
@@ -95,8 +95,9 @@ function musicApplyNames(cat, names) {
   uniq.push(name);
  }
  uniq.sort(musicNameSort);
- if (cat === 'intro') MUSIC_TRACKS.intro = musicIntroList(uniq);
- else MUSIC_TRACKS[cat] = uniq.map(function (n) { return musicFile(cat + '/' + n); });
+  if (cat === 'intro') MUSIC_TRACKS.intro = musicIntroList(uniq);
+  else if (cat === 'Load') MUSIC_TRACKS.Load = uniq.map(function (n) { return musicFile('Load/' + n); });
+  else MUSIC_TRACKS[cat] = uniq.map(function (n) { return musicFile(cat + '/' + n); });
 }
 
 /** Разбор HTML-листинга папки (локальный Python). */

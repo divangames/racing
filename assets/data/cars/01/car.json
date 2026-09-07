@@ -1,5 +1,5 @@
 {
-  "rev": 1788595878492,
+  "rev": 1788703511374,
   "body": {
     "x": 0,
     "y": 0,
@@ -177,5 +177,18 @@
     "body",
     "armor",
     "guides"
-  ]
+  ],
+  "audio": {
+    "engine": "01 Nissan GTR",
+    "wep": {
+      "pack": "Country Rifle",
+      "near": "shoot.wav",
+      "far": "distant0.wav"
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
 }

@@ -1,0 +1,170 @@
+{
+  "rev": 1788704467465,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -16,
+      -10.5,
+      11,
+      10,
+      0,
+      1,
+      0
+    ],
+    [
+      -16,
+      10.5,
+      11,
+      10,
+      0,
+      1,
+      0
+    ],
+    [
+      16,
+      -10.5,
+      11,
+      10,
+      0,
+      1,
+      1
+    ],
+    [
+      16,
+      10.5,
+      11,
+      10,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -22,
+      -6.8,
+      8,
+      1.4
+    ],
+    [
+      -22,
+      6.8,
+      8,
+      1.4
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«КОЗЁЛ»",
+    "owner": null,
+    "price": 350,
+    "top": 0.82,
+    "acc": 0.8,
+    "crn": 0.94,
+    "hp": 75,
+    "col": "#5a7a42",
+    "col2": "#3a2818",
+    "hov": false,
+    "traits": [
+      "ПОДСТВОЛЬЕ: дробь только в упор",
+      "ЛЕБЁДКА: дёргает себя вперёд",
+      "КОЛЕЯ: чуть меньше штраф бездорожья"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "03 Dodge Viper SRT10",
+    "wep": {
+      "pack": "Country Rifle",
+      "near": "shoot.wav",
+      "far": "distant0.wav"
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

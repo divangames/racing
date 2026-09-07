@@ -1,0 +1,170 @@
+{
+  "rev": 1788703569182,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -18,
+      -11.5,
+      29.47733746419245,
+      21.733867661098817,
+      0,
+      0.5,
+      0
+    ],
+    [
+      -18,
+      11.5,
+      31.393364399364955,
+      21.733867661098817,
+      0,
+      0.5,
+      0
+    ],
+    [
+      13.5,
+      -10,
+      29.47733746419245,
+      20.407387475210157,
+      0,
+      0.5,
+      1
+    ],
+    [
+      13.5,
+      10,
+      29.47733746419245,
+      21.733867661098817,
+      0,
+      0.5,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -28.5,
+      -10,
+      10,
+      1.9
+    ],
+    [
+      -28,
+      10,
+      10,
+      1.9
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ШРЕДЕР»",
+    "owner": null,
+    "price": 7500,
+    "top": 1.16,
+    "acc": 1.12,
+    "crn": 1.12,
+    "hp": 105,
+    "col": "#37c94f",
+    "col2": "#1c7a2e",
+    "hov": false,
+    "traits": [
+      "ХВАТКА: +12% поворот",
+      "РЕГЕН: +2 корпуса в секунду",
+      "МИНЁР: мины мощнее и шире"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "05 Porsche 911 992 GT3RS 2022",
+    "wep": {
+      "pack": "Country Rifle",
+      "near": "shoot.wav",
+      "far": "distant0.wav"
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

@@ -1,0 +1,182 @@
+{
+  "rev": 1788704666956,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -17,
+      -11,
+      11,
+      8.080730038225452,
+      0,
+      1,
+      0
+    ],
+    [
+      -17,
+      11,
+      11,
+      8.080730038225452,
+      0,
+      1,
+      0
+    ],
+    [
+      18,
+      -10.5,
+      11,
+      8.080730038225452,
+      0,
+      1,
+      1
+    ],
+    [
+      18,
+      10.5,
+      11,
+      8.605977490710107,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -26,
+      -7,
+      9,
+      1.5
+    ],
+    [
+      -26,
+      7,
+      9,
+      1.5
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "wmtom29ik31x",
+      "type": "wheel",
+      "on": true,
+      "ref": 4
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "wmtom29ikpt",
+      "type": "wheel",
+      "on": true,
+      "ref": 5
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ПИКАП»",
+    "owner": null,
+    "price": 1800,
+    "top": 0.9,
+    "acc": 0.88,
+    "crn": 0.94,
+    "hp": 122,
+    "col": "#4a6a38",
+    "col2": "#2a2018",
+    "hov": false,
+    "traits": [
+      "МАСЛО: лужа сзади",
+      "ОТКИД: конус сбрасывает с носа",
+      "ГРУЗ: тяжелее таран"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "03 Dodge Viper SRT10",
+    "wep": {
+      "pack": "Heat Seeker",
+      "near": "shoot.wav",
+      "far": "shoot.wav"
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

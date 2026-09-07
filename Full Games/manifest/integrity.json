@@ -1,0 +1,253 @@
+{
+  "id": "kolesnica-voyny",
+  "version": "0.2.2.1",
+  "created": "2026-09-07T16:44:16.623Z",
+  "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
+  "files": [
+    {
+      "path": "rnr.html",
+      "size": 375870,
+      "sha256": "81a4d7980df2f40f844d923111f2802b70b9e91df9d882149aa211ec1c871bb4"
+    },
+    {
+      "path": "career.js",
+      "size": 14869,
+      "sha256": "0ad2b6c75773d6bf87a29cc7123cb961d5ff89bc4610171297adb424a6c2fd1a"
+    },
+    {
+      "path": "chars.js",
+      "size": 8712,
+      "sha256": "2e89d5156df9df568923bba3aff6de3be2c3787fa092b7c909d23ca1d742fe1b"
+    },
+    {
+      "path": "music.js",
+      "size": 8280,
+      "sha256": "9b61ff374daaccb573a2ea723635b7136841ae5c11271b8f55345ec020d8d91e"
+    },
+    {
+      "path": "sounds.js",
+      "size": 3953,
+      "sha256": "bb43dec8407d191380d8c8d3d55e086e1e1f99663c3e7ac3581bc1e1bfb618b2"
+    },
+    {
+      "path": "car-audio.js",
+      "size": 11429,
+      "sha256": "c822e070363cf85afe8a6f2051ac294639987f527da94d04378c0983726afeba"
+    },
+    {
+      "path": "car-audio-voice.js",
+      "size": 15765,
+      "sha256": "e5858b68be0026ecefd91b25f5cc1b3db23bb9ee28091627fdef9aca5ff52656"
+    },
+    {
+      "path": "car-tires.js",
+      "size": 4864,
+      "sha256": "55b81b9a4c9a5f4db9edd124e94547b8b72ab56d41476ccad712db0e02e0c124"
+    },
+    {
+      "path": "car-nos.js",
+      "size": 4952,
+      "sha256": "f0201119a144ff708a5dd9b60e6aaa3e446e1ee9254c279e7abbed3facdd5100"
+    },
+    {
+      "path": "weapon-audio.js",
+      "size": 6442,
+      "sha256": "70d4d85563acbad66996110201204fac99392e1b6f3b94a0fd3da4de61b2bd7d"
+    },
+    {
+      "path": "voice.js",
+      "size": 14359,
+      "sha256": "749a7f6140ec71b17ca72c484a625b6e5fcebd5109631c1d671953c1e9b22566"
+    },
+    {
+      "path": "notice.js",
+      "size": 5281,
+      "sha256": "0a2d19476702679a0c6d9ef38dcc59288ca58444ab20fcaa6efc3b3ba4198a26"
+    },
+    {
+      "path": "combat-kits.js",
+      "size": 15913,
+      "sha256": "1143ad6cb8eb4d281e568a1942187c11f3c5e426b138713796acb8ab179c8b4f"
+    },
+    {
+      "path": "starter-kits.js",
+      "size": 15058,
+      "sha256": "4cfe5aab3dca623f733cc83a809382a8a1aee572a15527dcc41cdfaab8f5f966"
+    },
+    {
+      "path": "mid-kits.js",
+      "size": 7666,
+      "sha256": "af0d5dd8b53a69ca99ee23108a2c80ab2ce13f7145a936f331978b866bdb3691"
+    },
+    {
+      "path": "world-intro.js",
+      "size": 14255,
+      "sha256": "935057ed7ff1d0d7674750b5325f45beffb96bf1e87c75fa80c00b334f5453d6"
+    },
+    {
+      "path": "armory.js",
+      "size": 6863,
+      "sha256": "22e5f0491e27464fe6d5c425b4c280686fa764eebf624c023cb64b961b8b28ad"
+    },
+    {
+      "path": "tracks.js",
+      "size": 14448,
+      "sha256": "692f6d577e9362af6f90beb226e4ea689b2ee370f84aa795ca2391c04d60c712"
+    },
+    {
+      "path": "objects.js",
+      "size": 7796,
+      "sha256": "81aef81878f44b94ab47a7b2b787b1d48dc13899601e8d26b46f7615e08d6c6c"
+    },
+    {
+      "path": "vfx/quarks-layer.js",
+      "size": 7717,
+      "sha256": "3f24dcd8e748fb8a586b96fcbe89c81cd82400aea3d345195b60678d4644e0fc"
+    },
+    {
+      "path": "vfx/quarks-presets.js",
+      "size": 12305,
+      "sha256": "985722deb989220fdcfeb2ed75f10f06fdd9ed20e2191d0019141e37757108ba"
+    },
+    {
+      "path": "vfx/quarks-spray.js",
+      "size": 4556,
+      "sha256": "d5eab2388d6386093d2108a039c9c872fcd713669a30f7ff54e6c4c7dba48b2b"
+    },
+    {
+      "path": "vfx/quarks-wreck.js",
+      "size": 4169,
+      "sha256": "5bb2c5502fdcb01dfc41104efb63ac53e7d65b945f479f5ddd60fe4154151345"
+    },
+    {
+      "path": "vfx/quarks-weather.js",
+      "size": 8611,
+      "sha256": "7018be629ca6b447c1bd8b489851647337961af784fadfc4b6c94b8dea298011"
+    },
+    {
+      "path": "vfx/weather-fx.js",
+      "size": 11197,
+      "sha256": "7c85c035168907fda312f81fa731b23718a40b58939ddae231862a60b63f8bd7"
+    },
+    {
+      "path": "vendor/three.module.js",
+      "size": 1284652,
+      "sha256": "5916c8dfb5f4e3eede312de305345868d4a0a8105383b080c6985565d6e79b46"
+    },
+    {
+      "path": "vendor/three.quarks.esm.js",
+      "size": 124754,
+      "sha256": "49205c717d3f3c07a63afcc7932ecfe1899d130411f335c2c1c67ff286a5da81"
+    },
+    {
+      "path": "assets/image/game-logo.webp",
+      "size": 1374512,
+      "sha256": "4b1c82ceb9a195b7550753bd0bec3978a8bbb32aefc8b5f9b186acf1a3fe2ffb"
+    },
+    {
+      "path": "assets/data/cars/01/car.json",
+      "size": 2713,
+      "sha256": "f440f290a9a5564abf19dc351c8662339228bcd7f7ef955da502267e555e9fea"
+    },
+    {
+      "path": "assets/data/cars/02/car.json",
+      "size": 2341,
+      "sha256": "c00ec477ff7e2322a41470bbb6659bdadbf8d026abb89bdd982105fc5d867e2b"
+    },
+    {
+      "path": "assets/data/cars/03/car.json",
+      "size": 2475,
+      "sha256": "c101aea430ea3243439c801c8f1000a77448bfac4f7b17c9ba93ef27c1529a20"
+    },
+    {
+      "path": "assets/data/cars/04/car.json",
+      "size": 1772,
+      "sha256": "78c255c53273937d9a7624e7e4520de4f914beeae3e8fb4f0c7ecd701016d806"
+    },
+    {
+      "path": "assets/data/cars/05/car.json",
+      "size": 2361,
+      "sha256": "8046f0b0bbbe1cb41ec8cd9a4ce7c0c9c1b868d1188f37c64f277657c2bc91af"
+    },
+    {
+      "path": "assets/data/cars/06/car.json",
+      "size": 2359,
+      "sha256": "b6cbe5473648562d63af7ac3a7dc2531b7a4a2a1d9fa9501026bd430e7a6f381"
+    },
+    {
+      "path": "assets/data/cars/07/car.json",
+      "size": 2886,
+      "sha256": "361b607ead3e38e460a415f0d9565edadfc497992e1a0ea77c3c002e0c76932a"
+    },
+    {
+      "path": "assets/data/cars/08/car.json",
+      "size": 2413,
+      "sha256": "83246a7a444436dfc3a84002d0263b5ee37d7ad21ce1e885e7df1f4865e180b0"
+    },
+    {
+      "path": "assets/data/cars/09/car.json",
+      "size": 2713,
+      "sha256": "045c7b01357c6d488773f32d45bcae9c3d4565363ec923e14ba572b53bca1c13"
+    },
+    {
+      "path": "assets/data/cars/10/car.json",
+      "size": 2561,
+      "sha256": "2ffe0c4bc115f5dd20db4ff1cc43b08f23142efbe4e37f7f5e45528f8a2826a4"
+    },
+    {
+      "path": "assets/data/cars/11/car.json",
+      "size": 2423,
+      "sha256": "ab164c1d2e39127f55bab922f1e322878ea68f660844e0da81a58daeffd7766f"
+    },
+    {
+      "path": "assets/data/cars/12/car.json",
+      "size": 2349,
+      "sha256": "614fab166d4d39fdb73f044231a615cbfaecdfd76c5165938d066771cc75e32a"
+    },
+    {
+      "path": "assets/data/cars/13/car.json",
+      "size": 2719,
+      "sha256": "c15e9ac87e9f8f61857828685f67885dad7c096f7249317368be0132c65a0e44"
+    },
+    {
+      "path": "assets/data/cars/14/car.json",
+      "size": 2378,
+      "sha256": "af87a8b9cb59c4fab2f1a3996579f29a8161678ed9dddafdc2b79fc108023706"
+    },
+    {
+      "path": "assets/data/cars/15/car.json",
+      "size": 2375,
+      "sha256": "47f77bf61145585fab74350b1ccf04be2a8910969869d2bccec9a9e685b62773"
+    },
+    {
+      "path": "assets/data/cars/16/car.json",
+      "size": 2650,
+      "sha256": "df9d07a1d8500bd3cfebb48162ebe38a75b82328287803af23dc524b3f742021"
+    },
+    {
+      "path": "assets/data/cars/17/car.json",
+      "size": 2565,
+      "sha256": "1e578dbe9943515b050a940397285d0a4fe60d6a21c6d7d0f6aab825f2336a68"
+    },
+    {
+      "path": "assets/data/cars/18/car.json",
+      "size": 2564,
+      "sha256": "7e8de68ecbee20844be25640410af41776a72b2fcab93e38b3e90b2eb8189fde"
+    },
+    {
+      "path": "assets/data/cars/19/car.json",
+      "size": 2534,
+      "sha256": "c5fec84218f153bb6ad27dc30d1363fd734deaea05611dac477d72fbb793dfdf"
+    },
+    {
+      "path": "assets/data/cars/20/car.json",
+      "size": 2535,
+      "sha256": "956eb29d5ba1f36429fddaafe198512a7f8a5648142a2fb6ef75e2d595a797ec"
+    },
+    {
+      "path": "assets/data/cars/21/car.json",
+      "size": 2615,
+      "sha256": "5b993326773ba0675a761a7ac2a5f5146baf47937b0de82a05f04a24e41a0176"
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "name": "kolesnica-voyny",
+  "version": "0.2.2-1",
+  "description": "Лаунчер Колесницы войны. Игру он сам потом докачает.",
+  "main": "src/main/boot.js",
+  "author": "Divan Games",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.cjs",
+    "test:engine": "electron tools/smoke-engine.cjs",
+    "postinstall": "node tools/copy-vendor.cjs && node tools/sync-launcher-media.cjs",
+    "start": "electron .",
+    "start:lab": "electron . --lab",
+    "start:game": "electron . --game",
+    "manifest": "node tools/build-manifest.cjs",
+    "sync": "node tools/sync-content.cjs",
+    "icon": "python tools/make-icon.py",
+    "cert": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/ensure-code-cert.ps1",
+    "art:msi": "python tools/make-installer-art.py && node tools/sync-installer-art.cjs",
+    "media": "node tools/sync-launcher-media.cjs",
+    "pack": "npm run media && node tools/run-with-cert.cjs npx --no-install electron-builder --win dir",
+    "portable": "node tools/make-portable.cjs",
+    "pack:game": "node tools/pack-game-release.cjs",
+    "prefetch:wix": "node tools/prefetch-builder-binaries.cjs",
+    "dist": "npm run media && node tools/run-with-cert.cjs npx --no-install electron-builder --win nsis",
+    "dist:msi": "npm run prefetch:wix && npm run media && npm run art:msi && node tools/run-with-cert.cjs npx --no-install electron-builder --win msi --config.directories.output=out-msi"
+  },
+  "dependencies": {
+    "quarks.core": "0.16.0"
+  },
+  "devDependencies": {
+    "electron": "^37.3.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.divangames.kolesnicavoyny",
+    "productName": "Колесница войны",
+    "copyright": "Divan Games",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "forceCodeSigning": true,
+    "afterPack": "tools/after-pack.cjs",
+    "msiProjectCreated": "tools/msi-project-created.cjs",
+    "files": [
+      "src/**/*",
+      "config/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "src/launcher/media/**"
+    ],
+    "extraResources": [
+      {
+        "from": "manifest",
+        "to": "manifest"
+      },
+      {
+        "from": "vendor-local",
+        "to": "vendor-local"
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "executableName": "KolesnicaVoyny",
+      "artifactName": "KolesnicaVoyny-${env.KOLESNICA_VERSION}.${ext}",
+      "signtoolOptions": {
+        "sign": "./tools/sign-windows.cjs",
+        "certificateFile": "certs/divan-games.pfx",
+        "publisherName": "Divan Games",
+        "signingHashAlgorithms": [
+          "sha256"
+        ],
+        "rfc3161TimeStampServer": null,
+        "timeStampServer": null
+      },
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "msi": {
+      "oneClick": false,
+      "perMachine": true,
+      "runAfterFinish": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Колесница Войны",
+      "menuCategory": "Divan Games",
+      "upgradeCode": "8F3A2C10-9B47-4E21-9C6A-7D1E5B2A4F80",
+      "additionalLightArgs": [
+        "-loc",
+        "ui-ru.wxl"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Колесница войны",
+      "installerLanguages": [
+        "ru_RU"
+      ],
+      "language": "1049"
+    }
+  }
+}

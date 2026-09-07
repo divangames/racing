@@ -1,0 +1,170 @@
+{
+  "rev": 1788703962684,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -18.5,
+      -10.5,
+      10,
+      7.790120480867841,
+      0,
+      1,
+      0
+    ],
+    [
+      -18.5,
+      10.5,
+      10,
+      7.790120480867841,
+      0,
+      1,
+      0
+    ],
+    [
+      14,
+      -10.5,
+      10,
+      7.314667118185766,
+      0,
+      1,
+      1
+    ],
+    [
+      14,
+      10.5,
+      10,
+      7.790120480867841,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -25.8,
+      -6.1,
+      10,
+      1.7
+    ],
+    [
+      -26,
+      5.8,
+      10,
+      1.7
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«КУРЬЕР»",
+    "owner": 1,
+    "price": 0,
+    "top": 1.06,
+    "acc": 1.04,
+    "crn": 0.99,
+    "hp": 80,
+    "col": "#9dff4a",
+    "col2": "#3a7a18",
+    "hov": false,
+    "traits": [
+      "ТАРАН: двойной урон при столкновениях",
+      "ВСЕДОХОД: меньше штраф бездорожья",
+      "РАМА: +20 корпуса"
+    ]
+  },
+  "owner": 1,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "03 Dodge Viper SRT10",
+    "wep": {
+      "pack": "Golfclub",
+      "near": "swing.wav",
+      "far": "hit.wav"
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

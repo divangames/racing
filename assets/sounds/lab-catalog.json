@@ -1,0 +1,333 @@
+{
+  "engines": [
+    {
+      "id": "01 Nissan GTR",
+      "clips": [
+        "sound_001.wav",
+        "sound_002.wav",
+        "sound_003.wav",
+        "sound_004.wav",
+        "sound_005.wav"
+      ]
+    },
+    {
+      "id": "02 Lamborgini Murselago",
+      "clips": [
+        "sound_001.wav",
+        "sound_002.wav",
+        "sound_003.wav",
+        "sound_004.wav",
+        "sound_005.wav"
+      ]
+    },
+    {
+      "id": "03 Dodge Viper SRT10",
+      "clips": [
+        "sound_001.wav",
+        "sound_002.wav",
+        "sound_003.wav",
+        "sound_004.wav",
+        "sound_005.wav"
+      ]
+    },
+    {
+      "id": "04 Nissan 180SX",
+      "clips": [
+        "Sound_001.wav",
+        "Sound_002.wav",
+        "Sound_003.wav",
+        "Sound_004.wav",
+        "Sound_005.wav"
+      ]
+    },
+    {
+      "id": "05 Porsche 911 992 GT3RS 2022",
+      "clips": [
+        "sound_001.wav",
+        "sound_002.wav",
+        "sound_003.wav",
+        "sound_004.wav",
+        "sound_005.wav"
+      ]
+    }
+  ],
+  "weapons": [
+    {
+      "id": "Ak47",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit.wav",
+        "low_ammo.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Baseball Bat",
+      "files": [
+        "hit.wav",
+        "hitmetal.wav",
+        "hitwood.wav",
+        "swing.wav"
+      ]
+    },
+    {
+      "id": "Cane",
+      "files": [
+        "hit.wav",
+        "hitmetal.wav",
+        "hitwood.wav",
+        "swing.wav"
+      ]
+    },
+    {
+      "id": "Colt45",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit.wav",
+        "low_ammo.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Country Rifle",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit.wav",
+        "low_ammo.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Desert Eagle",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit1.wav",
+        "low_ammo.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Gifts",
+      "files": [
+        "hit.wav",
+        "hitmetal.wav",
+        "hitwood.wav",
+        "swing.wav"
+      ]
+    },
+    {
+      "id": "Golfclub",
+      "files": [
+        "hit.wav",
+        "hitmetal.wav",
+        "hitwood.wav",
+        "swing.wav"
+      ]
+    },
+    {
+      "id": "Heat Seeker",
+      "files": [
+        "hit.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Katana",
+      "files": [
+        "hit.wav",
+        "hitmetal.wav",
+        "hitwood.wav",
+        "swing.wav"
+      ]
+    },
+    {
+      "id": "Knife",
+      "files": [
+        "hit.wav",
+        "hitmetal.wav",
+        "hitwood.wav",
+        "swing.wav"
+      ]
+    },
+    {
+      "id": "M4",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit.wav",
+        "low_ammo.wav",
+        "reload_t2wo.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "M60",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Micro Uzi",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit1.wav",
+        "low_ammo.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Missiles",
+      "files": [
+        "missile_flyloop.wav"
+      ]
+    },
+    {
+      "id": "MP5",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit.wav",
+        "low_ammo.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Nightstick",
+      "files": [
+        "hit.wav",
+        "hitmetal.wav",
+        "hitwood.wav",
+        "swing.wav"
+      ]
+    },
+    {
+      "id": "Poolcue",
+      "files": [
+        "hit.wav",
+        "hitmetal.wav",
+        "hitwood.wav",
+        "swing.wav"
+      ]
+    },
+    {
+      "id": "Rocket Launcher",
+      "files": [
+        "hit.wav",
+        "projfire.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Sawnoff Shotgun",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Shotgun",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit.wav",
+        "low_ammo.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Shovel",
+      "files": [
+        "hit.wav",
+        "hitmetal.wav",
+        "hitwood.wav",
+        "swing.wav"
+      ]
+    },
+    {
+      "id": "Silenced Colt45",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "low_ammo.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Sniper Rifle",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit.wav",
+        "low_ammo.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Spas12",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "hit.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    },
+    {
+      "id": "Tank Cannon",
+      "files": [
+        "cannon_fire.wav"
+      ]
+    },
+    {
+      "id": "TEC9",
+      "files": [
+        "after.wav",
+        "distant0.wav",
+        "dryfire.wav",
+        "hit1.wav",
+        "low_ammo.wav",
+        "reload_one.wav",
+        "reload_two.wav",
+        "shoot.wav"
+      ]
+    }
+  ]
+}

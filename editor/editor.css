@@ -591,3 +591,71 @@ input[type="file"] { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .asset-edit { backdrop-filter: none; }
 }
+.sound-engine-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+.sound-engine-head .actions { margin: 0; flex-wrap: wrap; }
+.sound-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+.sound-pack {
+  min-height: 40px;
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.25;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), transparent 40%),
+    #161618;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 4px 12px rgba(0,0,0,.25);
+}
+.sound-pack.is-on {
+  border-color: var(--yellow);
+  color: #f4e2a4;
+  box-shadow: 0 0 0 1px rgba(232,197,71,.35), inset 0 1px 0 rgba(255,255,255,.08);
+}
+.engine-clip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0 4px;
+}
+.engine-clip-row button { min-height: 28px; font-size: 11px; }
+.sound-gun {
+  margin-top: 12px;
+  padding: 10px 10px 12px;
+  border: 1px solid #2c2c2e;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(ellipse at 12% 0, rgba(255,107,74,.12), transparent 48%),
+    #141416;
+}
+.sound-gun-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.sound-gun-head strong {
+  font-size: 13px;
+  letter-spacing: .06em;
+  color: #ffb59a;
+}
+.sound-gun-head span { font-size: 10px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+.sound-gun select { width: 100%; min-height: 32px; background: #0e0e10; border: 1px solid var(--line); border-radius: 4px; padding: 0 8px; }
+.sound-gun-files { display: grid; gap: 8px; margin-top: 8px; }
+.sound-file { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; align-items: center; }
+.sound-file span { grid-column: 1 / -1; font-size: 10px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.sound-file button { min-height: 32px; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) {
+  .sound-pack { box-shadow: none; }
+}

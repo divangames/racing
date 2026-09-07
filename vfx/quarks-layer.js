@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { BatchedRenderer } from 'three.quarks';
 import { buildPools, makeSoftMap, makeStreakMap } from './quarks-presets.js';
 import { buildSprayPools } from './quarks-spray.js';
+import { buildWreckPools } from './quarks-wreck.js';
 import { buildWeather } from './quarks-weather.js';
 
 const api = {
@@ -22,6 +23,7 @@ const api = {
   muzzle() { return false; },
   nitro() { return false; },
   smoke() { return false; },
+  wreck() { return false; },
   trail() { return false; },
   scrape() { return false; },
   scrapeRim() { return false; }
@@ -96,7 +98,8 @@ try {
   const soft = makeSoftMap();
   pools = Object.assign(
     buildPools(scene, batch, soft, makeStreakMap()),
-    buildSprayPools(scene, batch, soft)
+    buildSprayPools(scene, batch, soft),
+    buildWreckPools(scene, batch, soft)
   );
   weather = buildWeather(scene, batch, soft);
 
@@ -206,9 +209,20 @@ try {
     return !!pools.scrape.fireRim(pts, per);
   };
 
-  api.smoke = function (x, y) {
-    if (!api.ok) return false;
-    pools.engineSmoke.fire(x, y);
+  api.smoke = function (x, y, intensity) {
+    return api.wreck(x, y, intensity == null ? 0.7 : intensity);
+  };
+
+  /** Чёрный дым и огонь с корпуса. intensity 0…1 по потере HP. */
+  api.wreck = function (x, y, intensity) {
+    if (!api.ok || !pools.wreckSmoke) return false;
+    const k = Math.max(0, Math.min(1, intensity == null ? 0.65 : intensity));
+    pools.wreckSmoke.fire(x, y);
+    if (k > 0.45 && pools.wreckFire) pools.wreckFire.fire(x, y);
+    if (k > 0.72 && pools.wreckFire) {
+      pools.wreckSmoke.fire(x, y);
+      pools.wreckFire.fire(x, y);
+    }
     return true;
   };
 

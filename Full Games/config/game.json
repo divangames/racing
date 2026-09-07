@@ -1,0 +1,10 @@
+{
+  "id": "kolesnica-voyny",
+  "title": "Колесница войны",
+  "version": "0.2.2.1",
+  "scheme": "rnr",
+  "host": "game",
+  "entry": "rnr.html",
+  "contentDevRelative": "..",
+  "contentInstallName": "Content"
+}

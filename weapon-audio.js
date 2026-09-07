@@ -20,16 +20,28 @@ function carWeaponSafe(name) {
 
 /** Слот wep / ult из car.json лаборатории. */
 function carWeaponSlot(idx, kind) {
-  const cfg = (typeof editorCarConfig === 'function') ? editorCarConfig(idx) : null;
-  const gun = cfg && cfg.audio && cfg.audio[kind];
-  if (!gun || typeof gun !== 'object') return null;
-  const pack = carWeaponSafe(gun.pack);
-  if (!pack) return null;
-  return {
-    pack: pack,
-    near: carWeaponSafe(gun.near) || 'shoot.wav',
-    far: carWeaponSafe(gun.far) || 'distant0.wav'
+  const read = function (obj) {
+    const gun = obj && obj.audio && obj.audio[kind];
+    if (!gun || typeof gun !== 'object') return null;
+    const pack = carWeaponSafe(gun.pack);
+    if (!pack) return null;
+    return {
+      pack: pack,
+      near: carWeaponSafe(gun.near) || 'shoot.wav',
+      far: carWeaponSafe(gun.far) || 'distant0.wav'
+    };
   };
+  if (typeof editorCarConfig === 'function') {
+    const fromLab = read(editorCarConfig(idx));
+    if (fromLab) return fromLab;
+  }
+  const cars = typeof CARS !== 'undefined' ? CARS : [];
+  const fromCar = read(cars[idx]);
+  if (fromCar) return fromCar;
+  if (typeof EditorData !== 'undefined' && EditorData.diskAudio) {
+    return read({audio: EditorData.diskAudio(idx)});
+  }
+  return null;
 }
 
 /** Громкость эффектов. */

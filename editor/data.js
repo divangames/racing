@@ -10,7 +10,7 @@ const EditorData = (() => {
   const KEY_BASE = KEY + '.base';
   const KEY_BACKUP = KEY + '.backup';
   const LEGACY_KEYS = ['rnr.carEditor.v1', 'rnr.carEditor.v1'];
-  const STOCK = 11;
+  const STOCK = 21;
   const NAMES = [
     ['01', 'ГРЯЗЕВОЙ ДЬЯВОЛ'],
     ['02', 'V8 ПЕРЕХВАТЧИК'],
@@ -22,7 +22,17 @@ const EditorData = (() => {
     ['08', 'КУРЬЕР'],
     ['09', 'ШПИЛЬКА'],
     ['10', 'ЖЕРЕБЕЦ'],
-    ['11', 'БРИЧКА']
+    ['11', 'БРИЧКА'],
+    ['12', 'ТАЗИК'],
+    ['13', 'КАБЛУК'],
+    ['14', 'ЖЕЗЛ'],
+    ['15', 'КОЗЁЛ'],
+    ['16', 'БОРТ'],
+    ['17', 'ТАКСИ'],
+    ['18', 'ПИКАП'],
+    ['19', 'КУПЕ'],
+    ['20', 'ФУРГОН'],
+    ['21', 'СКОРАЯ']
   ];
   const STATS = [
     {name:'«ГРЯЗЕВОЙ ДЬЯВОЛ»',owner:0,price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d24a22',col2:'#7e2a12',hov:false,traits:['КЛЫК: дробь в лоб, сильнее в упор','ПЕРЕГОВОРЫ: рывок с двойным тараном','РАМА: +20 корпуса, вседоход']},
@@ -35,7 +45,17 @@ const EditorData = (() => {
     {name:'«КУРЬЕР»',owner:1,price:0,top:1.06,acc:1.04,crn:0.99,hp:80,col:'#9dff4a',col2:'#3a7a18',hov:false,traits:['ПОСЫЛКА: мина назад','НЕТ ДВЕРЕЙ: сквозь машины, корпус как бумага','СТЕКЛО: мало брони, много хода']},
     {name:'«ШПИЛЬКА»',owner:2,price:0,top:1.06,acc:0.97,crn:1.08,hp:100,col:'#ff5db1',col2:'#8a2458',hov:false,traits:['ШПИЛЬКА: гвозди назад только в заносе','СМЕХ ХОЗЯЙКИ: облако сбивает прицел','ХВАТКА: руль в скольжении']},
     {name:'«ЖЕРЕБЕЦ»',owner:null,price:90000,top:1.26,acc:1.20,crn:1.14,hp:118,col:'#c41e2a',col2:'#5a1018',hov:false,traits:['МИНИГАН: 50 патронов, шкала — магазин, перегрев после опустошения','СКАЧОК: прыжок как с трамплина вместо нитро','ТАБУН: ульта отталкивает и сбрасывает скорость рядом']},
-    {name:'«БРИЧКА»',owner:5,price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d45a1a',col2:'#2c2c30',hov:false,traits:['СКОБА: тянет лут или сбивает курс','ПЫЛЕСОС: деньги, ремонт и ускорение рядом','КУПОЛ: 4.5 сек от пуль и мин, таран проходит']}
+    {name:'«БРИЧКА»',owner:5,price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d45a1a',col2:'#2c2c30',hov:false,traits:['СКОБА: тянет лут или сбивает курс','ПЫЛЕСОС: деньги, ремонт и ускорение рядом','КУПОЛ: 4.5 сек от пуль и мин, таран проходит']},
+    {name:'«ТАЗИК»',owner:null,price:200,top:0.8,acc:0.86,crn:0.9,hp:68,col:'#c45c28',col2:'#5a2e18',hov:false,traits:['БАКЛАГА: канистра, лужа огня','ХЛОПОК: сажа режет разгон','ЖЕСТЬ: первый удар круга −50%']},
+    {name:'«КАБЛУК»',owner:null,price:250,top:0.78,acc:0.92,crn:1.0,hp:55,col:'#d8c45a',col2:'#6a5a20',hov:false,traits:['ГАЙКА: болты стопорят шины','СБРОС КУЗОВА: меньше рамка, корпус тоньше','МЫШЬ: мелкий хитбокс']},
+    {name:'«ЖЕЗЛ»',owner:null,price:300,top:0.88,acc:0.84,crn:0.86,hp:72,col:'#2a4a8c',col2:'#c8a428',hov:false,traits:['ЖЕЗЛ: оглушает руль','МИГАЛКА: инвертирует руль рядом','ПОЛОСА: +8% топ на асфальте']},
+    {name:'«КОЗЁЛ»',owner:null,price:350,top:0.82,acc:0.8,crn:0.94,hp:75,col:'#5a7a42',col2:'#3a2818',hov:false,traits:['ПОДСТВОЛЬЕ: дробь только в упор','ЛЕБЁДКА: дёргает себя вперёд','КОЛЕЯ: чуть меньше штраф бездорожья']},
+    {name:'«БОРТ»',owner:null,price:400,top:0.86,acc:0.78,crn:0.82,hp:74,col:'#6e6a66',col2:'#8a3020',hov:false,traits:['ЛОМ: удар с борта','ОТЦЕП: холодильник-ящик на трассе','ХЛАМ: ключ даёт +4 корпуса']},
+    {name:'«ТАКСИ»',owner:null,price:1400,top:0.94,acc:0.96,crn:1.08,hp:90,col:'#e8c428',col2:'#3a3a40',hov:false,traits:['СЧЁТЧИК: дротик режет ход','ГУДОК: оглушает руль рядом','ПОСАДКА: острее руль']},
+    {name:'«ПИКАП»',owner:null,price:1800,top:0.9,acc:0.88,crn:0.94,hp:122,col:'#4a6a38',col2:'#2a2018',hov:false,traits:['МАСЛО: лужа сзади','ОТКИД: конус сбрасывает с носа','ГРУЗ: тяжелее таран']},
+    {name:'«КУПЕ»',owner:null,price:2200,top:1.04,acc:1.02,crn:0.98,hp:84,col:'#c42838',col2:'#1a1a22',hov:false,traits:['ФАРА: конус слепит','ОБГОН: короткий рывок хода','СЛИК: +6% топ на асфальте']},
+    {name:'«ФУРГОН»',owner:null,price:2600,top:0.86,acc:0.84,crn:0.88,hp:136,col:'#5a6a88',col2:'#2a3040',hov:false,traits:['ДВЕРЬ: удар с борта','ШТОРКА: дым сбивает прицел','БУФЕР: первый удар круга −35%']},
+    {name:'«СКОРАЯ»',owner:null,price:3000,top:0.96,acc:0.97,crn:1.0,hp:108,col:'#f0e8e0',col2:'#c42838',hov:false,traits:['ШПРИЦ: дротик и яд хода','СИРЕНА: замедляет и слепит рядом','АПТЕЧКА: ключ даёт +14 корпуса']}
   ];
   const LAYOUTS = [
     [[-15.5,-11.4,12,4,0,1,0],[-15.5,11.4,12,4,0,1,0],[14.2,-11.4,12,4,0,1,1],[14.2,11.4,12,4,0,1,1]],
@@ -48,7 +68,17 @@ const EditorData = (() => {
     [[-17.8,-9.82,10,4.15,0,1,0],[-17.8,9.82,10,4.15,0,1,0],[14.5,-9.87,10,4.15,0,1,1],[14.5,9.87,10,4.15,0,1,1]],
     [[-16.5,-10,9.4,4.17,0,1,0],[-16.5,10,9.4,4.17,0,1,0],[16.5,-10,9.4,4.17,0,1,1],[16.5,10,9.4,4.17,0,1,1]],
     [[-16.2,-12.2,11,5,0,1,0],[-16.2,12.2,11,5,0,1,0],[16.4,-12.2,11,5,0,1,1],[16.4,12.2,11,5,0,1,1]],
-    [[-18.2,-11.6,11,5,0,1,0],[-18.2,11.6,11,5,0,1,0],[16.2,-11.6,11,5,0,1,1],[16.2,11.6,11,5,0,1,1]]
+    [[-18.2,-11.6,11,5,0,1,0],[-18.2,11.6,11,5,0,1,0],[16.2,-11.6,11,5,0,1,1],[16.2,11.6,11,5,0,1,1]],
+    [[-16,-11.5,11,5,0,1,0],[-16,11.5,11,5,0,1,0],[15,-11.5,11,5,0,1,1],[15,11.5,11,5,0,1,1]],
+    [[-12,-9.5,9,4,0,1,0],[-12,9.5,9,4,0,1,0],[11,-9.5,9,4,0,1,1],[11,9.5,9,4,0,1,1]],
+    [[-18,-11.2,11,5,0,1,0],[-18,11.2,11,5,0,1,0],[17,-11.2,11,5,0,1,1],[17,11.2,11,5,0,1,1]],
+    [[-14,-12,11,5.2,0,1,0],[-14,12,11,5.2,0,1,0],[14,-12,11,5.2,0,1,1],[14,12,11,5.2,0,1,1]],
+    [[-17,-11.8,11,5,0,1,0],[-17,11.8,11,5,0,1,0],[16,-11.8,11,5,0,1,1],[16,11.8,11,5,0,1,1]],
+    [[-16,-11.2,11,5,0,1,0],[-16,11.2,11,5,0,1,0],[16,-11.2,11,5,0,1,1],[16,11.2,11,5,0,1,1]],
+    [[-18,-12.2,11,5.2,0,1,0],[-18,12.2,11,5.2,0,1,0],[16,-12.2,11,5.2,0,1,1],[16,12.2,11,5.2,0,1,1]],
+    [[-15.5,-10.8,11,5,0,1,0],[-15.5,10.8,11,5,0,1,0],[16,-10.8,11,5,0,1,1],[16,10.8,11,5,0,1,1]],
+    [[-17.5,-12.4,11,5.2,0,1,0],[-17.5,12.4,11,5.2,0,1,0],[15.5,-12.4,11,5.2,0,1,1],[15.5,12.4,11,5.2,0,1,1]],
+    [[-17,-11.6,11,5,0,1,0],[-17,11.6,11,5,0,1,0],[16.5,-11.6,11,5,0,1,1],[16.5,11.6,11,5,0,1,1]]
   ];
   // Урал 07: колёса в арках спрайта (нос +X), не на кузове.
   const URAL_WHEELS = [
@@ -187,7 +217,17 @@ const EditorData = (() => {
     [[-25.8, -6.1, 10, 1.7], [-26, 5.8, 10, 1.7]],
     [[-25.8, -6.63, 9, 1.35], [-25.9, -4.37, 9, 1.35], [-25.8, 5.13, 9, 1.35], [-25.7, 6.92, 9, 1.35]],
     [[-26.2, -6.8, 10, 1.6], [-26.2, 6.8, 10, 1.6]],
-    [[-27.2, -6.4, 10, 1.55], [-27.2, 6.4, 10, 1.55]]
+    [[-27.2, -6.4, 10, 1.55], [-27.2, 6.4, 10, 1.55]],
+    [[-24, -6.2, 8, 1.4], [-24, 6.2, 8, 1.4]],
+    [[-20, -5.4, 7, 1.2], [-20, 5.4, 7, 1.2]],
+    [[-26, -6.4, 9, 1.5], [-26, 6.4, 9, 1.5]],
+    [[-22, -6.8, 8, 1.4], [-22, 6.8, 8, 1.4]],
+    [[-25, -6.6, 9, 1.5], [-25, 6.6, 9, 1.5]],
+    [[-25, -6.2, 9, 1.45], [-25, 6.2, 9, 1.45]],
+    [[-26, -7.0, 9, 1.5], [-26, 7.0, 9, 1.5]],
+    [[-24, -6.0, 8, 1.4], [-24, 6.0, 8, 1.4]],
+    [[-26, -6.8, 9, 1.5], [-26, 6.8, 9, 1.5]],
+    [[-25, -6.4, 9, 1.45], [-25, 6.4, 9, 1.45]]
   ];
 
   /** Глубокая копия JSON-значения. */
@@ -363,6 +403,33 @@ const EditorData = (() => {
     return car;
   }
 
+  /** Имя пака без пути. */
+  function audioPackName(raw) {
+    const s = String(raw || '').trim();
+    if (!s || s.length > 80 || s.indexOf('..') >= 0 || /[\\/]/.test(s)) return '';
+    return s;
+  }
+
+  /** Слот ствола или ульты: папка и два клипа. */
+  function fileGunAudio(raw) {
+    const g = raw && typeof raw === 'object' ? raw : {};
+    return {
+      pack: audioPackName(g.pack),
+      near: audioPackName(g.near),
+      far: audioPackName(g.far)
+    };
+  }
+
+  /** Блок звука машины для car.json. */
+  function fileAudio(car) {
+    const a = car && car.audio && typeof car.audio === 'object' ? car.audio : {};
+    return {
+      engine: audioPackName(a.engine),
+      wep: fileGunAudio(a.wep),
+      ult: fileGunAudio(a.ult)
+    };
+  }
+
   /** JSON для папки assets/data/cars/NN (без dataURL корпуса). */
   function fileCar(car) {
     ensureStack(car);
@@ -375,7 +442,8 @@ const EditorData = (() => {
       stats: clone(car.stats),
       owner: ownerOf(car, null),
       visible: clone(car.visible || {}),
-      layers: clone(car.layers || LAYERS)
+      layers: clone(car.layers || LAYERS),
+      audio: fileAudio(car)
     };
   }
 
@@ -422,7 +490,7 @@ const EditorData = (() => {
     ];
     const car = {
       custom: !stock,
-      body: {x: 0, y: 0, ax: 0, ay: 0, sx: 1, sy: 1, scale: stock && i === 6 ? 1.65 : 1, armor: 0},
+      body: {x: 0, y: 0, ax: 0, ay: 0, sx: 1, sy: 1, scale: stock && i === 6 ? 1.65 : (stock && i === 12 ? 0.86 : 1), armor: 0},
       w: wheels,
       nitro: defaultNitro(stock ? i : 3),
       layers: (stock && i === 6 ? URAL_LAYERS : LAYERS).slice(),
@@ -471,6 +539,7 @@ const EditorData = (() => {
     LAYERS.forEach((n) => { if (!layers.includes(n)) layers.push(n); if (vis[n] == null) vis[n] = true; });
     const out = Object.assign(base, saved, {
       body, visible: vis, stats, w: wheels, nitro, layers,
+      audio: fileAudio(saved),
       rev: saved.rev != null ? saved.rev : (base.rev || DISK_REV)
     });
     if (!(Array.isArray(saved.stack) && saved.stack.length)) delete out.stack;
@@ -513,6 +582,25 @@ const EditorData = (() => {
     await Promise.all(jobs);
   }
 
+  /** Пустые поля звука из localStorage заполняет car.json с диска. */
+  function fillAudioGaps(car, disk) {
+    if (!car || !disk) return car;
+    const a = fileAudio(car);
+    const b = fileAudio(disk);
+    car.audio = {
+      engine: a.engine || b.engine,
+      wep: a.wep && a.wep.pack ? a.wep : b.wep,
+      ult: a.ult && a.ult.pack ? a.ult : b.ult
+    };
+    return car;
+  }
+
+  /** Звук слота с диска, без localStorage. */
+  function diskAudio(i) {
+    const d = diskCars[i] || diskCars[String(i)];
+    return fileAudio(d);
+  }
+
   /** Диск + браузер: слот из браузера не уступает файлу с той же или старой меткой. */
   function load() {
     let ls = {};
@@ -534,6 +622,7 @@ const EditorData = (() => {
         const sRev = revTime(s && s.rev);
         if (s && (!d || sRev >= dRev)) c = mergeCar(i, s);
         else if (d) c = mergeCar(i, d);
+        if (d) fillAudioGaps(c, d);
         cars[i] = c;
       } catch (err) {
         console.error('слот ' + i, err);
@@ -632,7 +721,7 @@ const EditorData = (() => {
     });
   }
 
-    /** Список индексов: сток 0–10 плюс кастомы. */
+    /** Список индексов: сток 0–15 плюс кастомы. */
   function indices(data) {
     const extra = Object.keys((data && data.cars) || {}).map(Number).filter((n) => n >= STOCK);
     extra.sort((a, b) => a - b);
@@ -656,5 +745,5 @@ const EditorData = (() => {
     return b ? mergeCar(slot, b) : factory(slot);
   }
 
-  return {KEY, STOCK, NAMES, STATS, LAYERS, URAL_LAYERS, LAYER_RU, PILOTS, DISK_REV, clone, factory, mergeCar, load, save, indices, label, normWheel, restoreSteer, normJet, defaultNitro, defaultOwner, ownerOf, ensureStack, stackItemOn, cloneWheelLayer, cloneNitroLayer, reindexStack, appendWheel, appendNitro, syncVisibleFromStack, layerTitle, fileCar, hydrateFromDisk, pushDisk, saveAsBase, saveBackup, loadBaseCar, loadBackupCar, peekBase, folderId, revTime, refreshPilots};
+  return {KEY, STOCK, NAMES, STATS, LAYERS, URAL_LAYERS, LAYER_RU, PILOTS, DISK_REV, clone, factory, mergeCar, load, save, indices, label, normWheel, restoreSteer, normJet, defaultNitro, defaultOwner, ownerOf, ensureStack, stackItemOn, cloneWheelLayer, cloneNitroLayer, reindexStack, appendWheel, appendNitro, syncVisibleFromStack, layerTitle, fileCar, fileAudio, diskAudio, hydrateFromDisk, pushDisk, saveAsBase, saveBackup, loadBaseCar, loadBackupCar, peekBase, folderId, revTime, refreshPilots};
 })();

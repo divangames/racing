@@ -1,0 +1,182 @@
+{
+  "rev": 1788704537642,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -19,
+      -9.5,
+      11,
+      7.2957114826882,
+      0,
+      1,
+      0
+    ],
+    [
+      -19,
+      9.5,
+      11,
+      7.769932729062933,
+      0,
+      1,
+      0
+    ],
+    [
+      20,
+      -9.5,
+      11,
+      6.039748124999999,
+      0,
+      1,
+      1
+    ],
+    [
+      20,
+      9.5,
+      11,
+      6.432331753124998,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -25,
+      -6.2,
+      9,
+      1.45
+    ],
+    [
+      -25,
+      6.2,
+      9,
+      1.45
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "wmtom29ik31x",
+      "type": "wheel",
+      "on": true,
+      "ref": 4
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "wmtom29ikpt",
+      "type": "wheel",
+      "on": true,
+      "ref": 5
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ТАКСИ»",
+    "owner": null,
+    "price": 1400,
+    "top": 0.94,
+    "acc": 0.96,
+    "crn": 1.08,
+    "hp": 90,
+    "col": "#e8c428",
+    "col2": "#3a3a40",
+    "hov": false,
+    "traits": [
+      "СЧЁТЧИК: дротик режет ход",
+      "ГУДОК: оглушает руль рядом",
+      "ПОСАДКА: острее руль"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "01 Nissan GTR",
+    "wep": {
+      "pack": "M4",
+      "near": "shoot.wav",
+      "far": "distant0.wav"
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

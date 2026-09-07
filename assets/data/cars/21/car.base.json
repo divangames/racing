@@ -1,0 +1,182 @@
+{
+  "rev": 1788703400360,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -16.5,
+      -9.5,
+      11,
+      6.039748124999999,
+      0,
+      1,
+      0
+    ],
+    [
+      -16.5,
+      9.5,
+      11,
+      6.039748124999999,
+      0,
+      1,
+      0
+    ],
+    [
+      19,
+      -9,
+      9.136424,
+      6.039748124999999,
+      0,
+      1,
+      1
+    ],
+    [
+      19,
+      9,
+      8.588238559999999,
+      6.039748124999999,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -25,
+      -6.4,
+      9,
+      1.45
+    ],
+    [
+      -25,
+      6.4,
+      9,
+      1.45
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "wmtom29ik31x",
+      "type": "wheel",
+      "on": true,
+      "ref": 4
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "wmtom29ikpt",
+      "type": "wheel",
+      "on": true,
+      "ref": 5
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«СКОРАЯ»",
+    "owner": null,
+    "price": 3000,
+    "top": 0.96,
+    "acc": 0.97,
+    "crn": 1,
+    "hp": 108,
+    "col": "#f0e8e0",
+    "col2": "#c42838",
+    "hov": false,
+    "traits": [
+      "ШПРИЦ: дротик и яд хода",
+      "СИРЕНА: замедляет и слепит рядом",
+      "АПТЕЧКА: ключ даёт +14 корпуса"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "01 Nissan GTR",
+    "wep": {
+      "pack": "Heat Seeker",
+      "near": "shoot.wav",
+      "far": "shoot.wav"
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

@@ -1,0 +1,129 @@
+////////////////////////////////////////////////////////
+//
+// Пишет номер версии в game.json, package.json и движок.
+//
+////////////////////////////////////////////////////////
+
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+const client = path.resolve(__dirname, '..');
+
+/**
+ * Обрезает префикс v и пробелы.
+ * @param {string} raw
+ * @returns {string}
+ */
+function normalizeVersion(raw) {
+  return String(raw || '')
+    .trim()
+    .replace(/^v/i, '');
+}
+
+/**
+ * Номер вида 0.2.1 или 0.2.1.0 (1–4 части).
+ * @param {string} ver
+ * @returns {boolean}
+ */
+function isGameVersion(ver) {
+  return /^\d+(\.\d+){0,3}$/.test(ver);
+}
+
+/**
+ * electron-builder требует SemVer из трёх частей.
+ * Четвёртая становится пререлизом: 0.2.1.3 → 0.2.1-3.
+ * @param {string} ver
+ * @returns {string}
+ */
+function toNpmVersion(ver) {
+  const bits = String(ver).split('.');
+  while (bits.length < 3) bits.push('0');
+  if (bits.length === 3) return bits.join('.');
+  return bits.slice(0, 3).join('.') + '-' + bits[3];
+}
+
+/**
+ * Меняет поле version в JSON-файле.
+ * @param {string} filePath
+ * @param {string} version
+ */
+function writeJsonVersion(filePath, version) {
+  const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  data.version = version;
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + '\n', 'utf8');
+}
+
+/**
+ * Только корневая версия lockfile, без перезаписи всего файла.
+ * @param {string} filePath
+ * @param {string} version
+ */
+function writeLockRootVersion(filePath, version) {
+  let text = fs.readFileSync(filePath, 'utf8');
+  const next = text
+    .replace(/^  "version": "[^"]+",/m, '  "version": "' + version + '",')
+    .replace(
+      /(\n    "": \{\r?\n      "name": "kolesnica-voyny",\r?\n      "version": ")[^"]+(")/,
+      '$1' + version + '$2'
+    );
+  if (next === text) {
+    const root = text.match(/^  "version": "([^"]+)"/m);
+    const nested = text.match(
+      /\n    "": \{\r?\n      "name": "kolesnica-voyny",\r?\n      "version": "([^"]+)"/
+    );
+    if (root && root[1] === version && nested && nested[1] === version) return;
+    throw new Error('Не удалось прописать версию в package-lock.json.');
+  }
+  fs.writeFileSync(filePath, next, 'utf8');
+}
+
+/**
+ * Номер в RnREngine для смоук-тестов.
+ * @param {string} version
+ */
+function writeEngineVersion(version) {
+  const filePath = path.join(client, 'src', 'engine', 'presentation.js');
+  let text = fs.readFileSync(filePath, 'utf8');
+  const next = text.replace(
+    /window\.RnREngine=\{version:'[^']+'/,
+    "window.RnREngine={version:'" + version + "'"
+  );
+  if (next === text) {
+    if (text.includes("window.RnREngine={version:'" + version + "'")) return;
+    throw new Error('В presentation.js нет window.RnREngine.version.');
+  }
+  fs.writeFileSync(filePath, next, 'utf8');
+}
+
+/**
+ * Записывает версию во все канонические файлы клиента.
+ * @param {string} raw
+ * @returns {string}
+ */
+function setGameVersion(raw) {
+  const version = normalizeVersion(raw);
+  if (!isGameVersion(version)) {
+    throw new Error('Версия должна быть числом с точками, например 0.2.1.0');
+  }
+  const npmVersion = toNpmVersion(version);
+  writeJsonVersion(path.join(client, 'config', 'game.json'), version);
+  writeJsonVersion(path.join(client, 'package.json'), npmVersion);
+  const lockPath = path.join(client, 'package-lock.json');
+  if (fs.existsSync(lockPath)) writeLockRootVersion(lockPath, npmVersion);
+  writeEngineVersion(version);
+  return version;
+}
+
+if (require.main === module) {
+  try {
+    const version = setGameVersion(process.argv[2]);
+    console.log('Версия клиента:', version);
+  } catch (err) {
+    console.error(err.message || String(err));
+    process.exit(1);
+  }
+}
+
+module.exports = { normalizeVersion, isGameVersion, toNpmVersion, setGameVersion };

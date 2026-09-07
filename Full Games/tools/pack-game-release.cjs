@@ -65,6 +65,10 @@ function packGameRelease(opts) {
   if (!fs.existsSync(path.join(gameRoot, 'assets', 'image', 'game-logo.webp'))) {
     throw new Error('Нет логотипа в ' + gameRoot);
   }
+  const editorHtml = path.join(gameRoot, 'Editor.html');
+  if (fs.existsSync(editorHtml) && !fs.readFileSync(editorHtml, 'utf8').includes('id="labAudio"')) {
+    throw new Error('Editor.html без панели звука двигателя');
+  }
   assertCoreSounds(gameRoot);
 
   fs.mkdirSync(path.dirname(zipPath), { recursive: true });
@@ -98,11 +102,12 @@ function packGameRelease(opts) {
       windowsHide: true
     }
   );
-  fs.rmSync(overlayDir, { recursive: true, force: true });
   if (packed.status !== 0) {
     const err = packed.stderr || packed.stdout || 'tar не собрал zip';
+    fs.rmSync(overlayDir, { recursive: true, force: true });
     throw new Error(String(err).trim());
   }
+  fs.rmSync(overlayDir, { recursive: true, force: true });
   assertZipCoreSounds(zipPath);
 
   const size = fs.statSync(zipPath).size;

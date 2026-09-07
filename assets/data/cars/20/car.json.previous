@@ -1,0 +1,182 @@
+{
+  "rev": 1788704732942,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -19.5,
+      -11,
+      11,
+      6.28133805,
+      0,
+      1,
+      0
+    ],
+    [
+      -19.5,
+      11,
+      11,
+      6.28133805,
+      0,
+      1,
+      0
+    ],
+    [
+      21,
+      -10,
+      11,
+      6.68962502325,
+      0,
+      1,
+      1
+    ],
+    [
+      21,
+      10,
+      11,
+      7.12445064976125,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -26,
+      -6.8,
+      9,
+      1.5
+    ],
+    [
+      -26,
+      6.8,
+      9,
+      1.5
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "wmtom29ik31x",
+      "type": "wheel",
+      "on": true,
+      "ref": 4
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "wmtom29ikpt",
+      "type": "wheel",
+      "on": true,
+      "ref": 5
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ФУРГОН»",
+    "owner": null,
+    "price": 2600,
+    "top": 0.86,
+    "acc": 0.84,
+    "crn": 0.88,
+    "hp": 136,
+    "col": "#5a6a88",
+    "col2": "#2a3040",
+    "hov": false,
+    "traits": [
+      "ДВЕРЬ: удар с борта",
+      "ШТОРКА: дым сбивает прицел",
+      "БУФЕР: первый удар круга −35%"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "03 Dodge Viper SRT10",
+    "wep": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

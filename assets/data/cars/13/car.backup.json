@@ -1,0 +1,200 @@
+{
+  "rev": 1788702915207,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 0.86,
+    "armor": 0
+  },
+  "w": [
+    [
+      -16.5,
+      -12,
+      10,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      -16.5,
+      12,
+      10,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      18.5,
+      -11.5,
+      10,
+      8,
+      0,
+      1,
+      1
+    ],
+    [
+      18.5,
+      11.5,
+      10,
+      8,
+      0,
+      1,
+      1
+    ],
+    [
+      -7.5,
+      -12,
+      10,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      -7.5,
+      12,
+      10,
+      8,
+      0,
+      1,
+      0
+    ]
+  ],
+  "nitro": [
+    [
+      -20,
+      -5.4,
+      7,
+      1.2
+    ],
+    [
+      -20,
+      5.4,
+      7,
+      1.2
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "wmtohugi52tk",
+      "type": "wheel",
+      "on": true,
+      "ref": 4
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "wmtohugi52ng",
+      "type": "wheel",
+      "on": true,
+      "ref": 5
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«КАБЛУК»",
+    "owner": null,
+    "price": 250,
+    "top": 0.78,
+    "acc": 0.92,
+    "crn": 1,
+    "hp": 55,
+    "col": "#d8c45a",
+    "col2": "#6a5a20",
+    "hov": false,
+    "traits": [
+      "ГАЙКА: болты стопорят шины",
+      "СБРОС КУЗОВА: меньше рамка, корпус тоньше",
+      "МЫШЬ: мелкий хитбокс"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "03 Dodge Viper SRT10",
+    "wep": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

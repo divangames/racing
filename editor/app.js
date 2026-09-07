@@ -701,6 +701,9 @@ const EditorApp = (() => {
     try { renderNitro(); } catch (err) { console.error(err); }
     try { renderLayers(); } catch (err) { console.error(err); }
     try { syncInspector(); } catch (err) { console.error(err); }
+    if (typeof LabAudio !== 'undefined' && LabAudio.sync) {
+      try { LabAudio.sync(); } catch (err) { console.error(err); }
+    }
   }
 
   /** Полоски характеристик. */
@@ -833,8 +836,8 @@ const EditorApp = (() => {
     if (!box) return;
     const lvl = (car().body && car().body.armor) | 0;
     const nn = EditorData.folderId(carIndex);
-    const bodyWebp = 'assets/machines/cars/' + nn + '.webp';
-    const bodyPng = 'assets/machines/cars/' + nn + '.png';
+    const bodyWebp = 'assets/data/cars/' + nn + '/' + nn + '.webp';
+    const bodyPng = 'assets/data/cars/' + nn + '/' + nn + '.png';
     if (box.dataset.nn !== nn) {
       box.innerHTML = '';
       ARMOR_LABELS.forEach((lab, i) => {
@@ -854,7 +857,7 @@ const EditorApp = (() => {
           const plate = document.createElement('img');
           plate.className = 'armor-plate';
           plate.alt = lab;
-          const base = 'assets/machines/cars/' + nn + '_armor_' + i;
+          const base = 'assets/data/cars/' + nn + '/armor/' + nn + '_armor_' + i;
           setCarImg(plate, base + '.webp', base + '.png', () => {
             plate.style.display = 'none';
             b.classList.add('is-missing-plate');
@@ -1670,7 +1673,7 @@ const EditorApp = (() => {
     } catch (e) {}
   }
 
-  return {start};
+  return {start, car, index: () => carIndex, dirty: () => { mark(); commitSoon(); }};
 })();
 
 (function bootEditor() {

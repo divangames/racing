@@ -226,10 +226,10 @@ const EditorView = (() => {
     const n = String((idx >= 0 ? idx : 0) + 1).padStart(2, '0');
     if (armorLayer) {
       if (!(car.body.armor > 0)) return [];
-      const base = 'assets/machines/cars/' + n + '_armor_' + (car.body.armor | 0);
+      const base = 'assets/data/cars/' + n + '/armor/' + n + '_armor_' + (car.body.armor | 0);
       return [base + '.webp', base + '.png'];
     }
-    return ['assets/machines/cars/' + n + '.webp', 'assets/machines/cars/' + n + '.png'];
+    return ['assets/data/cars/' + n + '/' + n + '.webp', 'assets/data/cars/' + n + '/' + n + '.png'];
   }
 
   /** Картинка с запасным расширением (как в игре). */

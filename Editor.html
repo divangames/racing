@@ -11,7 +11,7 @@
 <link rel="icon" type="image/webp" href="assets/image/favicon.webp">
 <link rel="apple-touch-icon" href="assets/image/apple-touch-icon.png">
 <link rel="stylesheet" href="editor/fonts.css">
-<link rel="stylesheet" href="editor/editor.css?v=20260905o">
+<link rel="stylesheet" href="editor/editor.css?v=20260906s">
 <link rel="stylesheet" href="editor/content-browser.css?v=20260905o">
 </head>
 <body>
@@ -177,6 +177,21 @@
         <div class="field" style="margin-top:8px"><label for="trait0">Особенность 1</label><input id="trait0"></div>
         <div class="field"><label for="trait1">Особенность 2</label><input id="trait1"></div>
         <div class="field"><label for="trait2">Особенность 3</label><input id="trait2"></div>
+      </section>
+      <section class="section" id="labAudio">
+        <div class="section-title">ЗВУК</div>
+        <p class="hint">Двигатель — набор из <code>assets/sounds/cars/engine</code>. Шины в заезде общие (скольжение и дрифт). Ствол и ульта — ближний выстрел игрока и дальний из <code>assets/sounds/weapon</code>.</p>
+        <div class="sound-engine-head">
+          <span class="hint">Двигатель</span>
+          <div class="actions">
+            <button type="button" id="enginePackListen" title="Проиграть все клипы выбранного набора">Слушать пак</button>
+            <button type="button" id="enginePackStop">Стоп</button>
+            <button type="button" id="enginePackClear" title="Стандартный набор assets/sounds/engine">Стандарт</button>
+          </div>
+        </div>
+        <div class="engine-clip-row" id="engineClipRow"></div>
+        <div class="sound-grid" id="enginePackList"></div>
+        <div id="weaponSoundSlots"></div>
       </section>
       <section class="section">
         <div class="section-title">СОХРАНЕНИЕ</div>
@@ -353,10 +368,14 @@
 <script src="chars.js?v=20260829fb"></script>
 <script src="tracks.js?v=20260905h"></script>
 <script src="objects.js?v=20260905m"></script>
-<script src="editor/data.js?v=20260828u"></script>
+<script src="combat-kits.js?v=20260906s"></script>
+<script src="starter-kits.js?v=20260906s"></script>
+<script src="mid-kits.js?v=20260906s"></script>
+<script src="editor/data.js?v=20260906s"></script>
 <script src="editor/fx.js?v=20260828q"></script>
 <script src="editor/view.js?v=20260828s"></script>
-<script src="editor/app.js?v=20260828v"></script>
+<script src="editor/app.js?v=20260906s"></script>
+<script src="editor/lab-audio.js?v=20260907lab"></script>
 <script src="editor/map-data.js?v=20260905h"></script>
 <script src="editor/map-tex.js?v=20260905c"></script>
 <script src="editor/map-preview.js?v=20260905h"></script>

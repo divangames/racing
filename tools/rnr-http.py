@@ -187,6 +187,38 @@ def write_track_index():
     write_json(os.path.join(tracks_dir(), 'index.json'), {'files': list_track_files()})
 
 
+def lab_sounds():
+    """Паки двигателя и оружия для лаборатории."""
+    wav = {'.wav'}
+    engines = []
+    eng_root = os.path.join(ROOT, 'assets', 'sounds', 'cars', 'engine')
+    if os.path.isdir(eng_root):
+        for name in os.listdir(eng_root):
+            folder = os.path.join(eng_root, name, 'sound')
+            if not os.path.isdir(folder) or '..' in name or '/' in name or '\\' in name:
+                continue
+            clips = [n for n in os.listdir(folder)
+                     if os.path.isfile(os.path.join(folder, n)) and os.path.splitext(n)[1].lower() in wav]
+            clips.sort(key=natural_key)
+            if clips:
+                engines.append({'id': name, 'clips': clips})
+        engines.sort(key=lambda p: natural_key(p['id']))
+    weapons = []
+    wep_root = os.path.join(ROOT, 'assets', 'sounds', 'weapon')
+    if os.path.isdir(wep_root):
+        for name in os.listdir(wep_root):
+            folder = os.path.join(wep_root, name)
+            if name.lower() == 'generic' or not os.path.isdir(folder) or '..' in name:
+                continue
+            files = [n for n in os.listdir(folder)
+                     if os.path.isfile(os.path.join(folder, n)) and os.path.splitext(n)[1].lower() in wav]
+            files.sort(key=natural_key)
+            if files:
+                weapons.append({'id': name, 'files': files})
+        weapons.sort(key=lambda p: p['id'].lower())
+    return {'engines': engines, 'weapons': weapons}
+
+
 class Handler(SimpleHTTPRequestHandler):
     """Раздаёт файлы из корня игры и принимает POST /__save-car."""
 
@@ -215,6 +247,9 @@ class Handler(SimpleHTTPRequestHandler):
             return
         if path == '/__object-packs':
             self._json_ok(rnr_objects.list_packs(ROOT))
+            return
+        if path == '/__lab-sounds':
+            self._json_ok(lab_sounds())
             return
         return super().do_GET()
 

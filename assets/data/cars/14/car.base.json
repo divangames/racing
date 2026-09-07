@@ -1,0 +1,170 @@
+{
+  "rev": 1788704394048,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -18,
+      -9.5,
+      11.048479918580101,
+      10.022012099999998,
+      0,
+      1,
+      0
+    ],
+    [
+      -18,
+      10,
+      11.048479918580101,
+      9.420691373999997,
+      0,
+      1,
+      0
+    ],
+    [
+      18,
+      -9.5,
+      11,
+      10,
+      0,
+      1,
+      1
+    ],
+    [
+      18,
+      10,
+      11,
+      10,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -29,
+      -4,
+      9,
+      1.5
+    ],
+    [
+      -29,
+      4.5,
+      9,
+      1.5
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ЖЕЗЛ»",
+    "owner": null,
+    "price": 300,
+    "top": 0.88,
+    "acc": 0.84,
+    "crn": 0.86,
+    "hp": 72,
+    "col": "#2a4a8c",
+    "col2": "#c8a428",
+    "hov": false,
+    "traits": [
+      "ЖЕЗЛ: оглушает руль",
+      "МИГАЛКА: инвертирует руль рядом",
+      "ПОЛОСА: +8% топ на асфальте"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "01 Nissan GTR",
+    "wep": {
+      "pack": "Ak47",
+      "near": "shoot.wav",
+      "far": "distant0.wav"
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

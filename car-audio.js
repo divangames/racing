@@ -144,16 +144,26 @@ function tickCarEngineTitle(base) {
   ranked.sort(function (a, b) { return a.dist - b.dist; });
   const keep = new Set();
   const n = Math.min(cap, ranked.length);
+  let any = false;
   for (let i = 0; i < n; i++) {
     const item = ranked[i];
     keep.add(item.r);
     const slot = carEngineNpcSlot(item.r);
-    carEngineTickSlot(slot, item.r, mix * item.spat, carEnginePanFrom(listener, item.r));
+    any = carEngineTickSlot(slot, item.r, mix * item.spat, carEnginePanFrom(listener, item.r)) || any;
   }
   carEnginePruneNpcs(keep);
   if (typeof tickCarTires === 'function') tickCarTires(listener, pack, mix);
   if (typeof tickCarNos === 'function') tickCarNos(listener, pack, mix);
-  return n > 0;
+  return any;
+}
+
+/** Есть живой семпл мотора — пилу глушить только тогда. */
+function carEngineLive() {
+  if (carEnginePlayer && carEnginePlayer.voice) return true;
+  for (let i = 0; i < carEngineNpcs.length; i++) {
+    if (carEngineNpcs[i] && carEngineNpcs[i].voice) return true;
+  }
+  return false;
 }
 
 /** Холостой выбранной машины в ленте. */

@@ -1,0 +1,19 @@
+# Описание: сборка и зависимости десктоп-клиента не в git.
+
+node_modules/
+dist/
+out-msi/
+dist-content/
+vendor-local/*.js
+*.log
+.cache/
+src/launcher/media/
+build/msi/*.bmp
+build/msi/*.ico
+certs/*.pfx
+certs/password.txt
+Thumbs.db
+build/engine-check/
+build/engine-package/
+build/current-driving.js
+build/current-loop.js

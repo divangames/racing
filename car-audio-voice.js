@@ -22,12 +22,31 @@ function carEngineDir(idx) {
   return 'assets/data/cars/' + nn + '/sound/';
 }
 
+/** Имя пака двигателя: лаборатория, кузов, иначе car.json с диска. */
+function carEnginePackName(idx) {
+  const read = function (obj) {
+    const pack = obj && obj.audio && obj.audio.engine;
+    const name = String(pack || '').trim();
+    if (!name || name.length > 80 || name.indexOf('..') >= 0 || /[\\/]/.test(name)) return '';
+    return name;
+  };
+  if (typeof editorCarConfig === 'function') {
+    const fromLab = read(editorCarConfig(idx));
+    if (fromLab) return fromLab;
+  }
+  const cars = typeof CARS !== 'undefined' ? CARS : [];
+  const fromCar = read(cars[idx]);
+  if (fromCar) return fromCar;
+  if (typeof EditorData !== 'undefined' && EditorData.diskAudio) {
+    return read({audio: EditorData.diskAudio(idx)});
+  }
+  return '';
+}
+
 /** Пак из лаборатории: assets/sounds/cars/engine/<имя>/sound/. */
 function carEngineLibDir(idx) {
-  const cfg = (typeof editorCarConfig === 'function') ? editorCarConfig(idx) : null;
-  const pack = cfg && cfg.audio && cfg.audio.engine;
-  const name = String(pack || '').trim();
-  if (!name || name.length > 80 || name.indexOf('..') >= 0 || /[\\/]/.test(name)) return '';
+  const name = carEnginePackName(idx);
+  if (!name) return '';
   return CAR_ENGINE_LIB + name + '/sound/';
 }
 
@@ -63,6 +82,11 @@ function carEngineMarkMiss(url) {
   carEngineShare.miss[url] = true;
 }
 
+/** Десктоп: WAV через HTMLAudio, decodeAudioData по rnr:// часто пустой. */
+function carEngineDesktop() {
+  return typeof window !== 'undefined' && !!window.__RNR_DESKTOP__;
+}
+
 /** Первый уже декодированный клип: сначала кузов, иначе стандарт. */
 function carEnginePick(idx, n) {
   const urls = carEngineUrls(idx, n);
@@ -70,20 +94,28 @@ function carEnginePick(idx, n) {
     const buf = carEngineShare.buf[urls[i]];
     if (buf && buf !== 'bad') return urls[i];
   }
+  if (carEngineDesktop()) {
+    for (let i = 0; i < urls.length; i++) {
+      if (carEngineShare.buf[urls[i]] === 'bad' || carEngineShare.miss[urls[i]]) continue;
+      return urls[i];
+    }
+  }
   return '';
 }
 
 /** Грузит один кандидат клипа: пак, затем кузов, затем стандарт. Без лишних fetch. */
 function carEngineWarmClip(idx, n) {
+  if (carEngineDesktop()) return;
   const urls = carEngineUrls(idx, n);
+  const rest = [];
   for (let i = 0; i < urls.length; i++) {
     const url = urls[i];
     const buf = carEngineShare.buf[url];
     if (buf && buf !== 'bad') return;
     if (buf === 'bad' || carEngineShare.miss[url]) continue;
-    carEngineLoad(url);
-    return;
+    rest.push(url);
   }
+  if (rest.length) carEngineLoad(rest[0], rest.slice(1));
 }
 
 /** src с учётом кэша и адреса страницы (rnr:// и Pages). */
@@ -129,18 +161,37 @@ function carEngineDecode(raw) {
   });
 }
 
-/** Декодирует WAV в буфер контекста. */
-function carEngineLoad(url) {
+/** Следующий URL, если этот не открылся. */
+function carEngineLoadNext(rest) {
+  if (!rest || !rest.length) return;
+  for (let i = 0; i < rest.length; i++) {
+    const url = rest[i];
+    if (carEngineShare.buf[url] && carEngineShare.buf[url] !== 'bad') return;
+    if (carEngineShare.buf[url] === 'bad' || carEngineShare.miss[url]) continue;
+    carEngineLoad(url, rest.slice(i + 1));
+    return;
+  }
+}
+
+/** Декодирует WAV в буфер контекста. rest — запасные пути. */
+function carEngineLoad(url, rest) {
   if (!url || !AU.ctx) return;
   if (carEngineShare.buf[url] && carEngineShare.buf[url] !== 'bad') return;
-  if (carEngineShare.buf[url] === 'bad' || carEngineShare.miss[url]) return;
+  if (carEngineShare.buf[url] === 'bad' || carEngineShare.miss[url]) {
+    carEngineLoadNext(rest);
+    return;
+  }
   const started = carEngineShare.load[url];
   if (started && (typeof started !== 'number' || Date.now() - started < 2500)) return;
   carEngineShare.load[url] = Date.now();
-  fetch(carEngineSrc(url)).then(function (res) {
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 3500);
+  const opts = ctrl ? {signal: ctrl.signal} : {};
+  fetch(carEngineSrc(url), opts).then(function (res) {
     if (!res.ok) throw new Error('no wav');
     return res.arrayBuffer();
   }).then(function (raw) {
+    if (!raw || !raw.byteLength) throw new Error('empty');
     return carEngineDecode(raw);
   }).then(function (buf) {
     if (!buf || !buf.length) throw new Error('empty');
@@ -150,6 +201,9 @@ function carEngineLoad(url) {
     carEngineShare.buf[url] = 'bad';
     carEngineMarkMiss(url);
     carEngineShare.load[url] = 0;
+    carEngineLoadNext(rest);
+  }).finally(function () {
+    clearTimeout(timer);
   });
 }
 
@@ -217,8 +271,10 @@ function carEngineKillSlot(slot) {
   if (!slot) return;
   const v = slot.voice;
   if (v) {
+    try { if (v.el) { v.el.onended = null; v.el.onerror = null; v.el.pause(); v.el.removeAttribute('src'); v.el.load(); } } catch (err) {}
     try { v.src.onended = null; } catch (err) {}
     try { v.src.stop(); } catch (err) {}
+    try { if (v.media) v.media.disconnect(); } catch (err) {}
     try { v.src.disconnect(); } catch (err) {}
     try { v.gain.disconnect(); } catch (err) {}
     try { if (v.pan) v.pan.disconnect(); } catch (err) {}
@@ -227,9 +283,63 @@ function carEngineKillSlot(slot) {
   slot.shot = false;
 }
 
+/**
+ * URL для тега Audio — как у SFX, плюс пробелы в имени пака.
+ */
+function carEngineHtmlSrc(url) {
+  const raw = (typeof bootMediaSrc === 'function') ? bootMediaSrc(url) : url;
+  const slash = String(raw || url || '').replace(/\\/g, '/');
+  try {
+    return encodeURI(slash);
+  } catch (err) {
+    return slash;
+  }
+}
+
+/**
+ * Клип как money.mp3: тег Audio сразу в динамики.
+ * MediaElementSource уводил мотор в немой WebAudio-граф.
+ */
+function carEnginePlayHtml(slot, url, loop, vol, rate) {
+  const pitch = Math.max(0.7, Math.min(1.45, rate || 1));
+  const loud = Math.max(0, Math.min(1, vol));
+  const cur = slot.voice;
+  if (cur && cur.el && cur.url === url && cur.loop === loop) {
+    try { cur.el.volume = loud; } catch (err) {}
+    try { cur.el.playbackRate = pitch; } catch (err) {}
+    return true;
+  }
+  carEngineKillSlot(slot);
+  const el = new Audio();
+  el.preload = 'auto';
+  el.loop = !!loop;
+  el.referrerPolicy = 'no-referrer';
+  el.volume = loud;
+  try { el.playbackRate = pitch; } catch (err) {}
+  el.src = carEngineHtmlSrc(url);
+  el.onerror = function () {
+    carEngineMarkMiss(url);
+    carEngineShare.buf[url] = 'bad';
+    if (slot.voice && slot.voice.el === el) carEngineKillSlot(slot);
+  };
+  el.onended = function () {
+    if (!slot.voice || slot.voice.el !== el) return;
+    slot.voice = null;
+    slot.shot = false;
+    try { if (slot.live) carEngineResumeSlot(slot); } catch (err) {}
+  };
+  const play = el.play();
+  if (play && typeof play.catch === 'function') play.catch(function () {});
+  slot.voice = {src: el, gain: null, pan: null, url: url, loop: !!loop, el: el};
+  slot.shot = !loop;
+  return true;
+}
+
 /** Играет клип на слоте. pan: −1 слева, 0 центр, +1 справа. */
 function carEnginePlaySlot(slot, url, loop, vol, rate, pan) {
-  if (!slot || !AU.ctx || !AU.sfx || !url || vol <= 0) return false;
+  if (!slot || !url || vol <= 0) return false;
+  if (carEngineDesktop()) return carEnginePlayHtml(slot, url, loop, vol, rate);
+  if (!AU.ctx || !AU.sfx) return false;
   const buf = carEngineShare.buf[url];
   if (!buf || buf === 'bad') {
     carEngineLoad(url);

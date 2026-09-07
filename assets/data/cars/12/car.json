@@ -1,0 +1,170 @@
+{
+  "rev": 1788704287725,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -17.5,
+      -11,
+      10.7,
+      7,
+      0,
+      1,
+      0
+    ],
+    [
+      -17.5,
+      11,
+      10.7,
+      7,
+      0,
+      1,
+      0
+    ],
+    [
+      15,
+      -11,
+      11,
+      8,
+      0,
+      1,
+      1
+    ],
+    [
+      15,
+      11,
+      11,
+      8,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -28.5,
+      -3.5,
+      8,
+      1.4
+    ],
+    [
+      -28.5,
+      -0.5,
+      8,
+      1.4
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ТАЗИК»",
+    "owner": null,
+    "price": 200,
+    "top": 0.8,
+    "acc": 0.86,
+    "crn": 0.9,
+    "hp": 68,
+    "col": "#c45c28",
+    "col2": "#5a2e18",
+    "hov": false,
+    "traits": [
+      "БАКЛАГА: канистра, лужа огня",
+      "ХЛОПОК: сажа режет разгон",
+      "ЖЕСТЬ: первый удар круга −50%"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "01 Nissan GTR",
+    "wep": {
+      "pack": "Tank Cannon",
+      "near": "cannon_fire.wav",
+      "far": "cannon_fire.wav"
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}

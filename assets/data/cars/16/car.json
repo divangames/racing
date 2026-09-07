@@ -1,0 +1,200 @@
+{
+  "rev": 1788704477442,
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -22.5,
+      -11,
+      11,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      -22.5,
+      11,
+      11,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      19,
+      -10.5,
+      11,
+      8,
+      0,
+      1,
+      1
+    ],
+    [
+      19,
+      10.5,
+      11,
+      8,
+      0,
+      1,
+      1
+    ],
+    [
+      -13,
+      -11,
+      11,
+      8,
+      0,
+      1,
+      0
+    ],
+    [
+      -13,
+      11,
+      11,
+      8,
+      0,
+      1,
+      0
+    ]
+  ],
+  "nitro": [
+    [
+      -25,
+      -6.6,
+      9,
+      1.5
+    ],
+    [
+      -25,
+      6.6,
+      9,
+      1.5
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "wmtom29ik31x",
+      "type": "wheel",
+      "on": true,
+      "ref": 4
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "wmtom29ikpt",
+      "type": "wheel",
+      "on": true,
+      "ref": 5
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«БОРТ»",
+    "owner": null,
+    "price": 400,
+    "top": 0.86,
+    "acc": 0.78,
+    "crn": 0.82,
+    "hp": 74,
+    "col": "#6e6a66",
+    "col2": "#8a3020",
+    "hov": false,
+    "traits": [
+      "ЛОМ: удар с борта",
+      "ОТЦЕП: холодильник-ящик на трассе",
+      "ХЛАМ: ключ даёт +4 корпуса"
+    ]
+  },
+  "owner": null,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "03 Dodge Viper SRT10",
+    "wep": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
+}
