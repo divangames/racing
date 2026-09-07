@@ -307,6 +307,10 @@ function carEnginePlayHtml(slot, url, loop, vol, rate) {
   if (cur && cur.el && cur.url === url && cur.loop === loop) {
     try { cur.el.volume = loud; } catch (err) {}
     try { cur.el.playbackRate = pitch; } catch (err) {}
+    if (cur.el.paused) {
+      const retry = cur.el.play();
+      if (retry && typeof retry.catch === 'function') retry.catch(function () {});
+    }
     return true;
   }
   carEngineKillSlot(slot);
@@ -328,10 +332,10 @@ function carEnginePlayHtml(slot, url, loop, vol, rate) {
     slot.shot = false;
     try { if (slot.live) carEngineResumeSlot(slot); } catch (err) {}
   };
-  const play = el.play();
-  if (play && typeof play.catch === 'function') play.catch(function () {});
   slot.voice = {src: el, gain: null, pan: null, url: url, loop: !!loop, el: el};
   slot.shot = !loop;
+  const play = el.play();
+  if (play && typeof play.catch === 'function') play.catch(function () {});
   return true;
 }
 

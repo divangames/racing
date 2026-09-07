@@ -23,6 +23,7 @@ function carTireUrl(kind) {
   const url = kind === 'drift' ? CAR_TIRE_DRIFT : CAR_TIRE_SLIDE;
   const buf = carEngineShare.buf[url];
   if (buf && buf !== 'bad') return url;
+  if (typeof carEngineDesktop === 'function' && carEngineDesktop() && !carEngineShare.miss[url]) return url;
   return '';
 }
 

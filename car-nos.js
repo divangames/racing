@@ -23,6 +23,7 @@ function carNosUrl(kind) {
   const url = kind === 'loop' ? CAR_NOS_LOOP : CAR_NOS_START;
   const buf = carEngineShare.buf[url];
   if (buf && buf !== 'bad') return url;
+  if (typeof carEngineDesktop === 'function' && carEngineDesktop() && !carEngineShare.miss[url]) return url;
   return '';
 }
 
