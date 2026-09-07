@@ -9,7 +9,8 @@ const CAR_ENGINE_HEAR = 1320;
 const CAR_ENGINE_NEAR = 78;
 const CAR_ENGINE_PAN = 260;
 const CAR_ENGINE_PLAYER = 1;
-const CAR_ENGINE_MENU = 0.58;
+const CAR_ENGINE_MENU = 0.29;
+const CAR_ENGINE_NPC = 0.9;
 
 const carEnginePlayer = carEngineMakeSlot();
 const carEngineNpcs = [];
@@ -149,7 +150,9 @@ function tickCarEngineTitle(base) {
     const item = ranked[i];
     keep.add(item.r);
     const slot = carEngineNpcSlot(item.r);
-    any = carEngineTickSlot(slot, item.r, mix * item.spat, carEnginePanFrom(listener, item.r)) || any;
+    slot.npc = true;
+    const density = 1 / Math.sqrt(i + 1);
+    any = carEngineTickSlot(slot, item.r, mix * item.spat * CAR_ENGINE_NPC * density, carEnginePanFrom(listener, item.r)) || any;
   }
   carEnginePruneNpcs(keep);
   if (typeof tickCarTires === 'function') tickCarTires(listener, pack, mix);
@@ -215,7 +218,9 @@ function tickCarEngineField(player, paused, screen) {
     const item = ranked[i];
     keep.add(item.r);
     const slot = carEngineNpcSlot(item.r);
-    carEngineTickSlot(slot, item.r, base * item.spat, carEnginePanFrom(player, item.r));
+    slot.npc = true;
+    const density = 1 / Math.sqrt(i + 1);
+    carEngineTickSlot(slot, item.r, base * item.spat * CAR_ENGINE_NPC * density, carEnginePanFrom(player, item.r));
   }
   carEnginePruneNpcs(keep);
   if (typeof tickCarTires === 'function') tickCarTires(player, pack, base);
@@ -245,6 +250,16 @@ function carEngineTickSlot(slot, racer, mixVol, pan) {
   const top = Math.max(1, racer.st && racer.st.top ? racer.st.top : 1);
   const spd = Math.abs(racer.spd || 0);
   const n = Math.min(1, spd / top);
+  if (slot.npc) {
+    // NPC: один непрерывный loop без коротких разгонных клипов и обрывов.
+    slot.n = n;
+    slot.gas = 0;
+    slot.pulls = 0;
+    slot.want = 'drive';
+    if (slot.shot) carEngineKillSlot(slot);
+    carEngineEnsureSlot(slot);
+    return !!slot.voice;
+  }
   const gas = carEngineGas(racer);
   slot.n = n;
   const hb = !!racer.handbrake;

@@ -22,6 +22,7 @@
     "pack": "npm run media && node tools/run-with-cert.cjs npx --no-install electron-builder --win dir",
     "portable": "node tools/make-portable.cjs",
     "pack:game": "node tools/pack-game-release.cjs",
+    "publish:launcher": "node tools/publish-launcher-release.cjs",
     "prefetch:wix": "node tools/prefetch-builder-binaries.cjs",
     "dist": "npm run media && node tools/run-with-cert.cjs npx --no-install electron-builder --win nsis",
     "dist:msi": "npm run prefetch:wix && npm run media && npm run art:msi && node tools/run-with-cert.cjs npx --no-install electron-builder --win msi --config.directories.output=out-msi"
