@@ -250,16 +250,6 @@ function carEngineTickSlot(slot, racer, mixVol, pan) {
   const top = Math.max(1, racer.st && racer.st.top ? racer.st.top : 1);
   const spd = Math.abs(racer.spd || 0);
   const n = Math.min(1, spd / top);
-  if (slot.npc) {
-    // NPC: один непрерывный loop без коротких разгонных клипов и обрывов.
-    slot.n = n;
-    slot.gas = 0;
-    slot.pulls = 0;
-    slot.want = 'drive';
-    if (slot.shot) carEngineKillSlot(slot);
-    carEngineEnsureSlot(slot);
-    return !!slot.voice;
-  }
   const gas = carEngineGas(racer);
   slot.n = n;
   const hb = !!racer.handbrake;
