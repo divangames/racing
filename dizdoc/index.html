@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0e12">
+  <meta name="description" content="Рабочий сайт дизайн-документа Колесницы войны">
+  <title>Колесница войны — Диздок</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="В начало">
+        <span class="brand-mark">CW</span>
+        <span><b>КОЛЕСНИЦА ВОЙНЫ</b><small>РАБОЧИЙ ДИЗДОК · v0.2</small></span>
+      </a>
+      <div class="top-meta"><span class="signal"></span> КАНОН СИНХРОНИЗИРОВАН <span class="slash">/</span> 08.09.2026</div>
+    </header>
+
+    <div class="layout" id="top">
+      <aside class="sidebar">
+        <div class="side-label">НАВИГАЦИЯ</div>
+        <nav class="toc" aria-label="Содержание">
+          <a href="#overview">01 <span>Суть игры</span></a>
+          <a href="#cast">02 <span>Герои</span></a>
+          <a href="#campaign">03 <span>Кампании</span></a>
+          <a href="#missions">04 <span>Миссии</span></a>
+          <a href="#bosses">05 <span>Боссы</span></a>
+          <a href="#economy">06 <span>Экономика</span></a>
+          <a href="#cutscenes">07 <span>Катсцены</span></a>
+          <a href="#production">08 <span>Производство</span></a>
+        </nav>
+        <div class="side-note">
+          <span class="note-dot"></span>
+          <p>Изменения вносятся в этот сайт по команде<br><strong>«Диздок сайт»</strong></p>
+        </div>
+        <a class="source-link" href="../">← Главная страница игры</a>
+        <a class="source-link" href="ИГРОВОЙСЮЖЕТ.txt" download>↓ Скачать полный текст</a>
+      </aside>
+
+      <main class="content">
+        <section class="intro" id="overview">
+          <div class="eyebrow">DESIGN DOCUMENT / STORY SYSTEM</div>
+          <h1>История, которую<br><em>нужно пройти</em></h1>
+          <p class="dek">Смертельные гонки в Чёрном Поясе. Четыре героя, одна военная бойня и арена, которая учится заставлять людей предавать друг друга.</p>
+          <div class="hero-rule"><span></span><b>Главный принцип</b><span></span></div>
+          <blockquote>Игрок не смотрит историю о гонщиках — он зарабатывает её победами, рискует деньгами, выбирает маршрут и лично доводит отношения героев до взрыва.</blockquote>
+          <div class="stats-grid" aria-label="Ключевые показатели">
+            <div class="stat"><strong>04</strong><span>играбельных героя</span></div>
+            <div class="stat"><strong>21</strong><span>сюжетный этап</span></div>
+            <div class="stat"><strong>66</strong><span>миссий в плане</span></div>
+            <div class="stat"><strong>07</strong><span>боссов с фазами</span></div>
+          </div>
+        </section>
+
+        <section class="section" id="cast">
+          <div class="section-head"><span class="index">02</span><div><div class="eyebrow">THE FAMILY</div><h2>Герои не выбираются<br>из одной и той же боли</h2></div></div>
+          <div class="cast-grid">
+            <article class="person person-red"><div class="person-num">01</div><h3>Медведь</h3><p>Военный гонщик и последний свидетель «Ночи зубов». Молчит, потому что считает молчание защитой.</p><span class="tag">НЕЙРОСЕТЬ · ЛОВУШКИ</span></article>
+            <article class="person person-green"><div class="person-num">02</div><h3>Ерш</h3><p>Курьер, который выжил на скорости. Сын Башкира, муж Бегемотика. Броня для него — лишний вес.</p><span class="tag">РАЗГОН · РИСК</span></article>
+            <article class="person person-pink"><div class="person-num">03</div><h3>Бегемотик</h3><p>Королева шпильки. Возвращалась в огонь за своими и теперь смеётся, когда страх пытается её догнать.</p><span class="tag">ДРИФТ · КОНТРАТАКА</span></article>
+            <article class="person person-blue"><div class="person-num">04</div><h3>Башкир</h3><p>Отец Ерша, друг Медведя. Не гонится за первым местом — первое место само приезжает к его бамперу.</p><span class="tag">БРОНЯ · ТАРАН</span></article>
+          </div>
+          <div class="yanot-strip"><span class="person-num">06</span><div><h3>Янот · «Та, которая не забыла»</h3><p>Самостоятельный герой второй кампании. Бывшая любовница Медведя, которая не простит красивую смерть вместо честного разговора.</p></div><span class="tag">МАСКИРОВКА · ЧТЕНИЕ МАРШРУТА</span></div>
+        </section>
+
+        <section class="section" id="campaign">
+          <div class="section-head"><span class="index">03</span><div><div class="eyebrow">CAMPAIGN MAP</div><h2>Две кампании.<br>Одна катастрофа.</h2></div></div>
+          <div class="flow">
+            <div class="flow-node active"><b>ПРОЛОГ</b><span>Ограбленный гараж</span></div><i>→</i><div class="flow-node"><b>АКТ I</b><span>Подъём с нуля</span></div><i>→</i><div class="flow-node"><b>АКТ II</b><span>Семья на табло</span></div><i>→</i><div class="flow-node danger"><b>АКТ III</b><span>Смерть Медведя</span></div><i>→</i><div class="flow-node scarab"><b>АКТ IV</b><span>Скарабей</span></div>
+          </div>
+          <p class="section-note">После ограбления у игрока остаются только деньги, телефон, личный предмет и выбор стартового кузова. Старая машина, детали и гараж потеряны сюжетно — это точка, с которой начинается личное восстановление.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Этап</th><th>Глава</th><th>Фокус</th><th>Игровой акцент</th></tr></thead>
+              <tbody>
+                <tr><td>ПРОЛОГ</td><td>Пустые крепления</td><td>Ограбление гаража</td><td>Выбор стартовой машины</td></tr>
+                <tr><td>01</td><td>Три дня</td><td>Возвращение Медведя</td><td>Слежка и знакомство</td></tr>
+                <tr><td>02</td><td>Ночь зубов</td><td>Военный флэшбек</td><td>Конвой и побег</td></tr>
+                <tr><td>03</td><td>Последний свидетель</td><td>Фото Янот</td><td>Поиск в дыму</td></tr>
+                <tr><td>04</td><td>Год без дома</td><td>Новая жизнь</td><td>Первые деньги</td></tr>
+                <tr><td>05</td><td>Грабёж гаража</td><td>Бронекузнец</td><td>Оборона → погоня → босс</td></tr>
+                <tr><td>06</td><td>Подъём с нуля</td><td>Башкир</td><td>Рынок и Борис Бык</td></tr>
+                <tr><td>07</td><td>Подарок с ценой</td><td>Маяки</td><td>Доставка и защита</td></tr>
+                <tr><td>08</td><td>Приглашение на похороны</td><td>Янот</td><td>Пропуск и парная гонка</td></tr>
+                <tr><td>09</td><td>Живые на табло</td><td>Семья</td><td>Не уничтожить своих</td></tr>
+                <tr><td>10</td><td>То, что скрывал</td><td>Признание</td><td>Сервисный тоннель</td></tr>
+                <tr><td>11</td><td>Боссы из прошлого</td><td>Пастух / Сестра / Брат</td><td>Три уникальные дуэли</td></tr>
+                <tr><td>12</td><td>Выживет только один</td><td>Арена-эксперимент</td><td>Сервер и выбор цели</td></tr>
+                <tr class="critical"><td>13</td><td>Последний круг</td><td>Лаурят</td><td>Медведь закрывает Янот Camaro</td></tr>
+                <tr class="second"><td>14–16</td><td>Четверо вместо одного</td><td>Выбор выжившего</td><td>Скарабей как временный босс</td></tr>
+                <tr class="second"><td>17–18</td><td>Личные ветки</td><td>Ерш / Бегемотик / Башкир / Янот</td><td>Разные взгляды на правду</td></tr>
+                <tr class="second"><td>19–21</td><td>Чёрный ящик → Свободный панцирь</td><td>Сброс ошейника</td><td>Открытие Скарабея</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section" id="missions">
+          <div class="section-head"><span class="index">04</span><div><div class="eyebrow">MISSION DESIGN</div><h2>Каждая глава меняет<br>способ играть</h2></div></div>
+          <div class="mission-grid">
+            <article><span class="mission-icon">01</span><h3>Гонка</h3><p>Финишировать первым или попасть в сектор до закрытия ворот. Иногда важнее доставить улику, чем выиграть.</p></article>
+            <article><span class="mission-icon">02</span><h3>Погоня</h3><p>Держать дистанцию, ломать защиту цели и реагировать на смену маршрута.</p></article>
+            <article><span class="mission-icon">03</span><h3>Побег</h3><p>Пережить таймер, сбросить маяк, найти выход. Победа — это не всегда первое место.</p></article>
+            <article><span class="mission-icon">04</span><h3>Защита</h3><p>Прикрыть союзника, гараж или эвакуатор. Башкир делает этот тип личным.</p></article>
+            <article><span class="mission-icon">05</span><h3>Перехват</h3><p>Догнать конвой, забрать груз и не дать Дирекции стереть свидетеля.</p></article>
+            <article><span class="mission-icon">06</span><h3>Босс</h3><p>Три фазы, отдельное правило арены и личная причина ненавидеть героя.</p></article>
+          </div>
+          <div class="chase-card"><div><div class="eyebrow">SET PIECE / НИКОГДА НЕ ОСТАНАВЛИВАЙСЯ</div><h3>Побег с вертолётом</h3><p>Вышка → сухой канал → ретрансляторы → тоннель. Вертолёт нельзя просто убить: игрок использует кран, мост, топливный резервуар и тень эстакады.</p></div><ol><li>Уехать за 30 секунд</li><li>Спрятаться от ракет</li><li>Сломать два ретранслятора</li><li>Доставить архив</li></ol></div>
+        </section>
+
+        <section class="section" id="bosses">
+          <div class="section-head"><span class="index">05</span><div><div class="eyebrow">BOSS ROSTER</div><h2>Босс — это правило,<br>которое тебя ненавидит</h2></div></div>
+          <div class="table-wrap">
+            <table class="boss-table">
+              <thead><tr><th>Босс</th><th>Локация</th><th>Главная механика</th><th>Смысл</th></tr></thead>
+              <tbody>
+                <tr><td><b>Борис Бык</b><small>«Лоб в лоб»</small></td><td>Нижний рынок</td><td>Силовая дуэль, таран, закрытые короткие пути</td><td>Первый капитал</td></tr>
+                <tr><td><b>Бронекузнец</b><small>«Обломки»</small></td><td>Старый завод</td><td>Броня → ловушки → разваливающаяся быстрая машина</td><td>Ограбление гаража</td></tr>
+                <tr><td><b>Пастух</b><small>«Голоса в рации»</small></td><td>Разбитая эстакада</td><td>Рой дронов и ложные голоса погибших</td><td>Доверять не голосу, а фактам</td></tr>
+                <tr><td><b>Сестра</b><small>«Правильный порядок»</small></td><td>Узел связи</td><td>Меняет ворота и предлагает спасти одного союзника</td><td>Контроль как забота</td></tr>
+                <tr><td><b>Старший брат</b><small>«Цена жизни»</small></td><td>Подземная арена</td><td>Копирует стиль и последний успешный приём игрока</td><td>Вина выжившего</td></tr>
+                <tr><td><b>Лаурят</b><small>«Ты сам выбрал»</small></td><td>Диспетчерская</td><td>Архив, семья, месть и порядок действий</td><td>Зеркало Медведя</td></tr>
+                <tr class="critical"><td><b>Скарабей</b><small>«Чужой в панцире»</small></td><td>Арена второй кампании</td><td>Тяжёлый панцирь, паттерны Camaro, живой ошейник</td><td>Своего нужно сначала победить</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section" id="economy">
+          <div class="section-head"><span class="index">06</span><div><div class="eyebrow">MONEY / GARAGE / RISK</div><h2>Деньги — это<br>цена следующей ошибки</h2></div></div>
+          <div class="economy-layout">
+            <div class="money-card"><div class="eyebrow">ПОСЛЕ ОГРАБЛЕНИЯ</div><strong>Только деньги<br>и выбор кузова</strong><p>Никаких бесплатных запасов. Игрок сам решает, вложиться в скорость, ремонт или информацию.</p></div>
+            <div class="table-wrap"><table><thead><tr><th>Стадия</th><th>Что открывается</th><th>Цена решения</th></tr></thead><tbody><tr><td>0 · Пустой бокс</td><td>Ремонт, шины, базовый кузов</td><td>Каждый серьёзный удар</td></tr><tr><td>1 · Укрытие</td><td>Детали, улики, союзники</td><td>Деньги или внимание Дирекции</td></tr><tr><td>2 · Мастерская</td><td>Оружие, защита, подготовка к боссам</td><td>Выбор специализации</td></tr><tr><td>3 · Штаб</td><td>Несколько машин, карта влияния</td><td>Новый круг истории</td></tr></tbody></table></div>
+          </div>
+          <div class="vehicle-row"><div><b>КУРЬЕР</b><span>Разгон / слабая броня</span></div><div><b>КАТУШКА</b><span>Таран / плохой поворот</span></div><div><b>ИСКРА</b><span>Дрифт / перегрев</span></div><div><b>ПРОТОКОЛ</b><span>Нейросеть / поздний рост</span></div></div>
+        </section>
+
+        <section class="section" id="cutscenes">
+          <div class="section-head"><span class="index">07</span><div><div class="eyebrow">CUTSCENE BOARD</div><h2>Сцены, в которых<br>меняется правда</h2></div></div>
+          <p class="section-note">Полные раскадровки, диалоги и промты лежат в исходном файле. Ниже — ключевые постановочные узлы, связанные якорями с кампанией.</p>
+          <div class="scene-list">
+            <details open id="scene-garage"><summary><span>01</span><b>Гараж до бури</b><small>Пролог · Медведь / Янот</small></summary><div class="scene-body"><p><b>ЯНОТ:</b> Сколько тебя не будет?<br><b>МЕДВЕДЬ:</b> Три дня.<br><b>ЯНОТ:</b> Ты всегда врёшь одинаково. Хоть бы разнообразил.</p><p class="shot">Кадр: дождь, красный Camaro под лампой, сообщение «Не бери Лаурята в машину», которое Медведь стирает.</p><div class="prompt">PROMPT — мрачный гараж над промышленной улицей, красный бронированный Camaro, взрослые Медведь и Янот у верстака, тревожный телефон, дождь и янтарный свет, gritty animated comic-book, 21+.</div></div></details>
+            <details id="scene-robbery"><summary><span>02</span><b>Пустые крепления</b><small>Глава 5 · ограбление гаража</small></summary><div class="scene-body"><p><b>МЕДВЕДЬ:</b> Они забрали тебя.<br><b>НЕЙРОСЕТЬ:</b> Меня — частично. Тебя — полностью.<br><b>МЕДВЕДЬ:</b> Тогда начнём с того, чтобы не умереть дешёвыми.</p><p class="shot">Кадр: пустые крепления, копоть, жетон со знаком арены и удаляющаяся машина Бронекузнеца.</p><div class="prompt">PROMPT — разграбленный гараж после ночного нападения, пустые металлические крепления, копоть, Медведь среди дыма, жетон арены, машина из обломков за воротами, gritty comic-book, 21+.</div></div></details>
+            <details id="scene-family"><summary><span>03</span><b>Папа?</b><small>Глава 9 · семейный старт</small></summary><div class="scene-body"><p><b>БАШКИР:</b> Это я. Папа.<br><b>ЕРШ:</b> Папа?.. Ты тоже умер?<br><b>БАШКИР:</b> Не дождёшься.</p><p class="shot">Кадр: четыре машины на стартовой линии, между семейным узнаванием и ракетами арены — одна секунда.</p><div class="prompt">PROMPT — подземная арена перед смертельной гонкой, Башкир и Ерш смотрят друг на друга через дым, Янот и Бегемотик на соседних линиях, ракеты готовятся к запуску, gritty animated comic-book, 21+.</div></div></details>
+            <details id="scene-truth"><summary><span>04</span><b>Башкир бьёт первым</b><small>Глава 10 · сервисный тоннель</small></summary><div class="scene-body"><p><b>БАШКИР:</b> Ты мог сказать.<br><b>МЕДВЕДЬ:</b> Если бы сказал, ты бы поехал один.<br><b>БАШКИР:</b> А ты решил, что имеешь право ехать вместо всех?</p><p class="shot">Кадр: синий Ford 6x6 прижимает Camaro к бетонной стене, затем ключи летят обратно Медведю.</p><div class="prompt">PROMPT — узкий сервисный тоннель, Башкир и Медведь лицом к лицу у повреждённых машин, красные аварийные лампы, пар и масло, психологический gritty comic-book, 21+.</div></div></details>
+            <details id="scene-death"><summary><span>05</span><b>Ты сам выбрал</b><small>Глава 13 · смерть Медведя</small></summary><div class="scene-body"><p><b>ЛАУРЯТ:</b> Я решил, кто должен жить. Ты просто называл это защитой.<br><b>ЯНОТ:</b> Не смей решать за меня.<br><b>МЕДВЕДЬ:</b> Я рядом.</p><p class="shot">Кадр: Camaro бросается поперёк траектории ракеты. Янот у горящих обломков кричит: «Ты опять решил всё один!»</p><div class="prompt">PROMPT — диспетчерская арены, Лаурят на стене экранов, красный Camaro закрывает спорткар Янот от ракеты, огонь, дым, Башкир удерживает Янот, трагический gritty animated comic-book, 21+.</div></div></details>
+            <details id="scene-scarab"><summary><span>06</span><b>Чужой в панцире</b><small>Глава 15 · Скарабей</small></summary><div class="scene-body"><p><b>ЕРШ:</b> Он издевается.<br><b>ЯНОТ:</b> Нет. Он промахнулся слишком правильно.<br><b>СИСТЕМА:</b> Учебная цель: семья.</p><p class="shot">Кадр: Скарабей ставит мину перед Янот, но взрывает её раньше времени; ошейник разворачивает его против семьи.</p><div class="prompt">PROMPT — чёрный панцирь Скарабея с фарами-щёлями против четырёх машин семьи в дыму арены, красный сигнал ошейника, мина в стороне от Янот, boss reveal, gritty comic-book, 21+.</div></div></details>
+            <details id="scene-collar"><summary><span>07</span><b>Сброс ошейника</b><small>Глава 20 · освобождение</small></summary><div class="scene-body"><p><b>БЕГЕМОТИК:</b> У нас нет его руки.<br><b>ЯНОТ:</b> У нас есть его привычки.<br><b>НЕЙРОСЕТЬ:</b> Цель... отменена.<br><b>ЯНОТ:</b> Теперь можешь сам выбрать.</p><p class="shot">Кадр: на вершине ретрансляционной вышки гаснет искрящийся ошейник, Скарабей впервые остаётся без приказа.</p><div class="prompt">PROMPT — вершина ретрансляционной вышки в грозу, Янот вводит последний жест-подпись, Бегемотик у сервера, Башкир прикрывает огнём, Скарабей освобождается от ошейника, gritty sci-fi comic-book, 21+.</div></div></details>
+            <details id="scene-free"><summary><span>08</span><b>Свободный панцирь</b><small>Глава 21 · финал второго круга</small></summary><div class="scene-body"><p><b>НЕЙРОСЕТЬ:</b> Куда ехать?<br><b>БАШКИР:</b> Впервые спрашиваешь.<br><b>ЯНОТ:</b> Не называй себя Медведем, если сам не решил.</p><p class="shot">Кадр: рассвет, четыре машины и Скарабей на окраине Чёрного Пояса. Лаурят остаётся на свободе, но город получает часть архива.</p><div class="prompt">PROMPT — рассвет на окраине Чёрного Пояса, четыре машины и чёрный панцирь Скарабея на дороге, дымящиеся башни и погасшие экраны Дирекции, тяжёлая свобода, широкая кинематографическая композиция, gritty animated comic-book, 21+.</div></div></details>
+          </div>
+        </section>
+
+        <section class="section" id="production">
+          <div class="section-head"><span class="index">08</span><div><div class="eyebrow">PRODUCTION ORDER</div><h2>Сначала — кусок,<br>который уже играется</h2></div></div>
+          <div class="production-grid"><div><span>01</span><h3>Vertical slice</h3><p>Ограбление, выбор кузова, короткая гонка, вертолётная погоня, пустой бокс и Борис Бык.</p></div><div><span>02</span><h3>Подъём с нуля</h3><p>Главы 1–5, Нижний рынок, завод, сухой канал, Бронекузнец и внимание Дирекции.</p></div><div><span>03</span><h3>Семья и арена</h3><p>Главы 6–10, Янот, Ерш, Бегемотик, Башкир, Пастух и Сестра.</p></div><div><span>04</span><h3>Финал</h3><p>Главы 11–13, Лаурят, смерть Медведя, выбор нового героя и Скарабей.</p></div></div>
+          <div class="non-negotiable"><div class="eyebrow">НЕПОДВИЖНЫЕ ПРАВИЛА КАНОНА</div><ol><li>Медведь погибает, закрывая Янот своим Camaro.</li><li>Скарабей не показывается как «Медведь в новом скине» до раскрытия.</li><li>Играбельный Скарабей доступен только сейву, начатому за Медведя.</li><li>Деньги дают варианты, но не покупают прощение или бессмертие.</li><li>Каждая повторная гонка получает новую цель, маршрут или риск.</li></ol></div>
+        </section>
+
+        <footer class="footer"><span>КОЛЕСНИЦА ВОЙНЫ / ДИЗДОК</span><span>Рабочая версия · источник: ИГРОВОЙСЮЖЕТ.txt</span><a href="#top">↑ В начало</a></footer>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
