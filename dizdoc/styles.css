@@ -9,8 +9,6 @@
 @font-face{font-family:'Bender';src:url('../assets/fonts/bender/Bender-Bold.otf') format('opentype');font-weight:700;font-style:normal;font-display:swap}
 @font-face{font-family:'Bender';src:url('../assets/fonts/bender/Bender-Black.otf') format('opentype');font-weight:900;font-style:normal;font-display:swap}
 :root{--display:'Bender','Barlow Condensed',sans-serif}
-.brand-mark{overflow:hidden}
-.brand-mark img{display:block;width:27px;height:27px;object-fit:contain;transform:skew(10deg)}
 .asset-proof{display:flex;align-items:center;gap:16px;max-width:720px;margin-top:26px;padding:12px 15px;border:1px solid var(--line);background:linear-gradient(90deg,rgba(232,173,74,.08),transparent)}
 .asset-proof img{width:120px;height:54px;object-fit:cover;object-position:center;border-right:1px solid var(--line);padding-right:15px;image-rendering:pixelated}
 .asset-proof b{display:block;margin-top:4px;font-size:18px}.asset-proof small{display:block;color:var(--muted);font-family:var(--mono);font-size:10px;margin-top:3px}
