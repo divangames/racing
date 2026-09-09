@@ -16,7 +16,7 @@ echo Сборка MSI лаунчера без файлов игры.
 call npm run dist:msi
 if errorlevel 1 goto :fail
 if not exist dist mkdir dist
-copy /Y "out-msi\KolesnicaVoyny-*.msi" "dist\" >nul
+copy /Y "out-msi\KolesnicaVoyny-*.msi" dist\
 echo Готово. MSI в папке dist и out-msi ^(KolesnicaVoyny-версия.msi^)
 pause
 exit /b 0

@@ -12,6 +12,7 @@ const { quickCheck, fullVerify } = require('./integrity');
 const { loadSettings, saveSettings } = require('./settings');
 const { playGame, createLabWindow } = require('./windows');
 const { snapshot, installLatest } = require('./update/service');
+const { snapshot: launcherSnapshot, applyLatest, localVersion } = require('./update/launcher-self');
 
 /**
  * Подписка на каналы прелоада лаунчера.
@@ -21,13 +22,16 @@ function bindLauncherIpc() {
     const check = quickCheck();
     const settings = loadSettings();
     const install = await snapshot();
+    const selfUpdate = await launcherSnapshot();
     return {
       title: game.title,
       version: game.version,
+      launcherVersion: localVersion(),
       contentRoot: contentRoot(),
       fullscreen: settings.fullscreen,
       check,
-      install
+      install,
+      selfUpdate
     };
   });
 
@@ -57,6 +61,18 @@ function bindLauncherIpc() {
       return { ok: true, check, install: await snapshot() };
     }
     return { ok: false, issues: result.issues, install: await snapshot() };
+  });
+
+  ipcMain.handle('launcher:self-update', async (event) => {
+    const sender = event.sender;
+    const result = await applyLatest((info) => {
+      if (!sender.isDestroyed()) sender.send('launcher:self-progress', info);
+    });
+    if (result.applying) return result;
+    if (result.ok) {
+      return { ok: true, applying: false, selfUpdate: await launcherSnapshot() };
+    }
+    return { ok: false, issues: result.issues, selfUpdate: await launcherSnapshot() };
   });
 
   ipcMain.handle('launcher:lab', async () => {

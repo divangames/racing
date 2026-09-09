@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld('rnrLauncher', {
   sync() {
     return ipcRenderer.invoke('launcher:sync');
   },
+  selfUpdate() {
+    return ipcRenderer.invoke('launcher:self-update');
+  },
   quit() {
     return ipcRenderer.invoke('launcher:quit');
   },
@@ -39,5 +42,10 @@ contextBridge.exposeInMainWorld('rnrLauncher', {
     const listen = (_event, info) => fn(info);
     ipcRenderer.on('launcher:sync-progress', listen);
     return () => ipcRenderer.removeListener('launcher:sync-progress', listen);
+  },
+  onSelfProgress(fn) {
+    const listen = (_event, info) => fn(info);
+    ipcRenderer.on('launcher:self-progress', listen);
+    return () => ipcRenderer.removeListener('launcher:self-progress', listen);
   }
 });

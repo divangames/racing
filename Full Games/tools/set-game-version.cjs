@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////
 //
-// Пишет номер версии в game.json, package.json и движок.
+// Пишет номер zip-игры в game.json и движок. Лаунчер — set-launcher-version.
 //
 ////////////////////////////////////////////////////////
 
@@ -107,11 +107,7 @@ function setGameVersion(raw) {
   if (!isGameVersion(version)) {
     throw new Error('Версия должна быть числом с точками, например 0.2.1.0');
   }
-  const npmVersion = toNpmVersion(version);
   writeJsonVersion(path.join(client, 'config', 'game.json'), version);
-  writeJsonVersion(path.join(client, 'package.json'), npmVersion);
-  const lockPath = path.join(client, 'package-lock.json');
-  if (fs.existsSync(lockPath)) writeLockRootVersion(lockPath, npmVersion);
   writeEngineVersion(version);
   return version;
 }
@@ -119,11 +115,18 @@ function setGameVersion(raw) {
 if (require.main === module) {
   try {
     const version = setGameVersion(process.argv[2]);
-    console.log('Версия клиента:', version);
+    console.log('Версия игры:', version);
   } catch (err) {
     console.error(err.message || String(err));
     process.exit(1);
   }
 }
 
-module.exports = { normalizeVersion, isGameVersion, toNpmVersion, setGameVersion };
+module.exports = {
+  normalizeVersion,
+  isGameVersion,
+  toNpmVersion,
+  writeJsonVersion,
+  writeLockRootVersion,
+  setGameVersion
+};

@@ -23,9 +23,10 @@ if (ensure.status !== 0) process.exit(ensure.status || 1);
 
 const password = fs.readFileSync(pwdFile, 'utf8').trim();
 const game = JSON.parse(fs.readFileSync(path.join(root, 'config', 'game.json'), 'utf8'));
+const launcher = JSON.parse(fs.readFileSync(path.join(root, 'config', 'launcher.json'), 'utf8'));
 const env = {
   ...process.env,
-  KOLESNICA_VERSION: String(game.version || '0.0.0'),
+  KOLESNICA_VERSION: String(launcher.version || game.version || '0.0.0'),
   WIN_CSC_LINK: pfx,
   WIN_CSC_KEY_PASSWORD: password,
   CSC_LINK: pfx,

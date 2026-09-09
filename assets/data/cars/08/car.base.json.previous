@@ -1,5 +1,5 @@
 {
-  "rev": 1788702831256,
+  "rev": 1788703962684,
   "body": {
     "x": 0,
     "y": 0,
@@ -157,9 +157,9 @@
   "audio": {
     "engine": "03 Dodge Viper SRT10",
     "wep": {
-      "pack": "",
-      "near": "",
-      "far": ""
+      "pack": "Golfclub",
+      "near": "swing.wav",
+      "far": "hit.wav"
     },
     "ult": {
       "pack": "",

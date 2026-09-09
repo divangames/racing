@@ -2,5 +2,6 @@
   "owner": "divangames",
   "repo": "racing",
   "assetPrefix": "kolesnica-content",
+  "launcherAssetPrefix": "KolesnicaVoyny",
   "userAgent": "KolesnicaVoyny-Launcher"
 }

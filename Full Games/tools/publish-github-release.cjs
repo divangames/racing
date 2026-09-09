@@ -151,16 +151,17 @@ function apiRequest(url, opts) {
 }
 
 /**
- * Сырой zip на uploads.github.com.
+ * Сырой файл на uploads.github.com.
  * @param {string} uploadUrl
- * @param {string} zipPath
+ * @param {string} filePath
  * @param {string} token
+ * @param {string} contentType
  * @returns {Promise<{status: number, json: object|null, text: string}>}
  */
-function uploadZip(uploadUrl, zipPath, token) {
+function uploadAsset(uploadUrl, filePath, token, contentType) {
   return new Promise((resolve, reject) => {
     const parsed = new URL(uploadUrl);
-    const size = fs.statSync(zipPath).size;
+    const size = fs.statSync(filePath).size;
     const req = https.request(
       {
         protocol: 'https:',
@@ -171,7 +172,7 @@ function uploadZip(uploadUrl, zipPath, token) {
         headers: {
           Accept: 'application/vnd.github+json',
           Authorization: 'Bearer ' + token,
-          'Content-Type': 'application/zip',
+          'Content-Type': contentType || 'application/octet-stream',
           'Content-Length': String(size),
           'User-Agent': 'KolesnicaVoyny-Publish',
           'X-GitHub-Api-Version': '2022-11-28'
@@ -194,7 +195,7 @@ function uploadZip(uploadUrl, zipPath, token) {
     );
     req.setTimeout(0);
     req.on('error', reject);
-    fs.createReadStream(zipPath).on('error', reject).pipe(req);
+    fs.createReadStream(filePath).on('error', reject).pipe(req);
   });
 }
 
@@ -209,15 +210,16 @@ function sleep(ms) {
 
 /**
  * Сначала gh (без прокси, HTTP/1.1), если VPN режет — API IPv4.
- * @param {{repo: string, tag: string, zipPath: string, title: string, notes: string}} job
+ * @param {{repo: string, tag: string, zipPath?: string, filePath?: string, title: string, notes: string, contentType?: string}} job
  */
 async function publishRelease(job) {
-  const zipName = path.basename(job.zipPath);
+  const filePath = job.filePath || job.zipPath;
+  const fileName = path.basename(filePath);
   const ghArgsCreate = [
     'release',
     'create',
     job.tag,
-    job.zipPath,
+    filePath,
     '--repo',
     job.repo,
     '--title',
@@ -229,7 +231,7 @@ async function publishRelease(job) {
     'release',
     'upload',
     job.tag,
-    job.zipPath,
+    filePath,
     '--repo',
     job.repo,
     '--clobber'
@@ -239,7 +241,7 @@ async function publishRelease(job) {
     const view = runGh(['release', 'view', job.tag, '--repo', job.repo]);
     const args = view.status === 0 ? ghArgsUpload : ghArgsCreate;
     if (view.status === 0) {
-      console.log('Тег уже есть: заменяю zip. Попытка ' + attempt + '/3');
+      console.log('Тег уже есть: заменяю файл. Попытка ' + attempt + '/3');
     } else {
       console.log('Новый релиз ' + job.tag + '. Попытка ' + attempt + '/3');
     }
@@ -269,10 +271,10 @@ async function publishRelease(job) {
   }
   const assets = rel.json.assets || [];
   for (const asset of assets) {
-    if (String(asset.name) !== zipName) continue;
+    if (String(asset.name) !== fileName) continue;
     const del = await apiRequest(api + '/releases/assets/' + asset.id, { token, method: 'DELETE' });
     if (del.status >= 400 && del.status !== 204) {
-      throw new Error('Не удалось снять старый zip: ' + del.status);
+      throw new Error('Не удалось снять старый файл: ' + del.status);
     }
   }
   const uploadUrl =
@@ -281,10 +283,10 @@ async function publishRelease(job) {
     '/releases/' +
     rel.json.id +
     '/assets?name=' +
-    encodeURIComponent(zipName);
-  const up = await uploadZip(uploadUrl, job.zipPath, token);
+    encodeURIComponent(fileName);
+  const up = await uploadAsset(uploadUrl, filePath, token, job.contentType);
   if (up.status >= 400) {
-    throw new Error('Заливка zip сорвалась: ' + up.status + ' ' + (up.text || '').slice(0, 240));
+    throw new Error('Заливка сорвалась: ' + up.status + ' ' + (up.text || '').slice(0, 240));
   }
   return { ok: true, via: 'api' };
 }
@@ -308,7 +310,8 @@ async function main() {
     tag,
     zipPath,
     title: 'Игра ' + ver,
-    notes: 'Пакет контента для лаунчера. Сам лаунчер ставится отдельным MSI.'
+    notes: 'Пакет контента для лаунчера. Сам лаунчер — отдельный тег launcher-* и MSI.',
+    contentType: 'application/zip'
   });
   console.log('Релиз ' + tag + ' готов (' + result.via + ').');
 }

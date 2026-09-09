@@ -1,13 +1,13 @@
 {
   "id": "kolesnica-voyny",
   "version": "0.2.2.6",
-  "created": "2026-09-07T18:20:54.638Z",
+  "created": "2026-09-07T18:55:48.983Z",
   "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
   "files": [
     {
       "path": "rnr.html",
-      "size": 376312,
-      "sha256": "3ff13d8566484a2b3f315262832f5ff6fd486c8c2afef03bfe74be04f2b11135"
+      "size": 376962,
+      "sha256": "f1f9b9943a10a3d87caa8b69c2118eab0f7e13f8648f10651d30b4edbd28b8a5"
     },
     {
       "path": "career.js",

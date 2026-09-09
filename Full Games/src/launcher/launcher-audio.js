@@ -17,6 +17,10 @@ function startLauncherAudio() {
   const audio = document.createElement('audio');
   audio.preload = 'auto';
   audio.setAttribute('playsinline', '');
+  const ready = document.createElement('audio');
+  ready.preload = 'auto';
+  ready.src = 'media/play-ready.mp3';
+  ready.setAttribute('playsinline', '');
   let tracks = [];
   let index = 0;
   let muted = localStorage.getItem(MUTE_KEY) === '1';
@@ -29,6 +33,7 @@ function startLauncherAudio() {
     btn.setAttribute('aria-pressed', muted ? 'true' : 'false');
     btn.setAttribute('aria-label', muted ? 'Включить музыку' : 'Выключить музыку');
     audio.muted = muted;
+    ready.muted = muted;
   }
 
   /**
@@ -73,6 +78,7 @@ function startLauncherAudio() {
    */
   function hush() {
     audio.pause();
+    ready.pause();
   }
 
   /**
@@ -84,12 +90,22 @@ function startLauncherAudio() {
     if (start && typeof start.catch === 'function') start.catch(() => {});
   }
 
+  /**
+   * Короткий сигнал: обновление легло, «Играть» ожила.
+   */
+  function playReady() {
+    if (muted) return;
+    ready.currentTime = 0;
+    const start = ready.play();
+    if (start && typeof start.catch === 'function') start.catch(() => {});
+  }
+
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) hush();
     else wake();
   });
 
-  window.rnrLauncherAudio = { hush, wake };
+  window.rnrLauncherAudio = { hush, wake, playReady };
 }
 
 startLauncherAudio();

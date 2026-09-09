@@ -25,7 +25,7 @@ async function downloadFile(url, dest, onProgress) {
     redirect: 'follow'
   });
   if (!res.ok || !res.body) {
-    throw new Error('Не удалось скачать игру (HTTP ' + (res && res.status) + ').');
+    throw new Error('Не удалось скачать файл (HTTP ' + (res && res.status) + ').');
   }
   const total = Number(res.headers.get('content-length')) || 0;
   const stream = fs.createWriteStream(dest);

@@ -17,7 +17,8 @@ const el = {
   screen: document.getElementById('btn-screen'),
   quit: document.getElementById('btn-quit'),
   close: document.getElementById('btn-close'),
-  sync: document.getElementById('btn-sync')
+  sync: document.getElementById('btn-sync'),
+  self: document.getElementById('btn-self')
 };
 
 let fullscreen = true;
@@ -80,6 +81,36 @@ function paintInstall(install) {
 }
 
 /**
+ * Кнопка самообновления оболочки.
+ * @param {object} self
+ */
+function paintSelf(self) {
+  if (!el.self) return;
+  if (!self || !self.packaged) {
+    el.self.hidden = true;
+    return;
+  }
+  const show = Boolean(self.needUpdate || self.busy || self.remoteError);
+  el.self.hidden = !show;
+  el.self.textContent = self.needUpdate ? 'Обновить лаунчер' : 'Повторить лаунчер';
+  el.self.disabled = Boolean(self.busy);
+}
+
+/**
+ * Подпись версий оболочки и zip.
+ * @param {object} data
+ */
+function paintMeta(data) {
+  const inst = (data && data.install) || {};
+  const self = (data && data.selfUpdate) || {};
+  const launcherVer = self.localVersion || data.launcherVersion || data.version || '';
+  const gameVer = inst.localVersion || '';
+  el.meta.textContent = gameVer
+    ? 'Лаунчер v' + launcherVer + ' · игра ' + gameVer
+    : 'Лаунчер v' + launcherVer;
+}
+
+/**
  * Качает и ставит игру с GitHub.
  */
 async function runSync() {
@@ -98,12 +129,40 @@ async function runSync() {
       el.play.disabled = false;
     }
     el.sync.disabled = false;
+    if (!el.play.disabled && window.rnrLauncherAudio) window.rnrLauncherAudio.playReady();
     return;
   }
   const issues = (result && result.issues) || ['Не удалось скачать игру.'];
   setStatus(issues[0]);
   paintInstall(result && result.install);
   el.sync.disabled = false;
+}
+
+/**
+ * Качает MSI лаунчера и отдаёт его установщику.
+ */
+async function runSelfUpdate() {
+  if (!window.rnrLauncher || !el.self) return;
+  el.self.disabled = true;
+  if (el.sync) el.sync.disabled = true;
+  setStatus('Спрашиваю GitHub про лаунчер…');
+  setBar(2);
+  const result = await window.rnrLauncher.selfUpdate();
+  if (result && result.applying) {
+    setBar(100);
+    setStatus('Ставлю новый лаунчер. Окно закроется.');
+    return;
+  }
+  if (result && result.ok) {
+    paintSelf(result.selfUpdate);
+    setStatus('Лаунчер уже свежий.');
+    if (el.sync) el.sync.disabled = false;
+    return;
+  }
+  const issues = (result && result.issues) || ['Не удалось обновить лаунчер.'];
+  setStatus(issues[0]);
+  paintSelf(result && result.selfUpdate);
+  if (el.sync) el.sync.disabled = false;
 }
 /**
  * Подпись режима экрана.
@@ -140,15 +199,24 @@ async function boot() {
     if (typeof info.pct === 'number') setBar(info.pct);
     if (info.label) setStatus(info.label);
   });
+  window.rnrLauncher.onSelfProgress((info) => {
+    if (!info) return;
+    if (typeof info.pct === 'number') setBar(info.pct);
+    if (info.label) setStatus(info.label);
+  });
   const data = await window.rnrLauncher.status();
   fullscreen = data.fullscreen !== false;
   paintScreen();
   const inst = data.install || {};
-  el.meta.textContent = inst.localVersion
-    ? 'Лаунчер v' + data.version + ' · игра ' + inst.localVersion
-    : 'Лаунчер v' + data.version;
+  const self = data.selfUpdate || {};
+  paintMeta(data);
   applyCheck(data.check);
   paintInstall(inst);
+  paintSelf(self);
+  if (self.packaged && self.needUpdate && !self.remoteError) {
+    runSelfUpdate();
+    return;
+  }
   if (inst.packaged && (inst.needInstall || inst.needUpdate) && !inst.remoteError) {
     runSync();
   }
@@ -192,6 +260,12 @@ el.close.addEventListener('click', quitLauncher);
 if (el.sync) {
   el.sync.addEventListener('click', () => {
     runSync();
+  });
+}
+
+if (el.self) {
+  el.self.addEventListener('click', () => {
+    runSelfUpdate();
   });
 }
 

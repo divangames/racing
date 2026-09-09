@@ -6,15 +6,65 @@
 
 @font-face {
   font-family: Bender;
-  src: url("rnr://game/assets/fonts/bender/Bender-Black.otf") format("opentype");
-  font-weight: 900;
+  src: url("media/fonts/bender/Bender-Light.otf") format("opentype");
+  font-weight: 300;
+  font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: Montserrat;
-  src: url("rnr://game/assets/fonts/montserrat/cyrillic-500-normal.woff2") format("woff2");
-  font-weight: 500;
+  font-family: Bender;
+  src: url("media/fonts/bender/Bender-LightItalic.otf") format("opentype");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Bender;
+  src: url("media/fonts/bender/Bender.otf") format("opentype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Bender;
+  src: url("media/fonts/bender/Bender-Italic.otf") format("opentype");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Bender;
+  src: url("media/fonts/bender/Bender-Bold.otf") format("opentype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Bender;
+  src: url("media/fonts/bender/Bender-BoldItalic.otf") format("opentype");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Bender;
+  src: url("media/fonts/bender/Bender-Black.otf") format("opentype");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Bender;
+  src: url("media/fonts/bender/Bender-BlackItalic.otf") format("opentype");
+  font-weight: 900;
+  font-style: italic;
   font-display: swap;
 }
 
@@ -37,6 +87,7 @@ html, body {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
+  font-family: Bender, Impact, sans-serif;
 }
 
 .stage {
@@ -160,7 +211,8 @@ html, body {
 
 .kicker {
   margin: 0 0 0 22px;
-  font-family: Montserrat, "Segoe UI", sans-serif;
+  font-family: Bender, Impact, sans-serif;
+  font-weight: 300;
   font-size: 11px;
   letter-spacing: .28em;
   text-transform: uppercase;
@@ -205,6 +257,7 @@ html, body {
   background: linear-gradient(180deg, rgba(40, 28, 18, .55), rgba(12, 10, 16, .62));
   color: var(--gold);
   font-family: Bender, Impact, sans-serif;
+  font-weight: 900;
   font-size: 16px;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -232,6 +285,11 @@ html, body {
   border-color: #ffe08a;
 }
 
+#btn-self:not([hidden]) {
+  border-color: rgba(255, 210, 63, .75);
+  color: #ffe08a;
+}
+
 .btn.ghost {
   border-color: rgba(143, 136, 160, .45);
   color: var(--mute);
@@ -247,7 +305,8 @@ html, body {
 }
 
 .lead, .status, .meta {
-  font-family: Montserrat, "Segoe UI", sans-serif;
+  font-family: Bender, Impact, sans-serif;
+  font-weight: 300;
   color: var(--ink);
 }
 

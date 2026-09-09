@@ -34,6 +34,14 @@ fs.mkdirSync(dest, { recursive: true });
 
 copyIf(path.join(game, 'assets', 'image', 'launcher-hero.webp'), path.join(dest, 'launcher-hero.webp'));
 copyIf(path.join(game, 'assets', 'image', 'game-logo.webp'), path.join(dest, 'game-logo.webp'));
+copyIf(path.join(game, 'assets', 'sounds', 'FX', 'PianoHit.mp3'), path.join(dest, 'play-ready.mp3'));
+
+const fontSrc = path.join(game, 'assets', 'fonts', 'bender');
+if (fs.existsSync(fontSrc)) {
+  for (const name of fs.readdirSync(fontSrc).filter((file) => /\.otf$/i.test(file))) {
+    copyIf(path.join(fontSrc, name), path.join(dest, 'fonts', 'bender', name));
+  }
+}
 
 const tracks = [];
 if (fs.existsSync(musicSrc)) {
@@ -48,3 +56,4 @@ if (fs.existsSync(musicSrc)) {
 fs.writeFileSync(path.join(dest, 'tracks.json'), JSON.stringify(tracks, null, 2) + '\n');
 console.log('Медиа лаунчера:', dest);
 console.log('Треки Load:', tracks.length);
+console.log('Шрифт Bender и сигнал «Играть» скопированы в media.');
