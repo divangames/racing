@@ -80,25 +80,8 @@ function writeLockRootVersion(filePath, version) {
 }
 
 /**
- * Номер в RnREngine для смоук-тестов.
- * @param {string} version
- */
-function writeEngineVersion(version) {
-  const filePath = path.join(client, 'src', 'engine', 'presentation.js');
-  let text = fs.readFileSync(filePath, 'utf8');
-  const next = text.replace(
-    /window\.RnREngine=\{version:'[^']+'/,
-    "window.RnREngine={version:'" + version + "'"
-  );
-  if (next === text) {
-    if (text.includes("window.RnREngine={version:'" + version + "'")) return;
-    throw new Error('В presentation.js нет window.RnREngine.version.');
-  }
-  fs.writeFileSync(filePath, next, 'utf8');
-}
-
-/**
  * Записывает версию во все канонические файлы клиента.
+ * Номер рантайма в окне берётся из game.json при отдаче HTML.
  * @param {string} raw
  * @returns {string}
  */
@@ -108,7 +91,6 @@ function setGameVersion(raw) {
     throw new Error('Версия должна быть числом с точками, например 0.2.1.0');
   }
   writeJsonVersion(path.join(client, 'config', 'game.json'), version);
-  writeEngineVersion(version);
   return version;
 }
 

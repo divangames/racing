@@ -21,17 +21,22 @@ function handler(name,root){
 /** Запрос редактора без сети. */
 function request(data){return new Request('http://localhost/',{method:'POST',body:JSON.stringify(data)});}
 
-test('Модули подключаются после игры и не попадают в посторонний HTML',()=>{
- const html='<head></head><body><script>function stepVehicle(){}</script></body>';
- const out=enhanceHtml(html);
- assert(out.indexOf('/__engine/driving.js')>out.indexOf('function stepVehicle'));
- assert(out.includes('/__engine/loop.js'));
+test('Модули подключаются по пути и meta, не по тексту stepVehicle',()=>{
+ const sniff='<head></head><body><script>function stepVehicle(){}</script></body>';
+ assert.equal(enhanceHtml(sniff),sniff);
+ const byPath=enhanceHtml('<head></head><body></body>',{pathname:'/rnr.html'});
+ assert(byPath.includes('/__engine/runtime.js'));
+ assert(byPath.includes('/__engine/driving.js'));
+ assert(byPath.includes('__DIVAN_ENGINE_META__'));
+ const byMeta=enhanceHtml('<head><meta name="divan-engine" content="game"></head><body></body>');
+ assert(byMeta.includes('/__engine/loop.js'));
  assert.equal(enhanceHtml('<body>hello</body>'),'<body>hello</body>');
 });
 test('История загружается раньше приложения карты',()=>{
- const out=enhanceHtml('<head></head><body><main id="workMap"></main><script src="editor/map-app.js?v=1"></script></body>');
+ const out=enhanceHtml('<head></head><body><main id="workMap"></main><script src="editor/map-app.js?v=1"></script></body>',{pathname:'/Editor.html'});
  assert(out.indexOf('/__engine/editor/history.js')<out.indexOf('src="editor/map-app'));
  assert(out.includes('workbench.css'));
+ assert(out.includes('/__engine/runtime.js'));
 });
 test('Расширение текущего редактора сохраняет библиотеку объектов и стартовую клетку',()=>{
  const source=fs.readFileSync(path.resolve(__dirname,'../../editor/map-app.js'),'utf8');
@@ -40,11 +45,36 @@ test('Расширение текущего редактора сохраняе�
  assert(enhanced.includes('function addStart('));assert(enhanced.includes('getDocument:cur'));
  assert.throws(()=>enhanceEditorScript('const MapApp={};'),/контракт/);
 });
+test('Живые rnr.html и Editor.html получают рантайм по meta',()=>{
+ const gameHtml=fs.readFileSync(path.resolve(__dirname,'../../rnr.html'),'utf8');
+ const labHtml=fs.readFileSync(path.resolve(__dirname,'../../Editor.html'),'utf8');
+ assert(gameHtml.includes('name="divan-engine" content="game"'));
+ assert(labHtml.includes('name="divan-engine" content="lab"'));
+ assert(enhanceHtml(gameHtml).includes('/__engine/driving.js'));
+ assert(enhanceHtml(labHtml).includes('/__engine/editor/workbench.js'));
+});
+test('Хуки движка оборачивают исходную функцию, а не молча падают',()=>{
+ const src=fs.readFileSync(path.resolve(__dirname,'../src/engine/runtime.js'),'utf8');
+ const context={window:{},console,globalThis:null};
+ context.globalThis=context.window;
+ context.window.__DIVAN_ENGINE_META__={abi:1,version:'0.2.2.6',runtime:'html-legacy',host:'game'};
+ vm.runInNewContext(src,context);
+ const g=context.window;
+ let n=0;
+ g.stepVehicle=function(){n+=1;};
+ g.DiVANEngine.wrap('stepVehicle',orig=>function(){orig();n+=10;});
+ g.stepVehicle();
+ assert.equal(n,11);
+ assert.equal(g.DiVANEngine.version,'0.2.2.6');
+ assert.equal(g.DiVANEngine.name,'DiVANEngine');
+ assert.equal(g.DiVANEngine.replace('нетТакого',function(){}),false);
+});
 test('Маршрутизация модулей запрещает выход из каталога',()=>{
  assert.equal(engineFile('__engine/../../package.json'),null);
  assert.equal(engineFile('assets/anything.png'),null);
  assert.equal(engineFile('editor/map-app.js'),null);
  assert(engineFile('__engine/editor/workbench.js').endsWith('workbench.js'));
+ assert(engineFile('__engine/runtime.js').endsWith('runtime.js'));
 });
 test('Валидация принимает документ трассы',()=>assert.equal(validateTrack(valid()),null));
 for(const [name,doc] of [['null',null],['массив',[]],['повторяющиеся точки',{...valid(),cps:[[0,0],[0,0],[0,0],[0,0]]}],['NaN',{...valid(),cps:[[NaN,0],[1,2],[3,4],[5,6]]}],['пустой объект деколи',{...valid(),decals:[null]}],['опасность без координат',{...valid(),hazards:{ramps:[{}]}}]]) {

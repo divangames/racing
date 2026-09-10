@@ -9,7 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { protocol } = require('electron');
+const { protocol, app } = require('electron');
 const { game, contentRoot, vendorLocalRoot } = require('./paths');
 const { handleSaveCar } = require('./save-car');
 const { handleSaveTrack, handleListTracks } = require('./save-track');
@@ -19,6 +19,8 @@ const { MIME, serveLocalFile } = require('./serve-file');
 const { engineFile, enhanceHtml } = require('./enhancements');
 const { enhanceEditorScript } = require('./editor-enhancements');
 const { listLabSounds } = require('./lab-sounds');
+const { exportAll } = require('./player-store');
+const { desktopHeadScript } = require('./build-flags');
 
 /**
  * Регистрировать до app ready.
@@ -57,9 +59,10 @@ function safeJoin(root, rel) {
 /**
  * Подмена CDN Three на локальные модули, скрытие браузерного донесения.
  * @param {string} html
+ * @param {string} [pathname]
  * @returns {string}
  */
-function rewriteGameHtml(html) {
+function rewriteGameHtml(html, pathname) {
   const vendor = vendorLocalRoot();
   const hasThree = fs.existsSync(path.join(vendor, 'three.module.js'));
   const hasQuarks = fs.existsSync(path.join(vendor, 'three.quarks.esm.js'));
@@ -83,7 +86,7 @@ function rewriteGameHtml(html) {
     );
   }
   const localFonts = '<style>@font-face{font-family:"Russo One";src:url("/assets/fonts/bender/Bender-Bold.otf") format("opentype");font-display:swap}@font-face{font-family:"Chakra Petch";src:url("/assets/fonts/montserrat/cyrillic-600-normal.woff2") format("woff2");font-display:swap}</style>';
-  const inject = `${localFonts}<script>try{localStorage.setItem('rnr_client_notice_v1','1');}catch(e){}window.__RNR_DESKTOP__=true;</script>`;
+  const inject = `${localFonts}${desktopHeadScript(Boolean(app && app.isPackaged))}`;
   if (out.includes('</head>')) {
     out = out.replace('</head>', `${inject}</head>`);
   }
@@ -91,7 +94,9 @@ function rewriteGameHtml(html) {
     'РОК-Н-РОЛЛ ГОНКИ — браузерный оммаж',
     'Колесница войны'
   );
-  return enhanceHtml(out);
+  let storeDump = {};
+  try { storeDump = exportAll(); } catch (err) { storeDump = {}; }
+  return enhanceHtml(out, { pathname, storeDump });
 }
 
 /**
@@ -109,7 +114,7 @@ function resolveContentPath(pathname) {
   return engineFile(rel) || safeJoin(contentRoot(), rel);
 }
 
-const MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load'];
+const MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load', 'cast'];
 const MUSIC_EXTS = new Set(['.mp3', '.ogg', '.wav', '.m4a']);
 
 /**
@@ -215,7 +220,7 @@ async function handleRnrRequest(request) {
       return serveLocalFile(filePath, request, {body, type:MIME['.js']});
     }
     if (ext === '.html') {
-      const html = rewriteGameHtml(fs.readFileSync(filePath, 'utf8'));
+      const html = rewriteGameHtml(fs.readFileSync(filePath, 'utf8'), url.pathname);
       return serveLocalFile(filePath, request, { body: html, type: MIME['.html'] });
     }
     return serveLocalFile(filePath, request);

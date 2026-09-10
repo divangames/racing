@@ -47,9 +47,9 @@
     if(!musicOn())return;
     if(element?.src)playCurrent();else if(this.curCat)this.play(this.curCat);
   };
-  const applyBase=applyAudioSettings;
   /** Микшер применяет выключатель эффектов ко всему каналу, включая двигатель. */
-  applyAudioSettings = function() {
+  DiVANEngine.wrap('applyAudioSettings', function (applyBase) {
+    return function() {
     applyBase();
     const sound=settings.sound,sfx=clamp((sound.sfx??80)/100,0,1),music=clamp((sound.music??50)/100,0,1);
     if(AU.sfx)AU.sfx.gain.value=sound.sfxOn?sfx*.9:0;
@@ -59,6 +59,7 @@
     if(voiceEl)voiceEl.volume=sound.sfxOn?sfx:0;
     if(typeof VOICE!=='undefined'&&VOICE.audio)VOICE.audio.volume=sound.sfxOn?sfx*.92:0;
   };
+  });
   if(typeof SFX!=='undefined') {
     const play=SFX.play;
     SFX.play=function(id) { if(settings.sound.sfx===0)return;return play.call(this,id); };

@@ -1,5 +1,10 @@
-// Физика автомобиля: адаптация исходного stepVehicle для десктоп-движка.
-function stepVehicle(r,th,steer,dt,hb){
+////////////////////////////////////////////////////////
+//
+// Физика автомобиля: хук stepVehicle десктоп-движка.
+//
+////////////////////////////////////////////////////////
+(function () {
+function stepVehicleEngine(r,th,steer,dt,hb){
  if(!Number.isFinite(dt)||dt<=0)return;
  const S=R.S,p=S[r.trackIdx];
  const off=!r.air&&Math.hypot(r.x-p.x,r.y-p.y)>ROADW;
@@ -228,4 +233,6 @@ function stepVehicle(r,th,steer,dt,hb){
  if(r.cloak>0)r.cloak=Math.max(0,r.cloak-dt);
  if(typeof tickCarKits==='function')tickCarKits(r,dt);
 }
+DiVANEngine.replace('stepVehicle', stepVehicleEngine);
+})();
 

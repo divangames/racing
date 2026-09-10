@@ -40,7 +40,9 @@ var SFX_TRACKS = {
  // Любая покупка (машина, тренажёрка, скилл)
  buy: sfxFile('CashBay.mp3'),
  // Любая покупка тюнинга авто
- tune: sfxFile('carPay.wav')
+ tune: sfxFile('carPay.wav'),
+ // Эмбиент дождя на титуле
+ ambientRain: 'assets/sounds/embirnt/rain.mp3'
 };
 
 ////////////////////////////////////////////////////////

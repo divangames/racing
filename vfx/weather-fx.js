@@ -218,6 +218,7 @@
  /** Запасные осадки на холсте, если quarks выключен. */
  function drawWorld(g, R) {
   if (root.RnRVfx && RnRVfx.weatherOn) return;
+  if (quarksPrecip(root.settings)) return;
   if (!R || !R.wxFx || !R.weather || R.weather.parts <= 0) return;
   const parts = R.wxFx.parts;
   if (R.weather.id === 'rain') {

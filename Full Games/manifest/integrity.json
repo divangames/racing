@@ -1,18 +1,18 @@
 {
   "id": "kolesnica-voyny",
   "version": "0.2.2.6",
-  "created": "2026-09-07T18:55:48.983Z",
+  "created": "2026-09-10T15:36:26.770Z",
   "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
   "files": [
     {
       "path": "rnr.html",
-      "size": 376962,
-      "sha256": "f1f9b9943a10a3d87caa8b69c2118eab0f7e13f8648f10651d30b4edbd28b8a5"
+      "size": 387648,
+      "sha256": "c9370b804f0087ad45bde8a052bada3168327b59ee6f131cdc706dacb0953de3"
     },
     {
       "path": "career.js",
-      "size": 14869,
-      "sha256": "0ad2b6c75773d6bf87a29cc7123cb961d5ff89bc4610171297adb424a6c2fd1a"
+      "size": 15186,
+      "sha256": "773488025ac9af6a8beb3b2b320d8401cfb13265b9c49298f278e24d28f908f8"
     },
     {
       "path": "chars.js",
@@ -66,28 +66,28 @@
     },
     {
       "path": "combat-kits.js",
-      "size": 15913,
-      "sha256": "1143ad6cb8eb4d281e568a1942187c11f3c5e426b138713796acb8ab179c8b4f"
+      "size": 16060,
+      "sha256": "a001eda18d200540bd8f57a0fbb56b50e300091b868bcfd85adbb8196291e9ee"
     },
     {
       "path": "starter-kits.js",
-      "size": 15058,
-      "sha256": "4cfe5aab3dca623f733cc83a809382a8a1aee572a15527dcc41cdfaab8f5f966"
+      "size": 15152,
+      "sha256": "c241264543af299d2a741c7340a8946f9fefa6b01acf80b859ec0f1d58ece379"
     },
     {
       "path": "mid-kits.js",
-      "size": 7666,
-      "sha256": "af0d5dd8b53a69ca99ee23108a2c80ab2ce13f7145a936f331978b866bdb3691"
+      "size": 7854,
+      "sha256": "e3665d38e5167cddeaf5d10cbe25806b53b95439daf8e5c84211910f78d58426"
     },
     {
       "path": "world-intro.js",
-      "size": 14255,
-      "sha256": "935057ed7ff1d0d7674750b5325f45beffb96bf1e87c75fa80c00b334f5453d6"
+      "size": 14292,
+      "sha256": "90d1d38b96ccec517476ceb1cde44e4239b3dfc79f285e0e11066ae11f0f60c3"
     },
     {
       "path": "armory.js",
-      "size": 6863,
-      "sha256": "22e5f0491e27464fe6d5c425b4c280686fa764eebf624c023cb64b961b8b28ad"
+      "size": 7001,
+      "sha256": "b6a0b70be326a20f48057c838f9b620954bfec8fa5df463efc4ca543959e38e2"
     },
     {
       "path": "tracks.js",
@@ -121,13 +121,13 @@
     },
     {
       "path": "vfx/quarks-weather.js",
-      "size": 8611,
-      "sha256": "7018be629ca6b447c1bd8b489851647337961af784fadfc4b6c94b8dea298011"
+      "size": 9263,
+      "sha256": "43e600cdea8809a8a875d58209d6eaa2532f8e044468c7c6b98389e5eb3b06f2"
     },
     {
       "path": "vfx/weather-fx.js",
-      "size": 11197,
-      "sha256": "7c85c035168907fda312f81fa731b23718a40b58939ddae231862a60b63f8bd7"
+      "size": 11240,
+      "sha256": "23f4545179a554f7c5d51adac631148da6c4358492a0484d4b947df82fd54e00"
     },
     {
       "path": "vendor/three.module.js",
@@ -147,7 +147,7 @@
     {
       "path": "assets/data/cars/01/car.json",
       "size": 2707,
-      "sha256": "05f2d5286df26807dac20ccd445fe0b78cf60b416d959ad3867ce147b09cf112"
+      "sha256": "11b58016b2d6464954972a498ee9916308cb9ecc62392102dabbf357690a21c9"
     },
     {
       "path": "assets/data/cars/02/car.json",
@@ -156,8 +156,8 @@
     },
     {
       "path": "assets/data/cars/03/car.json",
-      "size": 2475,
-      "sha256": "c101aea430ea3243439c801c8f1000a77448bfac4f7b17c9ba93ef27c1529a20"
+      "size": 2476,
+      "sha256": "ae2bda248d0b674e55fcd41dd6a1ce6bb65fcc8baf8e6a2bf935584b32c7d179"
     },
     {
       "path": "assets/data/cars/04/car.json",
@@ -181,8 +181,8 @@
     },
     {
       "path": "assets/data/cars/08/car.json",
-      "size": 2413,
-      "sha256": "83246a7a444436dfc3a84002d0263b5ee37d7ad21ce1e885e7df1f4865e180b0"
+      "size": 2473,
+      "sha256": "594024f1fc069bf564da1da425f81a195b830acb22be9e6768bd35a88e728e42"
     },
     {
       "path": "assets/data/cars/09/car.json",

@@ -8,12 +8,14 @@
 const CAR_ENGINE_STD = 'assets/sounds/engine/';
 const CAR_ENGINE_LIB = 'assets/sounds/cars/engine/';
 const CAR_ENGINE_WAV = 0.62;
-const CAR_ENGINE_PULLS = 4;
+const CAR_ENGINE_CLIPS = [1, 2, 3, 5];
 
 const carEngineShare = {
   miss: {},
   buf: {},
-  load: {}
+  load: {},
+  html: {},
+  span: {}
 };
 
 /** Папка звуков слота: 0 → assets/data/cars/01/sound/. */
@@ -103,9 +105,19 @@ function carEnginePick(idx, n) {
   return '';
 }
 
+/** Прогревает WAV в кэше браузера, чтобы смена клипа не ждала load. */
+function carEngineHtmlWarm(url) {
+  if (!url || carEngineShare.miss[url] || carEngineShare.html[url]) return;
+  const el = new Audio();
+  el.preload = 'auto';
+  el.referrerPolicy = 'no-referrer';
+  el.src = carEngineHtmlSrc(url);
+  try { el.load(); } catch (err) {}
+  carEngineShare.html[url] = el;
+}
+
 /** Грузит один кандидат клипа: пак, затем кузов, затем стандарт. Без лишних fetch. */
 function carEngineWarmClip(idx, n) {
-  if (carEngineDesktop()) return;
   const urls = carEngineUrls(idx, n);
   const rest = [];
   for (let i = 0; i < urls.length; i++) {
@@ -113,9 +125,15 @@ function carEngineWarmClip(idx, n) {
     const buf = carEngineShare.buf[url];
     if (buf && buf !== 'bad') return;
     if (buf === 'bad' || carEngineShare.miss[url]) continue;
+    if (carEngineDesktop()) carEngineHtmlWarm(url);
     rest.push(url);
   }
   if (rest.length) carEngineLoad(rest[0], rest.slice(1));
+}
+
+/** Набор, луп хода, сброс и холостой — без sound_004. */
+function carEngineWarmPack(idx) {
+  for (let i = 0; i < CAR_ENGINE_CLIPS.length; i++) carEngineWarmClip(idx, CAR_ENGINE_CLIPS[i]);
 }
 
 /** src с учётом кэша и адреса страницы (rnr:// и Pages). */
@@ -188,23 +206,110 @@ function carEngineLoad(url, rest) {
   const timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 3500);
   const opts = ctrl ? {signal: ctrl.signal} : {};
   fetch(carEngineSrc(url), opts).then(function (res) {
-    if (!res.ok) throw new Error('no wav');
+    if (!res.ok) {
+      const err = new Error('no wav');
+      err.skip = true;
+      throw err;
+    }
     return res.arrayBuffer();
   }).then(function (raw) {
-    if (!raw || !raw.byteLength) throw new Error('empty');
-    return carEngineDecode(raw);
-  }).then(function (buf) {
-    if (!buf || !buf.length) throw new Error('empty');
-    carEngineShare.buf[url] = buf;
+    if (!raw || !raw.byteLength) {
+      const err = new Error('empty');
+      err.skip = true;
+      throw err;
+    }
+    carEngineShare.span[url] = carEngineSpanFromWav(raw);
+    if (!AU.ctx) {
+      carEngineShare.buf[url] = 'html';
+      return null;
+    }
+    return carEngineDecode(raw).then(function (buf) {
+      if (!buf || !buf.length) throw new Error('decode');
+      carEngineShare.buf[url] = buf;
+      carEngineShare.span[url] = carEngineSpanFromBuffer(buf);
+    }).catch(function () {
+      carEngineShare.buf[url] = 'html';
+    });
+  }).then(function () {
     carEngineShare.load[url] = 0;
-  }).catch(function () {
-    carEngineShare.buf[url] = 'bad';
-    carEngineMarkMiss(url);
+  }).catch(function (err) {
     carEngineShare.load[url] = 0;
-    carEngineLoadNext(rest);
+    if (err && err.skip) {
+      carEngineShare.buf[url] = 'bad';
+      carEngineMarkMiss(url);
+      carEngineLoadNext(rest);
+      return;
+    }
+    if (!carEngineShare.buf[url] || carEngineShare.buf[url] === 'bad') {
+      carEngineShare.buf[url] = 'html';
+    }
   }).finally(function () {
     clearTimeout(timer);
   });
+}
+
+/** Тихие края PCM — иначе луп щёлкает паузой (у части паков тишина в начале). */
+function carEngineSpanFromSamples(ch, sr) {
+  const n = ch.length;
+  if (!n || !sr) return {start: 0, end: 0};
+  const th = 0.018;
+  let a = 0;
+  let b = n - 1;
+  while (a < b && Math.abs(ch[a]) < th) a++;
+  while (b > a && Math.abs(ch[b]) < th) b--;
+  const pad = Math.max(1, (sr * 0.003) | 0);
+  a = Math.max(0, a - pad);
+  b = Math.min(n, b + pad + 1);
+  if ((b - a) / sr < 0.05) return {start: 0, end: n / sr};
+  return {start: a / sr, end: b / sr};
+}
+
+/** Края лупа из декодированного буфера. */
+function carEngineSpanFromBuffer(buf) {
+  try {
+    return carEngineSpanFromSamples(buf.getChannelData(0), buf.sampleRate);
+  } catch (err) {
+    return {start: 0, end: buf.duration || 0};
+  }
+}
+
+/** Края лупа из WAV, если decodeAudioData недоступен. */
+function carEngineSpanFromWav(raw) {
+  try {
+    const bytes = new Uint8Array(raw);
+    const view = new DataView(raw);
+    if (bytes.length < 44) return {start: 0, end: 0};
+    let o = 12;
+    let ch = 1;
+    let sr = 44100;
+    let bits = 16;
+    let dataOff = 0;
+    let dataLen = 0;
+    while (o + 8 <= bytes.length) {
+      const id = String.fromCharCode(bytes[o], bytes[o + 1], bytes[o + 2], bytes[o + 3]);
+      const sz = view.getUint32(o + 4, true);
+      if (id === 'fmt ') {
+        ch = view.getUint16(o + 10, true) || 1;
+        sr = view.getUint32(o + 12, true) || 44100;
+        bits = view.getUint16(o + 22, true) || 16;
+      } else if (id === 'data') {
+        dataOff = o + 8;
+        dataLen = sz;
+        break;
+      }
+      o += 8 + sz + (sz % 2);
+    }
+    if (!dataOff || bits !== 16) return {start: 0, end: dataLen / Math.max(1, sr * ch * 2)};
+    const step = ch * 2;
+    const frames = Math.floor(dataLen / step);
+    const samples = new Float32Array(frames);
+    for (let i = 0; i < frames; i++) {
+      samples[i] = view.getInt16(dataOff + i * step, true) / 32768;
+    }
+    return carEngineSpanFromSamples(samples, sr);
+  } catch (err) {
+    return {start: 0, end: 0};
+  }
 }
 
 /** Газ: клавиша у игрока, ith у ИИ. */
@@ -227,20 +332,19 @@ function carEngineStill(racer, n, spd) {
   return false;
 }
 
-/** Тон клипа по ходу и «передаче». */
+/** Тон клипа по ходу. */
 function carEngineRate(want, n, pulls) {
   const gear = Math.min(5, Math.floor(Math.max(0, n) * 5));
   if (want === 'accel') return 0.88 + Math.min(4, pulls) * 0.055 + gear * 0.02;
-  if (want === 'top') return 0.97 + n * 0.14;
-  if (want === 'drive') return 0.92 + n * 0.2;
+  if (want === 'drive' || want === 'top') return 0.92 + n * 0.18;
+  if (want === 'dump') return 0.9 + n * 0.16;
   if (want === 'idle') return 0.96 + n * 0.12;
   return 1;
 }
 
-/** Номер лупа. */
+/** Номер лупа: ход — 002, стоянка — 005. */
 function carEngineLoopNum(want) {
-  if (want === 'top') return 2;
-  if (want === 'drive') return 4;
+  if (want === 'top' || want === 'drive') return 2;
   return 5;
 }
 
@@ -262,16 +366,83 @@ function carEngineMakeSlot() {
     voice: null,
     shot: false,
     live: false,
-    pan: 0
+    pan: 0,
+    airHeld: false,
+    htmlPool: null,
+    htmlRaf: 0
   };
 }
 
-/** Снимает источник слота. */
+/** Тег из пула слота, уже с src — без повторного load. tag: a/b для бесшовного лупа. */
+function carEngineHtmlEl(slot, url, tag) {
+  if (!slot.htmlPool) slot.htmlPool = {};
+  const key = tag ? url + '|' + tag : url;
+  let el = slot.htmlPool[key];
+  if (el) return el;
+  el = new Audio();
+  el.preload = 'auto';
+  el.referrerPolicy = 'no-referrer';
+  el.src = carEngineHtmlSrc(url);
+  try { el.load(); } catch (err) {}
+  slot.htmlPool[key] = el;
+  return el;
+}
+
+/** Элемент лежит в пуле слота. */
+function carEngineHtmlPooled(slot, el) {
+  const pool = slot.htmlPool;
+  if (!pool || !el) return false;
+  for (const key in pool) {
+    if (pool[key] === el) return true;
+  }
+  return false;
+}
+
+/** Глушит остальные клипы слота, не сбрасывая кэш. */
+function carEngineMuteHtmlOthers(slot, keep) {
+  const pool = slot.htmlPool;
+  if (!pool) return;
+  for (const key in pool) {
+    const el = pool[key];
+    if (!el || el === keep) continue;
+    try { el.onended = null; } catch (err) {}
+    try { el.onerror = null; } catch (err) {}
+    try { if (!el.paused) el.pause(); } catch (err) {}
+    try { el.currentTime = 0; } catch (err) {}
+  }
+}
+
+/** Снимает пул HTML, когда меняется кузов или слот гасится. */
+function carEngineDrainHtmlPool(slot) {
+  const pool = slot.htmlPool;
+  if (!pool) return;
+  for (const key in pool) {
+    const el = pool[key];
+    try { el.onended = null; el.onerror = null; el.pause(); el.removeAttribute('src'); el.load(); } catch (err) {}
+  }
+  slot.htmlPool = null;
+}
+
+/** Снимает источник слота, пул WAV оставляет. */
 function carEngineKillSlot(slot) {
   if (!slot) return;
+  if (slot.htmlRaf) {
+    try { cancelAnimationFrame(slot.htmlRaf); } catch (err) {}
+    slot.htmlRaf = 0;
+  }
   const v = slot.voice;
   if (v) {
-    try { if (v.el) { v.el.onended = null; v.el.onerror = null; v.el.pause(); v.el.removeAttribute('src'); v.el.load(); } } catch (err) {}
+    try {
+      if (v.el) {
+        v.el.onended = null;
+        v.el.onerror = null;
+        v.el.pause();
+        if (!carEngineHtmlPooled(slot, v.el)) {
+          v.el.removeAttribute('src');
+          v.el.load();
+        }
+      }
+    } catch (err) {}
     try { v.src.onended = null; } catch (err) {}
     try { v.src.stop(); } catch (err) {}
     try { if (v.media) v.media.disconnect(); } catch (err) {}
@@ -281,6 +452,28 @@ function carEngineKillSlot(slot) {
   }
   slot.voice = null;
   slot.shot = false;
+}
+
+/** Громкость, тон и панорама без перезапуска клипа. */
+function carEngineTouchSlot(slot, vol, rate) {
+  const v = slot && slot.voice;
+  if (!v) return;
+  const pitch = rate ? Math.max(0.7, Math.min(1.45, rate)) : 0;
+  if (v.el) {
+    try { v.el.volume = Math.max(0, Math.min(1, vol)); } catch (err) {}
+    if (pitch) {
+      try { v.el.playbackRate = pitch; } catch (err) {}
+    }
+  }
+  if (v.gain) {
+    try { v.gain.gain.value = vol; } catch (err) {}
+  }
+  if (pitch && v.src && v.src.playbackRate) {
+    try { v.src.playbackRate.value = pitch; } catch (err) {}
+  }
+  if (v.pan) {
+    try { v.pan.pan.value = slot.pan || 0; } catch (err) {}
+  }
 }
 
 /**
@@ -303,67 +496,131 @@ function carEngineHtmlSrc(url) {
 
 /**
  * Клип как money.mp3: тег Audio сразу в динамики.
- * MediaElementSource уводил мотор в немой WebAudio-граф.
+ * Луп не через el.loop — у Chromium на WAV стык с паузой.
  */
-function carEnginePlayHtml(slot, url, loop, vol, rate) {
+function carEnginePlayHtml(slot, url, loop, vol, rate, force) {
   const pitch = Math.max(0.7, Math.min(1.45, rate || 1));
   const loud = Math.max(0, Math.min(1, vol));
   const cur = slot.voice;
-  if (cur && cur.el && cur.url === url && cur.loop === loop) {
-    try { cur.el.volume = loud; } catch (err) {}
-    try { cur.el.playbackRate = pitch; } catch (err) {}
+  if (!force && cur && cur.el && cur.url === url && cur.loop === loop) {
+    carEngineTouchSlot(slot, loud, pitch);
     if (cur.el.paused) {
       const retry = cur.el.play();
       if (retry && typeof retry.catch === 'function') retry.catch(function () {});
     }
+    if (loop) carEngineHtmlLoopArm(slot);
     return true;
   }
-  carEngineKillSlot(slot);
-  const el = new Audio();
-  el.preload = 'auto';
-  el.loop = !!loop;
-  el.referrerPolicy = 'no-referrer';
+  const tag = loop ? 'a' : '';
+  const el = carEngineHtmlEl(slot, url, tag);
+  carEngineMuteHtmlOthers(slot, el);
+  if (cur && cur.el && cur.el !== el) {
+    try { cur.el.onended = null; } catch (err) {}
+  }
+  el.loop = false;
   el.volume = loud;
   try { el.playbackRate = pitch; } catch (err) {}
-  el.src = carEngineHtmlSrc(url);
-  try { el.load(); } catch (err) {}
   el.onerror = function () {
     carEngineMarkMiss(url);
     carEngineShare.buf[url] = 'bad';
     if (slot.voice && slot.voice.el === el) carEngineKillSlot(slot);
   };
+  const span = carEngineShare.span[url];
+  const startAt = (loop && span && span.start > 0.004) ? span.start : 0;
   el.onended = function () {
     if (!slot.voice || slot.voice.el !== el) return;
+    if (loop) {
+      carEngineHtmlSeam(slot, true);
+      return;
+    }
     slot.voice = null;
     slot.shot = false;
     try { if (slot.live) carEngineResumeSlot(slot); } catch (err) {}
   };
-  el.oncanplay = function () {
-    if (!slot.voice || slot.voice.el !== el || !el.paused) return;
-    const retry = el.play();
-    if (retry && typeof retry.catch === 'function') retry.catch(function () {});
-  };
-  slot.voice = {src: el, gain: null, pan: null, url: url, loop: !!loop, el: el};
+  try { el.currentTime = startAt; } catch (err) {}
+  slot.voice = {src: el, gain: null, pan: null, url: url, loop: !!loop, el: el, tag: tag || 'a', seam: false};
   slot.shot = !loop;
   const play = el.play();
   if (play && typeof play.catch === 'function') play.catch(function () {});
+  if (loop) carEngineHtmlLoopArm(slot);
   return true;
 }
 
+/** Секунды лупа без тихих краёв. */
+function carEngineHtmlSpan(el, url) {
+  const dur = el && el.duration;
+  const span = carEngineShare.span[url];
+  const end = (span && span.end > 0.05) ? span.end : (dur || 0);
+  const start = (span && span.start > 0 && span.start + 0.05 < end) ? span.start : 0;
+  return {start: start, end: (dur && end > dur ? dur : end) || dur || 0};
+}
+
+/** Запускает второй тег чуть раньше конца, без дырки native loop. */
+function carEngineHtmlSeam(slot, fromEnded) {
+  const v = slot && slot.voice;
+  if (!v || !v.loop || !v.el || !v.url) return;
+  if (v.seam && !fromEnded) return;
+  const el = v.el;
+  const span = carEngineHtmlSpan(el, v.url);
+  if (!span.end && !fromEnded) return;
+  const nextTag = v.tag === 'a' ? 'b' : 'a';
+  const twin = carEngineHtmlEl(slot, v.url, nextTag);
+  twin.loop = false;
+  twin.volume = el.volume;
+  try { twin.playbackRate = el.playbackRate; } catch (err) {}
+  twin.onended = el.onended;
+  twin.onerror = el.onerror;
+  try { twin.currentTime = span.start; } catch (err) {}
+  v.seam = true;
+  const play = twin.play();
+  if (play && typeof play.catch === 'function') play.catch(function () {});
+  slot.voice = {src: twin, gain: null, pan: null, url: v.url, loop: true, el: twin, tag: nextTag, seam: false};
+  setTimeout(function () {
+    try {
+      if (el && slot.voice && slot.voice.el !== el) el.pause();
+    } catch (err) {}
+  }, 22);
+}
+
+/** Следит за концом лупа чаще, чем timeupdate. */
+function carEngineHtmlLoopArm(slot) {
+  if (!slot || slot.htmlRaf) return;
+  const step = function () {
+    slot.htmlRaf = 0;
+    const v = slot.voice;
+    if (!v || !v.loop || !v.el || !slot.live) return;
+    const el = v.el;
+    const span = carEngineHtmlSpan(el, v.url);
+    if (span.end > 0.05 && !el.paused) {
+      const rate = Math.max(0.05, el.playbackRate || 1);
+      const left = (span.end - el.currentTime) / rate;
+      if (left <= 0.048) carEngineHtmlSeam(slot, false);
+    }
+    slot.htmlRaf = requestAnimationFrame(step);
+  };
+  slot.htmlRaf = requestAnimationFrame(step);
+}
+
 /** Играет клип на слоте. pan: −1 слева, 0 центр, +1 справа. */
-function carEnginePlaySlot(slot, url, loop, vol, rate, pan) {
+function carEnginePlaySlot(slot, url, loop, vol, rate, pan, force) {
   if (!slot || !url || vol <= 0) return false;
-  if (carEngineDesktop()) return carEnginePlayHtml(slot, url, loop, vol, rate);
-  if (!AU.ctx || !AU.sfx) return false;
   const buf = carEngineShare.buf[url];
-  if (!buf || buf === 'bad') {
-    carEngineLoad(url);
-    return false;
+  if ((!buf || buf === 'html') && AU.ctx) carEngineLoad(url);
+  const sameHtml = slot.voice && slot.voice.el && slot.voice.url === url && slot.voice.loop === loop;
+  if (sameHtml && !force) return carEnginePlayHtml(slot, url, loop, vol, rate, false);
+  if (buf && buf !== 'bad' && buf !== 'html' && AU.ctx && AU.sfx) {
+    return carEnginePlayWeb(slot, url, buf, loop, vol, rate, pan, force);
   }
+  if (buf === 'bad') return false;
+  return carEnginePlayHtml(slot, url, loop, vol, rate, force);
+}
+
+/** Бесшовный луп через BufferSource, края без тишины. */
+function carEnginePlayWeb(slot, url, buf, loop, vol, rate, pan, force) {
   const pitch = Math.max(0.7, Math.min(1.45, rate || 1));
   const side = Math.max(-1, Math.min(1, pan || 0));
   const cur = slot.voice;
-  if (cur && cur.url === url && cur.loop === loop) {
+  if (!force && cur && cur.url === url && cur.loop === loop && cur.src && !cur.el) {
     try { cur.gain.gain.value = vol; } catch (err) {}
     try { cur.src.playbackRate.value = pitch; } catch (err) {}
     try { if (cur.pan) cur.pan.pan.value = side; } catch (err) {}
@@ -386,8 +643,16 @@ function carEnginePlaySlot(slot, url, loop, vol, rate, pan) {
   src.loop = !!loop;
   src.playbackRate.value = pitch;
   if (loop && buf.length > 1) {
-    src.loopStart = 0;
-    src.loopEnd = buf.length / buf.sampleRate;
+    const span = carEngineShare.span[url] || carEngineSpanFromBuffer(buf);
+    const dur = buf.duration;
+    let start = span.start || 0;
+    let end = span.end || dur;
+    if (!(end > start + 0.05) || end > dur) {
+      start = 0;
+      end = dur;
+    }
+    src.loopStart = start;
+    src.loopEnd = end;
   }
   src.connect(gain);
   src.onended = function () {
@@ -413,57 +678,48 @@ function carEngineEnsureSlot(slot) {
   const url = carEnginePick(slot.idx, n);
   if (!url) return false;
   const vol = carEngineLoopVol(slot.want, slot.mixVol || carEngineVol());
-  return carEnginePlaySlot(slot, url, true, vol, carEngineRate(slot.want, slot.n, slot.pulls), slot.pan);
+  return carEnginePlaySlot(slot, url, true, vol, carEngineRate(slot.want, slot.n, slot.pulls), slot.pan, false);
 }
 
-/** Разовый клип слота. */
-function carEngineShotSlot(slot, n, vol, rate) {
+/** Разовый клип слота. force — с начала, даже тот же файл. */
+function carEngineShotSlot(slot, n, vol, rate, force) {
   carEngineWarmClip(slot.idx, n);
   const url = carEnginePick(slot.idx, n);
   if (!url) return false;
-  return carEnginePlaySlot(slot, url, false, vol, rate || 1, slot.pan);
+  return carEnginePlaySlot(slot, url, false, vol, rate || 1, slot.pan, !!force);
 }
 
-/** После разового клипа. */
+/** После разового клипа: набор → луп хода, в воздухе не цеплять 002. */
 function carEngineResumeSlot(slot) {
   if (!slot || !slot.live) return;
   if (typeof slot.onResume === 'function') {
     slot.onResume(slot);
     return;
   }
-  const vol = slot.mixVol || carEngineVol();
-  if (slot.afterLand) {
-    const stunned = slot.racer && (slot.racer.landStun || 0) > 0.02;
-    if (stunned || slot.gas <= 0) {
-      slot.want = slot.n < 0.055 ? 'idle' : 'drive';
+  const racer = slot.racer;
+  if (racer && racer.air) return;
+  const spd = Math.abs((racer && racer.spd) || 0);
+  if (slot.want === 'accel') {
+    if (!slot.gas && carEngineStill(racer, slot.n, spd)) {
+      slot.want = 'idle';
       carEngineEnsureSlot(slot);
       return;
     }
-    slot.afterLand = false;
-    slot.pulls = 0;
-    slot.want = 'accel';
-    carEngineShotSlot(slot, 1, vol, carEngineRate('accel', slot.n, 0));
-    return;
-  }
-  if (slot.n < 0.06 || carEngineStill(slot.racer, slot.n, Math.abs((slot.racer && slot.racer.spd) || 0))) {
-    slot.pulls = 0;
-    slot.want = 'idle';
+    slot.want = 'drive';
     carEngineEnsureSlot(slot);
     return;
   }
-  if (slot.gas > 0) {
-    if (slot.want === 'accel') slot.pulls += 1;
-    if (slot.n >= 0.82 || slot.pulls >= CAR_ENGINE_PULLS) {
-      slot.want = 'top';
+  if (slot.want === 'dump') {
+    if (carEngineStill(racer, slot.n, spd)) {
+      slot.want = 'idle';
       carEngineEnsureSlot(slot);
       return;
     }
-    slot.want = 'accel';
-    carEngineShotSlot(slot, 1, vol, carEngineRate('accel', slot.n, slot.pulls));
+    slot.want = 'drive';
+    carEngineEnsureSlot(slot);
     return;
   }
-  slot.pulls = 0;
-  slot.want = slot.n < 0.055 ? 'idle' : 'drive';
+  slot.want = carEngineStill(racer, slot.n, spd) ? 'idle' : 'drive';
   carEngineEnsureSlot(slot);
 }
 
@@ -477,8 +733,14 @@ function carEngineHaltSlot(slot) {
   slot.pulls = 0;
   slot.afterLand = false;
   slot.wasAir = false;
+  slot.airHeld = false;
   carEngineKillSlot(slot);
+  carEngineDrainHtmlPool(slot);
 }
 
-/** Клип грузится в момент нужды, пачку заранее не качаем. */
-function carEngineWarm() {}
+/** Прогревает клипы выбранного кузова. */
+function carEngineWarm() {
+  const cars = typeof CARS !== 'undefined' ? CARS : [];
+  const idx = (typeof save !== 'undefined' && save) ? (save.car | 0) : 0;
+  if (cars[idx]) carEngineWarmPack(idx);
+}

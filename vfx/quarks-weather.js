@@ -173,14 +173,31 @@ function loopSystem(p) {
   return ps;
 }
 
-function place(ps, camera) {
+/**
+ * Полоса рождения над кадром: капли падают сквозь мир, не вокруг линзы.
+ * @param {ParticleSystem} ps система
+ * @param {THREE.Camera} camera ортокамера
+ * @param {string} kind rain | snow | sand | ash | ember
+ */
+function place(ps, camera, kind) {
   const hw = Math.max(8, Math.abs(camera.right - camera.left) / 2);
   const hh = Math.max(8, Math.abs(camera.top - camera.bottom) / 2);
-  ps.emitter.position.set(camera.position.x, camera.position.y, 0);
+  const cx = camera.position.x;
+  const cy = camera.position.y;
+  const rainLike = kind === 'rain' || kind === 'ember';
+  const lift = rainLike ? hh * 0.95 : (kind === 'ash' || kind === 'snow' ? hh * 0.55 : 0);
+  ps.emitter.position.set(cx, cy + lift, 0);
   ps.emitter.scale.set(1, 1, 1);
   ps.emitter.quaternion.identity();
   const shape = ps.emitterShape;
-  if (shape && shape.radius != null) shape.radius = Math.hypot(hw, hh) * 0.72;
+  if (shape && shape.radius != null) {
+    if (rainLike) {
+      shape.radius = hw * 1.05;
+      if (shape.thickness != null) shape.thickness = 0.35;
+    } else {
+      shape.radius = Math.hypot(hw, hh) * 0.62;
+    }
+  }
   ps.emitter.updateMatrixWorld(true);
 }
 
@@ -279,7 +296,7 @@ export function buildWeather(scene, batch, soft) {
 
   return {
     /**
-     * Следовать за ортокамерой.
+     * Эмиттер над кадром, не в центре линзы.
      * @param {string} id rain | snow | sand | ash | off
      * @param {number} q качество
      * @param {THREE.Camera} camera ортокамера
@@ -296,7 +313,7 @@ export function buildWeather(scene, batch, soft) {
       }
       const mul = Math.max(0.35, q || 1);
       for (const n of GROUPS[kind]) {
-        place(systems[n], camera);
+        place(systems[n], camera, n);
         systems[n]._rate.value = RATE[n] * mul;
       }
       if (active !== kind) {

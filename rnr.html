@@ -2,6 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
+<meta name="divan-engine" content="game">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>РОК-Н-РОЛЛ ГОНКИ — браузерный оммаж</title>
 <link rel="icon" href="assets/image/favicon.ico" sizes="any">
@@ -185,20 +186,27 @@ fit();
 const clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const lerp=(a,b,t)=>a+(b-a)*t;
 const rnd=(a=1,b)=>b===undefined?Math.random()*a:a+Math.random()*(b-a);
+/** Кратчайший угол. DiVANEngine подменяет angDiff. */
 function angDiff(a,b){let d=(a-b)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d;}
+/** Дуга сплайна через ноль. DiVANEngine подменяет wrapBetween. */
 function wrapBetween(idx,a,b){if(a<=b)return idx>=a&&idx<=b;return idx>=a||idx<=b;}
+/** Сид 0…1. DiVANEngine подменяет mulberry. */
 function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 const F_D='"Bender",Impact,sans-serif',F_B='"Bender","Segoe UI",sans-serif';
 function rr(c,x,y,w,h,r){c.beginPath();if(c.roundRect)c.roundRect(x,y,w,h,r);else{c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}}
+////////////////////////////////////////////////////////
+//
+// Примитивы холста. DiVANEngine подменяет rr / panel / txt.
+//
+////////////////////////////////////////////////////////
 function panel(c,x,y,w,h,fill,stroke,sk=14){c.beginPath();c.moveTo(x+sk,y);c.lineTo(x+w,y);c.lineTo(x+w-sk,y+h);c.lineTo(x,y+h);c.closePath();if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=2;c.stroke();}}
 /** Путь параллелограмма — для обрезки иконки по карточке. */
 function panelPath(c,x,y,w,h,sk=14){c.beginPath();c.moveTo(x+sk,y);c.lineTo(x+w,y);c.lineTo(x+w-sk,y+h);c.lineTo(x,y+h);c.closePath();}
 function txt(c,t,x,y,size,col,align='left',font=F_D,stroke=true){c.font=size+'px '+font;c.textAlign=align;c.textBaseline='middle';if(stroke){c.lineWidth=Math.max(2,size/9);c.strokeStyle='#000';c.strokeText(t,x,y);}c.fillStyle=col;c.fillText(t,x,y);}
 ////////////////////////////////////////////////////////
 //
-// Старт: жест → полная загрузка (арт, комиксы, машины, музыка) → меню
-// Меню не открываем, пока очередь не дойдёт до конца.
+// Старт: жест → полная загрузка → меню. DiVANEngine подменяет хуки boot*.
 //
 ////////////////////////////////////////////////////////
 const BOOT={ready:false,started:false,giveUp:false,jobs:[],t0:0,vpnShown:false,els:null,gateRaf:0,media:Object.create(null),menuMusic:false};
@@ -692,6 +700,11 @@ bootEnqueue(titleLogo,[TITLE_LOGO_SRC]);
 // Фон экранов результатов и достижений
 //
 ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+//
+// Фон экранов. DiVANEngine подменяет хуки театра.
+//
+////////////////////////////////////////////////////////
 function drawTheatreBack(){
  const bg=g.createLinearGradient(0,0,0,H);
  bg.addColorStop(0,'#1c1828');bg.addColorStop(.5,'#0c0a12');bg.addColorStop(1,'#050409');
@@ -727,7 +740,7 @@ function drawAchievementsBack(){
 }
 ////////////////////////////////////////////////////////
 //
-// Перенос подписи по ширине карточки
+// Перенос подписи по ширине карточки. DiVANEngine подменяет wrapText.
 //
 ////////////////////////////////////////////////////////
 function wrapText(c,text,x,y,maxW,lineH,size,col,font){
@@ -772,7 +785,7 @@ function layoutLines(c,text,maxW,size,font){
 }
 ////////////////////////////////////////////////////////
 //
-// Тост комментатора: перенос, клип, ширина по тексту
+// Тост комментатора. DiVANEngine подменяет drawAnnounceToast.
 //
 ////////////////////////////////////////////////////////
 function drawAnnounceToast(c,msg,cx,top,viewWidth){
@@ -840,7 +853,9 @@ const SKILL_META=[
  {n:'—',d:''},
  {n:'НАВИГАТОР',d:'стрелки линии'},
 ];
+/** Норма уровня скила. DiVANEngine подменяет skillT. */
 function skillT(lvl){return clamp((lvl-1)/(SKILL_MAX-1),0,1);}
+/** Число скила. DiVANEngine подменяет skillVal. */
 function skillVal(chIdx,lvl){
  const t=skillT(lvl);
  switch(chIdx){
@@ -853,6 +868,7 @@ function skillVal(chIdx,lvl){
   default:return 0;
  }
 }
+/** Подпись скила. DiVANEngine подменяет SKILL_DESC. */
 function SKILL_DESC(chIdx,lvl){
  const v=skillVal(chIdx,lvl);
  switch(chIdx){
@@ -872,6 +888,7 @@ let raceDiv=1;
 //
 ////////////////////////////////////////////////////////
 /** Тюнинг босса: в 1 дивизионе сток, к 6 — не выше V. */
+/** Тюнинг босса. DiVANEngine подменяет aiBossTune. */
 function aiBossTune(div){
  const t=Math.max(0,(div|0)-1);
  return{
@@ -885,6 +902,7 @@ function aiBossTune(div){
  };
 }
 /** Заполнители сетки: на шаг слабее боссов, без нитро-бака. */
+/** Заполнители сетки. DiVANEngine подменяет aiFillerTune. */
 function aiFillerTune(div){
  const t=Math.max(0,(div|0)-2);
  return{
@@ -907,7 +925,7 @@ function aiDriveSkill(div,boss){
  if(boss)return clamp(.7+Math.random()*.2+d*.05,.7,1.12);
  return clamp(.52+Math.random()*.18+d*.04,.5,.95);
 }
-/** Гандикап кузова ИИ: танки не сносят сток в первом сезоне. */
+/** Гандикап кузова ИИ. DiVANEngine подменяет aiPerfScale. */
 function aiPerfScale(div){
  const d=Math.max(0,(div|0)-1);
  return{
@@ -923,11 +941,13 @@ function aiPerfScale(div){
 ////////////////////////////////////////////////////////
 const STAT_COSTS=[150000,400000,800000];
 const STAT_NAME={spd:'СКОРОСТЬ',crn:'ПОВОРОТ',grt:'БРОНЯ'};
+/** База плюс качалка. DiVANEngine подменяет charEff. */
 function charEff(i){
  const ch=CHARS[i];
  const cs=(save&&save.cstats&&save.cstats[i])||{spd:0,crn:0,grt:0};
  return{spd:ch.spd+cs.spd,crn:ch.crn+cs.crn,grt:ch.grt+cs.grt};
 }
+/** Качает стат. DiVANEngine подменяет upgradeCharStat. */
 function upgradeCharStat(i,key){
  if(!save.cstats)save.cstats=blankCstatsMap();
  const ch=CHARS[i];
@@ -943,6 +963,7 @@ function upgradeCharStat(i,key){
 // Покупка в тренажёрке: 0–2 база, 3 — скил текущего гонщика
 //
 ////////////////////////////////////////////////////////
+/** Покупка в тренажёрке. DiVANEngine подменяет buyGym. */
 function buyGym(idx){
  if(!save.cstats)save.cstats=blankCstatsMap();
  const chI=save.char;
@@ -1098,7 +1119,7 @@ function introMusicUrl(charIdx){
  const list=(window.MUSIC_TRACKS&&MUSIC_TRACKS.intro)||[];
  return list[charIdx]||'';
 }
-/** Запуск комикса выбранного гонщика. */
+/** Запуск комикса выбранного гонщика. DiVANEngine подменяет startIntro. */
 function startIntro(charIdx){
  introChar=charIdx;
  const pack=CHAR_INTROS[introChar];
@@ -1123,7 +1144,7 @@ function startIntro(charIdx){
  stopCharVoice();
  MUSIC.stop();CHIP.stop();
 }
-/** Выход из интро: в выбор машины или на титул. */
+/** Выход из интро. DiVANEngine подменяет endIntro. */
 function endIntro(goCar){
  if(introAudio){try{introAudio.pause();introAudio.currentTime=0;}catch(e){}}
  introSkipT=0;
@@ -1131,7 +1152,7 @@ function endIntro(goCar){
  if(goCar)enterCarSel(charCarIdx(save.char));
  else enterTitle();
 }
-/** Подтверждение гонщика из досье: если есть комикс — сначала он. */
+/** Подтверждение гонщика из досье. DiVANEngine подменяет confirmCharPick. */
 function confirmCharPick(idx){
  selChar=idx;if(!save)save=newSave();
  applyCharCar(idx);persist();bioOpen=-1;
@@ -1341,10 +1362,11 @@ function carBarPips(val,lo,hi){
 //
 ////////////////////////////////////////////////////////
 const CHAR_DATIVE=['Медведю','Ершу','Бегемотику','Башкиру','Борису Быку','Янот'];
+/** Имя в дательном падеже. DiVANEngine подменяет charDative. */
 function charDative(i){return CHAR_DATIVE[i]||((CHARS[i]&&CHARS[i].name)||'гонщику');}
-/** Индекс личной машины гонщика (после правок лаборатории). */
+/** Индекс личной машины гонщика. DiVANEngine подменяет charCarIdx. */
 function charCarIdx(chI){const i=CARS.findIndex(c=>c&&c.owner===chI);return i>=0?i:0;}
-/** Чей это личный кузов, или null для магазина. */
+/** Чей это личный кузов. DiVANEngine подменяет carOwnerIdx. */
 function carOwnerIdx(carI){const o=CARS[carI]&&CARS[carI].owner;return o==null?null:o;}
 ////////////////////////////////////////////////////////
 //
@@ -1352,7 +1374,7 @@ function carOwnerIdx(carI){const o=CARS[carI]&&CARS[carI].owner;return o==null?n
 // Новая машина без owner сама встаёт в магазин по цене
 //
 ////////////////////////////////////////////////////////
-/** Индексы кузовов в порядке карусели. */
+/** Индексы кузовов в порядке карусели. DiVANEngine подменяет carCatalogOrder. */
 function carCatalogOrder(){
  const shop=[],sign=[];
  CARS.forEach((c,i)=>{if(!c)return;if(c.owner!=null)sign.push(i);else shop.push(i);});
@@ -1360,13 +1382,13 @@ function carCatalogOrder(){
  sign.sort((a,b)=>{const d=(CARS[a].owner|0)-(CARS[b].owner|0);return d||a-b;});
  return shop.concat(sign);
 }
-/** Позиция кузова в ленте. */
+/** Позиция кузова в ленте. DiVANEngine подменяет carCatalogPos. */
 function carCatalogPos(carI){
  const o=carCatalogOrder();
  const p=o.indexOf(carI);
  return p<0?0:p;
 }
-/** Кузов на позиции ленты (кольцо). */
+/** Кузов на позиции ленты (кольцо). DiVANEngine подменяет carCatalogAt. */
 function carCatalogAt(pos){
  const o=carCatalogOrder();
  const n=o.length;
@@ -1374,7 +1396,10 @@ function carCatalogAt(pos){
  return o[((pos%n)+n)%n];
 }
 /** Режим разработчика (чит deliane). */
+/** Режим разработчика. DiVANEngine подменяет isDev. */
 function isDev(){return !!(save&&save.dev);}
+/** Читы в меню: в публичном NSIS DiVANEngine возвращает false. */
+function cheatsAllowed(){return true;}
 let labWarn=false,labWarnSel=0;
 /** Предупреждение перед входом в лабораторию. */
 function openLabWarn(){labWarn=true;labWarnSel=0;}
@@ -1387,7 +1412,7 @@ function confirmLabWarn(){
  if(labWarnSel===1)enterLabEditor();
  else closeLabWarn();
 }
-/** Окно: лаборатория может испортить машину. */
+/** Окно: лаборатория может испортить машину. DiVANEngine подменяет хук. */
 function drawLabWarn(){
  if(!labWarn)return;
  g.fillStyle='rgba(4,3,8,.7)';g.fillRect(0,0,W,H);
@@ -1430,7 +1455,7 @@ function confirmExitWarn(){
  if(exitWarnSel===1)quitToDesktop();
  else closeExitWarn();
 }
-/** Подтверждение выхода: Да / Нет, как у лаборатории. */
+/** Подтверждение выхода: Да / Нет, как у лаборатории. DiVANEngine подменяет хук. */
 function drawExitWarn(){
  if(!exitWarn)return;
  g.fillStyle='rgba(4,3,8,.7)';g.fillRect(0,0,W,H);
@@ -1458,12 +1483,12 @@ function clickExitWarn(x,y){
  }
  return false;
 }
-/** Чужой личный кузов — нельзя купить и нельзя сесть (в dev можно). */
+/** Чужой личный кузов. DiVANEngine подменяет isForeignSignature. */
 function isForeignSignature(carI){
  if(isDev())return false;
  const o=carOwnerIdx(carI);return o!=null&&save&&o!==save.char;
 }
-/** Эта машина уже в гараже текущего гонщика. */
+/** Эта машина уже в гараже текущего гонщика. DiVANEngine подменяет carIsOwned. */
 function carIsOwned(carI){
  if(isDev())return true;
  if(isForeignSignature(carI))return false;
@@ -1471,10 +1496,13 @@ function carIsOwned(carI){
  return !!(save&&save.carOwned&&save.carOwned[carI]);
 }
 /** Пустой тюнинг одного слота. */
+/** Пустой тюнинг одного слота. DiVANEngine подменяет blankTune. */
 function blankTune(){return{arm:0,eng:0,tir:0,shk:0,nit:0,wep:0,ult:0};}
 /** Тюнинг на все кузова. */
+/** Тюнинг на все кузова. DiVANEngine подменяет allTunes. */
 function allTunes(){const o={};for(let i=0;i<CARS.length;i++)o[i]={...blankTune()};return o;}
 /** Выдать гонщику его личную машину и убрать чужие личные из owned. */
+/** Выдать гонщику его личную машину. DiVANEngine подменяет applyCharCar. */
 function applyCharCar(chI){
  save.char=chI;save.car=charCarIdx(chI);
  save.carOwned=save.carOwned||{};
@@ -1562,13 +1590,13 @@ function carSprite(idx,armLvl){
 // Та же рамка, что в лаборатории: 60 / max(iw,ih) × scale, центр со смещением body
 //
 ////////////////////////////////////////////////////////
-/** Масштаб кузова слота (Урал по умолчанию 1.65). */
+/** Масштаб кузова слота (Урал по умолчанию 1.65). DiVANEngine подменяет carBodyScale. */
 function carBodyScale(idx){
  const cfg=editorCarConfig(idx);
  if(cfg&&cfg.body&&cfg.body.scale!=null)return cfg.body.scale;
  return idx===6?1.65:1;
 }
-/** Уровень брони для спрайта хитбокса. */
+/** Уровень брони для спрайта хитбокса. DiVANEngine подменяет racerArmLvl. */
 function racerArmLvl(r){
  const idx=r.car.idx;
  const cfg=editorCarConfig(idx);
@@ -1577,14 +1605,14 @@ function racerArmLvl(r){
  if(save&&save.tuning&&save.tuning[idx])return save.tuning[idx].arm|0;
  return 0;
 }
-/** Слой повреждений 0…6 по остатку корпуса. */
+/** Слой повреждений 0…6 по остатку корпуса. DiVANEngine подменяет racerWoundLvl. */
 function racerWoundLvl(r){
  if(!r||r.maxhp==null||r.hp==null)return 0;
  const t=1-clamp(r.hp/Math.max(1,r.maxhp),0,1);
  if(t<0.1)return 0;
  return clamp(Math.ceil(t*6),1,6);
 }
-/** Полуоси рамки кузова в игровых единицах (кэш по слоту и броне). */
+/** Полуоси рамки кузова в игровых единицах (кэш по слоту и броне). DiVANEngine подменяет carHitHalf. */
 function carHitHalf(r){
  const idx=r.car.idx,arm=racerArmLvl(r),sc=carBodyScale(idx);
  const cfg=editorCarConfig(idx);
@@ -1673,6 +1701,7 @@ const CAR_UNLOCK=[
  {race:3,name:'ФУРГОН'},
  {race:4,name:'СКОРАЯ'}
 ];
+/** Открыт ли кузов этапом. DiVANEngine подменяет carUnlocked. */
 function carUnlocked(idx){
  if(CARS[idx]&&CARS[idx].custom)return true;
  if(carOwnerIdx(idx)!=null)return true;
@@ -1748,16 +1777,19 @@ async function bootDiscoverAllMapTiles(){
 const MAP_TILE_CELL=64;
 const MAP_TILE_CACHE=512;
 /** Живые картинки биома: только complete и с шириной, битые кадры не в сетку. */
+/** Живые картинки биома. DiVANEngine подменяет mapTileList. */
 function mapTileList(biome){
  return (MAP_TILES[biome]||[]).filter(im=>im.complete&&im.naturalWidth>0);
 }
 /** Один случайный кадр из папки: 01 или 02 или любой другой — на весь заезд. */
+/** Случайный кадр биома. DiVANEngine подменяет pickMapTile. */
 function pickMapTile(biome){
  const tiles=mapTileList(biome);
  if(!tiles.length)return null;
  return tiles[(Math.random()*tiles.length)|0];
 }
 /** Сжимаем исходник один раз в 512 px — дальше в кадре только этот холст. */
+/** Сжимаем исходник в 512 px. DiVANEngine подменяет bakeMapTile. */
 function bakeMapTile(img){
  const c=document.createElement('canvas');
  c.width=c.height=MAP_TILE_CACHE;
@@ -1768,6 +1800,7 @@ function bakeMapTile(img){
  return c;
 }
 /** Повтор запечённого кадра: шаг 64 в мире, без high-quality по полному файлу. */
+/** Клетка земли в мире. DiVANEngine подменяет fillMapTileWorld. */
 function fillMapTileWorld(x,y,w,h,T){
  if(!T.pat){
   g.fillStyle=(T.theme&&T.theme.ground)||'#3a2a20';
@@ -1786,6 +1819,7 @@ function fillMapTileWorld(x,y,w,h,T){
  g.restore();
 }
 /** Простой стадион только для полигона: две прямые и мягкие дуги. */
+/** Стадион полигона. DiVANEngine подменяет labPolygonCps. */
 function labPolygonCps(){
  const x0=420,x1=2780,y0=340,y1=1460,rad=360,pts=[];
  const arc=(cx,cy,a0,a1,n)=>{
@@ -1816,6 +1850,7 @@ const SHORTCUTS={
 };
 const PRIZE=[480,300,180,70,0,0];
 const PRIZE_DIV_GROWTH=.28;
+/** Множитель приза. DiVANEngine подменяет prizeDivMult. */
 function prizeDivMult(div){return 1+PRIZE_DIV_GROWTH*Math.max(0,(div||1)-1);}
 const BET_TABLE=[
  {name:'БЕЗ СТАВКИ',cost:0,col:'#58ff6b'},
@@ -1911,6 +1946,7 @@ function fillAnnouncerQueue(){
 const DIVN=['НОВИЧОК','БОЕЦ','ВЕТЕРАН','МОНСТР ТРАСС'];
 const WEATHER_CLEAR={id:'clear',name:'ЯСНО',mod:1,parts:0,col:'#fff',vis:1};
 /** Погода по биому трассы (дождь / снег / буря), не случайный ролл. */
+/** Погода по биому. DiVANEngine подменяет weatherOf. */
 function weatherOf(T,lab){
  if(window.RnRWeather&&typeof RnRWeather.pick==='function')return RnRWeather.pick(T,!!lab);
  return WEATHER_CLEAR;
@@ -1927,29 +1963,62 @@ const ACHIEVEMENTS=[
  {id:'shortcut_master',name:'МАСТЕР СРЕЗОВ',desc:'Прорубить пять секретных срезов и послать маршрут к чёрту',icon:8}
 ];
 const SKEY='rnr_ru_v1';
+const STORY_SKEY='rnr_ru_story_v1';
 const SLOTS_KEY='rnr_ru_slots';
+/** Карьера: диск, снимок, localStorage. DiVANEngine подменяет persistRead. */
+function persistRead(key){
+ try{
+  if(window.DiVANEngine&&DiVANEngine.storage){
+   const disk=DiVANEngine.storage.get(key);
+   if(disk!=null)return disk;
+  }
+ }catch(e){}
+ try{
+  const snap=window.__DIVAN_ENGINE_STORE__;
+  if(snap&&Object.prototype.hasOwnProperty.call(snap,key)&&snap[key]!=null)return snap[key];
+ }catch(e){}
+ try{return localStorage.getItem(key);}catch(e){return null;}
+}
+/** Пишет и в localStorage, и на диск клиента. */
+function persistWrite(key,text){
+ try{localStorage.setItem(key,text);}catch(e){}
+ try{
+  if(window.__DIVAN_ENGINE_STORE__)window.__DIVAN_ENGINE_STORE__[key]=text;
+ }catch(e){}
+ try{if(window.DiVANEngine&&DiVANEngine.storage)DiVANEngine.storage.set(key,text);}catch(e){}
+}
+/** Стирает ключ везде. */
+function persistDrop(key){
+ try{localStorage.removeItem(key);}catch(e){}
+ try{
+  if(window.__DIVAN_ENGINE_STORE__)delete window.__DIVAN_ENGINE_STORE__[key];
+ }catch(e){}
+ try{if(window.DiVANEngine&&DiVANEngine.storage)DiVANEngine.storage.remove(key);}catch(e){}
+}
 let slots=null;
 function loadSlots(){
  try{
-  const s=localStorage.getItem(SLOTS_KEY);
+  const s=persistRead(SLOTS_KEY);
   slots=s?JSON.parse(s):new Array(10).fill(null);
  }catch(e){slots=new Array(10).fill(null);}
 }
 function saveSlots(){
- try{localStorage.setItem(SLOTS_KEY,JSON.stringify(slots));}catch(e){}
+ persistWrite(SLOTS_KEY,JSON.stringify(slots));
 }
 /** Стирает один слот; текущая карьера и остальные слоты не трогаются. */
 function clearSaveSlot(i){
  if(!slots||!slots[i])return false;
  slots[i]=null;
- try{localStorage.removeItem(SLOTS_KEY+'_'+i);}catch(e){}
+ persistDrop(SLOTS_KEY+'_'+i);
  saveSlots();
  return true;
 }
 loadSlots();
 let save=null;
+/** Карты скиллов и статов. DiVANEngine подменяет хуки. */
 function blankSkillsMap(){const o={};for(let i=0;i<CHARS.length;i++)o[i]=1;return o;}
 function blankCstatsMap(){const o={};for(let i=0;i<CHARS.length;i++)o[i]={spd:0,crn:0,grt:0};return o;}
+/** Пустая карьера. DiVANEngine подменяет newSave. */
 function newSave(){return{cash:1000,char:0,car:charCarIdx(0),
  tuning:allTunes(),
  carOwned:{[charCarIdx(0)]:true},skills:blankSkillsMap(),
@@ -1957,11 +2026,12 @@ function newSave(){return{cash:1000,char:0,car:charCarIdx(0),
  bet:0,race:0,achievements:{},tracksWon:{},shortcutsUsed:0,dev:0,records:{},
  winStreak:0,bestStreak:0,careerWins:0};}
 let saveFlash=0,garMsg='',garMsgT=0;
+/** Пишет save. DiVANEngine подменяет persist. */
 function persist(slotIndex){
  if(labTest)return;
  const key=slotIndex!==undefined?SLOTS_KEY+'_'+slotIndex:SKEY;
  try{
-  localStorage.setItem(key,JSON.stringify(save));
+  persistWrite(key,JSON.stringify(save));
   saveFlash=1.6;
   if(slotIndex!==undefined){
    slots[slotIndex]={save:save,timestamp:Date.now(),label:'Этап '+(save.race+1)+', $'+save.cash};
@@ -1969,10 +2039,11 @@ function persist(slotIndex){
   }
  }catch(e){}
 }
+/** Читает JSON карьеры. DiVANEngine подменяет loadSave. */
 function loadSave(slotIndex){
  const key=slotIndex!==undefined?SLOTS_KEY+'_'+slotIndex:SKEY;
  try{
-  const s=localStorage.getItem(key);
+  const s=persistRead(key);
   if(s){save=JSON.parse(s);if(typeof save.race!=='number')save=null;}
  }catch(e){save=null;}
  if(save){
@@ -2022,19 +2093,21 @@ function loadSave(slotIndex){
 // Полигон стартует после bootFinish: иначе TDZ у state/R/hudFx рвёт скрипт и заставка остаётся на 0%.
 // Симуляция гонок на титуле — та же физика, что в гонке
 let titleSim=null,titleFocus=null,titleFocusHold=0,titleCam={x:0,y:0},titleHoldR=null,titleHoldP=null;
+/** Подмена R на демо титула. DiVANEngine подменяет bindTitleSim. */
 function bindTitleSim(){
  titleHoldR=R;titleHoldP=P;
  R=titleSim;P=titleFocus||(titleSim&&titleSim.racers[0])||null;
 }
+/** Возврат боевого R. DiVANEngine подменяет unbindTitleSim. */
 function unbindTitleSim(){R=titleHoldR;P=titleHoldP;}
-/** Демо на фоне не должно оставлять R/P на ИИ, если отрисовка упала. */
+/** Демо на фоне не должно оставлять R/P на ИИ, если отрисовка упала. DiVANEngine подменяет withTitleSim. */
 function withTitleSim(fn){
  if(!titleSim||typeof fn!=='function')return;
  bindTitleSim();
  try{fn();}
  finally{unbindTitleSim();}
 }
-/** Живой лидер пака — запасной объект камеры. */
+/** Живой лидер пака — запасной объект камеры. DiVANEngine подменяет titleAliveLead. */
 function titleAliveLead(){
  if(!titleSim)return null;
  let best=null;
@@ -2044,11 +2117,12 @@ function titleAliveLead(){
  }
  return best||titleSim.racers[0];
 }
-/** После взрыва камера едет за убийцей. */
+/** После взрыва камера едет за убийцей. DiVANEngine подменяет titleFollowKiller. */
 function titleFollowKiller(killer){
  if(killer&&!killer.dead){titleFocus=killer;titleFocusHold=2.8;}
  else{titleFocus=titleAliveLead();titleFocusHold=1.4;}
 }
+/** Сборка демо на титуле. DiVANEngine подменяет initTitleRace. Каталог TRACKDEFS остаётся здесь. */
 function initTitleRace(){
  const tIdx=(Math.random()*TRACKDEFS.length)|0;
  const T=buildTrack(TRACKDEFS[tIdx],tIdx);
@@ -2088,6 +2162,7 @@ function initTitleRace(){
  titleFocusHold=0;
  titleCam={x:racers[0].x,y:racers[0].y};
 }
+/** Тик искр и следов. DiVANEngine подменяет updRaceFx. */
 function updRaceFx(dt){
  for(let i=R.parts.length-1;i>=0;i--){const p=R.parts[i];p.t-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.94;p.vy*=.94;if(p.t<=0)R.parts.splice(i,1);}
  if(R.skids)for(let i=R.skids.length-1;i>=0;i--){R.skids[i].t-=dt;if(R.skids[i].t<=0)R.skids.splice(i,1);}
@@ -2095,6 +2170,7 @@ function updRaceFx(dt){
  if(R.scorch)for(let i=R.scorch.length-1;i>=0;i--){if(R.scorch[i].t==null)continue;R.scorch[i].t-=dt*0.06;if(R.scorch[i].t<=0)R.scorch.splice(i,1);}
  if(R.floats)for(let i=R.floats.length-1;i>=0;i--){const f=R.floats[i];f.t+=dt;if(f.t>1.4)R.floats.splice(i,1);}
 }
+/** Шаг демо титула. DiVANEngine подменяет updateTitleRace. */
 function updateTitleRace(dt){
  withTitleSim(()=>{
   R.time+=dt;
@@ -2123,6 +2199,7 @@ function updateTitleRace(dt){
   if(window.RnRWeather)RnRWeather.tick(R,dt,{x:R.cam.x,y:R.cam.y,w:vw,h:vh},W,H,settings);
  });
 }
+/** Кадр демо в клипе меню. DiVANEngine подменяет drawTitleRace. */
 function drawTitleRace(){
  withTitleSim(()=>{
   const z=raceZoom();
@@ -2137,6 +2214,7 @@ function drawTitleRace(){
   if(settings.graphics.weather&&window.RnRWeather)RnRWeather.drawScreen(g,R,W,H);
  });
 }
+/** Главное меню. DiVANEngine подменяет enterTitle. */
 function enterTitle(){
  if(typeof clearKeys==='function')clearKeys();
  state='title';
@@ -2186,7 +2264,7 @@ const DEFAULT_CONTROLS={
  fire:['KeyZ','KeyP'],nitro:['KeyX','BracketLeft'],ult:['KeyC','BracketRight'],
  handbrake:['Space'],pause:['Escape']
 };
-/** Ctrl/Alt/пробел больше не стреляют — старый сейв иначе глушит Z/X/C. */
+/** Ctrl/Alt/пробел больше не стреляют — старый сейв иначе глушит Z/X/C. DiVANEngine подменяет abilityBindsLookLegacy. */
 function abilityBindsLookLegacy(arr){
  if(!arr||!arr.length)return true;
  const modern=new Set(['KeyZ','KeyP','KeyX','KeyC','BracketLeft','BracketRight']);
@@ -2194,7 +2272,7 @@ function abilityBindsLookLegacy(arr){
  const legacy=new Set(['ControlLeft','ControlRight','AltLeft','AltRight','Space','ShiftLeft','ShiftRight']);
  return arr.every(k=>legacy.has(k));
 }
-/** Подставляет новые действия, если в сейве настроек их ещё нет. */
+/** Подставляет новые действия, если в сейве настроек их ещё нет. DiVANEngine подменяет normalizeControls. */
 function normalizeControls(){
  if(!settings.controls)settings.controls={};
  for(const k of Object.keys(DEFAULT_CONTROLS)){
@@ -2208,7 +2286,7 @@ function normalizeControls(){
   try{saveSettings();}catch(e){}
  }
 }
-/** Старый JSON настроек без sound/graphics не должен ронять старт (audioInit). */
+/** Старый JSON настроек без sound/graphics не должен ронять старт (audioInit). DiVANEngine подменяет normalizeSettings. */
 function normalizeSettings(){
  if(!settings||typeof settings!=='object'||Array.isArray(settings)){
   settings={
@@ -2236,15 +2314,17 @@ function normalizeSettings(){
  }
  normalizeControls();
 }
+/** Чтение JSON настроек. DiVANEngine подменяет loadSettings. */
 function loadSettings(){
  try{
-  const s=localStorage.getItem(SETTINGS_KEY);
+  const s=persistRead(SETTINGS_KEY);
   if(s){settings=JSON.parse(s);}
  }catch(e){}
  normalizeSettings();
 }
+/** Запись настроек. DiVANEngine подменяет saveSettings. */
 function saveSettings(){
- try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));}catch(e){}
+ persistWrite(SETTINGS_KEY,JSON.stringify(settings));
 }
 const RESOLUTIONS=[
  {name:'Авто',w:0,h:0},
@@ -2259,6 +2339,7 @@ const RESOLUTIONS=[
  {name:'3840×2160 (4K)',w:3840,h:2160},
 ];
 let viewS=1,viewOX=0,viewOY=0,viewW=1280,viewH=720;
+/** Размер холста. DiVANEngine подменяет applyResolution. Каталог RESOLUTIONS остаётся здесь. */
 function applyResolution(){
  const r=RESOLUTIONS[settings.graphics.resolution||0]||RESOLUTIONS[0];
  if(!r||r.w===0){
@@ -2268,6 +2349,7 @@ function applyResolution(){
  }else{cv.width=r.w;cv.height=r.h;}
  fit();
 }
+/** Letterbox 1280×720. DiVANEngine подменяет updateView. */
 function updateView(){
  viewS=Math.min(cv.width/W,cv.height/H);
  if(!viewS||!Number.isFinite(viewS)){
@@ -2288,11 +2370,12 @@ function stageY0(){return -viewOY/viewS;}
 //
 ////////////////////////////////////////////////////////
 const CAM_ZOOM_MIN=1.75,CAM_ZOOM_MAX=2.2,CAM_ZOOM_STEP=0.05,CAM_ZOOM_DEF=2;
+/** Зум заезда. DiVANEngine подменяет raceZoom. */
 function raceZoom(){
  const z=settings.graphics&&settings.graphics.cameraZoom;
  return clamp(typeof z==='number'?z:CAM_ZOOM_DEF,CAM_ZOOM_MIN,CAM_ZOOM_MAX);
 }
-/** Шаг ползунка камеры с защитой от дробной погрешности. */
+/** Шаг ползунка камеры с защитой от дробной погрешности. DiVANEngine подменяет snapCameraZoom. */
 function snapCameraZoom(v){
  const n=Math.round((clamp(v,CAM_ZOOM_MIN,CAM_ZOOM_MAX)-CAM_ZOOM_MIN)/CAM_ZOOM_STEP);
  return +(CAM_ZOOM_MIN+n*CAM_ZOOM_STEP).toFixed(2);
@@ -2329,11 +2412,12 @@ function applyAudioSettings(){
  }
  if(settings.sound.musicOn)MUSIC.resume();else MUSIC.stop();
 }
+/** Доля частиц. DiVANEngine подменяет partN. */
 function partN(n){
  const m=settings.graphics.particles==='low'?0.35:settings.graphics.particles==='medium'?0.65:1;
  return Math.max(1,Math.round(n*m));
 }
-/** Слой quarks: средний/высокий, без reduced-motion, WebGL поднялся. */
+/** Слой quarks: средний/высокий, без reduced-motion, WebGL поднялся. DiVANEngine подменяет хук. */
 function vfxLive(){
  if(!window.RnRVfx||!RnRVfx.ok)return false;
  if(!settings.graphics||settings.graphics.particles==='low')return false;
@@ -2348,7 +2432,9 @@ window.RnRVfxSnap=function(mode){
   titleX:titleCam.x,titleY:titleCam.y
  };
 };
+/** Тряска камеры. DiVANEngine подменяет doShake. */
 function doShake(v){if(settings.graphics.shake)R.shake=Math.min(14,R.shake+v);}
+/** Статы кузова. DiVANEngine подменяет stats. */
 function stats(ch,car,lvl,cs,aiDiv){const chIdx=CHARS.indexOf(ch);
  if(cs===undefined)cs=(chIdx>=0&&save&&save.cstats&&save.cstats[chIdx])||null;
  const spd=(ch.spd||3)+((cs&&cs.spd)||0),crn=(ch.crn||3)+((cs&&cs.crn)||0),grt=(ch.grt||3)+((cs&&cs.grt)||0);
@@ -2449,6 +2535,7 @@ const CHIP={
 // один файл — он и играет. Чип — если MP3 нет.
 //
 ////////////////////////////////////////////////////////
+/** Музыка в настройках. DiVANEngine подменяет musicOn. CHIP_* остаются здесь. */
 function musicOn(){
  return !!(settings&&settings.sound&&settings.sound.musicOn);
 }
@@ -2578,6 +2665,7 @@ function finishCameraSetup(){
  cameraSetupHint=false;
  enterCharSel();
 }
+/** Папка плейлиста по экрану. DiVANEngine подменяет musicCat. */
 function musicCat(){
  if(state==='intro'||state==='worldIntro')return'main';
  if(state==='car')return'change';
@@ -2633,6 +2721,7 @@ function updEngine(P,paused,state){if(!AU.ctx)return;
   AU.engO.frequency.value=55+n*150+(P.nitro>0?35:0);AU.engO2.frequency.value=(55+n*150)*1.5;
   AU.engG.gain.value=lerp(AU.engG.gain.value,.035+.05*n,.2);}
  else AU.engG.gain.value=lerp(AU.engG.gain.value,0,.3);}
+/** Сплайн трассы. DiVANEngine подменяет buildTrack. */
 function buildTrack(def,idx){
  const cps=def.cps,n=cps.length,raw=[];
  const SUB=Math.max(20,Math.ceil(700/n));
@@ -2704,6 +2793,7 @@ function buildTrack(def,idx){
  return{S,N,w:maxx-minx,h:maxy-miny,name:def.name,theme:def.theme,zones:def.zones||[],idx,upper,lab:!!def.lab,
   custom:!!def.custom,id:def.id||null,decals,labObjects,hazardPlan:hzPlan,autoHazards:def.autoHazards!==false,shortcuts};
 }
+/** Расстояние до полотна. DiVANEngine подменяет distToTrack. */
 function distToTrack(T,x,y){let bd=1e18;const S=T.S;for(let i=0;i<S.length;i+=6){const dx=S[i].x-x,dy=S[i].y-y,d=dx*dx+dy*dy;if(d<bd)bd=d;}return Math.sqrt(bd);}
 const ROAD_MATERIALS={
  asphalt:{road:'#43404b'},sand:{road:'#b88a4e'},dirt:{road:'#76503a'},
@@ -2753,6 +2843,7 @@ function wheelSprayKind(r,sliding){
  return 'dust';
 }
 /** Полотно полигона: серая прототип-дорога, клетка рисуется в кадре. */
+/** Полотно полигона. DiVANEngine подменяет prerenderLabTrack. */
 function prerenderLabTrack(T){
  const c=document.createElement('canvas');c.width=Math.ceil(T.w);c.height=Math.ceil(T.h);const q=c.getContext('2d');
  const S=T.S,N=S.length,path=new Path2D();
@@ -2785,6 +2876,7 @@ function prerenderLabTrack(T){
  T.mapTile=null;
  return c;
 }
+/** Запекание полотна. DiVANEngine подменяет prerender. */
 function prerender(T){
  if(T.lab)return prerenderLabTrack(T);
  const c=document.createElement('canvas');c.width=Math.ceil(T.w);c.height=Math.ceil(T.h);const q=c.getContext('2d');
@@ -2922,9 +3014,13 @@ const keys={};
 // Клавиатура: код клавиши, без залипания после меню и Alt+Tab
 //
 ////////////////////////////////////////////////////////
+/** Enter. DiVANEngine подменяет isEnter. */
 function isEnter(c){return c==='Enter'||c==='NumpadEnter';}
+/** Подтверждение. DiVANEngine подменяет isConfirm. */
 function isConfirm(c){return isEnter(c)||c==='Space';}
+/** Назад. DiVANEngine подменяет isBack. */
 function isBack(c){return c==='Escape';}
+/** Код клавиши. DiVANEngine подменяет codeFromEvent. */
 function codeFromEvent(e){
  if(e&&e.code)return e.code;
  const k=e&&e.key;
@@ -2937,6 +3033,7 @@ function codeFromEvent(e){
  if(k==='ArrowRight'||k==='Right')return'ArrowRight';
  return k||'';
 }
+/** Сброс залипания. DiVANEngine подменяет clearKeys. */
 function clearKeys(){
  for(const k in keys)keys[k]=false;
 }
@@ -2944,6 +3041,7 @@ function ctrlHeld(name){
  const arr=settings&&settings.controls&&settings.controls[name];
  return !!(arr&&arr.some(k=>keys[k]));
 }
+/** Не отдаём стрелки браузеру. DiVANEngine подменяет blockBrowserKeys. */
 function blockBrowserKeys(e,code){
  const gameCodes=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','Enter','NumpadEnter','KeyW','KeyA','KeyS','KeyD',
   'KeyZ','KeyX','KeyC','KeyP','BracketLeft','BracketRight',
@@ -2959,6 +3057,7 @@ function racerTag(r){
  if(r&&r.ch)return r.ch.short||r.ch.name;
  return (save&&CHARS[save.char]&&CHARS[save.char].short)||'';
 }
+/** Слот гонщика. DiVANEngine подменяет makeRacer. */
 function makeRacer(ch,car,isP,lvl,slot,opts){
  const damp=(!isP&&!(opts&&opts.noAiScale))?raceDiv:0;
  const st=stats(ch,car,lvl,isP?undefined:{spd:0,crn:0,grt:0},damp);
@@ -2987,6 +3086,7 @@ function makeRacer(ch,car,isP,lvl,slot,opts){
 //
 ////////////////////////////////////////////////////////
 /** Два трамплина на прямых полигона, не у старта. */
+/** Два трамплина полигона. DiVANEngine подменяет placeLabRamps. */
 function placeLabRamps(T){
  const S=T.S,N=T.N;
  if(!S||!N)return[];
@@ -3007,6 +3107,7 @@ function placeLabRamps(T){
  });
  return ramps;
 }
+/** Опасности сплайна. DiVANEngine подменяет placeTrackHazards. */
 function placeTrackHazards(T,seed){
  if(T&&T.lab)return{pads:[],ramps:placeLabRamps(T),mines:[],oils:[],picks:[]};
  if(T&&T.hazardPlan&&window.RnRTracks&&T.autoHazards===false){
@@ -3049,6 +3150,7 @@ function placeTrackHazards(T,seed){
  }
  return{pads,ramps,mines,oils,picks};
 }
+/** Паттерн земли. DiVANEngine подменяет makeTrackPattern. */
 function makeTrackPattern(T,tIdx){
  let img=T.mapTile;
  if(!img&&T.theme&&T.theme.groundSrc&&window.RnRTracks){
@@ -3070,6 +3172,7 @@ function makeTrackPattern(T,tIdx){
  T.pat=g.createPattern(tile,'repeat');
 }
 /** Перемешать копию массива. */
+/** Перемешать копию. DiVANEngine подменяет shuffleCopy. */
 function shuffleCopy(src){
  const a=src.slice();
  for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;const t=a[i];a[i]=a[j];a[j]=t;}
@@ -3098,21 +3201,26 @@ function computeFieldOdds(specs,div){
   };
  });
 }
-/** Кузова для сетки: 1–2 дивизион — хлам, 3–4 — хлам и средний класс. */
+/** Кузова для сетки: 1–2 дивизион — хлам, 3–4 — хлам и средний класс. Класс не снимается. */
 function fieldFreeCars(){
- const out=[];
  const div=1+((save.race/TRACKDEFS.length)|0);
- for(let i=0;i<CARS.length;i++){
-  const c=CARS[i];if(!c)continue;
-  if(i===save.car)continue;
-  if(c.owner!=null&&c.owner!==save.char)continue;
-  if(typeof fieldCarClassOk==='function'&&!fieldCarClassOk(i,div))continue;
-  out.push(i);
- }
- if(out.length)return shuffleCopy(out);
- return shuffleCopy([...Array(CARS.length).keys()].filter(i=>i!==save.car&&!(CARS[i]&&CARS[i].owner!=null&&CARS[i].owner!==save.char)));
+ const collect=function(ignoreOwner){
+  const out=[];
+  for(let i=0;i<CARS.length;i++){
+   const c=CARS[i];if(!c)continue;
+   if(i===save.car)continue;
+   if(!ignoreOwner&&c.owner!=null&&c.owner!==save.char)continue;
+   if(typeof fieldCarClassOk==='function'&&!fieldCarClassOk(i,div))continue;
+   out.push(i);
+  }
+  return out;
+ };
+ let out=collect(false);
+ if(!out.length)out=collect(true);
+ return shuffleCopy(out);
 }
 /** Сетка: игрок, Бык-босс, три случайных ИИ. Сюжетных пилотов в заезде нет. */
+/** Сетка заезда. DiVANEngine подменяет planRaceField. */
 function planRaceField(div){
  const tun=save.tuning[save.car]||blankTune();
  const specs=[{id:0,isP:true,ch:CHARS[save.char],car:CARS[save.car],lvl:tun,slot:4,skill:1,isBoss:false}];
@@ -3129,6 +3237,7 @@ function planRaceField(div){
  return specs;
 }
 /** Сетка заезда до старта: те же пилоты, что выедут на трассу. */
+/** Доска до старта. DiVANEngine подменяет makeRaceBoard. */
 function makeRaceBoard(){
  const div=1+((save.race/TRACKDEFS.length)|0);
  raceDiv=div;
@@ -3167,12 +3276,13 @@ function betPayoutFor(stake,odds,place){
  const k=place===0?odds.k1:place===1?odds.k2:odds.k3;
  return Math.round(stake*k);
 }
+/** Экран ставки. DiVANEngine подменяет enterPreRace. */
 function enterPreRace(){
  clampBetAfford();
  if(!raceBoard)raceBoard=makeRaceBoard();
  state='prerace';sClick();
 }
-/** Касса покрывает выбранную сумму — списываем и едем. */
+/** Касса покрывает выбранную сумму — списываем и едем. DiVANEngine подменяет confirmPreRace. */
 function confirmPreRace(){
  clampBetAfford();
  const cost=BET_TABLE[save.bet|0].cost;
@@ -3180,6 +3290,7 @@ function confirmPreRace(){
  if(cost>0){save.cash-=cost;persist();}
  buildRace();
 }
+/** Сборка заезда. DiVANEngine подменяет buildRace. */
 function buildRace(){
  const tIdx=labTest?0:(typeof careerTrackIdx==='function'?careerTrackIdx():(raceTrackOverride!=null?raceTrackOverride:save.race%TRACKDEFS.length));
  const div=labTest?1:(1+((save.race/TRACKDEFS.length)|0));
@@ -3246,7 +3357,9 @@ function buildRace(){
  if(typeof voiceReset==='function')voiceReset();
  if(labTest)announce((def.lab?'ПОЛИГОН':'ТЕСТ · '+(def.name||'ТРАССА'))+' · ESC — В ЛАБОРАТОРИЮ',true);
 }
+/** Перезапуск. DiVANEngine подменяет restartRace. */
 function restartRace(){if(!R||R.over)return;persist();buildRace();}
+/** Тост эфира. DiVANEngine подменяет announce. */
 function announce(txt,big){if(!R||R.demo)return;R.msg={txt,t:0,big:!!big};}
 function fl(x,y,txt,col){
  if(!R||!R.floats)return;
@@ -3258,6 +3371,7 @@ function fl(x,y,txt,col){
  if(R.floats.length>18)R.floats.splice(0,R.floats.length-18);
  R.floats.push({x,y,txt,col,t:0});
 }
+/** Искра. DiVANEngine подменяет spark. */
 function spark(x,y,col,n,sp){
  if(vfxLive()&&RnRVfx.spark(x,y,col,n,sp))return;
  const cnt=partN(n);for(let i=0;i<cnt;i++){const a=rnd(TAU),s=rnd(sp*.3,sp);R.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:rnd(.2,.5),col,sz:rnd(2,4)});}
@@ -3323,6 +3437,7 @@ function spawnCanvasSpray(r,impact,kind){
  if(kind==='water'&&R.shocks)R.shocks.push({x:r.x,y:r.y,r:6,maxR:22+k*28,t:.32,tint:'water'});
 }
 function irnd4(){return(Math.random()*4)|0;}
+/** Взрыв. DiVANEngine подменяет boom. */
 function boom(x,y,kind){
  const k=kind===true||kind==='car'?'car':kind==='rocket'?'rocket':'mine';
  if(vfxLive())RnRVfx.boom(x,y,k);
@@ -3345,6 +3460,7 @@ function boom(x,y,kind){
  if(car)R.shocks.push({x,y,r:6,maxR:170,t:.32});
  R.scorch.push({x,y,r:scorch,t:1});
 }
+/** Урон. DiVANEngine подменяет dmgRacer. */
 function dmgRacer(r,d,killer,src){
  if(r.dead||r.invuln>0||r.finished)return;
  src=src||'proj';
@@ -3370,6 +3486,7 @@ function dmgRacer(r,d,killer,src){
   if(killer&&typeof voiceSay==='function')voiceSay(r,'hit',{chance:.38,gap:6});
  }
 }
+/** Смерть. DiVANEngine подменяет killRacer. */
 function killRacer(r,killer){
  r.dead=true;r.respawnT=2.6;r.spd=0;r.lat=0;r.susp=0;r.steerFlt=0;r.bob=0;r.bobVel=0;r.rockAmp=0;r.landStun=0;boom(r.x,r.y,true);
  if(killer&&killer.isP)killer.kills++;
@@ -3378,6 +3495,7 @@ function killRacer(r,killer){
  const kn=killer&&killer!==r?racerTag(killer):'';
  announce(racerTag(r)+' '+LINES_DIE[(Math.random()*LINES_DIE.length)|0]+(kn?' ВИНОВНИК: '+kn:''));
  if(killer&&killer!==r&&typeof voiceSay==='function')voiceSay(killer,'kill',{chance:.72,gap:5});}
+/** Респаун. DiVANEngine подменяет respawn. */
 function respawn(r){const S=R.S,N=R.N,i=(r.trackIdx-10+N)%N,p=S[i];
  r.x=p.x+p.nx*r.aiLane*.5;r.y=p.y+p.ny*r.aiLane*.5;r.ang=p.ang;r.spd=0;r.lat=0;r.susp=0;r.steerFlt=0;
  r.bob=0;r.bobVel=0;r.rockAmp=0;r.rockT=0;r.landStun=0;
@@ -3387,6 +3505,7 @@ function respawn(r){const S=R.S,N=R.N,i=(r.trackIdx-10+N)%N,p=S[i];
  resetWepMag(r);
  if(r.car.idx===3)r.shield=1;}
 function nearP(x,y,d){return P&&Math.hypot(x-P.x,y-P.y)<d;}
+/** Нитро или прыжок. DiVANEngine подменяет useNitro. */
 function useNitro(r){if(r.dead||r.cdN>0)return;
  const nb=carAbil(r.car.idx).nitro;
  const red=r.chIdx===1?skillVal(1,r.skillLvl):0;
@@ -3401,6 +3520,7 @@ function useNitro(r){if(r.dead||r.cdN>0)return;
  }
  r.nitro=1.6+(r.nitLvl||0)*0.12;if(!R.demo&&typeof tickCarNos!=='function')swp('sawtooth',150,500,.4,.2);
  if(typeof voiceSay==='function')voiceSay(r,'nitro',{chance:r.isP?1:.45,gap:8});}
+/** Взрыв мины. DiVANEngine подменяет mineExplode. */
 function mineExplode(m,owner){
  const pow=m.pow||36,rad=m.rad||100;
  boom(m.x,m.y,'mine');if(!R.demo){sBoom();if(nearP(m.x,m.y,700))doShake(8);}
@@ -3410,6 +3530,7 @@ function mineExplode(m,owner){
   let dmg=(pow-d*.22)*(1-d/260);
   if(r.car.idx===4)dmg*=0.5;
   if(d<rad)dmgRacer(r,dmg,owner,'mine');}}
+/** Финиш круга. DiVANEngine подменяет finishRacer. */
 function finishRacer(r){
  r.finished=true;r.finishTime=R.time;
  r.pitSide=null;
@@ -3421,8 +3542,9 @@ function finishRacer(r){
  if(r.isP){announce('ФИНИШ! КАТИСЬ К КРАЮ, НЕ МЕШАЙ ОСТАЛЬНЫМ',true);sWin();}
  else announce(r.ch.name+' ФИНИШИРУЕТ ('+fmtT(r.finishTime)+')');}
 function fmtT(t){const m=(t/60)|0,s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(1);}
-/** Круг на полигоне: сотые, чтобы сравнить машины. */
+/** Круг на полигоне: сотые, чтобы сравнить машины. DiVANEngine подменяет fmtLap. */
 function fmtLap(t){if(!isFinite(t)||t<=0)return '—';const m=(t/60)|0,s=t-m*60;return m+':'+(s<10?'0':'')+s.toFixed(2);}
+/** Доска результатов. DiVANEngine подменяет showResults. */
 function showResults(){
  const ord=R.racers.slice().sort((a,b)=>{
   if(a.finished&&b.finished)return a.finishTime-b.finishTime;
@@ -3481,6 +3603,7 @@ function showResults(){
  if(typeof careerAfterResults==='function')careerAfterResults(prevRace,newAch);
  else{save.race++;persist();}
  state='results';}
+/** Новые трофеи. DiVANEngine подменяет checkAchievements. */
 function checkAchievements(){
  const newAch=[];
  const has=(id)=>save.achievements[id];
@@ -3722,6 +3845,7 @@ function stepVehicle(r,th,steer,dt,hb){
  if(r.cloak>0)r.cloak=Math.max(0,r.cloak-dt);
  if(typeof tickCarKits==='function')tickCarKits(r,dt);
 }
+/** Ближайшая точка сплайна и круг. DiVANEngine подменяет advanceIdx. */
 function advanceIdx(r){
  const S=R.S,N=R.N;let best=r.trackIdx,bd=1e18;
  for(let k=-4;k<=26;k++){const i=(r.trackIdx+k+N)%N,dx=r.x-S[i].x,dy=r.y-S[i].y,d=dx*dx+dy*dy;if(d<bd){bd=d;best=i;}}
@@ -3768,6 +3892,7 @@ function advanceIdx(r){
  else if(r.trackIdx<N*.25&&best>N*.75)r.lap--;
  r.trackIdx=best;r.prog=r.lap*N+best;
 }
+/** Тик ИИ на трассе. DiVANEngine подменяет aiThink. */
 function aiThink(r,dt){
  const S=R.S,N=R.N;
  r.laneT-=dt;if(r.laneT<=0){r.laneT=2+Math.random()*3;r.aiLane=clamp(r.aiLane+rnd(-35,35),-55,55);}
@@ -3796,7 +3921,7 @@ function aiThink(r,dt){
  if(S[(r.trackIdx+30)%N].k<.004&&!r.nitro&&r.cdN<=0&&Math.random()<dt*(R.demo?.55:.25)*r.skill)useNitro(r);
  if(r.cdU<=0&&(bestT&&bd<300||r.hp<r.maxhp*.4)&&Math.random()<dt*(R.demo?.9:.5)*r.skill)useUlt(r);
 }
-/** После финиша: катимся, тормозим, уходим к обочине, объезжаем других. */
+/** После финиша: катимся, тормозим, уходим к обочине, объезжаем других. DiVANEngine подменяет finishDrive. */
 function finishDrive(r){
  const S=R.S,p=S[r.trackIdx];
  if(r.pitSide==null){
@@ -3822,6 +3947,7 @@ function finishDrive(r){
  }
  return{th,st:clamp(steer,-1,1)};
 }
+/** Контакт машин, снарядов, мин и пикапов. DiVANEngine подменяет resolveRaceContact. */
 function resolveRaceContact(dt){
  const Rc=R.racers;
  for(let i=0;i<Rc.length;i++)for(let j=i+1;j<Rc.length;j++){
@@ -4340,6 +4466,11 @@ function drawCarShield(c,r){
  }
  c.restore();
 }
+////////////////////////////////////////////////////////
+//
+// Кузов на холсте. DiVANEngine подменяет хук drawCar.
+//
+////////////////////////////////////////////////////////
 function drawCar(c,r,sc){
  const z=r.z||0;
  const idx=r.car.idx;
@@ -5355,6 +5486,11 @@ function drawHUD(){
 // Портрет без круга, в 2 раза крупнее базового 88×88
 //
 ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////
+//
+// Портрет и рост. DiVANEngine подменяет хуки лиц.
+//
+////////////////////////////////////////////////////////
 function avatarImage(ch){
  const idx=CHARS.indexOf(ch);
  const img=idx>=0?AVATARS[idx]:null;
@@ -5388,7 +5524,7 @@ function kickPlayerImg(img,i,suffix){
  };
  next();
 }
-/** RGB из #hex для заливок сцены пилота. */
+/** RGB из #hex для заливок сцены пилота. DiVANEngine подменяет хук. */
 function hexToRgb(hex){
  const s=String(hex||'#c8b070').replace('#','');
  const n=parseInt(s.length===3?s.replace(/./g,'$&$&'):s,16);
@@ -5677,7 +5813,8 @@ function drawTitle(){
  drawTitleStage();
  const items=[];
  if(save)items.push('ПРОДОЛЖИТЬ (ЭТАП '+(save.race+1)+')');
- items.push('НОВАЯ ИГРА','ЗАГРУЗИТЬ ИГРУ','НАСТРОЙКИ','ДОСТИЖЕНИЯ','ЧИТЫ');
+ items.push('НОВАЯ ИГРА','ЗАГРУЗИТЬ ИГРУ','НАСТРОЙКИ','ДОСТИЖЕНИЯ');
+ if(typeof cheatsAllowed!=='function'||cheatsAllowed())items.push('ЧИТЫ');
  if(isDev())items.push('ВЫБОР ТРАССЫ','ЛАБОРАТОРИЯ');
  if(save)items.push('СБРОС ПРОГРЕССА');
  items.push('ВЫХОД');
@@ -5721,6 +5858,11 @@ function drawHelp(){
   txt(g,r[1],W/2-90,y,18,'#e8e2d0','left',F_B);});
  txt(g,'Собирай деньги и ящики, взрывай соперников, финишируй первым.',W/2,H-60,17,'#9a93a8','center',F_B);
  txt(g,'ЛЮБАЯ КЛАВИША — НАЗАД',W/2,H-30,16,'#ff9d2e','center');}
+////////////////////////////////////////////////////////
+//
+// Справка и слоты. DiVANEngine подменяет хуки.
+//
+////////////////////////////////////////////////////////
 function drawSlotSelect(){
  g.fillStyle='#0b0a12';g.fillRect(0,0,W,H);
  txt(g,slotSelectMode==='save'?'ВЫБЕРИТЕ СЛОТ ДЛЯ СОХРАНЕНИЯ':'ВЫБЕРИТЕ СЛОТ ДЛЯ ЗАГРУЗКИ',W/2,70,32,'#ffd23f','center');
@@ -5969,6 +6111,11 @@ function drawCameraSetup(){
   g._setHits=[{act:'camHint',x:mx,y:my,w:mw,h:mh}];
  }
 }
+////////////////////////////////////////////////////////
+//
+// Клик настроек и камеры. DiVANEngine подменяет хуки.
+//
+////////////////////////////////////////////////////////
 function clickCameraSetup(x,y){
  const h=hitSettings(x,y);
  if(!h)return;
@@ -6700,7 +6847,7 @@ function carSelStatus(i,owned){
 // Крупное превью по центру, соседи выглядывают, выбранная едет
 //
 ////////////////////////////////////////////////////////
-/** Открыть экран выбора машины с каруселью на указанном индексе. */
+/** Открыть экран выбора машины. DiVANEngine подменяет enterCarSel. */
 function enterCarSel(idx){
  stopCharVoice();
  const start=(idx==null)?charCarIdx(save.char):idx;
@@ -6713,7 +6860,7 @@ function carSelWrapDelta(from,to,n){
  if(d>n/2)d-=n;
  return d;
 }
-/** Фокус карусели: индекс слота (ассет), не позиция в ленте. */
+/** Фокус карусели: индекс слота. DiVANEngine подменяет pickCarSel. */
 function pickCarSel(i){
  const n=CARS.length;
  const next=((i%n)+n)%n;
@@ -6731,7 +6878,7 @@ function pickParkSel(i){
 }
 /** Сдвиг автопарка по той же ленте. */
 function nudgeParkSel(dir){pickParkSel(carCatalogAt(carCatalogPos(autoparkSel)+dir));}
-/** Открыть автопарк на текущей машине. */
+/** Открыть автопарк на текущей машине. DiVANEngine подменяет enterAutopark. */
 function enterAutopark(){
  state='autopark';autodetailOpen=false;
  autoparkSel=save.car||0;parkScroll=carCatalogPos(autoparkSel);parkDriveT=gt;
@@ -7526,6 +7673,11 @@ addEventListener('keyup',onGameKeyUp,true);
 addEventListener('blur',onGameFocusLost);
 addEventListener('pagehide',onGameFocusLost);
 addEventListener('visibilitychange',()=>{if(document.hidden)clearKeys();});
+////////////////////////////////////////////////////////
+//
+// Клавиатура хаба. DiVANEngine подменяет хук press.
+//
+////////////////////////////////////////////////////////
 function press(c,k){
  if(state==='press'){dismissPressStart();return;}
  if(state==='worldIntro'){
@@ -7884,7 +8036,7 @@ function press(c,k){
    else if(it&&it.startsWith('СБРОС')){
     if(!resetArm){resetArm=true;sClick();}
     else{
-     try{localStorage.removeItem(SKEY);}catch(e){}
+     persistDrop(SKEY);
      save=null;
      resetArm=false;sBoom();
     }
@@ -7926,6 +8078,11 @@ function press(c,k){
   }
   return;
  }}
+////////////////////////////////////////////////////////
+//
+// Действие строки гаража. DiVANEngine подменяет хук.
+//
+////////////////////////////////////////////////////////
 function garageAction(col,row){
  if(row===7){enterAutopark();sClick();return;}
  if(row===8){enterPreRace();return;}
@@ -7976,16 +8133,12 @@ cv.addEventListener('wheel',e=>{
  if(state==='car')nudgeCarSel(dir);
  else nudgeParkSel(dir);
 },{passive:false});
-cv.addEventListener('mousedown',e=>{
- if(!BOOT.ready){bootAcceptGate();return;}
- if(!AU.ctx)audioInit();
- cv.focus();
- const r=cv.getBoundingClientRect();
- const px=(e.clientX-r.left)*(cv.width/r.width),py=(e.clientY-r.top)*(cv.height/r.height);
- const x=(px-viewOX)/viewS,y=(py-viewOY)/viewS;
- if(labWarn){clickLabWarn(x,y);return;}
- if(exitWarn){clickExitWarn(x,y);return;}
- if(typeof clientNoticeClick==='function'&&CLIENT_NOTICE&&CLIENT_NOTICE.open){clientNoticeClick(x,y);return;}
+////////////////////////////////////////////////////////
+//
+// Клик хаба после предупреждений. DiVANEngine подменяет хук.
+//
+////////////////////////////////////////////////////////
+function hubClick(x,y){
  if(state==='intro'){press('Enter');return;}
  if(state==='worldIntro'){if(typeof worldIntroPress==='function')worldIntroPress();return;}
  if(state==='press'){dismissPressStart();return;}
@@ -8068,7 +8221,20 @@ cv.addEventListener('mousedown',e=>{
    return;
   }
  }
- else if(state==='help')enterTitle();});
+ else if(state==='help')enterTitle();
+}
+cv.addEventListener('mousedown',e=>{
+ if(!BOOT.ready){bootAcceptGate();return;}
+ if(!AU.ctx)audioInit();
+ cv.focus();
+ const r=cv.getBoundingClientRect();
+ const px=(e.clientX-r.left)*(cv.width/r.width),py=(e.clientY-r.top)*(cv.height/r.height);
+ const x=(px-viewOX)/viewS,y=(py-viewOY)/viewS;
+ if(labWarn){clickLabWarn(x,y);return;}
+ if(exitWarn){clickExitWarn(x,y);return;}
+ if(typeof clientNoticeClick==='function'&&CLIENT_NOTICE&&CLIENT_NOTICE.open){clientNoticeClick(x,y);return;}
+ hubClick(x,y);
+});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('contextmenu',e=>{if(state==='race'||state==='garage'||state==='title'||state==='press')e.preventDefault();});
 addEventListener('popstate',e=>{if(state==='race'){e.preventDefault();try{history.pushState(null,'',location.href);}catch(err){}}});

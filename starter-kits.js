@@ -37,13 +37,13 @@ let junkTuneCar = -1;
 let junkTuneLeft = 0;
 let junkTuneSel = 0;
 
-/** Магазинный хлам, слабее всех стоковых. */
+/** Магазинный хлам, слабее всех стоковых. DiVANEngine подменяет isStarterCar. */
 function isStarterCar(i) {
   i = i | 0;
   return i >= STARTER_LO && i <= STARTER_HI;
 }
 
-/** Дивизионы 1–2 едут только на стартовых кузовах. */
+/** Дивизионы 1–2 едут только на стартовых кузовах. DiVANEngine подменяет starterFieldOnly. */
 function starterFieldOnly(div) {
   return (div | 0) <= 2;
 }

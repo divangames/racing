@@ -9,7 +9,10 @@
 </head>
 <body>
   <div class="stage">
-    <figure class="hero" id="hero" aria-hidden="true"></figure>
+    <figure class="hero" id="hero" aria-hidden="true">
+      <video class="hero-video" id="hero-video" muted playsinline preload="auto" disablepictureinpicture controlslist="nodownload nofullscreen noremoteplayback"></video>
+    </figure>
+    <div class="hero-flash" id="hero-flash" aria-hidden="true"></div>
     <div class="vignette" aria-hidden="true"></div>
     <div class="edge" aria-hidden="true"></div>
     <canvas id="ash" class="ash" aria-hidden="true"></canvas>
@@ -53,6 +56,7 @@
     </aside>
   </div>
   <script src="ash.js"></script>
+  <script src="launcher-hero.js"></script>
   <script src="launcher-audio.js"></script>
   <script src="launcher.js"></script>
 </body>

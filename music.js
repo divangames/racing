@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////
 //
-// Музыка: папки assets/music/{main,change,garage,intro,racing}.
+// Музыка: папки assets/music/{main,change,garage,intro,racing,Load,cast}.
 // Список берётся с диска. Сколько файлов — столько треков.
 // Меню / гараж / гонка / выбор машины — случайно без повтора подряд.
 // Интро гонщика — файл с номером (01.mp3 → первый, 06.mp3 → шестой).
@@ -11,7 +11,7 @@
 var MUSIC_DIR = 'assets/music/';
 
 /** Папки плейлистов. */
-var MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load'];
+var MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load', 'cast'];
 
 /** Расширения, которые берём из папки. */
 var MUSIC_EXTS = ['.mp3', '.ogg', '.wav', '.m4a'];
@@ -20,7 +20,7 @@ var MUSIC_EXTS = ['.mp3', '.ogg', '.wav', '.m4a'];
 var MUSIC_CDN_VER = '20260829-0355';
 
 /** Найденные треки: заполняет musicDiscoverAll. */
-var MUSIC_TRACKS = { main: [], change: [], garage: [], intro: [], racing: [], Load: [] };
+var MUSIC_TRACKS = { main: [], change: [], garage: [], intro: [], racing: [], Load: [], cast: [] };
 
 /** Состояние сканирования папок. */
 var MUSIC_SCAN = { done: false, promise: null };

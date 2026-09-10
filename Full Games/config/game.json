@@ -5,6 +5,7 @@
   "scheme": "rnr",
   "host": "game",
   "entry": "rnr.html",
+  "runtime": "html-legacy",
   "contentDevRelative": "..",
   "contentInstallName": "Content"
 }

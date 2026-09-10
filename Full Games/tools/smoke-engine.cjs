@@ -40,11 +40,25 @@ app.whenReady().then(async()=>{
  protocol.attachProtocol();
  const win=create();
  await win.loadURL('rnr://game/rnr.html?lab=1&car=0');
- await until(win,"typeof R!=='undefined' && !!R && !!P && window.RnREngine && BOOT.ready");
+ await until(win,"typeof R!=='undefined' && !!R && !!P && window.DiVANEngine && BOOT.ready");
  results.game=await win.webContents.executeJavaScript(`(()=>{
    R.phase='go';R.countT=0;R.hintT=0;P.invuln=100;P.nitro=2;
-   return {engine:RnREngine.version,track:R.T.name,racers:R.racers.length,state,car:P.car.name};
+   return {
+     engine:DiVANEngine.version,track:R.T.name,racers:R.racers.length,state,car:P.car.name,
+     zoom:raceZoom(),
+     music:musicCat(),
+     hit:carHitHalf(P),
+     classD1junk:fieldCarClassOk(12,1),
+     classD1stock:fieldCarClassOk(0,1),
+     classD3mid:fieldCarClassOk(16,3)
+   };
  })()`);
+ assert(results.game.classD1junk,'1 дивизион должен пускать хлам');
+ assert.equal(results.game.classD1stock,false);
+ assert(results.game.classD3mid,'3 дивизион должен пускать средний класс');
+ assert(results.game.zoom>=1.75&&results.game.zoom<=2.2);
+ assert.equal(results.game.music,'racing');
+ assert(results.game.hit.hw>0&&results.game.hit.hh>0);
  await new Promise(resolve=>setTimeout(resolve,1500));
  fs.writeFileSync(path.join(output,'race.png'),(await win.webContents.capturePage()).toPNG());
  results.physics=await win.webContents.executeJavaScript(`(()=>{
@@ -70,6 +84,58 @@ app.whenReady().then(async()=>{
    return {racers:R.racers.length,elapsed,finite:R.racers.every(r=>Number.isFinite(r.x)&&Number.isFinite(r.y)&&Number.isFinite(r.spd)),speed:P.spd};
  })()`);
  assert(results.race.racers>=5);assert(results.race.finite);assert(Math.abs(results.race.elapsed-.1)<.001);
+ results.feel=await win.webContents.executeJavaScript(`(()=>{
+   const slot=typeof carWeaponSlot==='function'?carWeaponSlot(0,'wep'):null;
+   const wound=racerWoundLvl({hp:18,maxhp:100,car:{idx:0}});
+   const dmg=CAR_DAMAGE[0]&&CAR_DAMAGE[0][Math.max(1,wound)];
+   const dmgReady=!!(CAR_DAMAGE[0]&&[1,2,3,4,5,6].every(l=>CAR_DAMAGE[0][l]&&CAR_DAMAGE[0][l].naturalWidth>0));
+   P.hp=Math.max(1,P.maxhp*0.18);P.smokeT=0;
+   if(typeof emitWreckFx==='function')emitWreckFx(P,0.2);
+   settings.graphics.weather=true;settings.graphics.particles='high';
+   R.weather=Object.assign({},RnRWeather.catalog.rain);
+   const cam={x:R.cam.x-220,y:R.cam.y-160,w:440,h:320};
+   RnRWeather.tick(R,0.05,cam,viewW,viewH,settings);
+   audioInit();settings.sound.sfxOn=true;P.spd=Math.max(P.spd,48);
+   updEngine(P,false,'race');
+   return {
+     idx:P.car.idx,
+     name:P.car.name,
+     near:slot&&slot.near,
+     far:slot&&slot.far,
+     nearUrl:slot&&carWeaponUrl(slot,slot.near),
+     farUrl:slot&&carWeaponUrl(slot,slot.far),
+     pack:typeof carEnginePackName==='function'?carEnginePackName(0):'',
+     wound,
+     dmgReady,
+     dmgSrc:dmg&&dmg.src||'',
+     wreck:R.parts.some(p=>/18,16,14|255,140/.test(String(p.col||'')))||!!(window.RnRVfx&&typeof RnRVfx.wreck==='function'),
+     wxParts:R.wxFx?R.wxFx.parts.length:-1,
+     vfxOk:!!(window.RnRVfx&&RnRVfx.ok),
+     weatherOn:!!(window.RnRVfx&&RnRVfx.weatherOn)
+   };
+ })()`);
+ assert.equal(results.feel.idx,0,'прогон на Дьяволе, не на Молоте');
+ assert.equal(results.feel.near,'shoot.wav');
+ assert.equal(results.feel.far,'distant0.wav');
+ assert.notEqual(results.feel.nearUrl,results.feel.farUrl);
+ assert.equal(results.feel.pack,'01 Nissan GTR');
+ assert.ok(results.feel.dmgReady,'нет слоя мятости Дьявола');
+ assert(results.feel.wreck,'подбитый Дьявол должен дымить');
+ if(results.feel.vfxOk){
+  assert.equal(results.feel.wxParts,0,'при quarks капли не на холсте камеры');
+ }
+ results.divField=await win.webContents.executeJavaScript(`(()=>{
+   function aiIdx(board){return board.specs.filter(s=>!s.isP).map(s=>s.car.idx);}
+   const race0=save.race;
+   save.race=0;
+   const d1=aiIdx(makeRaceBoard());
+   save.race=TRACKDEFS.length*2;
+   const d3=aiIdx(makeRaceBoard());
+   save.race=race0;
+   return {d1,d3};
+ })()`);
+ assert(results.divField.d1.every(i=>i>=11&&i<=15),'1 дивизион пустил не хлам 12–16');
+ assert(results.divField.d3.every(i=>i>=11&&i<=20),'3 дивизион пустил кузов вне хлама и среднего');
  await new Promise(resolve=>setTimeout(resolve,500));
  fs.writeFileSync(path.join(output,'combat-race.png'),(await win.webContents.capturePage()).toPNG());
  win.destroy();

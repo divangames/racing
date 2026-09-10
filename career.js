@@ -13,7 +13,7 @@ const CAREER_PACK_PAY = 360;
 /** Побед, после которых можно выбрать уже проеханную трассу. */
 const CAREER_PICK_WINS = 5;
 
-/** Индекс трассы для гаража, ставки и старта. */
+/** Индекс трассы для гаража, ставки и старта. DiVANEngine подменяет careerTrackIdx. */
 function careerTrackIdx() {
  if (typeof labTest !== 'undefined' && labTest) return 0;
  if (typeof raceTrackOverride !== 'undefined' && raceTrackOverride != null) {
@@ -48,7 +48,7 @@ function careerPlaceWord(place) {
  return (place + 1) + ' МЕСТО';
 }
 
-/** Пишет сейв и R.career после призов. */
+/** Пишет сейв и R.career после призов. DiVANEngine подменяет careerAfterResults. Таблицы CAREER_* остаются здесь. */
 function careerAfterResults(prevRace, newAch) {
  careerPatchSave(save);
  const counts = !labTest && R.countsForCareer !== false;
@@ -249,7 +249,11 @@ function careerEnterTrackPick() {
 let careerPickSel = 0;
 let careerPickList = [];
 
-/** Клавиши экрана «что дальше». */
+////////////////////////////////////////////////////////
+//
+// Экран «что дальше». DiVANEngine подменяет отрисовку и ввод.
+//
+////////////////////////////////////////////////////////
 function careerPress(c) {
  if (state === 'careerTracks') {
   const n = careerPickList.length;

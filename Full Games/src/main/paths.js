@@ -100,6 +100,14 @@ function settingsPath() {
   return path.join(app.getPath('userData'), 'client-settings.json');
 }
 
+/**
+ * Карьера и настройки игры файлами, не LevelDB localStorage.
+ * @returns {string}
+ */
+function savesRoot() {
+  return path.join(app.getPath('userData'), 'Saves');
+}
+
 module.exports = {
   game,
   clientRoot,
@@ -108,5 +116,6 @@ module.exports = {
   vendorLocalRoot,
   manifestPath,
   settingsPath,
+  savesRoot,
   isLabMode
 };

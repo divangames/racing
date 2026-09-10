@@ -1,5 +1,10 @@
-// Кадровый цикл: время не замедляется при падении частоты до 15–30 FPS.
-function frame(now){
+////////////////////////////////////////////////////////
+//
+// Кадровый цикл: хук frame, экраны рисует screens.paint.
+//
+////////////////////////////////////////////////////////
+(function () {
+function frameEngine(now){
  const dt=Math.min(.1,Math.max(0,(now-last)/1000));last=now;gt+=dt;
  if(window.RnRVfx&&RnRVfx.ok)RnRVfx.tick(state==='race'&&paused?0:dt);
  fpsSmooth=lerp(fpsSmooth,1/dt,.1);
@@ -25,7 +30,8 @@ function frame(now){
   }
  }
  if(state==='race'&&!paused)updRace(dt);
- if(state==='press'||state==='title'||state==='settings'||state==='cameraSetup')updateTitleRace(dt);
+ if(state==='settings'||state==='cameraSetup')updateTitleRace(dt);
+ if(typeof tickTitleFx==='function')tickTitleFx(dt);
  updEngine(P,paused,state);
  if(CHIP.on)CHIP.pump();
  if(state==='intro'&&!introDone){
@@ -44,41 +50,13 @@ function frame(now){
  }
  if(typeof worldIntroTick==='function')worldIntroTick(dt);
  if(AU.ctx&&state!=='intro'&&state!=='worldIntro'){const mc=musicCat();if(mc!==lastMusicCat){lastMusicCat=mc;MUSIC.play(mc);}}
- if(state==='press'||state==='title'||state==='settings'||state==='cameraSetup'){
-  if(state==='press'){pollPressStartPad();drawPressStart();}
-  else if(state==='title')drawTitle();
-  else if(state==='cameraSetup')drawCameraSetup();
-  else drawSettings();
- }
- else if(state==='help')drawHelp();
- else if(state==='achievements')drawAchievements();
- else if(state==='cheats')drawCheats();
- else if(state==='tracks')drawTrackPick();
- else if(state==='slotSelect')drawSlotSelect();
- else if(state==='char'){drawCharSel();if(bioOpen>=0)drawBio();}
- else if(state==='intro')drawIntro();
- else if(state==='worldIntro'){
-  try{if(typeof drawWorldIntro==='function')drawWorldIntro();}catch(e){console.error(e);}
- }
- else if(state==='car')drawCarSel();
- else if(state==='junkTune'){
-  if(typeof drawJunkTune==='function')drawJunkTune();
-  else {state='garage';drawGarage();}
- }
- else if(state==='garage')drawGarage();
- else if(state==='gym')drawGym();
- else if(state==='armory')drawArmory();
- else if(state==='autopark')drawAutopark();
- else if(state==='detail')drawCarDetail();
- else if(state==='prerace')drawPreRace();
- else if(state==='career')drawCareer();
- else if(state==='careerTracks')drawCareerTracks();
- else if(state==='results')drawResults();
- else if(state==='race'){drawRaceWorld();drawHUD();}
+ DiVANEngine.screens.paint(state);
  g.setTransform(1,0,0,1,0,0);
  if(settings.graphics.showFps){
   g.fillStyle='#58ff6b';g.font='12px monospace';
   g.fillText(Math.round(fpsSmooth)+' FPS',10,20);
  }
- requestAnimationFrame(frame);}
+ requestAnimationFrame(frameEngine);}
+DiVANEngine.replace('frame', frameEngine);
+})();
 

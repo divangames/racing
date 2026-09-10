@@ -33,6 +33,7 @@ if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true });
 fs.mkdirSync(dest, { recursive: true });
 
 copyIf(path.join(game, 'assets', 'image', 'launcher-hero.webp'), path.join(dest, 'launcher-hero.webp'));
+copyIf(path.join(game, 'assets', 'image', 'launcher-hero.mp4'), path.join(dest, 'launcher-hero.mp4'));
 copyIf(path.join(game, 'assets', 'image', 'game-logo.webp'), path.join(dest, 'game-logo.webp'));
 copyIf(path.join(game, 'assets', 'sounds', 'FX', 'PianoHit.mp3'), path.join(dest, 'play-ready.mp3'));
 

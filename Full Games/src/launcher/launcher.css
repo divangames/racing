@@ -107,6 +107,44 @@ html, body {
   background: #050409 url("media/launcher-hero.webp") 68% 42% / cover no-repeat;
 }
 
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 68% 42%;
+  opacity: 0;
+  visibility: hidden;
+  background: transparent;
+}
+
+.hero-video.is-live {
+  opacity: 1;
+  visibility: visible;
+}
+
+.hero-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  background: #fff;
+  opacity: 0;
+  transform: translateZ(0);
+}
+
+.hero-flash.is-burst {
+  animation: hero-screen-fade 1.2s ease-out forwards;
+}
+
+@keyframes hero-screen-fade {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  48% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 .vignette, .edge, .ash {
   position: absolute;
   inset: 0;
@@ -359,6 +397,8 @@ html, body {
   .logo { animation: none; }
   .logo { transform: translateX(-50%); }
   .fill { box-shadow: none; transition: none; }
+  .hero-video { display: none; }
+  .hero-flash { display: none; animation: none; }
   .dock {
     background: linear-gradient(90deg, rgba(6, 4, 10, .7), rgba(6, 4, 10, 0));
   }

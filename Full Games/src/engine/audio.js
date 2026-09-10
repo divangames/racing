@@ -19,7 +19,14 @@
     return tire;
   }
   /** Семплы кузова глушат пилу; без файлов остаётся прежний тон. */
-  updEngine = function(player, isPaused, screen) {
+  DiVANEngine.replace('updEngine', function(player, isPaused, screen) {
+    if (screen === 'title' || screen === 'press') {
+      if (typeof carEngineHalt === 'function') carEngineHalt();
+      if (AU.ctx && AU.engG) AU.engG.gain.setTargetAtTime(0, AU.ctx.currentTime, .04);
+      const quiet = tireBus();
+      if (quiet) quiet.gain.gain.setTargetAtTime(0, AU.ctx.currentTime, .04);
+      return;
+    }
     if (typeof tickCarEngine === 'function') tickCarEngine(player, isPaused, screen);
     const sampled = typeof carEngineLive === 'function' && carEngineLive();
     if (!AU.ctx || !AU.engG) return;
@@ -47,7 +54,7 @@
         bus.gain.gain.setTargetAtTime(slip * .055 * Math.min((active ? Math.abs(player.spd) / Math.max(1, player.st.top) : 0) * 3, 1), now, .08);
       }
     }
-  };
+  });
   // Потеря фокуса глушит непрерывный звук даже при остановленном RAF.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && AU.ctx) {

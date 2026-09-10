@@ -24,18 +24,18 @@ if (typeof CAR_ABIL !== 'undefined') {
 const MID_LO = 16;
 const MID_HI = 20;
 
-/** Магазинный средний класс: сильнее хлама, слабее V8. */
+/** Магазинный средний класс: сильнее хлама, слабее V8. DiVANEngine подменяет isMidCar. */
 function isMidCar(i) {
   i = i | 0;
   return i >= MID_LO && i <= MID_HI;
 }
 
-/** Дивизионы 3–4 ещё не пускают V8 и выше. */
+/** Дивизионы 3–4 ещё не пускают V8 и выше. DiVANEngine подменяет midFieldOnly. */
 function midFieldOnly(div) {
   return (div | 0) <= 4;
 }
 
-/** Класс кузова для сетки ИИ. */
+/** Класс кузова для сетки ИИ. DiVANEngine подменяет fieldCarClassOk. Диапазоны MID_* остаются здесь. */
 function fieldCarClassOk(i, div) {
   if (typeof starterFieldOnly === 'function' && starterFieldOnly(div)) {
     return typeof isStarterCar === 'function' ? isStarterCar(i) : false;

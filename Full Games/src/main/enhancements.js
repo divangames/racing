@@ -1,10 +1,22 @@
-// Подключение модулей десктоп-движка к исходной игре и лаборатории.
+////////////////////////////////////////////////////////
+//
+// Отдача файлов движка и вставка рантайма в HTML.
+//
+////////////////////////////////////////////////////////
+
 'use strict';
+
 const fs = require('fs');
 const path = require('path');
+const { injectRuntime } = require('./engine-host');
+
 const ROOT = path.resolve(__dirname, '../engine');
 
-/** Возвращает локальный модуль или подмену редактора, не выходя за каталог. */
+/**
+ * Локальный модуль __engine/..., без выхода из каталога.
+ * @param {string} rel
+ * @returns {string|null}
+ */
 function engineFile(rel) {
   const name = rel.startsWith('__engine/') ? rel.slice(9) : null;
   if (!name) return null;
@@ -14,16 +26,14 @@ function engineFile(rel) {
   return fs.existsSync(file) && fs.statSync(file).isFile() ? file : null;
 }
 
-/** Подключает модули после исходных скриптов, сохраняя единый игровой контекст. */
-function enhanceHtml(html) {
-  const editor = html.includes('id="workMap"');
-  const game = html.includes('function stepVehicle(');
-  if (!editor && !game) return html;
-  const files = editor ? ['editor/workbench.js'] : ['driving.js', 'audio.js', 'soundtrack.js', 'loop.js', 'presentation.js'];
-  const scripts = files.map(file => `<script src="/__engine/${file}"></script>`).join('\n');
-  let result = html.replace('</body>', `${scripts}\n</body>`);
-  if (editor) result = result.replace('<script src="editor/map-app.js', '<script src="/__engine/editor/history.js"></script>\n<script src="editor/map-app.js');
-  if (editor) result = result.replace('</head>', '<link rel="stylesheet" href="/__engine/editor/workbench.css"></head>');
-  return result;
+/**
+ * Подключает модули к игре или лаборатории.
+ * @param {string} html
+ * @param {{pathname?: string}} [options]
+ * @returns {string}
+ */
+function enhanceHtml(html, options) {
+  return injectRuntime(html, options);
 }
-module.exports = {engineFile, enhanceHtml};
+
+module.exports = { engineFile, enhanceHtml };

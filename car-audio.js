@@ -192,6 +192,10 @@ function tickCarEnginePreview(base, screen) {
 }
 function tickCarEngineField(player, paused, screen) {
   const base = carEngineVol() * CAR_ENGINE_PLAYER;
+  if (screen === 'title' || screen === 'press') {
+    carEngineHalt();
+    return false;
+  }
   if (carEngineTitleScreen(screen)) return tickCarEngineTitle(base);
   if (carEnginePickScreen(screen)) return tickCarEnginePreview(base, screen);
   const live = screen === 'race' && !paused && !document.hidden && player && !player.dead && base > 0;
@@ -229,7 +233,7 @@ function tickCarEngineField(player, paused, screen) {
 }
 
 /**
- * Тик одного гонщика: лупы, набор, сброс, приземление с трамплина.
+ * Тик одного гонщика: набор, луп хода, сброс, воздух и посадка без пауз.
  */
 function carEngineTickSlot(slot, racer, mixVol, pan) {
   if (!slot || !racer) return false;
@@ -246,6 +250,8 @@ function carEngineTickSlot(slot, racer, mixVol, pan) {
     slot.idx = idx;
     slot.pulls = 0;
     carEngineKillSlot(slot);
+    carEngineDrainHtmlPool(slot);
+    carEngineWarmPack(idx);
   }
   const top = Math.max(1, racer.st && racer.st.top ? racer.st.top : 1);
   const spd = Math.abs(racer.spd || 0);
@@ -254,46 +260,38 @@ function carEngineTickSlot(slot, racer, mixVol, pan) {
   slot.n = n;
   const hb = !!racer.handbrake;
   const vol = mixVol;
-  const landed = !!slot.wasAir && !racer.air;
-  slot.wasAir = !!racer.air;
-  const stunned = (racer.landStun || 0) > 0.02;
-  const gasGo = gas > 0 && !hb && !stunned;
+  const inAir = !!racer.air;
+  const landed = !!slot.wasAir && !inAir;
+  slot.wasAir = inAir;
+  const counting = typeof R !== 'undefined' && R && R.phase === 'count';
+  const gasGo = gas > 0 && !hb && !counting;
   slot.gas = gasGo ? gas : 0;
-  if (landed && n > 0.07) {
-    slot.pulls = 0;
+
+  if (inAir) {
     slot.lastGas = false;
-    slot.afterLand = true;
+    slot.pulls = 0;
     slot.want = 'dump';
-    carEngineShotSlot(slot, 3, vol, carEngineRate('drive', n, 0));
+    if (!slot.airHeld) {
+      slot.airHeld = true;
+      carEngineShotSlot(slot, 3, vol, carEngineRate('dump', n, 0), true);
+    } else {
+      carEngineTouchSlot(slot, vol, carEngineRate('dump', n, 0));
+    }
     return !!slot.voice;
   }
-  if (slot.afterLand && slot.shot && slot.want === 'dump') return !!slot.voice;
-  if (slot.afterLand && !slot.shot) {
-    if (stunned) {
-      slot.want = n < 0.055 ? 'idle' : 'drive';
-      carEngineEnsureSlot(slot);
-      return !!slot.voice;
-    }
-    if (gasGo) {
-      slot.afterLand = false;
-      slot.pulls = 0;
-      slot.lastGas = true;
+
+  if (slot.airHeld || landed) {
+    slot.airHeld = false;
+    slot.lastGas = gasGo;
+    slot.pulls = 0;
+    if (n > 0.07 || gasGo) {
       slot.want = 'accel';
-      carEngineShotSlot(slot, 1, vol, carEngineRate('accel', n, 0));
+      carEngineShotSlot(slot, 1, vol, carEngineRate('accel', n, 0), true);
       return !!slot.voice;
     }
   }
-  if (slot.shot && slot.want === 'dump') {
-    const v = slot.voice;
-    if (v && v.gain) {
-      try { v.gain.gain.value = vol; } catch (err) {}
-    }
-    if (v && v.pan) {
-      try { v.pan.pan.value = slot.pan; } catch (err) {}
-    }
-    return !!slot.voice;
-  }
-  if (carEngineStill(racer, n, spd)) {
+
+  if (counting || (!gasGo && carEngineStill(racer, n, spd))) {
     slot.lastGas = false;
     slot.pulls = 0;
     slot.want = 'idle';
@@ -301,38 +299,44 @@ function carEngineTickSlot(slot, racer, mixVol, pan) {
     carEngineEnsureSlot(slot);
     return !!slot.voice;
   }
+
   if (gasGo) {
     slot.lastGas = true;
-    const atTop = n >= 0.86 || (slot.want === 'top' && n >= 0.78);
-    if (atTop && slot.pulls >= 1) {
-      slot.want = 'top';
-      if (!slot.shot) carEngineEnsureSlot(slot);
-    } else if (slot.shot && slot.want === 'accel') {
-      const v = slot.voice;
-      if (v && v.src && v.src.playbackRate) {
-        try { v.src.playbackRate.value = carEngineRate('accel', n, slot.pulls); } catch (err) {}
-      }
-      if (v && v.pan) {
-        try { v.pan.pan.value = slot.pan; } catch (err) {}
-      }
-      if (v && v.gain) {
-        try { v.gain.gain.value = vol; } catch (err) {}
-      }
-    } else {
-      slot.want = 'accel';
-      carEngineShotSlot(slot, 1, vol, carEngineRate('accel', n, slot.pulls));
+    if (slot.shot && slot.want === 'accel') {
+      carEngineTouchSlot(slot, vol, carEngineRate('accel', n, slot.pulls));
+      return !!slot.voice;
     }
-  } else if (slot.lastGas && n > 0.07) {
+    if (slot.want === 'accel' && !slot.shot) {
+      slot.want = 'drive';
+      carEngineEnsureSlot(slot);
+      return !!slot.voice;
+    }
+    if (slot.want === 'drive') {
+      carEngineEnsureSlot(slot);
+      return !!slot.voice;
+    }
+    slot.want = 'accel';
+    carEngineShotSlot(slot, 1, vol, carEngineRate('accel', n, 0), true);
+    return !!slot.voice;
+  }
+
+  if (slot.lastGas && n > 0.07) {
     slot.lastGas = false;
     slot.pulls = 0;
     slot.want = 'dump';
-    carEngineShotSlot(slot, 3, vol, carEngineRate('drive', n, 0));
-  } else {
-    slot.lastGas = false;
-    slot.pulls = 0;
-    slot.want = n < 0.055 ? 'idle' : 'drive';
-    if (!slot.shot) carEngineEnsureSlot(slot);
+    carEngineShotSlot(slot, 3, vol, carEngineRate('dump', n, 0), true);
+    return !!slot.voice;
   }
+
+  if (slot.shot && slot.want === 'dump') {
+    carEngineTouchSlot(slot, vol, carEngineRate('dump', n, 0));
+    return !!slot.voice;
+  }
+
+  slot.lastGas = false;
+  slot.pulls = 0;
+  slot.want = 'drive';
+  if (!slot.shot) carEngineEnsureSlot(slot);
   return !!slot.voice;
 }
 

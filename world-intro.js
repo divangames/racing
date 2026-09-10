@@ -12,6 +12,8 @@ const WORLD_INTRO_COUNT = 7;
 const WORLD_INTRO = {
   title: 'ЧЁРНЫЙ ПОЯС',
   accent: '#ffd23f',
+  dir: 'assets/data/cats/00/',
+  kind: 'lore',
   scenes: [],
   imgs: [],
   frame: 0,
@@ -58,7 +60,7 @@ function worldIntroAbs(rel) {
  */
 function worldIntroImgUrls(n) {
   const pad = String(n).padStart(2, '0');
-  const base = WORLD_INTRO_DIR;
+  const base = WORLD_INTRO.dir || WORLD_INTRO_DIR;
   return [base + pad + '.webp', base + n + '.webp', base + pad + '.png', base + n + '.png'].map(worldIntroAbs);
 }
 
@@ -132,8 +134,11 @@ function worldIntroApplyJson(data) {
  * Качает lines.json, не блокируя старт.
  */
 function worldIntroLoadText() {
-  WORLD_INTRO.scenes = worldIntroFallbackScenes();
-  fetch(WORLD_INTRO_DIR + 'lines.json', {cache: 'no-store'})
+  WORLD_INTRO.scenes = WORLD_INTRO.kind === 'campaign' && typeof campaignIntroFallbackScenes === 'function'
+    ? campaignIntroFallbackScenes()
+    : worldIntroFallbackScenes();
+  const dir = WORLD_INTRO.dir || WORLD_INTRO_DIR;
+  fetch(dir + 'lines.json', {cache: 'no-store'})
     .then(function (res) { return res.ok ? res.json() : null; })
     .then(function (data) { worldIntroApplyJson(data); })
     .catch(function () {});
@@ -206,14 +211,42 @@ function worldIntroStopMusic() {
 }
 
 /**
- * Семь кадров после «любая кнопка». labTest не зовёт.
+ * Семь кадров лора после «любая кнопка».
  */
 function startWorldIntro() {
+  WORLD_INTRO.dir = WORLD_INTRO_DIR;
+  WORLD_INTRO.kind = 'lore';
+  WORLD_INTRO.title = 'ЧЁРНЫЙ ПОЯС';
+  worldIntroEnqueueImgs();
+  worldIntroLoadText();
+  worldIntroBeginScreen();
+}
+
+/**
+ * Сюжетный ролик Медведя из меню «Кампания».
+ */
+function startCampaignIntro() {
+  WORLD_INTRO.dir = 'assets/data/cats/campaign/';
+  WORLD_INTRO.kind = 'campaign';
+  WORLD_INTRO.title = 'МЕДВЕДЬ';
+  worldIntroEnqueueImgs();
+  worldIntroLoadText();
+  worldIntroBeginScreen();
+}
+
+/**
+ * Общий вход в полноэкранный комикс.
+ */
+function worldIntroBeginScreen() {
   if (typeof clearKeys === 'function') clearKeys();
   WORLD_INTRO.frame = 0;
   WORLD_INTRO.skipT = 0;
   WORLD_INTRO.ready = true;
-  if (!WORLD_INTRO.scenes.length) WORLD_INTRO.scenes = worldIntroFallbackScenes();
+  if (!WORLD_INTRO.scenes.length) {
+    WORLD_INTRO.scenes = WORLD_INTRO.kind === 'campaign' && typeof campaignIntroFallbackScenes === 'function'
+      ? campaignIntroFallbackScenes()
+      : worldIntroFallbackScenes();
+  }
   worldIntroEnsureImgs();
   worldIntroResetType();
   state = 'worldIntro';
@@ -222,12 +255,19 @@ function startWorldIntro() {
 }
 
 /**
- * В главное меню.
+ * Лор — в меню. Кампания — к выбору времянки.
  */
 function endWorldIntro() {
+  const kind = WORLD_INTRO.kind;
+  WORLD_INTRO.kind = 'lore';
+  WORLD_INTRO.dir = WORLD_INTRO_DIR;
   worldIntroStopMusic();
   WORLD_INTRO.skipT = 0;
   if (typeof lastMusicCat !== 'undefined') lastMusicCat = null;
+  if (kind === 'campaign' && typeof storyFinishCampaignIntro === 'function') {
+    storyFinishCampaignIntro();
+    return;
+  }
   if (typeof enterTitle === 'function') enterTitle();
 }
 

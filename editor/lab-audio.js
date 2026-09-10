@@ -10,9 +10,8 @@ const LabAudio = (() => {
   const WEAPON_DIR = 'assets/sounds/weapon/';
   const CLIP_RU = {
     'sound_001.wav': 'Набор',
-    'sound_002.wav': 'Полная скорость',
+    'sound_002.wav': 'Луп хода',
     'sound_003.wav': 'Сброс газа',
-    'sound_004.wav': 'Езда',
     'sound_005.wav': 'Стоянка'
   };
   let catalog = {engines: [], weapons: []};
@@ -122,14 +121,26 @@ const LabAudio = (() => {
     return catalog.weapons.find((p) => p.id === id) || null;
   }
 
+  /** Клипы пака без снятого sound_004. */
+  function engineClips(pack) {
+    const list = (pack && pack.clips) || [];
+    const out = [];
+    for (let i = 0; i < list.length; i++) {
+      if (String(list[i]).toLowerCase() === 'sound_004.wav') continue;
+      out.push(list[i]);
+    }
+    return out;
+  }
+
   /** Слушает пак двигателя клипами по очереди. */
   function listenEnginePack(packId) {
     const pack = catalog.engines.find((p) => p.id === packId);
-    if (!pack || !pack.clips.length) return;
+    const files = engineClips(pack);
+    if (!files.length) return;
     let i = 0;
     const step = () => {
-      if (i >= pack.clips.length) return;
-      const file = pack.clips[i++];
+      if (i >= files.length) return;
+      const file = files[i++];
       playUrl(engineUrl(packId, file), () => {
         packTimer = setTimeout(step, 80);
       });
@@ -173,7 +184,7 @@ const LabAudio = (() => {
     if (!clips) return;
     clips.innerHTML = '';
     const pack = catalog.engines.find((p) => p.id === selected);
-    (pack ? pack.clips : []).forEach((file) => {
+    engineClips(pack).forEach((file) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.textContent = CLIP_RU[file.toLowerCase()] || file.replace(/\.wav$/i, '');

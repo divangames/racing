@@ -13,6 +13,7 @@ const { loadSettings, saveSettings } = require('./settings');
 const { playGame, createLabWindow } = require('./windows');
 const { snapshot, installLatest } = require('./update/service');
 const { snapshot: launcherSnapshot, applyLatest, localVersion } = require('./update/launcher-self');
+const playerStore = require('./player-store');
 
 /**
  * Подписка на каналы прелоада лаунчера.
@@ -90,6 +91,28 @@ function bindLauncherIpc() {
 
   ipcMain.handle('game:quit', async () => {
     app.quit();
+  });
+
+  ipcMain.on('engine:store-get', (event, key) => {
+    try {
+      event.returnValue = playerStore.get(key);
+    } catch (err) {
+      event.returnValue = null;
+    }
+  });
+  ipcMain.on('engine:store-set', (event, key, value) => {
+    try {
+      event.returnValue = playerStore.set(key, value);
+    } catch (err) {
+      event.returnValue = false;
+    }
+  });
+  ipcMain.on('engine:store-remove', (event, key) => {
+    try {
+      event.returnValue = playerStore.remove(key);
+    } catch (err) {
+      event.returnValue = false;
+    }
   });
 }
 

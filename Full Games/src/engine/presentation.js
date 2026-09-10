@@ -5,10 +5,6 @@
   let race = null;
   let simulationRace = null, accumulator = 0;
   const FIXED_STEP = 1 / 120;
-  const originalStep = stepVehicle;
-  const originalUpdate = updRace;
-  const originalArena = drawRaceArena;
-  const originalWorld = drawRaceWorld;
   const glow = document.createElement('canvas');
   glow.width = glow.height = 64;
   const gc = glow.getContext('2d');
@@ -23,7 +19,8 @@
     return settings.graphics.particles === 'off' ? 0 : settings.graphics.particles === 'low' ? 48 : 140;
   }
   /** Дополняет физику редкими частицами пыли и торможения без новых таймеров. */
-  stepVehicle = function(r, throttle, steer, dt, handbrake) {
+  DiVANEngine.wrap('stepVehicle', function (originalStep) {
+    return function(r, throttle, steer, dt, handbrake) {
     originalStep(r, throttle, steer, dt, handbrake);
     if (race !== R) { particles.length = 0; race = R; }
     if (!budget() || r.air || r.dead || r.car.hov || Math.abs(r.spd) < 70) return;
@@ -32,9 +29,11 @@
     const fx = Math.cos(r.ang), fy = Math.sin(r.ang), side = Math.random() < .5 ? -1 : 1;
     particles.push({x:r.x-fx*20-fy*side*12,y:r.y-fy*20+fx*side*12,
       vx:-fx*35-fy*(r.lat||0)*.3,vy:-fy*35+fx*(r.lat||0)*.3,life:.65,t:.65,size:3+Math.random()*4});
-  };
+    };
+  });
   /** Частицы замораживаются на паузе вместе с симуляцией. */
-  updRace = function(dt) {
+  DiVANEngine.wrap('updRace', function (originalUpdate) {
+    return function(dt) {
     if (simulationRace !== R) { accumulator = 0; simulationRace = R; }
     accumulator += Math.min(.1,Math.max(0,dt));
     // Не более 12 шагов за кадр: стабильная физика без бесконечного догоняющего цикла.
@@ -48,9 +47,11 @@
       const p=particles[i]; p.t-=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; p.size+=dt*9;
       if(p.t<=0)particles.splice(i,1);
     }
-  };
+    };
+  });
   /** Слой света и дыма использует мировую матрицу существующего рендера. */
-  drawRaceArena = function() {
+  DiVANEngine.wrap('drawRaceArena', function (originalArena) {
+    return function() {
     originalArena();
     if (!budget()) return;
     g.save();
@@ -67,9 +68,11 @@
       g.drawImage(glow,x-45,y-45,90,90);
     }
     g.restore();
-  };
+    };
+  });
   /** Мягкая виньетка и периферийные линии ускорения не закрывают дорогу. */
-  drawRaceWorld = function() {
+  DiVANEngine.wrap('drawRaceWorld', function (originalWorld) {
+    return function() {
     originalWorld();
     if(!P)return;
     g.save();
@@ -84,13 +87,14 @@
       }
     }
     g.restore();
-  };
+    };
+  });
   /** Подпись в приборном блоке с единым шрифтом и базовой линией. */
   function label(c,text,x,y,size,color=C.text,align='left') {
     c.fillStyle=color;c.font=`600 ${size}px ${F_B}`;c.textAlign=align;c.textBaseline='middle';c.fillText(text,x,y);
   }
   /** Новый HUD оставляет исходные кулдауны, магазины и назначенные пользователем клавиши. */
-  drawHudCockpit = function(c, width, height) {
+  DiVANEngine.replace('drawHudCockpit', function(c, width, height) {
     const w=Math.min(650,width-32),h=100,x=(width-w)/2,y=height-h-12;
     const fx=hudFx||{hp:clamp(P.hp/P.maxhp,0,1),spd:Math.abs(P.spd)*.45,ready:[0,0,0]};
     const speed=Math.round(fx.spd), boosted=P.nitro>0||P.bolt>0;
@@ -123,6 +127,6 @@
     drawHudSkillOrb(c,x+w-88,y+48,22,ab.nitro.type==='jump'?'ПРЫЖОК':'НИТРО',key('nitro'),P.cdN,ab.nitro.cd,C.cyan,fx.ready[1]);
     drawHudSkillOrb(c,x+w-30,y+48,22,'УЛЬТА',key('ult'),P.cdU,kitUltCd(P,ab.ult),C.gold,fx.ready[2]);
     c.restore();
-  };
-  window.RnREngine={version:'0.2.2.6',particleCount:()=>particles.length};
+  });
+  DiVANEngine.particleCount = function () { return particles.length; };
 })();
