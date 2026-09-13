@@ -50,7 +50,7 @@
 
 ## Десктоп-клиент
 
-Устанавливаемая игра (не браузер) собирается отдельно в `Full Games`. Запуск: `Full Games/Запуск.bat`. Игру на GitHub выкладывает `Выложить-игру.bat` (zip), оболочку — `Выложить-лаунчер.bat` (MSI); после первой установки клиент обновляет оба канала сам. Подробности — в `Full Games/README.md`.
+Устанавливаемая игра (не браузер) собирается отдельно в `Full Games`. Запуск: `Full Games/Запуск.bat`. Игру на GitHub выкладывает `Выложить-игру.bat` (zip), оболочку — `Выложить-лаунчер.bat` (MSI); после первой установки клиент обновляет оба канала сам. В чате Cursor: **Обнови игру**, **Обнови лаунчер**, **Полное обновление**. Подробности — в `Full Games/README.md`.
 
 ## Сборка
 
@@ -64,7 +64,7 @@
 
 https://divangames.github.io/racing/
 
-Презентация — корень. Скачать лаунчер: [MSI 0.2.2.4](https://github.com/divangames/racing/releases/download/launcher-0.2.2.4/KolesnicaVoyny-0.2.2.4.msi).
+Презентация — корень. Скачать лаунчер: [MSI 0.2.2.6](https://github.com/divangames/racing/releases/download/launcher-0.2.2.6/KolesnicaVoyny-0.2.2.6.msi).
 
 ## Технологии
 

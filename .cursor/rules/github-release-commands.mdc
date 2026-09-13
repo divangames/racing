@@ -1,0 +1,36 @@
+---
+description: Команды выкладки игры и лаунчера в GitHub Releases
+alwaysApply: true
+---
+
+# Команды GitHub Releases
+
+Когда пользователь пишет одну из фраз ниже — **сразу выполняй**, без уточняющих вопросов. Рабочая папка: `Full Games`. Репозиторий: `https://github.com/divangames/racing`. Не меняй git config. Не force-push. Не коммить `.env`, `.pfx`, секреты.
+
+| Фраза | Что делать |
+|---|---|
+| **Полное обновление** | Сначала игра, затем лаунчер |
+| **Обнови лаунчер** / **Обновить лаунчер** | Только MSI |
+| **Обнови игру** / **Обновить игру** | Только zip |
+
+Если в сообщении есть номер (`0.2.2.8`) — пиши его. Иначе: `node tools/bump-version.cjs game` или `launcher`. Батники с `pause` не запускай: только node/npm. Таймаут сборки — десятки минут.
+
+## Игра
+
+1. Поднять `config/game.json`.
+2. `npm run manifest` → `npm run pack:game` → `node tools/verify-game-content.cjs`.
+3. `node tools/publish-github-release.cjs` (тег `game-ВЕРСИЯ`, zip `kolesnica-content-ВЕРСИЯ.zip`).
+4. Запись в `Full Games/CHANGELOG.md`. Коммит и `git push origin main`.
+
+## Лаунчер
+
+1. Поднять `config/launcher.json` + `package.json`.
+2. `npm install` → `npm run manifest` → `npm run icon` → `tools\set-csc.cmd` → `npm run dist:msi`.
+3. Скопировать `out-msi\KolesnicaVoyny-*.msi` в `dist\`.
+4. `node tools/publish-launcher-release.cjs` (тег `launcher-ВЕРСИЯ`).
+5. Обновить ссылки MSI в `index.html`, корневом `README.md` и `Full Games/README.md`.
+6. CHANGELOG. Коммит, push. Дождаться GitHub Pages.
+
+## Ответ
+
+Версии, URL релизов (`…/releases/tag/game-…` и `…/launcher-…`), для лаунчера ещё MSI и https://divangames.github.io/racing/

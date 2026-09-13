@@ -1,6 +1,6 @@
 {
   "name": "kolesnica-voyny",
-  "version": "0.2.2-5",
+  "version": "0.2.2-6",
   "description": "Лаунчер Колесницы войны. Игру он сам потом докачает.",
   "main": "src/main/boot.js",
   "author": "Divan Games",

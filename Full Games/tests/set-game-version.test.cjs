@@ -8,7 +8,7 @@
 
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeVersion, isGameVersion } = require('../tools/set-game-version.cjs');
+const { normalizeVersion, isGameVersion, bumpLastSegment } = require('../tools/set-game-version.cjs');
 
 test('Срезает v и принимает четыре части', () => {
   assert.equal(normalizeVersion(' v0.2.1.0 '), '0.2.1.0');
@@ -16,6 +16,11 @@ test('Срезает v и принимает четыре части', () => {
   assert.equal(isGameVersion('0.2.1'), true);
   assert.equal(isGameVersion(''), false);
   assert.equal(isGameVersion('game-0.2.1'), false);
+});
+
+test('Поднимает последний сегмент', () => {
+  assert.equal(bumpLastSegment('0.2.2.6'), '0.2.2.7');
+  assert.equal(bumpLastSegment('v0.2.2'), '0.2.3');
 });
 
 test('Четыре части для npm: 0.2.1.3 → 0.2.1-3', () => {

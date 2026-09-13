@@ -32,6 +32,21 @@ function isGameVersion(ver) {
 }
 
 /**
+ * Поднимает последний сегмент: 0.2.2.6 → 0.2.2.7.
+ * @param {string} ver
+ * @returns {string}
+ */
+function bumpLastSegment(ver) {
+  const version = normalizeVersion(ver);
+  if (!isGameVersion(version)) {
+    throw new Error('Нельзя поднять номер: ' + ver);
+  }
+  const bits = version.split('.');
+  bits[bits.length - 1] = String(Number(bits[bits.length - 1]) + 1);
+  return bits.join('.');
+}
+
+/**
  * electron-builder требует SemVer из трёх частей.
  * Четвёртая становится пререлизом: 0.2.1.3 → 0.2.1-3.
  * @param {string} ver
@@ -107,6 +122,7 @@ if (require.main === module) {
 module.exports = {
   normalizeVersion,
   isGameVersion,
+  bumpLastSegment,
   toNpmVersion,
   writeJsonVersion,
   writeLockRootVersion,
