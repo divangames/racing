@@ -59,6 +59,8 @@ test('Сетка трофеев, чит-ячейки, плитка трассы 
   const tile = g.DiVANEngine.extras.trackTileRectAt(0, 5, 1280);
   assert.equal(tile.w, 360);
   assert.equal(tile.x, 80);
+  const packed = g.DiVANEngine.extras.trackTileRectAt(14, 15, 1280, 720);
+  assert.ok(packed.y + packed.h <= 720 - 40);
   const ptr = g.DiVANEngine.pointer;
   assert.equal(ptr.hitRect(10, 10, { x: 0, y: 0, w: 20, h: 20 }), true);
   assert.equal(ptr.hitRect(0, 10, { x: 0, y: 0, w: 20, h: 20 }), false);

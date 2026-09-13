@@ -72,7 +72,9 @@
    */
   function respawnEngine(r) {
     const S = R.S, N = R.N, i = (r.trackIdx - 10 + N) % N, p = S[i];
-    r.x = p.x + p.nx * r.aiLane * .5; r.y = p.y + p.ny * r.aiLane * .5; r.ang = p.ang; r.spd = 0; r.lat = 0; r.susp = 0; r.steerFlt = 0;
+    r.x = p.x + p.nx * (r.aiLane || 0) * .5; r.y = p.y + p.ny * (r.aiLane || 0) * .5; r.ang = p.ang; r.spd = 0; r.lat = 0; r.susp = 0; r.steerFlt = 0;
+    r.trackIdx = i;
+    r.prog = (r.lap || 0) * N + i;
     r.bob = 0; r.bobVel = 0; r.rockAmp = 0; r.rockT = 0; r.landStun = 0;
     r.hp = r.maxhp; r.dead = false; r.invuln = 2.2; r.bolt = 0; r.nitro = 0; r.bubble = 0; r.z = 0; r.vz = 0; r.air = false; r.jumpCd = 0; r.jumpSpd = 0;
     r.dash = 0; r.ghost = 0; r.paper = 0; r.haze = 0; r.blind = 0; r.cloak = 0; r.berserk = 0; r.slow = 0;

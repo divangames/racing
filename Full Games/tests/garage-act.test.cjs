@@ -21,7 +21,8 @@ function bootGarage() {
     drawLabWarn: function () {},
     clickLabWarn: function () {},
     drawExitWarn: function () {},
-    clickExitWarn: function () {}
+    clickExitWarn: function () {},
+    enterLabEditor: function () {}
   };
   g.window = g;
   g.globalThis = g;
@@ -47,6 +48,7 @@ test('Строки гаража, пара Нет/Да и край модалки
   const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
   assert(html.includes('function garageAction('));
   assert(html.includes('function drawLabWarn('));
+  assert(html.includes('function enterLabEditor('));
   assert(html.includes('function clickExitWarn('));
   const g = bootGarage();
   const kind = g.DiVANEngine.garageAct.garageRowKind;

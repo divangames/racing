@@ -22,6 +22,7 @@ const EditorView = (() => {
   const shadowCache = new Map();
 
   let lastCssW = 0, lastCssH = 0;
+  let raf = 0;
 
   /** Подключает холст и колбэки приложения. */
   function init(opts) {
@@ -57,16 +58,33 @@ const EditorView = (() => {
     }
     window.addEventListener('load', () => { syncCanvasSize(); fit(); });
     requestAnimationFrame(() => { syncCanvasSize(); fit(); });
-    requestAnimationFrame(tick);
+    wake();
   }
 
-  /** Кадр: вращение дисков, в тесте — руль и живое нитро. */
+  /** Холст машины на экране. */
+  function canvasLive() {
+    return canvas && !canvas.closest('[hidden]');
+  }
+
+  /** Крутятся диски или тест руля. */
+  function shouldSpin() {
+    return playing || testing;
+  }
+
+  /** Кадр, только если вкладка машины открыта. */
   function tick(t) {
+    raf = 0;
+    if (!canvasLive()) return;
     now = t;
-    if (playing || testing) spin = t * (testing ? 0.045 : 0.012);
+    if (shouldSpin()) spin = t * (testing ? 0.045 : 0.012);
     testSteer = testing ? Math.sin(t * 0.003) * 0.55 : yaw;
     try { draw(); } catch (err) { console.error(err); }
-    requestAnimationFrame(tick);
+    if (canvasLive() && shouldSpin()) raf = requestAnimationFrame(tick);
+  }
+
+  /** Продолжает цикл после скрытия вкладки или паузы. */
+  function wake() {
+    if (!raf) raf = requestAnimationFrame(tick);
   }
 
   /** Совпадает буфер холста с видимым размером (иначе картинка 1px на сером фоне). */
@@ -265,7 +283,7 @@ const EditorView = (() => {
 
   /** Рисует всю сцену по стеку: снизу вверх, как в Figma. */
   function draw() {
-    if (!canvas || !ctx) return;
+    if (!canvas || !ctx || !canvasLive()) return;
     const r = canvas.getBoundingClientRect();
     if (r.width < 4 || r.height < 4) return;
     const d = devicePixelRatio || 1;
@@ -1247,13 +1265,13 @@ const EditorView = (() => {
   function setMirrorWheels(v) { mirrorWheels = !!v; }
   function setLinkArmor(v) { linkArmor = !!v; }
   function armorLinked() { return linkArmor; }
-  function setPlay(v) { playing = !!v; }
-  function setTest(v) { testing = !!v; if (v) playing = true; }
-  function setYaw(v) { yaw = +v || 0; }
+  function setPlay(v) { playing = !!v; wake(); }
+  function setTest(v) { testing = !!v; if (v) playing = true; wake(); }
+  function setYaw(v) { yaw = +v || 0; wake(); }
   function clearCache() { cache.clear(); shadowCache.clear(); }
 
   return {
-    init, draw, fit, zoomBy, zoomLabel, resize, setSnap, setMarks, marksOn, setMirrorWheels, setLinkArmor, armorLinked, pairWheel, setPlay, setTest, setYaw, clearCache,
+    init, draw, fit, zoomBy, zoomLabel, resize, setSnap, setMarks, marksOn, setMirrorWheels, setLinkArmor, armorLinked, pairWheel, setPlay, setTest, setYaw, clearCache, wake,
     pickLayer, pickWheel, pickNitro, hasLayer, hasWheel, hasNitro, selectedLayers, clearSel, deselect,
     focusKind, inspectorKind, selectedWheels, selectedNitro, cam, syncWheelPair, dropWheelPair
   };

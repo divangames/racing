@@ -1,11 +1,21 @@
 ////////////////////////////////////////////////////////
 //
-// DiVANEngine: жест «любая кнопка», финиш заставки, пепел, bootGo.
+// DiVANEngine: дисклеймер 21+, очередь файлов, финиш заставки.
 //
 ////////////////////////////////////////////////////////
 
 (function (global) {
   'use strict';
+
+  /**
+   * Сколько ещё держать дисклеймер до минимума 5 с.
+   * @returns {number}
+   */
+  function bootDisclaimerHoldMs() {
+    const need = (BOOT && BOOT.disclaimerMs) || 5000;
+    const t0 = (BOOT && BOOT.t0) || performance.now();
+    return Math.max(0, need - (performance.now() - t0));
+  }
 
   /** Снимает заставку и открывает интро или меню. */
   function bootFinishEngine() {
@@ -36,37 +46,28 @@
         if (cv && cv.focus) cv.focus();
       } catch (e) {
         console.error(e);
-        if (labTest) { try { location.href = 'Editor.html'; } catch (err) {} }
+        if (labTest) {
+          try {
+            if (typeof exitLabTest === 'function') exitLabTest();
+            else location.href = 'Editor.html';
+          } catch (err) {}
+        }
         titleSim = null;
       }
       requestAnimationFrame(frame);
     }, 40);
   }
 
-  /** Жест игрока: музыка меню и очередь файлов. */
+  /** Старт очереди без жеста: дисклеймер уже на экране. */
   function bootAcceptGateEngine() {
     if (BOOT.started || BOOT.ready) return;
     if (BOOT.gateRaf) { cancelAnimationFrame(BOOT.gateRaf); BOOT.gateRaf = 0; }
-    try { if (!AU.ctx) audioInit(); } catch (e) { console.error(e); }
-    const el = bootEls();
-    if (el.root) { el.root.classList.remove('is-gate'); el.root.classList.add('is-load'); }
-    if (el.heading) el.heading.textContent = 'ЗАГРУЗКА';
     try { bootGo(); } catch (e) { console.error(e); bootFinish(); }
   }
 
-  /** Геймпад на экране «любая кнопка». */
+  /** Гейт «любая кнопка» больше не используется. */
   function bootPollGateEngine() {
-    if (BOOT.started || BOOT.ready) return;
-    if (typeof navigator !== 'undefined' && navigator.getGamepads) {
-      const pads = navigator.getGamepads();
-      for (const p of pads) {
-        if (!p || !p.buttons) continue;
-        for (const b of p.buttons) {
-          if (b && b.pressed && (b.value || 0) > 0.55) { bootAcceptGate(); return; }
-        }
-      }
-    }
-    BOOT.gateRaf = requestAnimationFrame(bootPollGate);
+    if (BOOT.gateRaf) { cancelAnimationFrame(BOOT.gateRaf); BOOT.gateRaf = 0; }
   }
 
   /** Пепел на заставке: лёгкие угли, без blur. */
@@ -140,12 +141,14 @@
     requestAnimationFrame(tick);
   }
 
-  /** Полная очередь: диски, музыка, шрифты, тайлы, затем финиш. */
+  /** Полная очередь: дисклеймер минимум 5 с, файлы могут держать дольше. */
   async function bootGoEngine() {
     if (BOOT.started) return;
     BOOT.started = true;
     BOOT.t0 = performance.now();
-    bootEls();
+    try { if (typeof audioInit === 'function' && (!global.AU || !AU.ctx)) audioInit(); } catch (e) { console.error(e); }
+    const el = bootEls();
+    if (el.root) { el.root.classList.remove('is-gate'); el.root.classList.add('is-load'); }
     bootPaint();
     const tick = setInterval(bootPaint, 250);
     try {
@@ -164,6 +167,8 @@
       await bootWaitAll(8, [fonts, voice, maps, custom, packs]);
     } catch (e) { console.error(e); }
     finally { clearInterval(tick); }
+    const hold = bootDisclaimerHoldMs();
+    if (hold > 0) await bootSleep(hold);
     bootFinish();
   }
 

@@ -50,6 +50,7 @@
       const poke = wy * (1 + suspVis * 0.05);
       c.save(); c.translate(wx, poke); c.rotate(steer);
       c.imageSmoothingEnabled = true;
+      if (c.imageSmoothingQuality) c.imageSmoothingQuality = 'medium';
       const frame = ((Math.floor(r.wheelRot * .5) % WHEEL_FRAME_COUNT) + WHEEL_FRAME_COUNT) % WHEEL_FRAME_COUNT;
       const dw = Math.max(0.4, (isFinite(+ww) ? +ww : 12) * scw), dh = Math.max(0.4, (isFinite(+wh) ? +wh : 8) * scw);
       if (WHEEL_SPRITE.complete && WHEEL_SPRITE.naturalWidth > 0) {
@@ -80,6 +81,8 @@
       const bx = isFinite(+bodyOffset.sx) && +bodyOffset.sx > 0 ? +bodyOffset.sx : 1;
       const by = isFinite(+bodyOffset.sy) && +bodyOffset.sy > 0 ? +bodyOffset.sy : 1;
       c.save(); c.translate((bodyOffset.x || 0) + (ox || 0), (bodyOffset.y || 0) + (oy || 0));
+      c.imageSmoothingEnabled = true;
+      if (c.imageSmoothingQuality) c.imageSmoothingQuality = 'medium';
       if (rockVis) c.rotate(rockVis);
       c.drawImage(im, -iw * s * bx / 2, -ih * s * by / 2, iw * s * bx, ih * s * by);
       c.restore();

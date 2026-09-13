@@ -203,9 +203,12 @@
     }
     drawHudCockpit(g, HW, VH);
     if (R.hintT > 0) {
+      // Подсказка следует верхней кромке рамки и не перекрывает её приборы.
+      const telemetry = global.DiVANEngine.telemetry;
+      const hintY = telemetry && telemetry.ready() ? telemetry.layout(HW, VH).y - 28 : VH - 122;
       g.globalAlpha = clamp(R.hintT, 0, 1);
-      panel(g, HW / 2 - 360, VH - 122, 720, 26, 'rgba(12,10,18,.72)', null, 10);
-      txt(g, 'WASD — руль  ·  Z / P оружие  ·  X / { нитро  ·  C / } ульта', HW / 2, VH - 109, 12, '#c8c2d4', 'center', F_B);
+      panel(g, HW / 2 - 360, hintY, 720, 26, 'rgba(12,10,18,.72)', null, 10);
+      txt(g, 'WASD — руль  ·  Z / P оружие  ·  X / { нитро  ·  C / } ульта', HW / 2, hintY + 13, 12, '#c8c2d4', 'center', F_B);
       g.globalAlpha = 1;
     }
     if (R.msg) drawAnnounceToast(g, R.msg, HW / 2, weatherOn ? 92 : 78, HW);

@@ -14,6 +14,13 @@ contextBridge.exposeInMainWorld('rnrDesktop', {
     return ipcRenderer.invoke('game:quit');
   },
   /**
+   * Отдельное окно редактора DiVANEngine, не вкладка заезда.
+   * @returns {Promise<{ok:boolean}>}
+   */
+  openEditor() {
+    return ipcRenderer.invoke('game:open-editor');
+  },
+  /**
    * Текст сейва с диска (синхронно, как localStorage).
    * @param {string} key
    * @returns {string|null}

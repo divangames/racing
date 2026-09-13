@@ -206,7 +206,7 @@
         else if (it && it.startsWith('ДОСТИЖЕНИЯ')) { resetArm = false; openAchievements('title'); }
         else if (it && it.startsWith('ЧИТЫ')) { resetArm = false; state = 'cheats'; cheatMsgT = 0; }
         else if (it && it.startsWith('ВЫБОР ТРАССЫ')) { resetArm = false; enterTrackPick('title'); }
-        else if (it && it.startsWith('ЛАБОРАТОРИЯ')) { resetArm = false; openLabWarn(); }
+        else if (it && (it.startsWith('DIVANENGINE') || it.startsWith('ЛАБОРАТОРИЯ'))) { resetArm = false; openLabWarn(); }
         else if (it && it.startsWith('СБРОС')) {
           if (!resetArm) { resetArm = true; sClick(); }
           else {

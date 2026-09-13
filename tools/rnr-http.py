@@ -56,18 +56,34 @@ def stock_map_root():
     return os.path.join(ROOT, 'assets', 'image', 'textures', 'map')
 
 
+def read_scale(folder):
+    """Масштаб фона из meta.json лаборатории."""
+    meta = os.path.join(folder, 'meta.json')
+    if not os.path.isfile(meta):
+        return 1
+    try:
+        with open(meta, encoding='utf-8') as f:
+            n = float(json.load(f).get('scale') or 1)
+        return max(0.25, min(4.0, n))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return 1
+
+
 def first_image(folder):
-    """Первый кадр в папке."""
+    """Первый кадр в папке, 01.* важнее."""
     if not os.path.isdir(folder):
         return None
     names = [n for n in os.listdir(folder) if os.path.splitext(n)[1].lower() in IMG_EXT]
     names.sort(key=natural_key)
+    for n in names:
+        if n.lower().startswith('01.'):
+            return n
     return names[0] if names else None
 
 
 def list_textures():
-    """Каталог биомов, дорог и объектов."""
-    biomes = []
+    """Каталог биомов, дорог и объектов. Папка проекта перекрывает сток."""
+    by_id = {}
     stock = stock_map_root()
     if os.path.isdir(stock):
         for name in os.listdir(stock):
@@ -77,11 +93,12 @@ def list_textures():
             file = first_image(folder)
             if not file:
                 continue
-            biomes.append({
+            by_id[name] = {
                 'id': name,
                 'src': 'assets/image/textures/map/%s/%s' % (name, file),
-                'stock': True
-            })
+                'stock': True,
+                'scale': read_scale(os.path.join(tex_root(), 'biomes', name))
+            }
     custom = os.path.join(tex_root(), 'biomes')
     if os.path.isdir(custom):
         for name in os.listdir(custom):
@@ -91,21 +108,24 @@ def list_textures():
             file = first_image(folder)
             if not file:
                 continue
-            biomes.append({
+            by_id[name] = {
                 'id': name,
                 'src': 'assets/data/tracks/Textures/biomes/%s/%s' % (name, file),
-                'stock': False
-            })
-    out = {'biomes': biomes, 'roads': [], 'objects': []}
-    for kind in ('road', 'objects'):
+                'stock': False,
+                'scale': read_scale(folder)
+            }
+    biomes = [by_id[k] for k in sorted(by_id)]
+    out = {'biomes': biomes, 'roads': [], 'rails': [], 'objects': []}
+    for kind in ('road', 'rails', 'objects'):
         folder = os.path.join(tex_root(), kind)
         if not os.path.isdir(folder):
             continue
+        key = 'roads' if kind == 'road' else ('rails' if kind == 'rails' else 'objects')
         for name in os.listdir(folder):
             ext = os.path.splitext(name)[1].lower()
             if ext not in IMG_EXT:
                 continue
-            out['road' if kind == 'road' else 'objects'].append({
+            out[key].append({
                 'id': os.path.splitext(name)[0],
                 'src': 'assets/data/tracks/Textures/%s/%s' % (kind, name)
             })
@@ -115,11 +135,21 @@ def list_textures():
 def write_texture(data):
     """Пишет файл земли, дороги или объекта. Возвращает dict или None."""
     kind = data.get('kind')
-    dest = data.get('dest') or 'library'
     tid = data.get('id')
+    if not isinstance(tid, str) or not TEX_ID.match(tid):
+        return None
+    if kind == 'meta':
+        try:
+            scale = max(0.25, min(4.0, float(data.get('scale') or 1)))
+        except (TypeError, ValueError):
+            scale = 1.0
+        folder = os.path.join(tex_root(), 'biomes', tid)
+        os.makedirs(folder, exist_ok=True)
+        write_json(os.path.join(folder, 'meta.json'), {'scale': scale})
+        return {'ok': True, 'id': tid, 'scale': scale}
     ext = str(data.get('ext') or 'png').lower().replace('jpeg', 'jpg')
     payload = data.get('data') or ''
-    if not isinstance(tid, str) or not TEX_ID.match(tid) or ('.' + ext) not in IMG_EXT:
+    if ('.' + ext) not in IMG_EXT:
         return None
     if not isinstance(payload, str) or 'base64,' not in payload:
         return None
@@ -127,19 +157,22 @@ def write_texture(data):
     if not raw:
         return None
     rel = None
-    if kind == 'ground' and dest == 'current':
-        stock_dir = os.path.join(stock_map_root(), tid)
-        if os.path.isdir(stock_dir):
-            rel = 'assets/image/textures/map/%s/lab.%s' % (tid, ext)
-        else:
-            os.makedirs(os.path.join(tex_root(), 'biomes', tid), exist_ok=True)
-            rel = 'assets/data/tracks/Textures/biomes/%s/01.%s' % (tid, ext)
-    elif kind == 'ground':
-        os.makedirs(os.path.join(tex_root(), 'biomes', tid), exist_ok=True)
+    if kind == 'ground':
+        folder = os.path.join(tex_root(), 'biomes', tid)
+        os.makedirs(folder, exist_ok=True)
+        for old in ('png', 'jpg', 'jpeg', 'webp', 'gif'):
+            if old == ext:
+                continue
+            stale = os.path.join(folder, '01.' + old)
+            if os.path.isfile(stale):
+                os.remove(stale)
         rel = 'assets/data/tracks/Textures/biomes/%s/01.%s' % (tid, ext)
     elif kind == 'road':
         os.makedirs(os.path.join(tex_root(), 'road'), exist_ok=True)
         rel = 'assets/data/tracks/Textures/road/%s.%s' % (tid, ext)
+    elif kind == 'rail':
+        os.makedirs(os.path.join(tex_root(), 'rails'), exist_ok=True)
+        rel = 'assets/data/tracks/Textures/rails/%s.%s' % (tid, ext)
     elif kind == 'object':
         os.makedirs(os.path.join(tex_root(), 'objects'), exist_ok=True)
         rel = 'assets/data/tracks/Textures/objects/%s.%s' % (tid, ext)

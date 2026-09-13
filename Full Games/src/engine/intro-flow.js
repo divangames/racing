@@ -49,6 +49,32 @@
   }
 
   /**
+   * Экран дистанции камеры. next: char — гонщик, car — кузов.
+   * @param {string} [next]
+   */
+  function enterCameraSetupEngine(next) {
+    cameraSetupHint = false;
+    settingsZoomDrag = false;
+    if (next) cameraSetupNext = next;
+    if (typeof ensureTitlePreview === 'function') ensureTitlePreview();
+    state = 'cameraSetup';
+  }
+
+  /**
+   * После подсказки: свободная карьера — гонщик, кампания — кузов.
+   */
+  function finishCameraSetupEngine() {
+    cameraSetupHint = false;
+    const next = cameraSetupNext || 'char';
+    cameraSetupNext = 'char';
+    if (next === 'car') {
+      enterCarSel(save && save.car);
+      return;
+    }
+    enterCharSel();
+  }
+
+  /**
    * Выход из интро: в выбор машины или на титул.
    * @param {boolean} goCar
    */
@@ -101,4 +127,6 @@
   engine.replace('confirmCharPick', confirmCharPickEngine);
   engine.replace('enterTitle', enterTitleEngine);
   engine.replace('dismissPressStart', dismissPressStartEngine);
+  engine.replace('enterCameraSetup', enterCameraSetupEngine);
+  engine.replace('finishCameraSetup', finishCameraSetupEngine);
 })(typeof window !== 'undefined' ? window : globalThis);

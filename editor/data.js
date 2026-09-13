@@ -152,6 +152,7 @@ const EditorData = (() => {
 
   /** Добирает гонщиков из аватаров, которых ещё нет в CHARS. */
   async function refreshPilots() {
+    splashFile('Гонщики');
     const byId = {};
     pilotsFromChars().forEach((p) => { byId[p.id] = p; });
     let listed = [];
@@ -570,14 +571,31 @@ const EditorData = (() => {
     return fetch(url, opts).then((r) => r.ok ? r.json() : null).finally(() => clearTimeout(timer));
   }
 
+  /** Пишет этап в сплэш лаборатории, если он есть. */
+  function splashFile(label) {
+    try {
+      if (typeof LabSplash !== 'undefined' && LabSplash.file) LabSplash.file(label);
+    } catch (err) {}
+  }
+
   /** Подгружает заводские JSON из assets/data/cars. */
   async function hydrateFromDisk() {
     if (typeof location !== 'undefined' && location.protocol === 'file:') return;
     diskCars = {};
     const jobs = [];
+    let done = 0;
+    splashFile('Машины');
     for (let i = 0; i < STOCK; i++) {
-      const url = 'assets/data/cars/' + folderId(i) + '/car.json';
-      jobs.push(fetchJson(url).then((j) => { if (j) diskCars[i] = j; }).catch(() => {}));
+      const id = folderId(i);
+      const url = 'assets/data/cars/' + id + '/car.json';
+      jobs.push(fetchJson(url).then((j) => {
+        if (j) diskCars[i] = j;
+        done += 1;
+        splashFile('Машины · ' + id + '/car.json · ' + done + ' / ' + STOCK);
+      }).catch(() => {
+        done += 1;
+        splashFile('Машины · ' + id + '/car.json · ' + done + ' / ' + STOCK);
+      }));
     }
     await Promise.all(jobs);
   }

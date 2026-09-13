@@ -7,6 +7,7 @@
 
 const MapPanel = (() => {
   let $, getDoc, getStamp, setStamp, setDirty, setToolUi;
+  let painting = false;
 
   /** Тема: сток и свои папки. */
   function fillTheme() {
@@ -33,6 +34,27 @@ const MapPanel = (() => {
     if (sel.value !== keep) sel.value = RnRTracks.THEMES[0].id;
   }
 
+  /** Превью земли и ползунок масштаба. */
+  function fillGround() {
+    const t = getDoc();
+    const scale = RnRTracks.groundScaleOf(t.theme);
+    const range = $('mapGroundScale');
+    const read = $('mapGroundScaleRead');
+    if (range) range.value = String(scale);
+    if (read) read.textContent = Math.round(scale * 100) + '%';
+    const prev = $('mapGroundPreview');
+    if (prev) {
+      const im = MapTex.groundOf(t.theme);
+      if (im && im.src) {
+        prev.src = im.src;
+        prev.hidden = false;
+      } else {
+        prev.removeAttribute('src');
+        prev.hidden = true;
+      }
+    }
+  }
+
   /** Погода. */
   function fillWeather() {
     const sel = $('mapWeather');
@@ -52,23 +74,44 @@ const MapPanel = (() => {
     sel.value = getDoc().theme.weather || '';
   }
 
-  /** Библиотека дороги. */
-  function fillRoads() {
-    const sel = $('mapRoadPick');
+  /** Превью картинки темы. */
+  function fillPreview(id, im) {
+    const prev = $(id);
+    if (!prev) return;
+    if (im && im.src) {
+      prev.src = im.src;
+      prev.hidden = false;
+    } else {
+      prev.removeAttribute('src');
+      prev.hidden = true;
+    }
+  }
+
+  /** Список файлов библиотеки. */
+  function fillLib(selId, keep, items, emptyLabel) {
+    const sel = $(selId);
     if (!sel) return;
-    const keep = getDoc().theme.roadSrc || '';
     sel.innerHTML = '';
     const none = document.createElement('option');
     none.value = '';
-    none.textContent = '— цвет зон покрытия —';
+    none.textContent = emptyLabel;
     sel.appendChild(none);
-    (MapTex.catalog.roads || []).forEach((r) => {
+    (items || []).forEach((r) => {
       const o = document.createElement('option');
       o.value = r.src;
       o.textContent = r.id;
       sel.appendChild(o);
     });
-    sel.value = keep;
+    sel.value = keep || '';
+  }
+
+  /** Библиотека дороги и бортов. */
+  function fillRoads() {
+    const t = getDoc().theme;
+    fillLib('mapRoadPick', t.roadSrc, MapTex.catalog.roads, '— цвет зон покрытия —');
+    fillLib('mapRailPick', t.railSrc, MapTex.catalog.rails, '— ржавый рельс —');
+    fillPreview('mapRoadPreview', MapTex.roadOf(t));
+    fillPreview('mapRailPreview', MapTex.railOf(t));
   }
 
   /** Штампы деколей. */
@@ -123,11 +166,18 @@ const MapPanel = (() => {
 
   /** Все поля справа. */
   function paint() {
-    fillTheme();
-    fillWeather();
-    fillRoads();
-    fillZones();
-    fillDecals();
+    if (painting) return;
+    painting = true;
+    try {
+      fillTheme();
+      fillGround();
+      fillWeather();
+      fillRoads();
+      fillZones();
+      fillDecals();
+    } finally {
+      painting = false;
+    }
   }
 
   /** Связка с приложением. */

@@ -27,6 +27,11 @@
         "boot-net.js",
         "boot-gate.js",
         "track.js",
+        "track-span.js",
+        "track-rail.js",
+        "track-strip.js",
+        "track-ribbon.js",
+        "track-ribbon-deck.js",
         "track-paint.js",
         "race-hazards.js",
         "race-build.js",
@@ -91,19 +96,26 @@
         "story-invite.js",
         "story-family.js",
         "loop.js",
-        "presentation.js"
+        "presentation.js",
+        "telemetry.js"
       ]
     },
     "lab": {
       "meta": "lab",
       "scripts": [
         "runtime.js",
+        "track-span.js",
+        "track-strip.js",
+        "track-ribbon.js",
+        "track-ribbon-deck.js",
+        "editor/splash.js",
         "editor/workbench.js"
       ],
       "before": {
         "editor/map-app.js": "editor/history.js"
       },
       "styles": [
+        "editor/splash.css",
         "editor/workbench.css"
       ]
     }

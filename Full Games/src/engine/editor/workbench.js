@@ -44,7 +44,8 @@ window.StudioCheck = {
       return;
     }
     document.querySelector('.eyebrow').textContent='DIVAN GAMES  /  ENGINE WORKSPACE';
-    document.querySelector('.title').textContent='Лаборатория';
+    document.querySelector('.title').textContent='DiVANEngine';
+    try { document.title = 'DiVANEngine'; } catch (err) {}
     const actions=document.createElement('div');actions.className='studio-actions';
     const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.hidden=true;
     const status=document.createElement('p');status.className='studio-report';status.setAttribute('role','status');

@@ -130,11 +130,12 @@
   }
 
   /**
-   * Конец ролика кампании: ограбление и времянка.
+   * Конец ролика кампании: ограбление, камера, затем времянка.
    */
   function storyFinishCampaignIntro() {
     storyApplyGarageRobbery();
-    if (typeof enterCarSel === 'function') enterCarSel(save && save.car);
+    if (typeof enterCameraSetup === 'function') enterCameraSetup('car');
+    else if (typeof enterCarSel === 'function') enterCarSel(save && save.car);
   }
 
   /**

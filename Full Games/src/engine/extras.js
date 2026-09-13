@@ -38,17 +38,23 @@
   }
 
   /**
-   * Плитка трассы в сетке по три в ряд.
+   * Плитка трассы в сетке по три в ряд (ряд = биом). Высота жмётся под 720p.
    * @param {number} i
    * @param {number} n
    * @param {number} width
+   * @param {number} [height]
    * @returns {{x:number,y:number,w:number,h:number}}
    */
-  function trackTileRectAt(i, n, width) {
-    const cols = 3, tw = 360, th = 196, gap = 20;
+  function trackTileRectAt(i, n, width, height) {
+    const cols = 3, tw = 360, gapX = 20;
+    const rows = Math.max(1, Math.ceil(n / cols));
+    const h = height || (typeof H === 'number' ? H : 720);
+    const top = 148, foot = 48, gridH = Math.max(180, h - top - foot);
+    const gapY = rows > 3 ? 8 : 20;
+    const th = Math.max(72, Math.min(196, ((gridH - (rows - 1) * gapY) / rows) | 0));
     const row = (i / cols) | 0, inRow = Math.min(cols, n - row * cols), col = i % cols;
-    const rowW = inRow * tw + (inRow - 1) * gap;
-    return { x: (width - rowW) / 2 + col * (tw + gap), y: 148 + row * (th + gap), w: tw, h: th };
+    const rowW = inRow * tw + (inRow - 1) * gapX;
+    return { x: (width - rowW) / 2 + col * (tw + gapX), y: top + row * (th + gapY), w: tw, h: th };
   }
 
   /**
@@ -89,7 +95,7 @@
     const cps = def.cps; if (!cps || !cps.length) return;
     let minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9;
     for (const p of cps) { minx = Math.min(minx, p[0]); miny = Math.min(miny, p[1]); maxx = Math.max(maxx, p[0]); maxy = Math.max(maxy, p[1]); }
-    const pad = 18, bw = w - pad * 2, bh = h - pad * 2 - 36;
+    const pad = 12, bw = w - pad * 2, bh = h - pad * 2;
     const sc = Math.min(bw / Math.max(1, maxx - minx), bh / Math.max(1, maxy - miny));
     const ox = x + w / 2 - ((minx + maxx) / 2) * sc, oy = y + pad + 8 + bh / 2 - ((miny + maxy) / 2) * sc;
     const th = def.theme || {};
@@ -237,11 +243,12 @@
     list.forEach(function (def, i) {
       const r = trackTileRect(i), sel = i === trackPickSel;
       const th = def.theme || {};
+      const cap = Math.max(22, Math.min(44, (r.h * 0.28) | 0));
       panel(g, r.x, r.y, r.w, r.h, sel ? 'rgba(255,157,46,.16)' : 'rgba(20,17,28,.92)', sel ? '#ffd23f' : '#3a3548', 10);
       g.fillStyle = th.ground || '#2a2434';
-      rr(g, r.x + 10, r.y + 10, r.w - 20, r.h - 52, 8); g.fill();
-      drawTrackOutline(g, def, r.x + 10, r.y + 10, r.w - 20, r.h - 52);
-      txt(g, def.name, r.x + r.w / 2, r.y + r.h - 22, 16, sel ? '#ffd23f' : '#c8c0d4', 'center');
+      rr(g, r.x + 10, r.y + 10, r.w - 20, r.h - cap - 8, 8); g.fill();
+      drawTrackOutline(g, def, r.x + 10, r.y + 10, r.w - 20, r.h - cap - 8);
+      txt(g, def.name, r.x + r.w / 2, r.y + r.h - cap / 2 - 2, r.h < 120 ? 12 : 16, sel ? '#ffd23f' : '#c8c0d4', 'center');
       if (def.custom) txt(g, 'СВОЯ', r.x + 24, r.y + 24, 11, '#3d9eff', 'left', F_B);
       g._trackTiles.push(r);
     });

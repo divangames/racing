@@ -112,9 +112,17 @@
         exit: [s.exit[0] - minx, s.exit[1] - miny]
       };
     });
+    const span = global.DiVANEngine && global.DiVANEngine.trackSpan;
+    const gaps = span ? span.normalizeGaps(def.gaps) : (def.gaps || []);
+    let decks = span ? span.normalizeDecks(def.decks) : (def.decks || []);
+    if (span && span.detectCrossingDecks && !decks.length) {
+      const auto = span.detectCrossingDecks(S, N, typeof ROADW === 'number' ? ROADW : 95);
+      decks = span.mergeDecks((decks || []).concat(auto));
+    }
     return {
       S: S, N: N, w: maxx - minx, h: maxy - miny, name: def.name, theme: def.theme, zones: def.zones || [], idx: idx, upper: upper, lab: !!def.lab,
-      custom: !!def.custom, id: def.id || null, decals: decals, labObjects: labObjects, hazardPlan: hzPlan, autoHazards: def.autoHazards !== false, shortcuts: shortcuts
+      custom: !!def.custom, id: def.id || null, decals: decals, labObjects: labObjects, hazardPlan: hzPlan, autoHazards: def.autoHazards !== false, shortcuts: shortcuts,
+      gaps: gaps, decks: decks
     };
   }
 
@@ -135,6 +143,32 @@
     return Math.sqrt(bd);
   }
 
+  /** Доля круга, на которой два покрытия смешиваются. */
+  const MAT_BLEND = 0.05;
+
+  /**
+   * Прогресс круга в [0, 1).
+   * @param {number} t
+   * @returns {number}
+   */
+  function wrapLap(t) {
+    t = t % 1;
+    if (t < 0) t += 1;
+    return t;
+  }
+
+  /**
+   * Кратчайшая разница на кольце круга.
+   * @param {number} d
+   * @returns {number}
+   */
+  function signedLap(d) {
+    d = d % 1;
+    if (d > 0.5) d -= 1;
+    if (d < -0.5) d += 1;
+    return d;
+  }
+
   /**
    * Материал покрытия по прогрессу круга.
    * @param {object} T
@@ -142,8 +176,37 @@
    * @returns {string}
    */
   function roadMaterialEngine(T, t) {
+    t = wrapLap(t);
     for (const z of (T.zones || [])) if (t >= z.from && t < z.to) return z.material;
     return 'asphalt';
+  }
+
+  /**
+   * Два материала и смесь у границы зоны.
+   * @param {object} T
+   * @param {number} t
+   * @returns {{matA:string,matB:string,mix:number}}
+   */
+  function roadMaterialBlendEngine(T, t) {
+    t = wrapLap(t);
+    const a = roadMaterialEngine(T, wrapLap(t - MAT_BLEND));
+    const b = roadMaterialEngine(T, wrapLap(t + MAT_BLEND));
+    if (a === b) return { matA: a, matB: a, mix: 0 };
+    const zones = T.zones || [];
+    let de = 0, best = 2;
+    for (let i = 0; i < zones.length; i++) {
+      const z = zones[i];
+      const edges = [wrapLap(z.from), wrapLap(z.to >= 1 ? 0 : z.to)];
+      for (let e = 0; e < edges.length; e++) {
+        const d = signedLap(edges[e] - t);
+        if (Math.abs(d) < Math.abs(best)) { best = d; de = d; }
+      }
+    }
+    let mix = (MAT_BLEND - de) / (2 * MAT_BLEND);
+    if (mix < 0) mix = 0;
+    else if (mix > 1) mix = 1;
+    mix = mix * mix * (3 - 2 * mix);
+    return { matA: a, matB: b, mix: mix };
   }
 
   /**
@@ -156,6 +219,7 @@
     if (!T || !T.S) return a;
     const S = T.S, N = S.length, rng = mulberry(19 + (T.idx || 0) * 41);
     for (let i = 6; i < N; i += 12) {
+      if (typeof inTrackGap === 'function' && inTrackGap(T, i / N)) continue;
       if (roadMaterial(T, i / N) !== 'asphalt') continue;
       if (rng() > .48) continue;
       const p = S[i], side = (rng() - .5) * 86;
@@ -205,7 +269,11 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.track = { ROAD_MATERIALS: ROAD_MATERIALS, catmull: catmull };
+  global.roadMaterialBlend = roadMaterialBlendEngine;
+  engine.track = {
+    ROAD_MATERIALS: ROAD_MATERIALS, catmull: catmull, MAT_BLEND: MAT_BLEND,
+    roadMaterialBlend: roadMaterialBlendEngine
+  };
   engine.replace('buildTrack', buildTrackEngine);
   engine.replace('distToTrack', distToTrackEngine);
   engine.replace('roadMaterial', roadMaterialEngine);

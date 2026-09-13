@@ -72,6 +72,18 @@ function bootStory() {
       g.save.carOwned[g.save.car] = true;
     },
     enterCarSel: function (idx) { g._carSel = idx; g.state = 'car'; },
+    enterCameraSetup: function (next) {
+      g._camNext = next;
+      g.cameraSetupNext = next || 'char';
+      g.state = 'cameraSetup';
+    },
+    finishCameraSetup: function () {
+      const next = g.cameraSetupNext || 'char';
+      g.cameraSetupNext = 'char';
+      if (next === 'car') g.enterCarSel(g.save && g.save.car);
+      else g.state = 'char';
+    },
+    cameraSetupNext: 'char',
     endIntro: function (goCar) { if (goCar) g.enterCarSel(g.charCarIdx(g.save.char)); },
     carSelStatus: function () { return { t: 'ТВОЯ', col: '#0f0' }; },
     drawGarage: function () { g._garage = true; },
@@ -170,6 +182,9 @@ test('Ограбление: Camaro stolen, деньги целы, времянк
   g.storyFixActiveCar(g.save);
   assert.equal(g.save.car, 11);
   g.storyFinishCampaignIntro();
+  assert.equal(g.state, 'cameraSetup');
+  assert.equal(g._camNext, 'car');
+  g.finishCameraSetup();
   assert.equal(g._carSel, 11);
   const st = g.carSelStatus(0, true);
   assert.match(st.t, /УКРАДЕНА/);

@@ -64,23 +64,25 @@ const MapData = (() => {
     });
   }
 
-  /** Клон стоковой трассы игры. */
-  function fromStock(def, id) {
+  /** Клон стоковой трассы игры: петля как в карьере, авто-бонусы на холсте. */
+  function fromStock(def, id, stockIdx) {
     const theme = def && def.theme ? def.theme : RnRTracks.themeById('sand');
-    return RnRTracks.normalize({
+    const doc = RnRTracks.normalize({
       id,
       name: ((def && def.name) || 'КЛОН') + ' · ЧЕРНОВИК',
       published: true,
-      autoHazards: true,
+      autoHazards: def && def.autoHazards === false ? false : true,
       theme,
       zones: def && def.zones,
       cps: def && def.cps,
-      decals: [],
-      items: [],
-      objects: [],
-      hazards: {ramps: [], mines: [], oils: [], pads: []},
-      shortcuts: []
+      decals: (def && def.decals) || [],
+      items: (def && def.items) || [],
+      objects: (def && def.objects) || [],
+      hazards: (def && def.hazards) || {ramps: [], mines: [], oils: [], pads: []},
+      shortcuts: (def && def.shortcuts) || []
     });
+    if (stockIdx != null && Number.isFinite(+stockIdx)) doc.stockIdx = +stockIdx;
+    return doc;
   }
 
   /** Снимок без лишнего. */
@@ -148,6 +150,9 @@ const MapData = (() => {
       const name = String(files[i] || '');
       const url = name.indexOf('/') >= 0 ? name : ('assets/data/tracks/' + name);
       try {
+        if (typeof LabSplash !== 'undefined' && LabSplash.file) {
+          LabSplash.file('Карты · ' + name.replace(/^assets\/data\/tracks\//, '') + ' · ' + (i + 1) + ' / ' + files.length);
+        }
         const r = await fetch(url, {cache: 'no-store'});
         if (!r.ok) continue;
         docs.push(RnRTracks.normalize(await r.json()));

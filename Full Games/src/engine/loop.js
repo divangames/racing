@@ -32,6 +32,7 @@ function frameEngine(now){
  if(state==='race'&&!paused)updRace(dt);
  if(state==='settings'||state==='cameraSetup')updateTitleRace(dt);
  if(typeof tickTitleFx==='function')tickTitleFx(dt);
+ if(window.RnRWeatherAudio&&state!=='race'&&state!=='settings'&&state!=='cameraSetup')RnRWeatherAudio.haltRain();
  updEngine(P,paused,state);
  if(CHIP.on)CHIP.pump();
  if(state==='intro'&&!introDone){

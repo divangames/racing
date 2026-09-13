@@ -7,17 +7,27 @@
 
 const MapTex = (() => {
   const cache = Object.create(null);
-  let catalog = {biomes: [], roads: [], objects: []};
+  let catalog = {biomes: [], roads: [], rails: [], objects: []};
+
+  /** Забывает кэш картинки после записи на диск. */
+  function forget(url) {
+    const key = String(url || '').split('?')[0];
+    delete cache[key];
+  }
 
   /** Картинка по URL, с перерисовкой. */
-  function img(url, onload) {
+  function img(url, onload, bust) {
     if (!url) return null;
-    if (cache[url]) return cache[url];
+    const key = String(url).split('?')[0];
+    if (!bust && cache[key]) return cache[key];
     const im = new Image();
-    im.onload = () => { if (onload) onload(); };
+    im.onload = () => {
+      if (typeof MapPreview !== 'undefined' && MapPreview.invalidateRoad) MapPreview.invalidateRoad();
+      if (onload) onload();
+    };
     im.onerror = () => { if (onload) onload(); };
-    im.src = url;
-    cache[url] = im;
+    im.src = bust ? (key + '?r=' + Date.now()) : key;
+    cache[key] = im;
     return im;
   }
 
@@ -51,6 +61,27 @@ const MapTex = (() => {
     });
     if (!r.ok) return {ok: false, error: 'Сервер ' + r.status};
     const out = await r.json();
+    if (out && out.src) forget(out.src);
+    await list();
+    if (out && out.src) img(out.src, () => MapView && MapView.draw && MapView.draw(), true);
+    return out;
+  }
+
+  /**
+   * Пишет масштаб фона биома в meta.json проекта.
+   * @param {string} biomeId
+   * @param {number} scale
+   */
+  async function saveMeta(biomeId, scale) {
+    const id = String(biomeId || '').toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 32);
+    if (!id) return {ok: false};
+    const r = await fetch('/__save-texture', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({kind: 'meta', id, scale: +scale || 1})
+    });
+    if (!r.ok) return {ok: false, error: 'Сервер ' + r.status};
+    const out = await r.json();
     await list();
     return out;
   }
@@ -71,5 +102,11 @@ const MapTex = (() => {
     return null;
   }
 
-  return {img, list, upload, groundOf, roadOf, get catalog() { return catalog; }};
+  /** Борта / рельс. */
+  function railOf(theme) {
+    if (theme && theme.railSrc) return img(theme.railSrc, () => MapView && MapView.draw && MapView.draw());
+    return null;
+  }
+
+  return {img, list, upload, saveMeta, forget, groundOf, roadOf, railOf, get catalog() { return catalog; }};
 })();

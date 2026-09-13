@@ -77,7 +77,7 @@
     const card = warnCard('lab', W, H);
     panel(g, card.mx, card.my, card.mw, card.mh, 'rgba(16,10,14,.97)', '#ff3d2e', 16);
     txt(g, 'ОПАСНО', W / 2, card.my + 44, 32, '#ff3d2e', 'center');
-    const warn = 'В лаборатории легко сломать посадку колёс и кузов. Если вы не участник разработки проекта — лучше туда не лезть.';
+    const warn = 'В редакторе DiVANEngine легко сломать посадку колёс и кузов. Если вы не участник разработки проекта — лучше туда не лезть.';
     const lines = layoutLines(g, warn, card.mw - 72, 16, F_B);
     lines.forEach(function (ln, i) { txt(g, ln, W / 2, card.my + 96 + i * 22, 16, '#e8e2d0', 'center', F_B); });
     g._labHits = paintWarnButtons(card.pair, labWarnSel === 1, 'labNo', 'labYes');
@@ -133,8 +133,23 @@
   const engine = global.DiVANEngine;
   if (!engine) return;
   engine.dialogs = { warnPair, warnCard, hitInclusive };
+  /**
+   * На десктопе открывает отдельное окно редактора, в браузере — Editor.html.
+   */
+  function enterLabEditorEngine() {
+    const desk = global.rnrDesktop;
+    if (desk && typeof desk.openEditor === 'function') {
+      desk.openEditor();
+      if (typeof closeLabWarn === 'function') closeLabWarn();
+      return;
+    }
+    const q = save && save.car != null ? ('?car=' + save.car) : '';
+    location.href = 'Editor.html' + q;
+  }
+
   engine.replace('drawLabWarn', drawLabWarnEngine);
   engine.replace('clickLabWarn', clickLabWarnEngine);
   engine.replace('drawExitWarn', drawExitWarnEngine);
   engine.replace('clickExitWarn', clickExitWarnEngine);
+  engine.replace('enterLabEditor', enterLabEditorEngine);
 })(typeof window !== 'undefined' ? window : globalThis);

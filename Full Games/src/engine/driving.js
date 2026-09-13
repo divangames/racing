@@ -7,7 +7,8 @@
 function stepVehicleEngine(r,th,steer,dt,hb){
  if(!Number.isFinite(dt)||dt<=0)return;
  const S=R.S,p=S[r.trackIdx];
- const off=!r.air&&Math.hypot(r.x-p.x,r.y-p.y)>ROADW;
+ const inGap=typeof inTrackGap==='function'&&R.T&&inTrackGap(R.T,(r.trackIdx||0)/R.N);
+ const off=!r.air&&(inGap||Math.hypot(r.x-p.x,r.y-p.y)>ROADW);
  let mult=1;if(r.bolt>0)mult*=1.3;
  if(r.nitro>0)mult*=(r.car.idx===1?1.6:1.45);
  mult=Math.min(mult,1.6);
@@ -142,12 +143,16 @@ function stepVehicleEngine(r,th,steer,dt,hb){
  r.x+=(fx*long-fy*lat)*dt;r.y+=(fy*long+fx*lat)*dt;
  r.x=clamp(r.x,20,R.T.w-20);r.y=clamp(r.y,20,R.T.h-20);
  if(window.RnRObjects&&R.labObjects)RnRObjects.pushCar(r,R.labObjects);
- // ТРАМПЛИН: прыжок. Высота/дальность зависят от скорости (баланс).
+ if(typeof keepOnTrack==='function')keepOnTrack(r,ROADW);
+ // ТРАМПЛИН: прыжок. На разломе порог ниже и толчок сильнее.
  if(!r.air&&!r.finished){
   for(const rp of R.ramps){
-   if(Math.hypot(r.x-rp.x,r.y-rp.y)<46&&Math.abs(r.spd)>140){
+   const need=rp.gap?95:140;
+   const rad=rp.gap?54:46;
+   if(Math.hypot(r.x-rp.x,r.y-rp.y)<rad&&Math.abs(r.spd)>need){
     r.air=true;
-    r.vz=Math.abs(r.spd)*0.9;
+    r.vz=Math.abs(r.spd)*(rp.boost||0.9);
+    if(rp.gap)r.z=Math.max(r.z||0,10);
     r.jumpSpd=Math.abs(r.spd);
     r.jumps++;
     if(r.isP){fl(r.x,r.y,'ПРЫЖОК!','#7df9ff');swp('sine',300,700,.2,.2);}

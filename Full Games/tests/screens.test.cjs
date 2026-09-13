@@ -85,13 +85,14 @@ test('Пункты меню и камера мира считаются без c
   assert.ok(items.includes('ПРОДОЛЖИТЬ (ЭТАП 1)'));
   assert.ok(items.includes('НОВАЯ ИГРА'));
   assert.ok(items.includes('ЧИТЫ'));
+  assert.ok(!items.includes('DIVANENGINE'));
   assert.ok(!items.includes('ЛАБОРАТОРИЯ'));
   assert.equal(items[items.length - 1], 'ВЫХОД');
   const cont = g.DiVANEngine.screens.titleItems({ race: 0 }, false, { storyCampaign: 'medved_v1', race: 2 });
   assert.equal(cont[0], 'ПРОДОЛЖИТЬ КАМПАНИЮ');
   const dev = g.DiVANEngine.screens.titleItems(null, true);
   assert.equal(dev[0], 'КАМПАНИЯ');
-  assert.ok(dev.includes('ЛАБОРАТОРИЯ'));
+  assert.ok(dev.includes('DIVANENGINE'));
   const retail = Object.assign(g, { __RNR_DESKTOP__: true, __RNR_PUBLIC_BUILD__: true });
   assert.ok(!retail.DiVANEngine.screens.titleItems({ race: 0 }, false).includes('ЧИТЫ'));
   const lay = g.DiVANEngine.screens.titleLayout({ H: 720, n: 8, logoH: 200, resetArm: false });

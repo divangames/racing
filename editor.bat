@@ -1,5 +1,6 @@
 @echo off
+chcp 65001 >nul
 cd /d "%~dp0"
-echo Opening car lab...
-call "%~dp0local-server.bat" Editor.html
+echo DiVANEngine — десктопный редактор, не браузер.
+call "%~dp0Full Games\DiVANEngine.bat"
 if errorlevel 1 pause

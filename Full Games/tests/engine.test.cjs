@@ -36,7 +36,11 @@ test('История загружается раньше приложения к
  const out=enhanceHtml('<head></head><body><main id="workMap"></main><script src="editor/map-app.js?v=1"></script></body>',{pathname:'/Editor.html'});
  assert(out.indexOf('/__engine/editor/history.js')<out.indexOf('src="editor/map-app'));
  assert(out.includes('workbench.css'));
+ assert(out.includes('splash.css'));
  assert(out.includes('/__engine/runtime.js'));
+ assert(out.includes('id="lab-splash"'));
+ assert(out.includes('lab-splash-version'));
+ assert(out.includes('lab-splash-files'));
 });
 test('Расширение текущего редактора сохраняет библиотеку объектов и стартовую клетку',()=>{
  const source=fs.readFileSync(path.resolve(__dirname,'../../editor/map-app.js'),'utf8');
@@ -45,6 +49,18 @@ test('Расширение текущего редактора сохраняе�
  assert(enhanced.includes('function addStart('));assert(enhanced.includes('getDocument:cur'));
  assert.throws(()=>enhanceEditorScript('const MapApp={};'),/контракт/);
 });
+test('Возврат из теста карты несёт id трассы',()=>{
+ const html=fs.readFileSync(path.resolve(__dirname,'../../rnr.html'),'utf8');
+ const map=fs.readFileSync(path.resolve(__dirname,'../../editor/map-app.js'),'utf8');
+ assert.match(html,/function exitLabTest/);
+ assert.match(html,/&track=/);
+ assert.match(map,/applyStartDoc/);
+ assert.match(map,/rnr\.mapSel/);
+ assert.match(map,/__mapFillLock/);
+ assert.match(map,/if \(fillLock\) return;/);
+ const enhanced=enhanceEditorScript(map);
+ assert.match(enhanced,/__mapFillLock/);
+});
 test('Живые rnr.html и Editor.html получают рантайм по meta',()=>{
  const gameHtml=fs.readFileSync(path.resolve(__dirname,'../../rnr.html'),'utf8');
  const labHtml=fs.readFileSync(path.resolve(__dirname,'../../Editor.html'),'utf8');
@@ -52,6 +68,9 @@ test('Живые rnr.html и Editor.html получают рантайм по me
  assert(labHtml.includes('name="divan-engine" content="lab"'));
  assert(enhanceHtml(gameHtml).includes('/__engine/driving.js'));
  assert(enhanceHtml(labHtml).includes('/__engine/editor/workbench.js'));
+ assert(enhanceHtml(labHtml).includes('/__engine/track-ribbon.js'));
+ assert(enhanceHtml(labHtml).includes('/__engine/track-span.js'));
+ assert(enhanceHtml(labHtml).includes('/__engine/editor/splash.js'));
 });
 test('Хуки движка оборачивают исходную функцию, а не молча падают',()=>{
  const src=fs.readFileSync(path.resolve(__dirname,'../src/engine/runtime.js'),'utf8');

@@ -28,6 +28,8 @@
   function drawRaceWorldEngine() {
     const cam = worldCamera(R, raceZoom(), viewS);
     g.setTransform(cam.scale, 0, 0, cam.scale, 0, 0);
+    g.imageSmoothingEnabled = true;
+    if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'medium';
     g.save();
     g.translate(cam.tx, cam.ty);
     drawRaceArena();

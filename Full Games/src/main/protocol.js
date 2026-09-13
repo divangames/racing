@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 const { protocol, app } = require('electron');
-const { game, contentRoot, vendorLocalRoot } = require('./paths');
+const { game, contentRoot, vendorLocalRoot, clientRoot } = require('./paths');
 const { handleSaveCar } = require('./save-car');
 const { handleSaveTrack, handleListTracks } = require('./save-track');
 const { handleListTextures, handleSaveTexture } = require('./save-texture');
@@ -111,7 +111,16 @@ function resolveContentPath(pathname) {
   if (rel.startsWith('vendor-local/')) {
     return safeJoin(vendorLocalRoot(), rel.slice('vendor-local/'.length));
   }
-  return engineFile(rel) || safeJoin(contentRoot(), rel);
+  const fromEngine = engineFile(rel);
+  if (fromEngine) return fromEngine;
+  const fromContent = safeJoin(contentRoot(), rel);
+  if (fromContent && fs.existsSync(fromContent)) return fromContent;
+  const norm = rel.replace(/\\/g, '/');
+  if (norm.startsWith('assets/ui/')) {
+    const fromClient = safeJoin(clientRoot(), norm);
+    if (fromClient && fs.existsSync(fromClient)) return fromClient;
+  }
+  return fromContent;
 }
 
 const MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load', 'cast'];

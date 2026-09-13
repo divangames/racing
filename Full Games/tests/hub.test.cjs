@@ -61,3 +61,20 @@ test('Колонки гаража, эфир доски и порядок маш�
   assert.equal(order[0].id, 2);
   assert.equal(order[1].id, 1);
 });
+
+test('Мост закрывает нижние машины независимо от цели камеры, включая метки и щиты', () => {
+  const g=bootHub(), calls=[];
+  g.g=new Proxy({}, {get(target,key){return target[key] || function(){};},set(target,key,value){target[key]=value;return true;}});
+  g.g.drawImage=(img,...args)=>calls.push([img,...args]);
+  Object.assign(g, { TAU:Math.PI*2, gt:0, settings:{graphics:{weather:false}},
+    visW:()=>100,visH:()=>100,fillMapTileWorld:()=>{},drawYanotGuide:()=>{},drawFinishZone:()=>{},
+    drawCar:(_q,r)=>calls.push(r.id),drawCarShield:(_q,r)=>calls.push(r.id+' shield'),
+    drawPlayerRaceTag:(_q,r)=>calls.push(r.id+' tag'),racerDeck:r=>r.deck });
+  const low={id:'under',y:90,deck:0,isP:true}, high={id:'over',y:10,deck:1};
+  g.R={T:{w:400,h:300,img:'ground',imgHigh:'bridge',S:[],N:0},S:[],cam:{x:0,y:0},racers:[high,low]};
+  for(const key of ['shocks','scorch','pads','ramps','oils','mines','picks','shots','parts','floats'])g.R[key]=[];
+  for(const focus of [low,high,null]){
+    g.R.pl=focus;calls.length=0;g.drawRaceArena();
+    assert.deepEqual(calls,[['ground',0,0,400,300],'under','under shield','under tag',['bridge',0,0,400,300],'over','over shield']);
+  }
+});

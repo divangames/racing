@@ -12,7 +12,9 @@
     "map": "sand",
     "weather": "",
     "groundSrc": "",
-    "roadSrc": ""
+    "roadSrc": "",
+    "railSrc": "",
+    "groundScale": 2.3
   },
   "zones": [
     {

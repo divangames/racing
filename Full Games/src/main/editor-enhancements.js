@@ -42,7 +42,8 @@ function enhanceEditorScript(source) {
   out = replaceOnce(out, '      select(Math.max(0, idx - 1));', '      hist = new StudioHistory();\n      select(Math.max(0, idx - 1));');
   out = replaceOnce(out, '    bind();', `    bind();
     document.addEventListener('change', e => {
-      if (e.target.closest('#workMap')) setTimeout(() => commit(), 0);
+      if (window.__mapFillLock) return;
+      if (e.target.closest('#workMap')) setTimeout(() => { if (!window.__mapFillLock) commit(); }, 0);
     });
     window.addEventListener('beforeunload', e => {
       commit();

@@ -19,12 +19,22 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 const startGameDirect = process.argv.includes('--game');
 const startLab = isLabMode();
+if (startLab) app.setName('DiVANEngine');
 
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
+  app.on('second-instance', (_event, argv) => {
+    const args = argv || [];
+    if (args.includes('--lab')) {
+      createLabWindow();
+      return;
+    }
+    if (args.includes('--game')) {
+      createGameWindow();
+      return;
+    }
     focusExisting();
   });
   app.whenReady().then(() => {

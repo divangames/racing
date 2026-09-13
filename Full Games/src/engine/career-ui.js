@@ -175,12 +175,13 @@
       const def = TRACKDEFS[idx];
       const r = trackTileRect(slot);
       const sel = slot === careerPickSel;
+      const cap = Math.max(22, Math.min(44, (r.h * 0.28) | 0));
       panel(g, r.x, r.y, r.w, r.h, sel ? 'rgba(255,157,46,.16)' : 'rgba(20,17,28,.92)', sel ? '#ffd23f' : '#3a3548', 10);
       const th = def.theme || {};
       g.fillStyle = th.ground || '#2a2434';
-      rr(g, r.x + 10, r.y + 10, r.w - 20, r.h - 52, 8); g.fill();
-      drawTrackOutline(g, def, r.x + 10, r.y + 10, r.w - 20, r.h - 52);
-      txt(g, def.name, r.x + r.w / 2, r.y + r.h - 22, 16, sel ? '#ffd23f' : '#c8c0d4', 'center');
+      rr(g, r.x + 10, r.y + 10, r.w - 20, r.h - cap - 8, 8); g.fill();
+      drawTrackOutline(g, def, r.x + 10, r.y + 10, r.w - 20, r.h - cap - 8);
+      txt(g, def.name, r.x + r.w / 2, r.y + r.h - cap / 2 - 2, r.h < 120 ? 12 : 16, sel ? '#ffd23f' : '#c8c0d4', 'center');
       g._careerTiles.push(r);
     });
     txt(g, 'ENTER — в гараж на этой трассе · ESC — назад', W / 2, H - 28, 14, '#6f6880', 'center', F_B);

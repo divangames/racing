@@ -15,7 +15,7 @@ const game = require('../../config/game.json');
 const CLIENT_ROOT = path.resolve(__dirname, '../..');
 
 /**
- * Запуск лаборатории: --lab в аргументах.
+ * Запуск редактора DiVANEngine: --lab в аргументах.
  * @returns {boolean}
  */
 function isLabMode() {

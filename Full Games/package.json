@@ -12,6 +12,7 @@
     "postinstall": "node tools/copy-vendor.cjs && node tools/sync-launcher-media.cjs",
     "start": "electron .",
     "start:lab": "electron . --lab",
+    "start:editor": "electron . --lab",
     "start:game": "electron . --game",
     "manifest": "node tools/build-manifest.cjs",
     "sync": "node tools/sync-content.cjs",

@@ -7,6 +7,20 @@
 (function (global) {
   'use strict';
 
+  /** High density static layers; cap their combined RGBA storage at 192 MiB. */
+  function createTrackCanvas(T, layers) {
+    const scale = Math.min(3, 8192 / T.w, 8192 / T.h,
+      Math.sqrt(48 * 1024 * 1024 / (T.w * T.h * (layers || 1))));
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.floor(T.w * scale));
+    c.height = Math.max(1, Math.floor(T.h * scale));
+    const q = c.getContext('2d');
+    q.scale(c.width / T.w, c.height / T.h);
+    q.imageSmoothingEnabled = true;
+    q.imageSmoothingQuality = 'high';
+    return c;
+  }
+
   /**
    * Живые картинки биома: только complete и с шириной.
    * @param {string} biome
@@ -58,7 +72,13 @@
     }
     const src = T.mapBake || T.mapTile;
     const nw = (src && (src.width || src.naturalWidth)) || MAP_TILE_CELL;
-    const s = MAP_TILE_CELL / nw;
+    const scales = global.MAP_BIOME_SCALE || {};
+    let sc = 1;
+    if (global.RnRTracks && typeof RnRTracks.groundScaleOf === 'function') sc = RnRTracks.groundScaleOf(T.theme);
+    else if (T.theme && Number.isFinite(+T.theme.groundScale) && +T.theme.groundScale > 0) sc = +T.theme.groundScale;
+    else if (T.theme && Number.isFinite(+scales[T.theme.map])) sc = +scales[T.theme.map];
+    const cell = MAP_TILE_CELL * Math.max(0.25, Math.min(4, sc || 1));
+    const s = cell / nw;
     g.save();
     g.imageSmoothingEnabled = true;
     if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'medium';
@@ -134,7 +154,7 @@
    * @returns {HTMLCanvasElement}
    */
   function prerenderLabTrackEngine(T) {
-    const c = document.createElement('canvas'); c.width = Math.ceil(T.w); c.height = Math.ceil(T.h); const q = c.getContext('2d');
+    const c = createTrackCanvas(T, 1), q = c.getContext('2d');
     const S = T.S, N = S.length, path = new Path2D();
     path.moveTo(S[0].x, S[0].y); for (let i = 1; i < N; i++) path.lineTo(S[i].x, S[i].y); path.closePath();
     q.lineJoin = 'round'; q.lineCap = 'round';
@@ -173,7 +193,11 @@
    */
   function prerenderEngine(T) {
     if (T.lab) return prerenderLabTrack(T);
-    const c = document.createElement('canvas'); c.width = Math.ceil(T.w); c.height = Math.ceil(T.h); const q = c.getContext('2d');
+    const span = global.DiVANEngine && global.DiVANEngine.trackSpan;
+    const layers = span && span.hasDeck(T, 1) ? 2 : 1;
+    const c = createTrackCanvas(T, layers), q = c.getContext('2d');
+    q.imageSmoothingEnabled = true;
+    if (q.imageSmoothingQuality) q.imageSmoothingQuality = 'medium';
     const th = T.theme, rng = mulberry(7 + T.idx * 31);
     T.mapTile = th.map ? pickMapTile(th.map) : null;
     if (th.groundSrc && global.RnRTracks) {
@@ -183,36 +207,109 @@
     if (T.mapTile) {
       // Земля рисуется в кадре из исходника; здесь только декор и полотно
     } else {
-      q.fillStyle = th.ground; q.fillRect(0, 0, c.width, c.height);
-      for (let i = 0; i < 2600; i++) { q.fillStyle = rng() < .5 ? th.dark : '#00000022'; const s = 2 + rng() * 4; q.fillRect(rng() * c.width, rng() * c.height, s, s); }
-      for (let i = 0; i < 60; i++) { q.fillStyle = '#00000014'; q.beginPath(); q.arc(rng() * c.width, rng() * c.height, 30 + rng() * 90, 0, TAU); q.fill(); }
+      q.fillStyle = th.ground; q.fillRect(0, 0, T.w, T.h);
+      for (let i = 0; i < 2600; i++) { q.fillStyle = rng() < .5 ? th.dark : '#00000022'; const s = 2 + rng() * 4; q.fillRect(rng() * T.w, rng() * T.h, s, s); }
+      for (let i = 0; i < 60; i++) { q.fillStyle = '#00000014'; q.beginPath(); q.arc(rng() * T.w, rng() * T.h, 30 + rng() * 90, 0, TAU); q.fill(); }
     }
     for (let i = 0; i < 46; i++) {
-      let x = rng() * c.width, y = rng() * c.height, tr = 0;
-      while (distToTrack(T, x, y) < ROADW + 70 && tr++ < 12) { x = rng() * c.width; y = rng() * c.height; }
+      let x = rng() * T.w, y = rng() * T.h, tr = 0;
+      while (distToTrack(T, x, y) < ROADW + 70 && tr++ < 12) { x = rng() * T.w; y = rng() * T.h; }
       if (tr >= 13) continue;
       q.save(); q.translate(x, y);
       paintOffroadDeco(q, th);
       q.restore();
     }
-    const S = T.S, N = S.length, path = new Path2D();
-    path.moveTo(S[0].x, S[0].y); for (let i = 1; i < N; i++) path.lineTo(S[i].x, S[i].y); path.closePath();
-    q.lineJoin = 'round'; q.lineCap = 'round';
-    q.strokeStyle = th.line; q.lineWidth = ROADW * 2 + 22; q.stroke(path);
-    for (let i = 0; i < N; i++) {
-      const a = S[i], b = S[(i + 1) % N], mat = roadMaterial(T, i / N), m = ROAD_MATERIALS[mat] || ROAD_MATERIALS.asphalt;
-      q.strokeStyle = mat === 'asphalt' ? (th.road || m.road) : m.road; q.lineWidth = ROADW * 2;
-      q.beginPath(); q.moveTo(a.x, a.y); q.lineTo(b.x, b.y); q.stroke();
+    const S = T.S, N = S.length;
+    const ribbon = global.DiVANEngine && global.DiVANEngine.trackRibbon;
+    if (ribbon && ribbon.paintDeck) ribbon.paintDeck(q, T, ROADW, 0);
+    else if (ribbon) {
+      const path = new Path2D();
+      path.moveTo(S[0].x, S[0].y); for (let i = 1; i < N; i++) path.lineTo(S[i].x, S[i].y); path.closePath();
+      ribbon.paintShoulder(q, path, ROADW);
+      ribbon.paintRoadBody(q, T, ROADW);
+      ribbon.paintRails(q, T, ROADW, 0);
+      ribbon.paintCenterDash(q, T);
     }
-    if (th.roadSrc && global.RnRTracks) {
-      const road = RnRTracks.texOf(th.roadSrc);
-      if (road && road.complete && road.naturalWidth) {
-        const pat = q.createPattern(road, 'repeat');
-        if (pat) { q.save(); q.globalAlpha = .62; q.strokeStyle = pat; q.lineWidth = ROADW * 2; q.stroke(path); q.restore(); }
+    paintMatMarks(q, T, 0);
+    paintOverpassPiers(q, T, ROADW);
+    T.imgHigh = null;
+    if (ribbon && ribbon.paintDeck && span && span.hasDeck(T, 1)) {
+      const hi = createTrackCanvas(T, layers);
+      const hq = hi.getContext('2d');
+      hq.imageSmoothingEnabled = true;
+      if (hq.imageSmoothingQuality) hq.imageSmoothingQuality = 'medium';
+      ribbon.paintDeck(hq, T, ROADW, 1);
+      paintMatMarks(hq, T, 1);
+      T.imgHigh = hi;
+    }
+    const p0 = S[0]; q.save(); q.translate(p0.x, p0.y); q.rotate(p0.ang);
+    for (let cxI = -24; cxI < 24; cxI += 12) for (let cyI = -96; cyI < 96; cyI += 12) {
+      q.fillStyle = ((cxI / 12 + cyI / 12) % 2 === 0) ? '#eee' : '#15141a'; q.fillRect(cxI, cyI, 12, 12);
+    }
+    q.restore();
+    if (global.RnRTracks && T.decals) RnRTracks.paintDecals(q, T.decals);
+    return c;
+  }
+
+  /**
+   * Опоры и тень эстакады на земле — развязка, не «приподнятая петля».
+   * @param {CanvasRenderingContext2D} q
+   * @param {object} T
+   * @param {number} halfW
+   */
+  function paintOverpassPiers(q, T, halfW) {
+    const span = global.DiVANEngine && global.DiVANEngine.trackSpan;
+    if (!span || !span.hasDeck(T, 1) || !span.eachSolidRun) return;
+    const S = T.S, N = S.length;
+    span.eachSolidRun(T, 1, function (a, len) {
+      q.save();
+      q.strokeStyle = 'rgba(18,14,10,.38)';
+      q.lineWidth = halfW * 2 + 10;
+      q.lineCap = 'butt';
+      q.lineJoin = 'round';
+      q.beginPath();
+      for (let k = 0; k < len; k++) {
+        const p = S[(a + k) % N];
+        if (k === 0) q.moveTo(p.x + 12, p.y + 22);
+        else q.lineTo(p.x + 12, p.y + 22);
       }
-    }
+      q.stroke();
+      q.restore();
+      for (let k = 4; k < len - 3; k += 6) {
+        const p = S[(a + k) % N];
+        q.save();
+        q.translate(p.x, p.y + 4);
+        q.fillStyle = 'rgba(0,0,0,.32)';
+        q.beginPath();
+        q.moveTo(-11, 2); q.lineTo(11, 2); q.lineTo(8, 48); q.lineTo(-8, 48); q.closePath();
+        q.fill();
+        q.fillStyle = '#6e6e76';
+        q.beginPath();
+        q.moveTo(-9, 0); q.lineTo(9, 0); q.lineTo(6, 44); q.lineTo(-6, 44); q.closePath();
+        q.fill();
+        q.fillStyle = '#b8b8be';
+        q.fillRect(-11, -8, 22, 12);
+        q.fillStyle = '#8a8a92';
+        q.fillRect(2, 0, 5, 44);
+        q.restore();
+      }
+    });
+  }
+
+  /**
+   * Рисунок материала поверх ленты, только на своём этаже.
+   * @param {CanvasRenderingContext2D} q
+   * @param {object} T
+   * @param {number} deck
+   */
+  function paintMatMarks(q, T, deck) {
+    const S = T.S, N = S.length;
+    const span = global.DiVANEngine && global.DiVANEngine.trackSpan;
     for (let i = 0; i < N; i += 11) {
-      const p = S[i], mat = roadMaterial(T, i / N); q.save(); q.translate(p.x, p.y); q.rotate(p.ang);
+      if (span && !span.segSolid(T, i, deck)) continue;
+      const p = S[i], mat = roadMaterial(T, i / N);
+      if (mat === 'asphalt') continue;
+      q.save(); q.translate(p.x, p.y); q.rotate(p.ang);
       q.lineWidth = 2;
       if (mat === 'ice') {
         q.strokeStyle = 'rgba(235,255,255,.62)'; q.beginPath(); q.moveTo(-32, -28); q.lineTo(-8, -8); q.lineTo(15, -18); q.lineTo(34, 20); q.stroke();
@@ -226,39 +323,14 @@
         q.strokeStyle = 'rgba(179,201,105,.42)'; q.beginPath(); q.moveTo(-34, -26); q.lineTo(-22, -15); q.moveTo(0, 25); q.lineTo(12, 14); q.moveTo(26, -20); q.lineTo(38, -10); q.stroke();
       } else if (mat === 'dirt') {
         q.strokeStyle = 'rgba(45,27,19,.30)'; q.lineWidth = 3; q.beginPath(); q.moveTo(-40, -18); q.lineTo(38, -10); q.moveTo(-35, 17); q.lineTo(30, 25); q.stroke();
-      } else {
-        q.strokeStyle = 'rgba(255,255,255,.08)'; q.beginPath(); q.moveTo(-35, -18); q.lineTo(28, 14); q.stroke();
       }
       q.restore();
     }
-    for (let i = 0; i < N; i += 2) {
-      const p = S[i];
-      if (p.k > .01) {
-        q.fillStyle = (i >> 1) % 2 ? '#e33b2e' : '#f2ede0';
-        for (const s of [1, -1]) {
-          q.save(); q.translate(p.x + p.nx * s * (ROADW + 8), p.y + p.ny * s * (ROADW + 8)); q.rotate(p.ang); q.fillRect(-10, -6, 20, 12); q.restore();
-        }
-      }
-    }
-    const off = new Path2D(), off2 = new Path2D();
-    for (let i = 0; i <= N; i++) {
-      const p = S[i % N], x1 = p.x + p.nx * (ROADW - 7), y1 = p.y + p.ny * (ROADW - 7), x2 = p.x - p.nx * (ROADW - 7), y2 = p.y - p.ny * (ROADW - 7);
-      if (i === 0) { off.moveTo(x1, y1); off2.moveTo(x2, y2); } else { off.lineTo(x1, y1); off2.lineTo(x2, y2); }
-    }
-    q.strokeStyle = 'rgba(255,255,255,.55)'; q.lineWidth = 4; q.stroke(off); q.stroke(off2);
-    q.strokeStyle = 'rgba(255,210,63,.4)'; q.lineWidth = 5; q.setLineDash([26, 34]); q.stroke(path); q.setLineDash([]);
-    const p0 = S[0]; q.save(); q.translate(p0.x, p0.y); q.rotate(p0.ang);
-    for (let cxI = -24; cxI < 24; cxI += 12) for (let cyI = -96; cyI < 96; cyI += 12) {
-      q.fillStyle = ((cxI / 12 + cyI / 12) % 2 === 0) ? '#eee' : '#15141a'; q.fillRect(cxI, cyI, 12, 12);
-    }
-    q.restore();
-    if (global.RnRTracks && T.decals) RnRTracks.paintDecals(q, T.decals);
-    return c;
   }
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.trackPaint = { paintOffroadDeco: paintOffroadDeco };
+  engine.trackPaint = { paintOffroadDeco: paintOffroadDeco, createTrackCanvas: createTrackCanvas };
   engine.replace('mapTileList', mapTileListEngine);
   engine.replace('pickMapTile', pickMapTileEngine);
   engine.replace('bakeMapTile', bakeMapTileEngine);

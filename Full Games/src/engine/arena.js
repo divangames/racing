@@ -38,7 +38,9 @@
     const pad = arenaPad(R.cam, vw, vh, 64);
     if (T.lab) drawLabWorldGrid(pad.x, pad.y, pad.w, pad.h);
     else fillMapTileWorld(pad.x, pad.y, pad.w, pad.h, T);
-    g.drawImage(T.img, 0, 0);
+    g.imageSmoothingEnabled = true;
+    if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'medium';
+    g.drawImage(T.img, 0, 0, T.w, T.h);
     if (global.RnRObjects) RnRObjects.drawLayer(g, R.labObjects, 'under');
     if (R.puddles && R.weather && R.weather.id === 'rain') {
       for (const p of R.puddles) {
@@ -197,8 +199,12 @@
     }
     drawFinishZone(g, R.S[0]);
     const order = racerDrawOrder(R.racers);
-    for (const r of order) {
-      if (r.dead) continue;
+    /**
+     * Один гонщик: корпус, дымка, щит, метка.
+     * @param {object} r
+     */
+    function paintRacer(r) {
+      if (r.dead) return;
       let al = 1; if (r.invuln > 0) al = .4 + .3 * Math.sin(gt * 25);
       if (r.cloak && r.cloak > 0) al *= 0.15 + .05 * Math.sin(gt * 20);
       g.globalAlpha = al; drawCar(g, r, 1); g.globalAlpha = 1;
@@ -209,6 +215,21 @@
       drawCarShield(g, r);
       if (r.isP) drawPlayerRaceTag(g, r);
     }
+    /**
+     * Этаж отрисовки: эстакада сверху.
+     * @param {object} r
+     * @returns {number}
+     */
+    function paintLayer(r) {
+      if (typeof racerDeck === 'function') return racerDeck(r) > 0 ? 1 : 0;
+      if (r.air && (r.z || 0) > 18) return 1;
+      return 0;
+    }
+    // Occlusion depends on each racer's deck, never on the camera's target.
+    const layers = order.map(function (r) { return { racer: r, deck: paintLayer(r) }; });
+    for (const item of layers) if (item.deck === 0) paintRacer(item.racer);
+    if (T.imgHigh) g.drawImage(T.imgHigh, 0, 0, T.w, T.h);
+    for (const item of layers) if (item.deck > 0) paintRacer(item.racer);
     if (global.RnRObjects) RnRObjects.drawLayer(g, R.labObjects, 'over');
     for (const p of R.parts) {
       if (vfxLive() && !p.rim) continue;

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!-- Лаборатория: машины и редактор трасс. -->
+<!-- DiVANEngine: машины и редактор трасс. -->
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="divan-engine" content="lab">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Редактор машин Рок-н-ролл гонки">
-<title>RNR · Лаборатория</title>
+<meta name="description" content="Редактор DiVANEngine — машины и трассы">
+<title>DiVANEngine</title>
 <link rel="icon" href="assets/image/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" href="assets/image/favicon-32.png" sizes="32x32">
 <link rel="icon" type="image/webp" href="assets/image/favicon.webp">
@@ -19,9 +19,9 @@
 <main class="app">
   <header class="topbar">
     <div>
-      <div class="eyebrow">RNR · Dev tools</div>
-      <h1 class="title">Лаборатория</h1>
-      <div class="app-tabs" role="tablist" aria-label="Разделы лаборатории">
+      <div class="eyebrow">DIVAN GAMES  /  ENGINE WORKSPACE</div>
+      <h1 class="title">DiVANEngine</h1>
+      <div class="app-tabs" role="tablist" aria-label="Разделы редактора">
         <button type="button" class="tab is-on" role="tab" data-tab="car" aria-selected="true">Машина</button>
         <button type="button" class="tab" role="tab" data-tab="map" aria-selected="false">Карта</button>
       </div>
@@ -276,15 +276,25 @@
       </section>
       <section class="section">
         <div class="section-title">ТЕКСТУРЫ</div>
-        <p class="hint">Покрытие — материал полотна (асфальт, песок…). Свою землю кладём в текущий биом или в новую папку.</p>
+        <p class="hint">Земля — <code>Textures/biomes</code>, полотно — <code>Textures/road</code>, борта — <code>Textures/rails</code>. В заезде эти файлы перекрывают сток.</p>
         <div class="tex-dest">
           <label><input type="radio" name="mapTexDest" id="mapTexDestCur" value="current" checked> В текущий биом</label>
           <label><input type="radio" name="mapTexDest" id="mapTexDestNew" value="new"> Новый биом</label>
         </div>
         <div class="field"><label for="mapNewBiomeId">Id нового биома</label><input id="mapNewBiomeId" maxlength="32" placeholder="ash_wastes" spellcheck="false"></div>
+        <img id="mapGroundPreview" class="tex-preview" alt="Фон трассы" hidden>
         <label class="file-label">Земля PNG/WebP<input type="file" id="mapGroundFile" accept="image/png,image/webp,image/jpeg"></label>
-        <div class="field"><label for="mapRoadPick">Дорога из библиотеки</label><select id="mapRoadPick"><option value="">— сток цвета зон —</option></select></div>
-        <label class="file-label">Текстура дороги<input type="file" id="mapRoadFile" accept="image/png,image/webp,image/jpeg"></label>
+        <div class="field scale-row">
+          <label for="mapGroundScale">Масштаб фона</label>
+          <input id="mapGroundScale" type="range" min="0.25" max="4" step="0.05" value="1">
+          <span id="mapGroundScaleRead">100%</span>
+        </div>
+        <div class="field"><label for="mapRoadPick">Дорога из библиотеки</label><select id="mapRoadPick"><option value="">— цвет зон покрытия —</option></select></div>
+        <img id="mapRoadPreview" class="tex-preview" alt="Полотно дороги" hidden>
+        <label class="file-label">Текстура дороги PNG/WebP<input type="file" id="mapRoadFile" accept="image/png,image/webp,image/jpeg"></label>
+        <div class="field"><label for="mapRailPick">Борта из библиотеки</label><select id="mapRailPick"><option value="">— ржавый рельс —</option></select></div>
+        <img id="mapRailPreview" class="tex-preview" alt="Борта трассы" hidden>
+        <label class="file-label">Текстура бортов PNG/WebP<input type="file" id="mapRailFile" accept="image/png,image/webp,image/jpeg"></label>
       </section>
       <section class="section">
         <div class="section-title">ПОКРЫТИЕ <span>доля круга 0…1</span></div>
@@ -374,21 +384,22 @@
 <script src="mid-kits.js?v=20260906s"></script>
 <script src="editor/data.js?v=20260906s"></script>
 <script src="editor/fx.js?v=20260828q"></script>
-<script src="editor/view.js?v=20260828s"></script>
+<script src="editor/view.js?v=20260913p"></script>
 <script src="editor/app.js?v=20260906s"></script>
 <script src="editor/lab-audio.js?v=20260907lab"></script>
 <script src="editor/map-data.js?v=20260905h"></script>
-<script src="editor/map-tex.js?v=20260905c"></script>
-<script src="editor/map-preview.js?v=20260905h"></script>
+<script src="editor/map-tex.js?v=20260913p"></script>
+<script src="editor/map-layout.js?v=20260913p"></script>
+<script src="editor/map-preview.js?v=20260913q"></script>
 <script src="editor/map-marks.js?v=20260905h"></script>
 <script src="editor/map-gizmo.js?v=20260905h"></script>
 <script src="editor/map-coll.js?v=20260905g"></script>
 <script src="editor/map-assets.js?v=20260905n"></script>
 <script src="editor/map-asset-coll.js?v=20260905m"></script>
 <script src="editor/map-asset-edit.js?v=20260905m"></script>
-<script src="editor/map-input.js?v=20260905h"></script>
-<script src="editor/map-panel.js?v=20260905m"></script>
-<script src="editor/map-view.js?v=20260905k"></script>
-<script src="editor/map-app.js?v=20260905m"></script>
+<script src="editor/map-input.js?v=20260913p"></script>
+<script src="editor/map-panel.js?v=20260913t"></script>
+<script src="editor/map-view.js?v=20260913q"></script>
+<script src="editor/map-app.js?v=20260913t"></script>
 </body>
 </html>

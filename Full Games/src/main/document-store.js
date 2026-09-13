@@ -27,7 +27,7 @@ function validateTrack(track) {
   if (!track.cps.every(validPoint)) return 'Некорректные координаты трассы';
   if (new Set(track.cps.map(p => p[0]+','+p[1])).size < 4) return 'Нужны хотя бы четыре различные точки';
   if (typeof track.name !== 'string' || !track.name.trim() || track.name.length > 120) return 'Имя трассы: от 1 до 120 символов';
-  for (const key of ['decals','items','zones','shortcuts']) {
+  for (const key of ['decals','items','zones','shortcuts','gaps','decks']) {
     if (track[key] != null && (!Array.isArray(track[key]) || track[key].length > 10000 || track[key].some(p=>!p || typeof p!=='object' || Array.isArray(p)))) return 'Некорректный список: '+key;
   }
   if (track.hazards != null) {

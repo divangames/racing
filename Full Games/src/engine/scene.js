@@ -96,6 +96,7 @@
         advanceIdx(r);
       }
       resolveRaceContact(dt);
+      if (typeof keepAllOnTrack === 'function') keepAllOnTrack();
       if (R.doneT <= 0) showResults();
       return;
     }
@@ -131,6 +132,7 @@
       if (R.endTimer <= 0) { R.phase = 'done'; R.doneT = 1.2; }
     }
     resolveRaceContact(dt);
+    if (typeof keepAllOnTrack === 'function') keepAllOnTrack();
     R.order = R.racers.slice().sort(function (a, b) {
       if (a.finished && b.finished) return a.finishTime - b.finishTime;
       if (a.finished) return -1; if (b.finished) return 1; return b.prog - a.prog;

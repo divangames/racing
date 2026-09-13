@@ -14,7 +14,8 @@ const vm = require('node:vm');
 const { enhanceHtml, engineFile } = require('../src/main/enhancements');
 
 const HOOKS = [
-  'enterCarSel', 'startIntro', 'endIntro', 'confirmCharPick', 'enterTitle', 'dismissPressStart'
+  'enterCarSel', 'startIntro', 'endIntro', 'confirmCharPick', 'enterTitle', 'dismissPressStart',
+  'enterCameraSetup', 'finishCameraSetup'
 ];
 
 /** Песочница входа в комикс и меню. */
@@ -52,7 +53,11 @@ function bootIntro() {
     carEngineHalt: function () { g._engHalt = true; },
     initTitleRace: function () { g._titleRace = true; },
     sClick: function () { g._click = true; },
-    clearKeys: function () { g._keys = true; }
+    clearKeys: function () { g._keys = true; },
+    cameraSetupHint: false,
+    cameraSetupNext: 'char',
+    settingsZoomDrag: false,
+    enterCharSel: function () { g.state = 'char'; }
   };
   g.window = g;
   g.globalThis = g;
@@ -94,4 +99,11 @@ test('Комикс Медведя, выбор машины и титул', () =>
   g.state = 'press';
   g.dismissPressStart();
   assert.equal(g.state, 'title');
+  g.save = { car: 11 };
+  g.enterCameraSetup('car');
+  assert.equal(g.state, 'cameraSetup');
+  assert.equal(g.cameraSetupNext, 'car');
+  g.finishCameraSetup();
+  assert.equal(g.state, 'car');
+  assert.equal(g.selCar, 11);
 });

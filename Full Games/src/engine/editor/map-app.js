@@ -84,6 +84,10 @@ const MapApp = (() => {
     idx = i;
     hist = histories.get(cur()) || new StudioHistory();
     histories.set(cur(), hist);
+    try {
+      const id = docs[idx] && docs[idx].id;
+      if (id) sessionStorage.setItem('rnr.mapSel', id);
+    } catch (err) {}
     commit();
     fill();
     MapView.fit();
@@ -149,6 +153,7 @@ const MapApp = (() => {
   /** Тест в игре: черновик в sessionStorage. */
   async function testDrive() {
     if (!await saveNow()) return;
+    try { if (cur().id) sessionStorage.setItem('rnr.mapSel', cur().id); } catch (err) {}
     try { sessionStorage.setItem('rnr.trackDraft', JSON.stringify(MapData.fileTrack(cur()))); } catch (err) {}
     const car = new URLSearchParams(location.search).get('car') || '0';
     location.href = 'rnr.html?lab=1&from=map&car=' + encodeURIComponent(car) + '&track=' + encodeURIComponent(cur().id);
@@ -168,10 +173,14 @@ const MapApp = (() => {
     const reset = $('resetBtn');
     if (reset) reset.hidden = name === 'map';
     if (name === 'map') {
-      MapView.sync();
-      MapView.fit();
-      if (window.MapAssets) MapAssets.setOpen(name === 'map');
-    } else if (window.MapAssets) MapAssets.setOpen(false);
+      const show = () => { MapView.sync(); MapView.fit(); MapView.draw(); };
+      show();
+      requestAnimationFrame(show);
+      if (window.MapAssets) MapAssets.setOpen(true);
+    } else {
+      if (window.MapAssets) MapAssets.setOpen(false);
+      if (window.EditorView && EditorView.wake) EditorView.wake();
+    }
   }
 
   /** Привязка кнопок. */
@@ -202,14 +211,19 @@ const MapApp = (() => {
       const stock = RnRTracks.THEMES.find((x) => x.id === id);
       const wx = cur().theme.weather;
       const road = cur().theme.roadSrc;
+      const rail = cur().theme.railSrc;
+      const gscale = cur().theme.groundScale;
+      const b = (MapTex.catalog.biomes || []).find((x) => x.id === id);
+      const gsrc = b && !b.stock ? b.src : (b ? '' : cur().theme.groundSrc);
       if (stock) {
-        cur().theme = {ground: stock.ground, dark: stock.dark, road: stock.road, line: stock.line, deco: stock.deco, map: stock.map, weather: wx, groundSrc: '', roadSrc: road};
+        cur().theme = {ground: stock.ground, dark: stock.dark, road: stock.road, line: stock.line, deco: stock.deco, map: stock.map, weather: wx, groundSrc: gsrc, roadSrc: road, railSrc: rail, groundScale: gscale};
       } else {
-        const b = (MapTex.catalog.biomes || []).find((x) => x.id === id);
         cur().theme.map = id;
-        cur().theme.groundSrc = b ? b.src : cur().theme.groundSrc;
+        cur().theme.groundSrc = gsrc || cur().theme.groundSrc;
         cur().theme.weather = wx;
         cur().theme.roadSrc = road;
+        cur().theme.railSrc = rail;
+        cur().theme.groundScale = gscale;
       }
       dirty = true;
     };
@@ -219,6 +233,10 @@ const MapApp = (() => {
     };
     if ($('mapRoadPick')) $('mapRoadPick').onchange = () => {
       cur().theme.roadSrc = $('mapRoadPick').value;
+      dirty = true;
+    };
+    if ($('mapRailPick')) $('mapRailPick').onchange = () => {
+      cur().theme.railSrc = $('mapRailPick').value;
       dirty = true;
     };
     if ($('mapGroundFile')) $('mapGroundFile').onchange = async () => {
@@ -249,7 +267,21 @@ const MapApp = (() => {
         dirty = true;
         fill();
       } catch (err) {
-        if ($('mapSaveState')) $('mapSaveState').textContent = 'Нужен editor.bat';
+        if ($('mapSaveState')) $('mapSaveState').textContent = 'Нужен DiVANEngine.bat';
+      }
+    };
+    if ($('mapRailFile')) $('mapRailFile').onchange = async () => {
+      const file = $('mapRailFile').files && $('mapRailFile').files[0];
+      $('mapRailFile').value = '';
+      if (!file) return;
+      try {
+        const out = await MapTex.upload(file, 'rail', 'library', file.name);
+        if (!out.ok) { if ($('mapSaveState')) $('mapSaveState').textContent = out.error || 'Сбой бортов'; return; }
+        cur().theme.railSrc = out.src;
+        dirty = true;
+        fill();
+      } catch (err) {
+        if ($('mapSaveState')) $('mapSaveState').textContent = 'Нужен DiVANEngine.bat';
       }
     };
     if ($('mapAddZone')) $('mapAddZone').onclick = () => {

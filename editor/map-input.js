@@ -111,9 +111,15 @@ const MapInput = (() => {
     st.onSelect(st.sel);
   }
 
+  /** Кадр после ввода. */
+  function redraw() {
+    if (st.redraw) st.redraw();
+  }
+
   /** Нажатие. */
   function onDown(e) {
     if (!live()) return;
+    try {
     if (e.button === 1 || st.spacePan || st.tool === 'pan') {
       st.drag = {mode: 'pan', x: e.clientX, y: e.clientY, cx: st.cam.x, cy: st.cam.y};
       e.preventDefault();
@@ -233,6 +239,7 @@ const MapInput = (() => {
       st.sel = {kind: 'cut', i: t.shortcuts.length - 1};
       st.onChange(true); st.onSelect(st.sel);
     }
+    } finally { redraw(); }
   }
 
   /** Движение. */
@@ -241,11 +248,15 @@ const MapInput = (() => {
     const w = worldOf(e);
     if (st.onHover) st.onHover(w);
     st.hoverW = w;
+    const over = st.canvas && (e.target === st.canvas || (st.canvas.contains && st.canvas.contains(e.target)));
     const t = doc();
     if (t && st.sel && !st.drag) {
       st.gizmoHover = MapGizmo.hit(w, st.cam, MapGizmo.resolve(t, st.sel));
     } else if (!st.drag) st.gizmoHover = null;
-    if (!st.drag) return;
+    if (!st.drag) {
+      if (over && st.redraw) st.redraw();
+      return;
+    }
     const drag = st.drag, cam = st.cam;
     if (drag.mode === 'pan') {
       cam.x = drag.cx - (e.clientX - drag.x) / cam.z;
@@ -281,6 +292,7 @@ const MapInput = (() => {
       rec.ang = Math.atan2(w.y - rec.y, w.x - rec.x);
       st.onChange(false);
     }
+    if (st.redraw) st.redraw();
   }
 
   /** Отпускание. */
@@ -288,12 +300,14 @@ const MapInput = (() => {
     if (st.drag && st.drag.mode !== 'pan' && st.onDragEnd) st.onDragEnd();
     st.drag = null;
     st.brushLast = null;
+    if (st.redraw) st.redraw();
   }
 
   /** Зум, размер кисти, поворот. */
   function onWheel(e) {
     if (!live()) return;
     e.preventDefault();
+    try {
     const t = doc();
     if (st.tool === 'decal' && e.shiftKey) {
       st.brushScale = Math.max(0.18, Math.min(2.4, st.brushScale * (e.deltaY > 0 ? 0.9 : 1.12)));
@@ -345,6 +359,7 @@ const MapInput = (() => {
     st.cam.x += before.x - after.x;
     st.cam.y += before.y - after.y;
     if (st.onZoom) st.onZoom(Math.round(st.cam.z * 100) + '%');
+    } finally { redraw(); }
   }
 
   /** Подписка на холст. */

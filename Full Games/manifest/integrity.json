@@ -1,13 +1,13 @@
 {
   "id": "kolesnica-voyny",
-  "version": "0.2.2.7",
-  "created": "2026-09-13T06:03:57.824Z",
+  "version": "0.2.2.8",
+  "created": "2026-09-13T15:08:17.434Z",
   "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
   "files": [
     {
       "path": "rnr.html",
-      "size": 387684,
-      "sha256": "7554c7cd820ea96a2ba9af483f3acb27640441e7fc5ad4537d92b225c3cbaf57"
+      "size": 389827,
+      "sha256": "80e04723ea7f113d9c5f5e7e209c62c067c19306b814ca72fcc73d6e90a0a50a"
     },
     {
       "path": "career.js",
@@ -26,8 +26,8 @@
     },
     {
       "path": "sounds.js",
-      "size": 4049,
-      "sha256": "03948784709a35cbbc827d5ca1e1d5911bc8c60af3f4c748040ab4f557c6e0de"
+      "size": 4238,
+      "sha256": "3698dd25feb6e89f7542c55ff3799c5f86178ddd691d70e1c096645d11dea90b"
     },
     {
       "path": "car-audio.js",
@@ -91,8 +91,8 @@
     },
     {
       "path": "tracks.js",
-      "size": 14448,
-      "sha256": "692f6d577e9362af6f90beb226e4ea689b2ee370f84aa795ca2391c04d60c712"
+      "size": 21910,
+      "sha256": "bbce74fcb0a1c8e0484105cfd3ffcbe4aab082be32365af8c3a128accfe28c87"
     },
     {
       "path": "objects.js",
@@ -126,8 +126,13 @@
     },
     {
       "path": "vfx/weather-fx.js",
-      "size": 11240,
-      "sha256": "23f4545179a554f7c5d51adac631148da6c4358492a0484d4b947df82fd54e00"
+      "size": 11437,
+      "sha256": "89f5d7a19a4d9eb0119718fb76718510980661ec2176c3b0c658677cf85c9804"
+    },
+    {
+      "path": "vfx/weather-audio.js",
+      "size": 4983,
+      "sha256": "92286a4f1756c9dae7f424d9055710ed22d016be13b138a1ffe75af6e6ea742b"
     },
     {
       "path": "vendor/three.module.js",
@@ -147,7 +152,7 @@
     {
       "path": "assets/data/cars/01/car.json",
       "size": 2707,
-      "sha256": "11b58016b2d6464954972a498ee9916308cb9ecc62392102dabbf357690a21c9"
+      "sha256": "76825dfdbb3677ff768247b34d9165b5c1adaa3dfaa380034516d29f30484722"
     },
     {
       "path": "assets/data/cars/02/car.json",
@@ -202,7 +207,7 @@
     {
       "path": "assets/data/cars/12/car.json",
       "size": 2349,
-      "sha256": "614fab166d4d39fdb73f044231a615cbfaecdfd76c5165938d066771cc75e32a"
+      "sha256": "fdf26f3077ca9fb02e9cca5dd9229dbcd43f2e48caf4315e5992e2c0a3b31344"
     },
     {
       "path": "assets/data/cars/13/car.json",

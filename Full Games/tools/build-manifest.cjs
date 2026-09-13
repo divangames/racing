@@ -43,6 +43,7 @@ const FILES = [
   'vfx/quarks-wreck.js',
   'vfx/quarks-weather.js',
   'vfx/weather-fx.js',
+  'vfx/weather-audio.js',
   'vendor/three.module.js',
   'vendor/three.quarks.esm.js',
   'assets/image/game-logo.webp'

@@ -155,6 +155,7 @@
    st.bolts.push(makeBolt(sw, sh));
    if (Math.random() < 0.35) st.bolts.push(makeBolt(sw, sh));
    if (R.shake != null) R.shake = Math.max(R.shake, 3.2);
+   if (root.RnRWeatherAudio) root.RnRWeatherAudio.strike();
   }
  }
 
@@ -180,6 +181,7 @@
    st.bolts.length = 0;
    st.flash = 0;
    quarksOff();
+   if (root.RnRWeatherAudio) root.RnRWeatherAudio.sync(R, settings);
    return;
   }
   const calm = reduced();
@@ -213,6 +215,7 @@
    }
   }
   tickLightning(R, dt, cam, sw, sh, calm);
+  if (root.RnRWeatherAudio) root.RnRWeatherAudio.sync(R, settings);
  }
 
  /** Запасные осадки на холсте, если quarks выключен. */

@@ -67,6 +67,10 @@ test('Подпись этапа, MIME, доля очереди и дедуп fet
   const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
   assert(html.includes('function bootJobLabel('));
   assert(html.includes('function bootGo('));
+  assert(html.includes('disclaimer-21plus.svg'));
+  assert(html.includes('boot-disclaimer'));
+  assert(html.includes('id="boot-screen" class="is-load"'));
+  assert(html.includes('disclaimerMs:5000'));
   const g = bootSandbox();
   assert.equal(g.DiVANEngine.boot.jobLabel({ urls: ['assets/data/comics/01.webp'] }), 'Комиксы');
   assert.equal(g.DiVANEngine.boot.jobLabel({ label: 'Шрифты', urls: ['x'] }), 'Шрифты');

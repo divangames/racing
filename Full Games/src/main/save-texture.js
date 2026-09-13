@@ -38,15 +38,48 @@ function firstImage(folder) {
   if (!fs.existsSync(folder)) return null;
   const names = fs.readdirSync(folder).filter((n) => EXT_OK.has(path.extname(n).slice(1).toLowerCase()));
   names.sort((a, b) => a.localeCompare(b, 'en', {numeric: true}));
-  return names[0] || null;
+  const preferred = names.find((n) => /^01\./i.test(n));
+  return preferred || names[0] || null;
+}
+
+/**
+ * Масштаб клетки фона из meta.json лаборатории.
+ * @param {string} folder
+ * @returns {number}
+ */
+function readScale(folder) {
+  const file = path.join(folder, 'meta.json');
+  if (!fs.existsSync(file)) return 1;
+  try {
+    const n = +JSON.parse(fs.readFileSync(file, 'utf8')).scale;
+    return Number.isFinite(n) ? Math.max(0.25, Math.min(4, n)) : 1;
+  } catch (err) {
+    return 1;
+  }
+}
+
+/**
+ * Пишет 01.* и убирает другой формат той же клетки.
+ * @param {string} folder
+ * @param {string} ext
+ * @param {Buffer} buf
+ */
+function writeBiomeImage(folder, ext, buf) {
+  fs.mkdirSync(folder, {recursive: true});
+  ['png', 'jpg', 'jpeg', 'webp', 'gif'].forEach((old) => {
+    if (old === ext) return;
+    const stale = path.join(folder, '01.' + old);
+    if (fs.existsSync(stale)) fs.unlinkSync(stale);
+  });
+  fs.writeFileSync(path.join(folder, '01.' + ext), buf);
 }
 
 /**
  * Каталог для редактора.
- * @returns {{biomes: object[], roads: object[], objects: object[]}}
+ * @returns {{biomes: object[], roads: object[], rails: object[], objects: object[]}}
  */
 function listTextures() {
-  const biomes = [];
+  const byId = Object.create(null);
   const stock = stockRoot();
   if (fs.existsSync(stock)) {
     fs.readdirSync(stock).forEach((id) => {
@@ -54,7 +87,12 @@ function listTextures() {
       if (!fs.statSync(folder).isDirectory()) return;
       const file = firstImage(folder);
       if (!file) return;
-      biomes.push({id, src: 'assets/image/textures/map/' + id + '/' + file, stock: true});
+      byId[id] = {
+        id,
+        src: 'assets/image/textures/map/' + id + '/' + file,
+        stock: true,
+        scale: readScale(path.join(texRoot(), 'biomes', id))
+      };
     });
   }
   const custom = path.join(texRoot(), 'biomes');
@@ -64,9 +102,15 @@ function listTextures() {
       if (!fs.statSync(folder).isDirectory()) return;
       const file = firstImage(folder);
       if (!file) return;
-      biomes.push({id, src: 'assets/data/tracks/Textures/biomes/' + id + '/' + file, stock: false});
+      byId[id] = {
+        id,
+        src: 'assets/data/tracks/Textures/biomes/' + id + '/' + file,
+        stock: false,
+        scale: readScale(folder)
+      };
     });
   }
+  const biomes = Object.keys(byId).sort().map((id) => byId[id]);
   const pack = (kind) => {
     const folder = path.join(texRoot(), kind);
     if (!fs.existsSync(folder)) return [];
@@ -75,7 +119,7 @@ function listTextures() {
       src: 'assets/data/tracks/Textures/' + kind + '/' + n
     }));
   };
-  return {biomes, roads: pack('road'), objects: pack('objects')};
+  return {biomes, roads: pack('road'), rails: pack('rails'), objects: pack('objects')};
 }
 
 /**
@@ -104,36 +148,34 @@ async function handleSaveTexture(request) {
     return new Response('Bad request', {status: 400});
   }
   const kind = data.kind;
-  const dest = data.dest || 'library';
   const id = typeof data.id === 'string' ? data.id : '';
+  if (!ID_RE.test(id)) return new Response('Bad request', {status: 400});
+  if (kind === 'meta') {
+    const scale = Math.max(0.25, Math.min(4, Number.isFinite(+data.scale) ? +data.scale : 1));
+    const folder = path.join(texRoot(), 'biomes', id);
+    fs.mkdirSync(folder, {recursive: true});
+    fs.writeFileSync(path.join(folder, 'meta.json'), JSON.stringify({scale: scale}, null, 2) + '\n');
+    return new Response(JSON.stringify({ok: true, id, scale}), {
+      status: 200,
+      headers: {'content-type': 'application/json; charset=utf-8'}
+    });
+  }
   const ext = String(data.ext || 'png').toLowerCase().replace('jpeg', 'jpg');
   const payload = String(data.data || '');
-  if (!ID_RE.test(id) || !EXT_OK.has(ext) || payload.indexOf('base64,') < 0) {
+  if (!EXT_OK.has(ext) || payload.indexOf('base64,') < 0) {
     return new Response('Bad request', {status: 400});
   }
   const buf = Buffer.from(payload.split('base64,')[1], 'base64');
   if (!buf.length) return new Response('Bad request', {status: 400});
   let rel;
-  if (kind === 'ground' && dest === 'current') {
-    const stockDir = path.join(stockRoot(), id);
-    if (fs.existsSync(stockDir) && fs.statSync(stockDir).isDirectory()) {
-      rel = 'assets/image/textures/map/' + id + '/lab.' + ext;
-      fs.writeFileSync(path.join(contentRoot(), rel), buf);
-    } else {
-      const folder = path.join(texRoot(), 'biomes', id);
-      fs.mkdirSync(folder, {recursive: true});
-      rel = 'assets/data/tracks/Textures/biomes/' + id + '/01.' + ext;
-      fs.writeFileSync(path.join(contentRoot(), rel), buf);
-    }
-  } else if (kind === 'ground') {
+  if (kind === 'ground') {
     const folder = path.join(texRoot(), 'biomes', id);
-    fs.mkdirSync(folder, {recursive: true});
+    writeBiomeImage(folder, ext, buf);
     rel = 'assets/data/tracks/Textures/biomes/' + id + '/01.' + ext;
-    fs.writeFileSync(path.join(contentRoot(), rel), buf);
-  } else if (kind === 'road') {
-    const folder = path.join(texRoot(), 'road');
-    fs.mkdirSync(folder, {recursive: true});
-    rel = 'assets/data/tracks/Textures/road/' + id + '.' + ext;
+  } else if (kind === 'road' || kind === 'rail') {
+    const dir = kind === 'rail' ? 'rails' : 'road';
+    fs.mkdirSync(path.join(texRoot(), dir), {recursive: true});
+    rel = 'assets/data/tracks/Textures/' + dir + '/' + id + '.' + ext;
     fs.writeFileSync(path.join(contentRoot(), rel), buf);
   } else if (kind === 'object') {
     const folder = path.join(texRoot(), 'objects');

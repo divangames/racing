@@ -1,4 +1,4 @@
-/* Лаборатория: Montserrat, плотная панель как у DCC, не игровой постер. */
+/* DiVANEngine: Montserrat, плотная панель как у DCC, не игровой постер. */
 :root {
   --bg: #121212;
   --panel: #1c1c1c;
@@ -503,6 +503,18 @@ input[type="file"] { display: none; }
 .item-swatch.is-on { border-color: var(--gold, #e8c547); }
 .tex-dest { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; font-size: 12px; color: var(--muted); }
 .tex-dest label { display: flex; gap: 8px; align-items: center; }
+.tex-preview {
+  display: block;
+  width: 100%;
+  max-height: 88px;
+  margin: 8px 0;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #141414;
+}
+.scale-row input[type="range"] { width: 100%; }
+.scale-row span { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 11px; }
 .zone-list { display: flex; flex-direction: column; gap: 6px; }
 .zone-row { display: grid; grid-template-columns: 1.2fr .7fr .7fr; gap: 4px; }
 .zone-row input, .zone-row select {

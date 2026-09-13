@@ -42,7 +42,9 @@ function fakeCtx() {
     restore: function () {},
     translate: function () {},
     rotate: function () {},
-    scale: function () {},
+    scale: function () { calls.push('scale'); },
+    transform: function () { calls.push('transform'); },
+    clip: function () { calls.push('clip'); },
     fill: function () {},
     arc: function () {},
     ellipse: function () {},
@@ -67,6 +69,7 @@ function bootPaint() {
     MAP_TILE_CELL: 64,
     MAP_TILE_CACHE: 512,
     MAP_TILES: {},
+    MAP_BIOME_SCALE: {},
     ROAD_MATERIALS: { asphalt: { road: '#43404b' }, ice: { road: '#72b8d1' } },
     Path2D: FakePath,
     document: { createElement: function (tag) { return tag === 'canvas' ? makeCanvas() : {}; } },
@@ -86,6 +89,9 @@ function bootPaint() {
   g.globalThis = g;
   g.__DIVAN_ENGINE_META__ = { name: 'DiVANEngine', abi: 1, host: 'game' };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/runtime.js'), 'utf8'), g);
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/track-strip.js'), 'utf8'), g);
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/track-ribbon.js'), 'utf8'), g);
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/track-ribbon-deck.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/track-paint.js'), 'utf8'), g);
   return g;
 }
@@ -110,7 +116,14 @@ function miniTrack(lab) {
 test('Заезд подключает track-paint после сплайна', () => {
   const out = enhanceHtml('<head></head><body></body>', { pathname: '/rnr.html' });
   assert(out.includes('/__engine/track-paint.js'));
-  assert(out.indexOf('track.js') < out.indexOf('track-paint.js'));
+  assert(out.includes('/__engine/track-ribbon.js'));
+  assert(out.includes('/__engine/track-ribbon-deck.js'));
+  assert(out.includes('/__engine/track-strip.js'));
+  assert(out.indexOf('track.js') < out.indexOf('track-strip.js'));
+  assert(out.indexOf('track-span.js') < out.indexOf('track-ribbon.js'));
+  assert(out.indexOf('track-strip.js') < out.indexOf('track-ribbon.js'));
+  assert(out.indexOf('track-ribbon.js') < out.indexOf('track-ribbon-deck.js'));
+  assert(out.indexOf('track-ribbon-deck.js') < out.indexOf('track-paint.js'));
   assert(out.indexOf('track-paint.js') < out.indexOf('collision.js'));
   assert(engineFile('__engine/track-paint.js').endsWith('track-paint.js'));
 });
@@ -138,6 +151,41 @@ test('Тайл, полигон, запекание лаборатории и з�
   const world = miniTrack(false);
   const cWorld = g.prerender(world);
   assert(cWorld._ctx.calls.includes('fillRect'));
+  assert(cWorld._ctx.calls.includes('drawImage'));
+  assert(g.DiVANEngine.trackRibbon);
   g.fillMapTileWorld(0, 0, 10, 10, { theme: { ground: '#abc' } });
   assert(g.g.calls.includes('fillRect'));
+  g.g.calls.length = 0;
+  g.fillMapTileWorld(0, 0, 10, 10, {
+    pat: {},
+    mapBake: { width: 64 },
+    theme: { groundScale: 2, map: 'sand' }
+  });
+  assert(g.g.calls.includes('scale'));
+});
+
+test('Запекание сохраняет детали зума и ограничивает суммарную память этажей', () => {
+  const g=bootPaint(), make=g.DiVANEngine.trackPaint.createTrackCanvas;
+  const small=make({w:400,h:300},2);
+  assert.equal(small.width,1200);assert.equal(small.height,900);
+  const large=make({w:6000,h:4000},2);
+  assert(large.width<=8192 && large.height<=8192);
+  assert(large.width*large.height*2<=48*1024*1024);
+  assert(Math.abs(large.width/large.height-1.5)<.001);
+});
+
+test('Покрытие наносится после всей базы, а текстуры сохраняют мировой масштаб', () => {
+  const g=bootPaint(), q=fakeCtx(), events=[];
+  q.fill=()=>events.push('base');q.stroke=()=>events.push('base');
+  q.drawImage=()=>events.push('texture');
+  g.DiVANEngine.trackRibbon.paintRoadBody(q,miniTrack(false),95,0);
+  assert(events.indexOf('texture')>0);
+  assert(!events.slice(events.indexOf('texture')).includes('base'));
+  const strip=g.DiVANEngine.trackStrip.bakeRoadStrip('asphalt','#333333');
+  assert.equal(strip.width/strip.worldWidth,3);
+  const transforms=[];
+  q.transform=(...args)=>transforms.push(args);
+  g.DiVANEngine.trackRibbon.blitSeg(q,{x:0,y:0,nx:0,ny:1},{x:20,y:0,nx:0,ny:1},strip,95,505);
+  assert(transforms.length>=4,'UV wrap must render both sides of the repeat');
+  assert(transforms.flat().every(Number.isFinite));
 });

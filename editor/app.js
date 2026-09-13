@@ -1648,17 +1648,19 @@ const EditorApp = (() => {
     applyUiPref();
     applyMarks(loadMarksPref(), true);
     try {
+      if (window.LabSplash) LabSplash.file('Машины');
       await EditorData.hydrateFromDisk();
       pack = EditorData.load();
       if (EditorData.refreshPilots) await EditorData.refreshPilots();
       fillFields();
     } catch (err) { console.error(err); }
+    try { if (window.LabSplash) LabSplash.done('cars'); } catch (err) {}
     commit(true, {seed: true});
     syncHistoryBtns();
     const warn = $('originWarn');
     if (warn && location.protocol === 'file:') {
       warn.hidden = false;
-      warn.textContent = 'Лаборатория открыта как файл. Игра не увидит настройки. Запустите editor.bat — тот же адрес, что у start.bat (порт 8765).';
+      warn.textContent = 'Редактор открыт как файл. Запустите DiVANEngine.bat в Full Games — отдельное окно, не вкладка браузера.';
     }
     const flushSave = () => { flushCommit(); persist(true); };
     window.addEventListener('pagehide', flushSave);

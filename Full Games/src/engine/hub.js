@@ -163,7 +163,7 @@
     drawGarageRow(rx, y, rw, 60, selR, '#ff9d2e', 'rgba(255,157,46,.22)', 'В ГОНКУ!', 'пробел — сразу на старт', 'ГОНКА', '#ffd23f');
     g._gar.push({ x: rx, y: y, w: rw, h: 60, row: 8, isRace: true });
 
-    txt(g, '↑ ↓  выбор   ·   ENTER  улучшить   ·   ПРОБЕЛ  гонка   ·   E  лаборатория   ·   ESC  меню', W / 2, H - 28, 13, '#6f6880', 'center', F_B);
+    txt(g, '↑ ↓  выбор   ·   ENTER  улучшить   ·   ПРОБЕЛ  гонка   ·   E  DiVANEngine   ·   ESC  меню', W / 2, H - 28, 13, '#6f6880', 'center', F_B);
 
     if (garMsgT > 0) {
       g.globalAlpha = Math.min(1, garMsgT);

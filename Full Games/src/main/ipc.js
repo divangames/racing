@@ -93,6 +93,11 @@ function bindLauncherIpc() {
     app.quit();
   });
 
+  ipcMain.handle('game:open-editor', async () => {
+    createLabWindow();
+    return { ok: true };
+  });
+
   ipcMain.on('engine:store-get', (event, key) => {
     try {
       event.returnValue = playerStore.get(key);

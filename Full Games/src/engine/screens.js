@@ -99,7 +99,7 @@
   }
 
   /**
-   * Пункты титульного меню. Лаборатория — в dev; читы — не в публичном NSIS.
+   * Пункты титульного меню. DiVANEngine — в dev; читы — не в публичном NSIS.
    * @param {object|null} saveObj
    * @param {boolean} dev
    * @returns {string[]}
@@ -111,7 +111,7 @@
     if (saveObj) items.push('ПРОДОЛЖИТЬ (ЭТАП ' + (saveObj.race + 1) + ')');
     items.push('НОВАЯ ИГРА', 'ЗАГРУЗИТЬ ИГРУ', 'НАСТРОЙКИ', 'ДОСТИЖЕНИЯ');
     if (typeof cheatsAllowed !== 'function' || cheatsAllowed()) items.push('ЧИТЫ');
-    if (dev) items.push('ВЫБОР ТРАССЫ', 'ЛАБОРАТОРИЯ');
+    if (dev) items.push('ВЫБОР ТРАССЫ', 'DIVANENGINE');
     if (saveObj) items.push('СБРОС ПРОГРЕССА');
     items.push('ВЫХОД');
     return items;

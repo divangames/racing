@@ -6,11 +6,24 @@
 
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
-const { BrowserWindow, shell } = require('electron');
+const { BrowserWindow, Menu, shell } = require('electron');
 const { gameStartUrl, labStartUrl } = require('./protocol');
 const { loadSettings } = require('./settings');
-const { game } = require('./paths');
+const { game, clientRoot } = require('./paths');
+
+/** Заголовок отдельного приложения редактора. */
+const EDITOR_TITLE = 'DiVANEngine';
+
+/**
+ * Иконка окна: та же, что у клиента, если файл на месте.
+ * @returns {string|undefined}
+ */
+function windowIcon() {
+  const file = path.join(clientRoot(), 'build', 'icon.ico');
+  return fs.existsSync(file) ? file : undefined;
+}
 
 let launcherWindow = null;
 let gameWindow = null;
@@ -133,25 +146,38 @@ function createGameWindow() {
 }
 
 /**
- * Окно лаборатории: правка машин, запись car.json в папку игры.
+ * Окно редактора DiVANEngine: машины и трассы, запись в папку игры.
  * @returns {Electron.BrowserWindow}
  */
 function createLabWindow() {
   if (labWindow && !labWindow.isDestroyed()) {
+    if (labWindow.isMinimized()) labWindow.restore();
     labWindow.show();
+    labWindow.focus();
     return labWindow;
   }
+  const icon = windowIcon();
   labWindow = new BrowserWindow({
     width: 1680,
     height: 960,
     minWidth: 1100,
     minHeight: 700,
-    backgroundColor: '#0b0a12',
+    backgroundColor: '#0c121a',
     autoHideMenuBar: true,
-    title: 'Лаборатория — ' + game.title,
+    title: EDITOR_TITLE,
+    show: false,
+    icon,
     webPreferences: webPrefs(path.join(__dirname, '../preload/game.js'))
   });
+  Menu.setApplicationMenu(null);
   labWindow.setMenuBarVisibility(false);
+  labWindow.webContents.on('context-menu', (event) => {
+    event.preventDefault();
+  });
+  labWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  labWindow.once('ready-to-show', () => {
+    if (labWindow && !labWindow.isDestroyed()) labWindow.show();
+  });
   labWindow.loadURL(labStartUrl());
   labWindow.on('closed', () => {
     labWindow = null;

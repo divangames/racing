@@ -20,7 +20,7 @@
     if (/data\/cars|armor|_armor_/i.test(u)) return 'Машины';
     if (/wheels/i.test(u)) return 'Машины';
     if (/music|ikrinka24/i.test(u)) return 'Музыка';
-    if (/textures\/map/i.test(u)) return 'Карта';
+    if (/textures\/map|Textures\/biomes/i.test(u)) return 'Карта';
     if (/sounds|\/FX\//i.test(u)) return 'Звуки';
     if (/voice\/.*\.json/i.test(u)) return 'Гонщики';
     return 'Файлы';
@@ -88,7 +88,8 @@
       fill: document.getElementById('boot-fill'),
       pct: document.getElementById('boot-pct'),
       status: document.getElementById('boot-status'),
-      vpn: document.getElementById('boot-vpn')
+      vpn: document.getElementById('boot-vpn'),
+      disclaimer: document.getElementById('boot-disclaimer')
     };
     return BOOT.els;
   }

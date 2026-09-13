@@ -78,6 +78,21 @@ function runtimeTags(host) {
 }
 
 /**
+ * Разметка сплэша лаборатории: арт и слоты версии / файла.
+ * @returns {string}
+ */
+function labSplashMarkup() {
+  const raw = String((game && game.version) || '');
+  const ver = raw ? (/^v/i.test(raw) ? raw : 'v' + raw) : '';
+  return '<div id="lab-splash" class="lab-splash" role="status" aria-live="polite" aria-label="Загрузка DiVANEngine">'
+    + '<div class="lab-splash-stage">'
+    + '<img class="lab-splash-art" src="/assets/ui/SplashScreen/splashscreen.svg" alt="" width="900" height="420" decoding="async" fetchpriority="high">'
+    + '<p id="lab-splash-version" class="lab-splash-version">' + ver.replace(/</g, '') + '</p>'
+    + '<p id="lab-splash-files" class="lab-splash-files">Файлы</p>'
+    + '</div></div>';
+}
+
+/**
  * Вставляет рантайм перед </body> и служебные теги лаборатории.
  * @param {string} html
  * @param {{pathname?: string}} [options]
@@ -106,6 +121,11 @@ function injectRuntime(html, options) {
         result = result.replace('</head>', `${tag}</head>`);
       }
     }
+  }
+  if (host === 'lab' && !result.includes('id="lab-splash"')) {
+    result = result.replace(/<body[^>]*>/i, function (open) {
+      return open + labSplashMarkup();
+    });
   }
   const tags = runtimeTags(host);
   if (host === 'game' && options && options.storeDump && result.includes('</head>')) {

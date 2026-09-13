@@ -16,26 +16,6 @@ const MapView = (() => {
   };
   let ctx, images = Object.create(null), raf = 0;
 
-  /** Catmull-Rom как в игре. */
-  function cr(p0, p1, p2, p3, t) {
-    const t2 = t * t, t3 = t2 * t;
-    return [
-      0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
-      0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
-    ];
-  }
-
-  /** Плотная полилиния петли. */
-  function sample(cps) {
-    const n = cps.length, raw = [], SUB = Math.max(8, Math.ceil(48 / Math.max(1, n)));
-    if (n < 2) return raw;
-    for (let i = 0; i < n; i++) {
-      const p0 = cps[(i + n - 1) % n], p1 = cps[i], p2 = cps[(i + 1) % n], p3 = cps[(i + 2) % n];
-      for (let j = 0; j < SUB; j++) raw.push(cr(p0, p1, p2, p3, j / SUB));
-    }
-    return raw;
-  }
-
   /** Документ. */
   function doc() { return st.getDoc(); }
 
@@ -60,6 +40,11 @@ const MapView = (() => {
   /** Живой кадр мира. */
   function draw(now) {
     if (!st.canvas || !ctx) return;
+    try { drawScene(now); } catch (err) { console.error(err); }
+  }
+
+  /** Сцена карты: земля, петля, маркеры. */
+  function drawScene(now) {
     const canvas = st.canvas, dpr = devicePixelRatio || 1;
     const cssW = canvas.width / dpr, cssH = canvas.height / dpr;
     const t = doc();
@@ -67,6 +52,7 @@ const MapView = (() => {
     ctx.fillStyle = (t && t.theme && t.theme.ground) || '#1a1a1a';
     ctx.fillRect(0, 0, cssW, cssH);
     ctx.save();
+    try {
     ctx.translate(cssW / 2, cssH / 2);
     ctx.scale(cam.z, cam.z);
     ctx.translate(-cam.x, -cam.y);
@@ -75,13 +61,18 @@ const MapView = (() => {
     const x1 = cam.x + cssW / 2 / cam.z, y1 = cam.y + cssH / 2 / cam.z;
     if (t) MapPreview.fillGround(ctx, t, x0, y0, x1, y1);
     if (t && window.RnRObjects) RnRObjects.drawLayer(ctx, t.objects, 'under', () => {});
-    ctx.strokeStyle = st.snapGrid ? 'rgba(232,197,71,.22)' : 'rgba(0,0,0,.18)';
-    ctx.lineWidth = 1 / cam.z;
-    ctx.beginPath();
-    for (let x = Math.floor(x0 / cell) * cell; x < x1; x += cell) { ctx.moveTo(x, y0); ctx.lineTo(x, y1); }
-    for (let y = Math.floor(y0 / cell) * cell; y < y1; y += cell) { ctx.moveTo(x0, y); ctx.lineTo(x1, y); }
-    ctx.stroke();
-    if (!t) { ctx.restore(); return; }
+    const gridStep = cell * cam.z;
+    if (gridStep >= 6) {
+      ctx.strokeStyle = st.snapGrid ? 'rgba(232,197,71,.22)' : 'rgba(0,0,0,.18)';
+      ctx.lineWidth = 1 / cam.z;
+      ctx.beginPath();
+      for (let x = Math.floor(x0 / cell) * cell; x < x1; x += cell) { ctx.moveTo(x, y0); ctx.lineTo(x, y1); }
+      for (let y = Math.floor(y0 / cell) * cell; y < y1; y += cell) { ctx.moveTo(x0, y); ctx.lineTo(x1, y); }
+      ctx.stroke();
+    }
+    if (!t) { return; }
+    const cheap = !!(st.drag && st.drag.mode === 'cp');
+    const S = MapPreview.strokeRoad(ctx, null, t, { cheap: cheap });
     (t.decals || []).forEach((d) => {
       const im = imgOf(d.id, d.src);
       if (!im || !im.complete || !im.naturalWidth) return;
@@ -93,14 +84,19 @@ const MapView = (() => {
       ctx.drawImage(im, -w / 2, -h / 2, w, h);
       ctx.restore();
     });
-    MapPreview.strokeRoad(ctx, sample(t.cps), t);
     t.cps.forEach((p, i) => {
       ctx.fillStyle = st.sel && st.sel.kind === 'cp' && st.sel.i === i ? '#3d9eff' : '#ededed';
       ctx.beginPath();
       ctx.arc(p[0], p[1], (st.sel && st.sel.kind === 'cp' && st.sel.i === i ? 10 : 7) / cam.z, 0, TAU);
       ctx.fill();
     });
-    MapMarks.drawAll(ctx, t, st.sel, now, st.cutStep);
+    const lay = (typeof MapLayout !== 'undefined' && MapLayout.visible) ? MapLayout.visible(t, S || []) : null;
+    const view = lay ? {
+      start: t.start,
+      hazards: { ramps: lay.ramps, mines: lay.mines, oils: lay.oils, pads: lay.pads },
+      shortcuts: t.shortcuts
+    } : t;
+    MapMarks.drawAll(ctx, view, st.sel, now, st.cutStep);
     if (st.rampStep && st.hoverW) {
       MapMarks.drawRamp(ctx, {
         x: st.rampStep[0], y: st.rampStep[1],
@@ -117,7 +113,7 @@ const MapView = (() => {
       ctx.stroke();
       ctx.setLineDash([]);
     }
-    (t.items || []).forEach((p) => MapPreview.drawItem(ctx, p, cam.z));
+    (lay ? lay.picks : (t.items || [])).forEach((p) => MapPreview.drawItem(ctx, p, cam.z));
     if (window.RnRObjects) RnRObjects.drawLayer(ctx, t.objects, 'over', () => {});
     if (st.sel && st.sel.kind === 'asset' && t.objects && t.objects[st.sel.i] && window.MapColl) {
       MapColl.draw(ctx, t.objects[st.sel.i], cam);
@@ -126,13 +122,37 @@ const MapView = (() => {
     }
     MapGizmo.draw(ctx, cam, MapGizmo.resolve(t, st.sel), st.gizmoHover);
     MapPreview.drawWeather(ctx, t, x0, y0, x1, y1, now || performance.now());
-    ctx.restore();
+    } finally { ctx.restore(); }
+  }
+
+  /** Нужен ли повтор кадра (погода или перетаскивание). */
+  function needsLoop() {
+    if (!mapLive()) return false;
+    if (st.drag) return true;
+    const t = doc();
+    if (!t) return false;
+    const wx = MapPreview.weatherId(t);
+    if (!wx || wx === 'clear') return false;
+    return !(typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  /** Ставит кадр в очередь, не крутит цикл вхолостую. */
+  function kick() {
+    if (!raf) raf = requestAnimationFrame(tick);
   }
 
   /** Кадр, пока открыта карта. */
   function tick(now) {
-    raf = requestAnimationFrame(tick);
+    raf = 0;
     if (mapLive()) draw(now);
+    if (needsLoop()) raf = requestAnimationFrame(tick);
+  }
+
+  /** Зум от кнопок панели. */
+  function zoomBy(factor) {
+    cam.z = Math.max(ZMIN, Math.min(ZMAX, cam.z * (factor || 1)));
+    if (st.onZoom) st.onZoom(Math.round(cam.z * 100) + '%');
+    kick();
   }
 
   /** Размер буфера. */
@@ -142,7 +162,13 @@ const MapView = (() => {
     const d = devicePixelRatio || 1;
     const w = Math.max(1, Math.round(r.width * d));
     const h = Math.max(1, Math.round(r.height * d));
-    if (st.canvas.width !== w || st.canvas.height !== h) { st.canvas.width = w; st.canvas.height = h; }
+    const grew = (st.canvas.width < 8 && w >= 8) || (st.canvas.height < 8 && h >= 8);
+    if (st.canvas.width !== w || st.canvas.height !== h) {
+      st.canvas.width = w;
+      st.canvas.height = h;
+      if (grew) fit();
+      else kick();
+    }
   }
 
   /** Вписать петлю. */
@@ -157,6 +183,7 @@ const MapView = (() => {
     cam.y = (miny + maxy) / 2;
     cam.z = Math.max(ZMIN, Math.min(1.2, Math.min((r.width - pad) / Math.max(1, maxx - minx), (r.height - pad) / Math.max(1, maxy - miny))));
     if (st.onZoom) st.onZoom(Math.round(cam.z * 100) + '%');
+    kick();
   }
 
   /** Удаляет выбранное. */
@@ -178,6 +205,7 @@ const MapView = (() => {
     st.sel = null;
     st.onChange(true);
     st.onSelect(null);
+    kick();
   }
 
   /** Подключение холста. */
@@ -191,6 +219,7 @@ const MapView = (() => {
     st.onZoom = opts.onZoom;
     st.onDragEnd = opts.onDragEnd;
     st.removeSel = removeSel;
+    st.redraw = kick;
     MapInput.bind(st);
     window.addEventListener('resize', sync);
     if (typeof ResizeObserver !== 'undefined' && st.canvas.parentElement) {
@@ -198,26 +227,27 @@ const MapView = (() => {
     }
     RnRTracks.preloadDecals();
     sync();
-    if (!raf) raf = requestAnimationFrame(tick);
+    kick();
   }
 
   return {
-    init, draw, fit, sync, removeSel,
+    init, draw: kick, fit, sync, removeSel, zoomBy,
     center: () => ({x: cam.x, y: cam.y}),
-    setTool: (v) => { st.tool = v; st.cutStep = null; st.rampStep = null; },
+    setTool: (v) => { st.tool = v; st.cutStep = null; st.rampStep = null; kick(); },
     tool: () => st.tool,
-    setSnap: (v) => { st.snapGrid = !!v; },
+    setSnap: (v) => { st.snapGrid = !!v; kick(); },
     setSnapObj: (v) => { st.snapObj = !!v; },
     setDecal: (id) => { if (st.canvas) st.canvas.dataset.decal = id; },
     setItem: (id) => { if (st.canvas) st.canvas.dataset.item = id; },
     selection: () => st.sel,
-    setSelection: (s) => { st.sel = s; },
+    setSelection: (s) => { st.sel = s; kick(); },
     confirmSel: () => {
       if (!st.sel) return;
       st.sel = null;
       st.onChange(true);
       if (st.onDragEnd) st.onDragEnd();
       st.onSelect(null);
+      kick();
     },
   };
 })();

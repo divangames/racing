@@ -133,6 +133,7 @@
         aiThink(r, dt); stepVehicle(r, r.ith, r.ist, dt); advanceIdx(r);
       }
       resolveRaceContact(dt);
+      if (typeof keepAllOnTrack === 'function') keepAllOnTrack();
       for (const m of R.mines) {
         if (!m.dead) continue;
         m.deadT = (m.deadT || 0) + dt;

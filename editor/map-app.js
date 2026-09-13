@@ -73,10 +73,55 @@ const MapApp = (() => {
     });
   }
 
+  /** Запоминает открытый слот между тестом заезда и возвратом. */
+  function rememberSel() {
+    try {
+      const id = docs[idx] && docs[idx].id;
+      if (id) sessionStorage.setItem('rnr.mapSel', id);
+    } catch (err) {}
+  }
+
+  /** Id трассы из URL теста или прошлого выбора. */
+  function wantedTrackId() {
+    try {
+      const q = new URLSearchParams(location.search).get('track');
+      if (q) return q;
+    } catch (err) {}
+    try { return sessionStorage.getItem('rnr.mapSel') || ''; } catch (err) { return ''; }
+  }
+
+  /** После загрузки списка открывает ту же петлю, что тестировали. */
+  function applyStartDoc() {
+    let want = wantedTrackId();
+    if (!want) {
+      try {
+        const draft = JSON.parse(sessionStorage.getItem('rnr.trackDraft') || 'null');
+        if (draft && draft.id) want = draft.id;
+      } catch (err) {}
+    }
+    let i = want ? docs.findIndex((d) => d && d.id === want) : -1;
+    if (i < 0) {
+      try {
+        const draft = JSON.parse(sessionStorage.getItem('rnr.trackDraft') || 'null');
+        if (draft && draft.cps && draft.cps.length >= 4) {
+          docs.push(RnRTracks.normalize(draft));
+          i = docs.length - 1;
+        }
+      } catch (err) {}
+    }
+    select(i >= 0 ? i : 0);
+  }
+
   /** Выбор слота. */
   function select(i) {
+    i = i | 0;
+    if (i === idx && docs[idx] && hist.list && hist.list.length) {
+      MapView.fit();
+      return;
+    }
     idx = i;
     hist = {list: [], at: -1};
+    rememberSel();
     commit();
     fill();
     MapView.fit();
@@ -85,7 +130,10 @@ const MapApp = (() => {
 
   /** Поля инспектора. */
   function fill() {
+    if (fillLock) return;
     fillLock = true;
+    window.__mapFillLock = true;
+    try {
     const t = cur();
     if ($('mapName')) $('mapName').value = t.name;
     if ($('mapId')) $('mapId').value = t.id;
@@ -97,8 +145,11 @@ const MapApp = (() => {
     if ($('mapSaveState')) $('mapSaveState').textContent = dirty ? 'Есть несохранённые правки' : 'Сохранено';
     if ($('mapNameRead')) $('mapNameRead').textContent = t.name;
     syncStartBtn();
-    fillLock = false;
     renderList();
+    } finally {
+      fillLock = false;
+      window.__mapFillLock = false;
+    }
   }
 
   /** Кнопка старта, если клетки нет. */
@@ -146,6 +197,9 @@ const MapApp = (() => {
         if ($('mapSaveState')) $('mapSaveState').textContent = res.error || 'Сбой записи';
         return false;
       }
+      try {
+        if (MapTex.saveMeta) await MapTex.saveMeta(t.theme.map || 'sand', t.theme.groundScale);
+      } catch (err) {}
       dirty = false;
       if ($('mapSaveState')) $('mapSaveState').textContent = 'Записано в assets/data/tracks/' + t.id + '.json';
       return true;
@@ -158,6 +212,7 @@ const MapApp = (() => {
   /** Тест в игре: черновик в sessionStorage. */
   async function testDrive() {
     await saveNow();
+    rememberSel();
     try { sessionStorage.setItem('rnr.trackDraft', JSON.stringify(MapData.fileTrack(cur()))); } catch (err) {}
     const car = new URLSearchParams(location.search).get('car') || '0';
     location.href = 'rnr.html?lab=1&from=map&car=' + encodeURIComponent(car) + '&track=' + encodeURIComponent(cur().id);
@@ -177,8 +232,11 @@ const MapApp = (() => {
     const reset = $('resetBtn');
     if (reset) reset.hidden = name === 'map';
     if (name === 'map') {
-      MapView.sync();
-      MapView.fit();
+      const show = () => { MapView.sync(); MapView.fit(); MapView.draw(); };
+      show();
+      requestAnimationFrame(show);
+    } else if (window.EditorView && EditorView.wake) {
+      EditorView.wake();
     }
     if (window.MapAssets) MapAssets.setOpen(name === 'map');
   }
@@ -205,31 +263,58 @@ const MapApp = (() => {
     if ($('mapZoomOut')) $('mapZoomOut').onclick = () => MapView.zoomBy(0.85);
     if ($('mapName')) $('mapName').oninput = () => { if (fillLock) return; cur().name = $('mapName').value; dirty = true; fill(); };
     if ($('mapId')) $('mapId').onchange = () => { if (fillLock) return; cur().id = $('mapId').value; dirty = true; };
-    if ($('mapPublished')) $('mapPublished').onchange = () => { cur().published = $('mapPublished').checked; dirty = true; };
-    if ($('mapAutoHz')) $('mapAutoHz').onchange = () => { cur().autoHazards = $('mapAutoHz').checked; dirty = true; };
+    if ($('mapPublished')) $('mapPublished').onchange = () => { if (fillLock) return; cur().published = $('mapPublished').checked; dirty = true; };
+    if ($('mapAutoHz')) $('mapAutoHz').onchange = () => { if (fillLock) return; cur().autoHazards = $('mapAutoHz').checked; dirty = true; };
     if ($('mapTheme')) $('mapTheme').onchange = () => {
+      if (fillLock) return;
       const id = $('mapTheme').value;
       const stock = RnRTracks.THEMES.find((x) => x.id === id);
       const wx = cur().theme.weather;
       const road = cur().theme.roadSrc;
+      const rail = cur().theme.railSrc;
+      const gscale = cur().theme.groundScale;
+      const b = (MapTex.catalog.biomes || []).find((x) => x.id === id);
+      const gsrc = b && !b.stock ? b.src : (b ? '' : cur().theme.groundSrc);
       if (stock) {
-        cur().theme = {ground: stock.ground, dark: stock.dark, road: stock.road, line: stock.line, deco: stock.deco, map: stock.map, weather: wx, groundSrc: '', roadSrc: road};
+        cur().theme = {ground: stock.ground, dark: stock.dark, road: stock.road, line: stock.line, deco: stock.deco, map: stock.map, weather: wx, groundSrc: gsrc, roadSrc: road, railSrc: rail, groundScale: gscale};
       } else {
-        const b = (MapTex.catalog.biomes || []).find((x) => x.id === id);
         cur().theme.map = id;
-        cur().theme.groundSrc = b ? b.src : cur().theme.groundSrc;
+        cur().theme.groundSrc = gsrc || cur().theme.groundSrc;
         cur().theme.weather = wx;
         cur().theme.roadSrc = road;
+        cur().theme.railSrc = rail;
+        cur().theme.groundScale = gscale;
       }
       dirty = true;
+      MapPanel.paint();
+      MapView.draw();
     };
     if ($('mapWeather')) $('mapWeather').onchange = () => {
+      if (fillLock) return;
       cur().theme.weather = $('mapWeather').value;
       dirty = true;
     };
+    if ($('mapGroundScale')) $('mapGroundScale').oninput = () => {
+      if (fillLock) return;
+      const n = Math.max(0.25, Math.min(4, +$('mapGroundScale').value || 1));
+      cur().theme.groundScale = n;
+      if ($('mapGroundScaleRead')) $('mapGroundScaleRead').textContent = Math.round(n * 100) + '%';
+      dirty = true;
+      MapView.draw();
+    };
     if ($('mapRoadPick')) $('mapRoadPick').onchange = () => {
+      if (fillLock) return;
       cur().theme.roadSrc = $('mapRoadPick').value;
       dirty = true;
+      MapPanel.paint();
+      MapView.draw();
+    };
+    if ($('mapRailPick')) $('mapRailPick').onchange = () => {
+      if (fillLock) return;
+      cur().theme.railSrc = $('mapRailPick').value;
+      dirty = true;
+      MapPanel.paint();
+      MapView.draw();
     };
     if ($('mapGroundFile')) $('mapGroundFile').onchange = async () => {
       const file = $('mapGroundFile').files && $('mapGroundFile').files[0];
@@ -258,8 +343,24 @@ const MapApp = (() => {
         cur().theme.roadSrc = out.src;
         dirty = true;
         fill();
+        MapView.draw();
       } catch (err) {
-        if ($('mapSaveState')) $('mapSaveState').textContent = 'Нужен editor.bat';
+        if ($('mapSaveState')) $('mapSaveState').textContent = 'Нужен DiVANEngine.bat';
+      }
+    };
+    if ($('mapRailFile')) $('mapRailFile').onchange = async () => {
+      const file = $('mapRailFile').files && $('mapRailFile').files[0];
+      $('mapRailFile').value = '';
+      if (!file) return;
+      try {
+        const out = await MapTex.upload(file, 'rail', 'library', file.name);
+        if (!out.ok) { if ($('mapSaveState')) $('mapSaveState').textContent = out.error || 'Сбой бортов'; return; }
+        cur().theme.railSrc = out.src;
+        dirty = true;
+        fill();
+        MapView.draw();
+      } catch (err) {
+        if ($('mapSaveState')) $('mapSaveState').textContent = 'Нужен DiVANEngine.bat';
       }
     };
     if ($('mapAddZone')) $('mapAddZone').onclick = () => {
@@ -300,7 +401,7 @@ const MapApp = (() => {
         if (v === '') return;
         const stock = RnRTracks.STOCK[+v];
         if (!stock) return;
-        const c = MapData.fromStock(stock, MapData.freshId(docs.map((d) => d.id)));
+        const c = MapData.fromStock(stock, MapData.freshId(docs.map((d) => d.id)), +v);
         docs.push(c);
         select(docs.length - 1);
         dirty = true;
@@ -373,8 +474,14 @@ const MapApp = (() => {
     });
     MapView.setDecal(stamp);
     MapView.setItem('money');
-    try { await MapTex.list(); } catch (err) {}
-    try { if (window.RnRObjects) await RnRObjects.list(); } catch (err) {}
+    try {
+      if (window.LabSplash) LabSplash.file('Текстуры');
+      await MapTex.list();
+    } catch (err) {}
+    try {
+      if (window.LabSplash) LabSplash.file('Объекты');
+      if (window.RnRObjects) await RnRObjects.list();
+    } catch (err) {}
     MapAssets.paint();
     try {
       const loaded = await MapData.loadAll();
@@ -382,11 +489,12 @@ const MapApp = (() => {
     } catch (err) {
       docs = [MapData.factory('custom_01')];
     }
-    select(0);
+    applyStartDoc();
     try {
       const q = new URLSearchParams(location.search);
       if (q.get('tab') === 'map') setTab('map');
     } catch (err) {}
+    try { if (window.LabSplash) LabSplash.done('map'); } catch (err) {}
   }
 
   return {start, mapOn, saveNow, setTab};

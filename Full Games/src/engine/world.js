@@ -15,6 +15,7 @@
     const Rc = R.racers;
     for (let i = 0; i < Rc.length; i++) for (let j = i + 1; j < Rc.length; j++) {
       const a = Rc[i], b = Rc[j]; if (a.dead || b.dead || a.air || b.air) continue;
+      if (typeof racerDeck === 'function' && racerDeck(a) !== racerDeck(b)) continue;
       if (kitGhost(a) || kitGhost(b)) continue;
       const hit = obbOverlap(carObb(a), carObb(b));
       if (!hit) continue;
