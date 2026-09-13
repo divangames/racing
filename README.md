@@ -27,7 +27,7 @@
 - `assets/data/tracks/` — JSON петель (`index.json` + `id.json`). Текстуры: `Textures/biomes/`, `Textures/road/`, `Textures/rails/`, `Textures/objects/` (POST `/__save-texture`).
 - `tools/rnr-http.py` — HTTP на порту 8765: запись машин, трасс, текстур и ассетов
 - `tools/rnr-ensure-http.py` — живой GET `/rnr.html`; мёртвый python на порту снимается и сервер стартует заново
-- `index.html` — презентация: скачать клиент, сюжет, гонщики, скрины заезда, роадмап
+- `index.html` — презентация: скачать клиент, сюжет, гонщики, скрины, журнал / роадмап / TODO
 - `music.js` — сам читает `assets/music/{main,change,garage,intro,racing}/`. Сколько MP3 в папке, столько треков; меню/гараж/гонка играют случайно. Интро — `01.mp3`… по номеру гонщика. Подпапка `old` не берётся.
 - `sounds.js` — эффекты (`money` / `buy` / `tune`) из `assets/sounds/FX/` (те же имена: `money.mp3`, `CashBay.mp3`, `carPay.wav`). Если файла нет — тот же путь с `ikrinka24.com`.
 - `car-audio-voice.js` / `car-audio.js` / `car-tires.js` / `car-nos.js` / `weapon-audio.js` — двигатель, покрышки, нитро и выстрелы. Мотор: `001` набор, `002` луп хода, `003` сброс и воздух, `005` стоянка; `004` не играет. Пак из лаборатории (`assets/sounds/cars/engine`) или папка кузова, иначе `assets/sounds/engine/`. Ствол: ближний клип у игрока, дальний у чужих. Визг из `assets/sounds/cars/wheels/`, ускорение из `assets/sounds/cars/NOSZ/` (`084` запуск, `011` луп). Эти WAV должны быть в git: иначе GitHub Pages и zip с чистого клона — без мотора и дрифта.

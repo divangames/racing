@@ -116,6 +116,12 @@
   padding: 1.15rem 1.15rem 1.05rem;
   border: 1px solid var(--line);
   background: rgba(0, 0, 0, 0.28);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.plan__track article:hover {
+  border-color: rgba(255, 210, 63, 0.45);
+  transform: translateY(-2px);
 }
 
 .plan__track span {
@@ -129,13 +135,172 @@
 .plan__track h3 { margin-bottom: 0.4rem; }
 .plan__track p { margin: 0; color: var(--mute); }
 
+////////////////////////////////////////////////////////
+//
+// Журнал последнего релиза и оперативный TODO
+//
+////////////////////////////////////////////////////////
+
+.plan__drop {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.42fr) minmax(0, 1fr);
+  gap: 0;
+  margin-bottom: 1.6rem;
+  border: 1px solid var(--gold);
+  background: #08060a;
+  box-shadow: 10px 10px 0 #000;
+  overflow: hidden;
+}
+
+.plan__drop-art {
+  display: grid;
+  align-content: end;
+  padding: 1.6rem 1.4rem 1.4rem;
+  min-height: 16rem;
+  background:
+    linear-gradient(180deg, rgba(196, 90, 24, 0.35), transparent 48%),
+    radial-gradient(ellipse at 30% 0%, rgba(255, 210, 63, 0.35), transparent 55%),
+    #1a0e08;
+  border-right: 1px solid var(--line);
+}
+
+.plan__drop-art strong {
+  font-family: Bender, Impact, "Arial Black", sans-serif;
+  font-size: clamp(2.4rem, 6vw, 4.4rem);
+  line-height: 0.9;
+  color: var(--gold);
+  text-shadow: 4px 4px 0 #000;
+}
+
+.plan__drop-art span {
+  margin-top: 0.7rem;
+  color: var(--ink);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.plan__drop-copy {
+  padding: 1.5rem 1.6rem 1.4rem;
+}
+
+.plan__drop-copy h3 { margin: 0.2rem 0 0.7rem; }
+
+.plan__drop-copy > p {
+  margin: 0 0 1rem;
+  color: var(--mute);
+  max-width: 46rem;
+}
+
+.plan__hits {
+  list-style: none;
+  margin: 0 0 1.1rem;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.plan__hits li {
+  padding-left: 1.1rem;
+  position: relative;
+  color: var(--ink);
+}
+
+.plan__hits li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  background: var(--rust);
+  box-shadow: 2px 2px 0 #000;
+}
+
+.plan__file {
+  display: inline-block;
+  margin-right: 1.2rem;
+  margin-top: 0.2rem;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-family: Bender, Impact, sans-serif;
+  text-decoration: none;
+}
+
+.plan__file:hover { color: var(--ink); }
+
+.plan__todo {
+  display: grid;
+  grid-template-columns: minmax(14rem, 0.7fr) minmax(0, 1.4fr);
+  gap: 1.3rem;
+  margin-top: 1.6rem;
+  align-items: start;
+}
+
+.plan__todo-lead h3 { margin: 0.2rem 0 0.6rem; }
+
+.plan__todo-lead p {
+  margin: 0 0 0.8rem;
+  color: var(--mute);
+}
+
+.plan__todo-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.plan__todo-grid li {
+  padding: 1.1rem 1.05rem 1rem;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255, 210, 63, 0.06), transparent 40%),
+    rgba(0, 0, 0, 0.34);
+  transition: border-color 0.2s ease;
+}
+
+.plan__todo-grid li:hover { border-color: rgba(255, 210, 63, 0.4); }
+
+.plan__todo-grid span {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--gold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-family: Bender, Impact, sans-serif;
+}
+
+.plan__todo-grid p { margin: 0; color: var(--mute); }
+
 @media (max-width: 1100px) {
   .gallery,
-  .plan__cols { grid-template-columns: 1fr; }
+  .plan__cols,
+  .plan__drop,
+  .plan__todo,
+  .plan__todo-grid { grid-template-columns: 1fr; }
+
+  .plan__drop-art {
+    min-height: 10rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
 
   .gallery__hero { grid-row: auto; }
   .gallery__hero img,
   .gallery img {
     max-height: 16rem;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan__drop-art { background: #1a0e08; }
+  .plan__track article,
+  .plan__todo-grid li { transition: none; }
+  .plan__track article:hover { transform: none; }
 }

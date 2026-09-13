@@ -9,6 +9,8 @@
   scroll-margin-top: 4.6rem;
 }
 
+.plan__drop, .plan__todo { scroll-margin-top: 4.6rem; }
+
 .world {
   background: radial-gradient(ellipse at 80% 0%, rgba(139, 30, 30, 0.18), transparent 45%), var(--oil);
 }
