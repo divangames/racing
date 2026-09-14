@@ -28,6 +28,27 @@ function parts(ver) {
 }
 
 /**
+ * Три поля WiX/MSI (каждое 0–255) из нашего номера 0.A.B.C → A.B.C.
+ * Иначе electron-builder режет 0.2.2.6 до 0.2.2 и апгрейд не идёт.
+ * @param {string} ver
+ * @returns {string}
+ */
+function toMsiProductVersion(ver) {
+  const p = parts(ver);
+  while (p.length < 3) p.push(0);
+  let major = p[0];
+  let minor = p[1];
+  let build = p[2];
+  if (p[0] === 0 && p.length >= 4) {
+    major = p[1];
+    minor = p[2];
+    build = p[3];
+  }
+  const clamp = (n) => Math.max(0, Math.min(255, Number(n) || 0));
+  return clamp(major) + '.' + clamp(minor) + '.' + clamp(build);
+}
+
+/**
  * remote новее local (пустой local — всегда да).
  * @param {string} remote
  * @param {string} local
@@ -48,4 +69,4 @@ function isNewer(remote, local) {
   return false;
 }
 
-module.exports = { normalizeTag, isNewer };
+module.exports = { normalizeTag, isNewer, toMsiProductVersion };

@@ -27,12 +27,12 @@ function localVersion() {
 }
 
 /**
- * Кавычки для cmd, без инъекции.
+ * Одинарные кавычки PowerShell, без инъекции.
  * @param {string} value
  * @returns {string}
  */
-function cmdQuote(value) {
-  return '"' + String(value || '').replace(/"/g, '') + '"';
+function psSingle(value) {
+  return "'" + String(value || '').replace(/'/g, "''") + "'";
 }
 
 /**
@@ -65,22 +65,39 @@ async function snapshot() {
 }
 
 /**
- * После выхода ставит MSI и снова открывает exe.
+ * После выхода: UAC → msiexec (замена per-machine) → снова exe.
+ * Если установку отменили, старый клиент всё равно откроется.
  * @param {string} msiPath
  */
 function scheduleApply(msiPath) {
   const exe = process.execPath;
-  const script =
-    'ping 127.0.0.1 -n 5 >nul & msiexec /i ' +
-    cmdQuote(msiPath) +
-    ' /passive /norestart & start "" ' +
-    cmdQuote(exe);
-  spawn(process.env.ComSpec || 'cmd.exe', ['/c', script], {
+  const args = ['/i', msiPath, '/qb!', '/norestart', 'ALLUSERS=1', 'REBOOT=ReallySuppress']
+    .map(psSingle)
+    .join(',');
+  const ps =
+    'Start-Sleep -Seconds 4; ' +
+    'try { Start-Process -FilePath msiexec -ArgumentList @(' +
+    args +
+    ') -Verb RunAs -Wait } catch {}; ' +
+    'if (Test-Path -LiteralPath ' +
+    psSingle(exe) +
+    ') { Start-Process -FilePath ' +
+    psSingle(exe) +
+    ' }';
+  spawn('powershell.exe', [
+    '-NoProfile',
+    '-WindowStyle',
+    'Hidden',
+    '-ExecutionPolicy',
+    'Bypass',
+    '-Command',
+    ps
+  ], {
     detached: true,
     stdio: 'ignore',
     windowsHide: true
   }).unref();
-  setTimeout(() => app.quit(), 500);
+  setTimeout(() => app.quit(), 400);
 }
 
 /**

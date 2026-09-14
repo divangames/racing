@@ -8,6 +8,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const { toMsiProductVersion } = require('../src/main/update/version');
+const launcherCfg = require('../config/launcher.json');
 
 const ART_NAMES = [
   ['banner.bmp', 'WixUIBannerBmp'],
@@ -50,9 +52,13 @@ function wixVariables(stageDir) {
  * Меняет сгенерированный project.wxs под наш сценарий.
  * @param {string} xml
  * @param {string} extraVariables
+ * @param {string} [productVersion]
  * @returns {string}
  */
-function patchMsiXml(xml, extraVariables) {
+function patchMsiXml(xml, extraVariables, productVersion) {
+  if (productVersion) {
+    xml = xml.replace(/(\sVersion=")(\d+(?:\.\d+){1,3})(")/, '$1' + productVersion + '$3');
+  }
   xml = xml.replace(/Language="1033"/, 'Language="1049"');
   xml = xml.replace(/Codepage="65001"/, 'Codepage="1251"');
   xml = xml.replace(
@@ -127,8 +133,9 @@ function patchMsiXml(xml, extraVariables) {
 function patchMsiProjectFile(projectFile, artDir) {
   const stageDir = path.dirname(projectFile);
   copyStageArt(stageDir, artDir);
+  const productVersion = toMsiProductVersion(launcherCfg && launcherCfg.version);
   let xml = fs.readFileSync(projectFile, 'utf8');
-  xml = patchMsiXml(xml, wixVariables(stageDir));
+  xml = patchMsiXml(xml, wixVariables(stageDir), productVersion);
   fs.writeFileSync(projectFile, xml, 'utf8');
 }
 

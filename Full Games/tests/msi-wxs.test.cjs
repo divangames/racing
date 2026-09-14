@@ -36,7 +36,8 @@ const SAMPLE = `<?xml version="1.0" encoding="UTF-8"?>
 `;
 
 test('MSI: русский язык, C:\\games, ярлык, без экрана «для кого»', () => {
-  const xml = patchMsiXml(SAMPLE, '    <WixVariable Id="WixUIBannerBmp" Value="banner.bmp"/>');
+  const xml = patchMsiXml(SAMPLE, '    <WixVariable Id="WixUIBannerBmp" Value="banner.bmp"/>', '2.2.6');
+  assert.match(xml, /Version="2.2.6"/);
   assert.match(xml, /Language="1049"/);
   assert.match(xml, /Codepage="1251"/);
   assert.match(xml, /Id="GAMESROOT" Name="games"/);

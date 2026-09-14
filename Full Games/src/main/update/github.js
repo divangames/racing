@@ -7,6 +7,7 @@
 'use strict';
 
 const updateCfg = require('../../../config/update.json');
+const { isNewer } = require('./version');
 
 let listCache = null;
 let listCachedAt = 0;
@@ -42,9 +43,15 @@ async function getJson(url) {
  */
 async function fetchReleaseList() {
   if (listCache && Date.now() - listCachedAt < 120000) return listCache;
-  const url = 'https://api.github.com/repos/' + updateCfg.owner + '/' + updateCfg.repo + '/releases?per_page=100';
-  const list = await getJson(url);
-  listCache = Array.isArray(list) ? list : [];
+  const all = [];
+  const base = 'https://api.github.com/repos/' + updateCfg.owner + '/' + updateCfg.repo + '/releases?per_page=100';
+  for (let page = 1; page <= 10; page++) {
+    const list = await getJson(base + '&page=' + page);
+    if (!Array.isArray(list) || list.length === 0) break;
+    all.push.apply(all, list);
+    if (list.length < 100) break;
+  }
+  listCache = all;
   listCachedAt = Date.now();
   return listCache;
 }
@@ -102,19 +109,68 @@ function toRemote(release, asset) {
 }
 
 /**
+ * Карточка релиза канала или null.
+ * @param {object} release
+ * @param {'game'|'launcher'} kind
+ * @returns {{tag: string, name: string, url: string, size: number}|null}
+ */
+function remoteFromRelease(release, kind) {
+  if (!release || release.draft || release.prerelease) return null;
+  switch (kind) {
+    case 'launcher': {
+      if (!isLauncherRelease(release)) return null;
+      const asset = pickLauncherAsset(release);
+      return asset && asset.browser_download_url ? toRemote(release, asset) : null;
+    }
+    case 'game': {
+      if (isLauncherRelease(release)) return null;
+      const asset = pickContentAsset(release);
+      return asset && asset.browser_download_url ? toRemote(release, asset) : null;
+    }
+    default: {
+      return null;
+    }
+  }
+}
+
+/**
+ * Самый новый по номеру тега, не первый в ленте GitHub.
+ * @param {Array<{tag: string}|null|undefined>} items
+ * @returns {object|null}
+ */
+function pickNewestRemote(items) {
+  let best = null;
+  const list = Array.isArray(items) ? items : [];
+  for (let i = 0; i < list.length; i++) {
+    const item = list[i];
+    if (!item || !item.tag) continue;
+    if (!best || isNewer(item.tag, best.tag)) best = item;
+  }
+  return best;
+}
+
+/**
+ * Свежий ассет канала из уже загруженного списка релизов.
+ * @param {object[]} list
+ * @param {'game'|'launcher'} kind
+ * @returns {{tag: string, name: string, url: string, size: number}|null}
+ */
+function pickLatestFromReleases(list, kind) {
+  const found = [];
+  const rows = Array.isArray(list) ? list : [];
+  for (let i = 0; i < rows.length; i++) {
+    const remote = remoteFromRelease(rows[i], kind);
+    if (remote) found.push(remote);
+  }
+  return pickNewestRemote(found);
+}
+
+/**
  * Последний публичный релиз с zip игры.
  * @returns {Promise<{tag: string, name: string, url: string, size: number}|null>}
  */
 async function fetchLatestGame() {
-  const list = await fetchReleaseList();
-  for (const release of list) {
-    if (!release || release.draft || release.prerelease) continue;
-    if (isLauncherRelease(release)) continue;
-    const asset = pickContentAsset(release);
-    if (!asset || !asset.browser_download_url) continue;
-    return toRemote(release, asset);
-  }
-  return null;
+  return pickLatestFromReleases(await fetchReleaseList(), 'game');
 }
 
 /**
@@ -122,15 +178,7 @@ async function fetchLatestGame() {
  * @returns {Promise<{tag: string, name: string, url: string, size: number}|null>}
  */
 async function fetchLatestLauncher() {
-  const list = await fetchReleaseList();
-  for (const release of list) {
-    if (!release || release.draft || release.prerelease) continue;
-    if (!isLauncherRelease(release)) continue;
-    const asset = pickLauncherAsset(release);
-    if (!asset || !asset.browser_download_url) continue;
-    return toRemote(release, asset);
-  }
-  return null;
+  return pickLatestFromReleases(await fetchReleaseList(), 'launcher');
 }
 
 module.exports = {
@@ -138,6 +186,8 @@ module.exports = {
   fetchLatestLauncher,
   pickContentAsset,
   pickLauncherAsset,
+  pickLatestFromReleases,
+  pickNewestRemote,
   isLauncherRelease,
   headers
 };

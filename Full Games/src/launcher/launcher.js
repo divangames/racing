@@ -214,6 +214,7 @@ async function boot() {
   paintInstall(inst);
   paintSelf(self);
   if (self.packaged && self.needUpdate && !self.remoteError) {
+    setStatus('Нашёл новый лаунчер. Качаю и ставлю сам.');
     runSelfUpdate();
     return;
   }
