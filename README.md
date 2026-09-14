@@ -65,7 +65,7 @@
 
 https://divangames.github.io/racing/
 
-Презентация — корень. Скачать лаунчер: [MSI 0.2.2.6](https://github.com/divangames/racing/releases/download/launcher-0.2.2.6/KolesnicaVoyny-0.2.2.6.msi).
+Презентация — корень. Скачать лаунчер: [MSI 0.2.2.7](https://github.com/divangames/racing/releases/download/launcher-0.2.2.7/KolesnicaVoyny-0.2.2.7.msi).
 
 ## Технологии
 
