@@ -193,6 +193,7 @@
       packPay = Math.round(CAREER_PACK_PAY * prizeDivMult(R.div));
       save.cash += packPay;
     }
+    if (typeof storyAfterCareerRace === 'function') storyAfterCareerRace(prevRace, counts);
     persist();
     R.career = careerMakeBrief(prevRace, counts, streakPay, packPay, newAch || []);
   }

@@ -19,7 +19,7 @@ const ENGINE = path.resolve(__dirname, '../src/engine');
  * Песочница среза: владение + сюжет.
  * @returns {object}
  */
-function bootStory() {
+function bootStory(slice) {
   const CARS = [];
   for (let i = 0; i < 16; i++) CARS.push({ price: i >= 11 ? 200 : 0, idx: i });
   CARS[0].owner = 0;
@@ -118,12 +118,37 @@ function bootStory() {
   g.globalThis = g;
   g.__DIVAN_ENGINE_META__ = { name: 'DiVANEngine', abi: 1, host: 'game' };
   vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'runtime.js'), 'utf8'), g);
+  if (slice) {
+    Object.assign(g, {
+      CAREER_STREAK_PAY: {}, CAREER_PACK: 3, CAREER_PACK_PAY: 360, CAREER_PICK_WINS: 5,
+      DIVN: ['I', 'II', 'III', 'IV'], CAR_UNLOCK: [], labTest: false, gt: 0,
+      raceBoard: null, garagePaused: false,
+      prizeDivMult: () => 1, fm: String, sClick: () => {},
+      newSave: () => ({ cash: 1000, race: 0, char: 0, carOwned: {}, tuning: {} }),
+      allTunes: () => ({}),
+      WORLD_INTRO: {}, CHAR_INTROS: [{ imgs: [{ n: 0 }, { n: 1 }, { n: 2 }, { n: 3 }, { n: 4 }, { n: 5 }, { n: 6 }], scenes: [{ img: 0, text: 'Медведь' }] }],
+      playerComicsDir: () => 'comics/', worldIntroEnqueueImgs: () => {},
+      worldIntroBeginScreen: () => { g.state = 'worldIntro'; },
+      worldIntroApplyJson: () => { g._jsonApplied = true; },
+      startCampaignIntro: () => {},
+      careerVisitedIdx: () => [], careerPlaceWord: () => '',
+      careerOpenFromResults: () => {}, careerDo: () => {}, careerEnterTrackPick: () => {},
+      careerPress: () => {}, careerClick: () => {}, drawCareer: () => {},
+      enterPreRace: () => { g.state = 'prerace'; },
+      isBack: c => c === 'Escape', enterTitle: () => { g.state = 'title'; },
+      carCatalogOrder: () => [0, 11, 12, 13, 14, 15],
+      press: () => { g._pressed = true; }, hubClick: () => {},
+      loadSave: () => {},
+    });
+    vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'career-econ.js'), 'utf8'), g);
+  }
   vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'story-campaign.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'story-hunt.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'story-repair.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'story-gift.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'story-invite.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'story-family.js'), 'utf8'), g);
+  if (slice) vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'story-bear-chapter.js'), 'utf8'), g);
   return g;
 }
 
@@ -135,6 +160,7 @@ test('Заезд подключает сюжет после клавиатуры
   assert(out.includes('/__engine/story-gift.js'));
   assert(out.includes('/__engine/story-invite.js'));
   assert(out.includes('/__engine/story-family.js'));
+  assert(out.includes('/__engine/story-bear-chapter.js'));
   assert(out.indexOf('press.js') < out.indexOf('story-campaign.js'));
   assert(out.indexOf('story-campaign.js') < out.indexOf('story-hunt.js'));
   assert(out.indexOf('story-hunt.js') < out.indexOf('story-repair.js'));
@@ -147,6 +173,134 @@ test('Заезд подключает сюжет после клавиатуры
   assert(engineFile('__engine/story-gift.js').endsWith('story-gift.js'));
   assert(engineFile('__engine/story-invite.js').endsWith('story-invite.js'));
   assert(engineFile('__engine/story-family.js').endsWith('story-family.js'));
+});
+
+function beginChapter() {
+  const g = bootStory(true);
+  g.storyStartNewCampaign();
+  g.storyFinishCampaignIntro();
+  return g;
+}
+
+test('Новая глава: вступление сохраняет машину, деньги и тюнинг', () => {
+  const g = bootStory(true);
+  g.storyStartNewCampaign();
+  assert.equal(g.state, 'worldIntro');
+  assert.equal(g.save.storyMission, 'race_a');
+  assert.ok(g.WORLD_INTRO.scenes.length >= 2);
+  assert.match(g.WORLD_INTRO.scenes[g.WORLD_INTRO.scenes.length - 1].text, /десять тысяч/i);
+  assert.equal(g.storyApplyGarageRobbery(), false);
+  g.worldIntroApplyJson({ scenes: [{ text: 'Старая кража' }] });
+  assert.equal(g._jsonApplied, undefined);
+  g.save.tuning[0] = { eng: 3 };
+  g.storyFinishCampaignIntro();
+  assert.equal(g.save.personalCarState, 'owned');
+  assert.equal(g.save.car, 0);
+  assert.equal(g.save.cash, 1000);
+  assert.equal(g.save.tuning[0].eng, 3);
+  assert.equal(g.state, 'cameraSetup');
+});
+
+test('А не повышается автоматически; взнос после гонки списывается один раз', () => {
+  const g = beginChapter();
+  g.save.cash = 10000;
+  assert.equal(g.storyPayBearEntry(), false);
+  g.R.place = 3;
+  for (let i = 0; i < 12; i++) {
+    g.careerAfterResults(g.save.race, []);
+    assert.ok(g.save.race < g.TRACKDEFS.length);
+    assert.equal(g.save.storyMission, 'race_a');
+  }
+  g.save.cash = 9999;
+  assert.equal(g.storyPayBearEntry(), false);
+  g.save.cash = 10000;
+  assert.equal(g.storyPayBearEntry(), true);
+  assert.equal(g.save.cash, 0);
+  assert.equal(g.save.race, g.TRACKDEFS.length);
+  assert.equal(g.save.storyMission, 'race_b');
+  assert.equal(g.storyPayBearEntry(), false);
+});
+
+test('Б: порог после призов, комикс после ложного взноса, деньги сохраняются', () => {
+  const g = beginChapter();
+  g.save.storyFlags.raceACompleted = true;
+  g.save.cash = 20000;
+  g.storyPayBearEntry();
+  assert.match(g.storyMissionHud(), /ЗАЕЗДЫ Б/);
+  assert.equal(g.save.cash, 10000);
+  assert.equal(g.storyRequestBearEntry(), false);
+  g.R.place = 3;
+  g.save.race = 6;
+  g.careerAfterResults(g.save.race, []);
+  assert.equal(g.save.storyFlags.robberyPending, undefined);
+  assert.equal(g.save.personalCarState, 'owned');
+  g.careerOpenFromResults();
+  assert.notEqual(g.state, 'worldIntro');
+  assert.equal(g.storyRequestBearEntry(), true);
+  assert.equal(g.save.cash, 10000);
+  assert.equal(g.save.storyFlags.robberyPending, true);
+  assert.equal(g.state, 'worldIntro');
+  assert.match(g.WORLD_INTRO.title, /ОГРАБЛЕНИЕ/);
+  assert.match(g.WORLD_INTRO.dir, /comics/);
+  assert.equal(g.WORLD_INTRO.imgs, g.CHAR_INTROS[0].imgs);
+  g.save.carOwned[12] = true;
+  g.save.tuning[12] = { eng: 6 };
+  g.storyFinishCampaignIntro();
+  assert.equal(g.save.cash, 10000);
+  assert.equal(g.save.storyMission, 'buy_junk');
+  assert.equal(g.save.race, 0);
+  assert.equal(g.carIsOwned(0), false);
+  assert.equal(g.carIsOwned(11), false);
+  assert.equal(g.carIsOwned(12), false);
+  assert.equal(g.save.tuning[12], undefined);
+  assert.equal(g.storyHuntActive(), false);
+  assert.equal(g.storyApplyGarageRobbery(), false);
+  assert.equal(g.state, 'car');
+});
+
+test('Перезагрузка возобновляет комикс и обязательную покупку; после покупки можно ехать', () => {
+  const g = beginChapter();
+  g.save.storyFlags.robberyPending = true;
+  g.save.storyMission = 'race_b';
+  g.save = JSON.parse(JSON.stringify(g.save));
+  g.storyContinueCampaign();
+  assert.equal(g.state, 'worldIntro');
+  g.storyFinishCampaignIntro();
+  g.save = JSON.parse(JSON.stringify(g.save));
+  g.storyContinueCampaign();
+  assert.equal(g.state, 'car');
+  g.enterPreRace();
+  assert.equal(g.state, 'car');
+  assert.deepEqual(Array.from(g.carCatalogOrder()), [11, 12, 13, 14, 15]);
+  g.selCar = 0;
+  g.press('Enter');
+  assert.equal(g._pressed, undefined);
+  g.save.cash -= g.CARS[11].price;
+  g.save.carOwned[11] = true;
+  g.persist();
+  assert.equal(g.save.storyMission, 'restart_races');
+  assert.equal(g.save.temporaryCar, 11);
+  g.enterPreRace();
+  assert.equal(g.state, 'prerace');
+  assert.equal(g.storyHuntActive(), false);
+});
+
+test('Реванш и лаборатория не запускают сюжет; свободная карьера работает по-старому', () => {
+  const g = beginChapter();
+  g.save.storyMission = 'race_b';
+  g.save.cash = 20000;
+  g.R.countsForCareer = false;
+  g.careerAfterResults(g.save.race, []);
+  assert.equal(g.save.storyFlags.robberyPending, undefined);
+  g.R.countsForCareer = true;
+  g.labTest = true;
+  g.careerAfterResults(g.save.race, []);
+  assert.equal(g.save.storyFlags.robberyPending, undefined);
+  g.labTest = false;
+  g.save.playMode = 'free';
+  g.save.race = 4;
+  g.careerAfterResults(4, []);
+  assert.equal(g.save.race, 5);
 });
 
 test('Старый сейв без сюжета остаётся свободной карьерой', () => {

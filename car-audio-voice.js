@@ -369,8 +369,33 @@ function carEngineMakeSlot() {
     pan: 0,
     airHeld: false,
     htmlPool: null,
-    htmlRaf: 0
+    htmlRaf: 0,
+    playGen: 0
   };
+}
+
+/** Новый номер старта: старые play() после глушения не имеют права ожить. */
+function carEngineArmPlay(slot) {
+  slot.playGen = (slot.playGen || 0) + 1;
+  return slot.playGen;
+}
+
+/** Этот play ещё актуален. */
+function carEnginePlayFresh(slot, gen) {
+  return !!(slot && slot.live && slot.playGen === gen);
+}
+
+/** Старт тега: если слот уже глушили — сразу пауза. */
+function carEngineHtmlAwait(el, slot, gen) {
+  if (!el) return;
+  const done = function () {
+    if (carEnginePlayFresh(slot, gen)) return;
+    try { el.pause(); } catch (err) {}
+    try { el.volume = 0; } catch (err) {}
+  };
+  const play = el.play();
+  if (play && typeof play.then === 'function') play.then(done, function () {});
+  else done();
 }
 
 /** Тег из пула слота, уже с src — без повторного load. tag: a/b для бесшовного лупа. */
@@ -423,6 +448,20 @@ function carEngineDrainHtmlPool(slot) {
   slot.htmlPool = null;
 }
 
+/** Пауза всех тегов пула: близнец шва иначе продолжает визг. */
+function carEngineMuteHtmlPool(slot) {
+  const pool = slot && slot.htmlPool;
+  if (!pool) return;
+  for (const key in pool) {
+    const el = pool[key];
+    if (!el) continue;
+    try { el.onended = null; } catch (err) {}
+    try { el.onerror = null; } catch (err) {}
+    try { el.pause(); } catch (err) {}
+    try { el.volume = 0; } catch (err) {}
+  }
+}
+
 /** Снимает источник слота, пул WAV оставляет. */
 function carEngineKillSlot(slot) {
   if (!slot) return;
@@ -430,6 +469,7 @@ function carEngineKillSlot(slot) {
     try { cancelAnimationFrame(slot.htmlRaf); } catch (err) {}
     slot.htmlRaf = 0;
   }
+  carEngineMuteHtmlPool(slot);
   const v = slot.voice;
   if (v) {
     try {
@@ -504,10 +544,7 @@ function carEnginePlayHtml(slot, url, loop, vol, rate, force) {
   const cur = slot.voice;
   if (!force && cur && cur.el && cur.url === url && cur.loop === loop) {
     carEngineTouchSlot(slot, loud, pitch);
-    if (cur.el.paused) {
-      const retry = cur.el.play();
-      if (retry && typeof retry.catch === 'function') retry.catch(function () {});
-    }
+    if (cur.el.paused) carEngineHtmlAwait(cur.el, slot, slot.playGen || 0);
     if (loop) carEngineHtmlLoopArm(slot);
     return true;
   }
@@ -528,7 +565,7 @@ function carEnginePlayHtml(slot, url, loop, vol, rate, force) {
   const span = carEngineShare.span[url];
   const startAt = (loop && span && span.start > 0.004) ? span.start : 0;
   el.onended = function () {
-    if (!slot.voice || slot.voice.el !== el) return;
+    if (!slot.live || !slot.voice || slot.voice.el !== el) return;
     if (loop) {
       carEngineHtmlSeam(slot, true);
       return;
@@ -538,10 +575,10 @@ function carEnginePlayHtml(slot, url, loop, vol, rate, force) {
     try { if (slot.live) carEngineResumeSlot(slot); } catch (err) {}
   };
   try { el.currentTime = startAt; } catch (err) {}
+  const gen = carEngineArmPlay(slot);
   slot.voice = {src: el, gain: null, pan: null, url: url, loop: !!loop, el: el, tag: tag || 'a', seam: false};
   slot.shot = !loop;
-  const play = el.play();
-  if (play && typeof play.catch === 'function') play.catch(function () {});
+  carEngineHtmlAwait(el, slot, gen);
   if (loop) carEngineHtmlLoopArm(slot);
   return true;
 }
@@ -558,9 +595,10 @@ function carEngineHtmlSpan(el, url) {
 /** Запускает второй тег чуть раньше конца, без дырки native loop. */
 function carEngineHtmlSeam(slot, fromEnded) {
   const v = slot && slot.voice;
-  if (!v || !v.loop || !v.el || !v.url) return;
+  if (!slot || !slot.live || !v || !v.loop || !v.el || !v.url) return;
   if (v.seam && !fromEnded) return;
   const el = v.el;
+  const gen = slot.playGen || 0;
   const span = carEngineHtmlSpan(el, v.url);
   if (!span.end && !fromEnded) return;
   const nextTag = v.tag === 'a' ? 'b' : 'a';
@@ -572,12 +610,11 @@ function carEngineHtmlSeam(slot, fromEnded) {
   twin.onerror = el.onerror;
   try { twin.currentTime = span.start; } catch (err) {}
   v.seam = true;
-  const play = twin.play();
-  if (play && typeof play.catch === 'function') play.catch(function () {});
+  carEngineHtmlAwait(twin, slot, gen);
   slot.voice = {src: twin, gain: null, pan: null, url: v.url, loop: true, el: twin, tag: nextTag, seam: false};
   setTimeout(function () {
     try {
-      if (el && slot.voice && slot.voice.el !== el) el.pause();
+      if (!carEnginePlayFresh(slot, gen) || (slot.voice && slot.voice.el !== el)) el.pause();
     } catch (err) {}
   }, 22);
 }
@@ -588,7 +625,10 @@ function carEngineHtmlLoopArm(slot) {
   const step = function () {
     slot.htmlRaf = 0;
     const v = slot.voice;
-    if (!v || !v.loop || !v.el || !slot.live) return;
+    if (!v || !v.loop || !v.el || !slot.live) {
+      try { if (v && v.el) v.el.pause(); } catch (err) {}
+      return;
+    }
     const el = v.el;
     const span = carEngineHtmlSpan(el, v.url);
     if (span.end > 0.05 && !el.paused) {
@@ -726,6 +766,7 @@ function carEngineResumeSlot(slot) {
 /** Глушит слот. */
 function carEngineHaltSlot(slot) {
   if (!slot) return;
+  slot.playGen = (slot.playGen || 0) + 1;
   slot.live = false;
   slot.want = '';
   slot.gas = 0;

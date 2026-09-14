@@ -58,7 +58,7 @@ test('На титуле капли есть, в гонке слой пустой
   g.tickTitleFx(0.016);
   g.drawTitleRain();
   assert.ok((g.rects || 0) > 10);
-  g.state = 'race';
+  g.state = 'garage';
   g.tickTitleFx(0.016);
   g.rects = 0;
   g.drawTitleRain();

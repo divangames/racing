@@ -155,7 +155,8 @@ function tickCarEngineTitle(base) {
     any = carEngineTickSlot(slot, item.r, mix * item.spat * CAR_ENGINE_NPC * density, carEnginePanFrom(listener, item.r)) || any;
   }
   carEnginePruneNpcs(keep);
-  if (typeof tickCarTires === 'function') tickCarTires(listener, pack, mix);
+  // Демо камеры/настроек: моторы можно, визг шин с демо иначе залипает на всю сессию.
+  if (typeof carTiresHalt === 'function') carTiresHalt();
   if (typeof tickCarNos === 'function') tickCarNos(listener, pack, mix);
   return any;
 }

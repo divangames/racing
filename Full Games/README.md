@@ -7,7 +7,8 @@
 ## Структура
 
 - `src/main/` — процесс клиента: окна, протокол, целостность
-- `src/engine/story-campaign.js` — кампания Медведя: stolen Camaro, времянка; после комикса — настройка камеры
+- `src/engine/story-campaign.js` — кампания Медведя: поля сейва, stolen Camaro, времянка
+- `src/engine/story-bear-chapter.js` — срез главы 1: комикс → А → взнос 10 000 → Б (ложный взнос) → ограбление → хлам
 - `src/engine/story-hunt.js` — охота на Бронекузнеца: заводской трек, босс, корпус за 1 место
 - `src/engine/story-repair.js` — ходовая на овале, ручной режим без чёрного ящика
 - `src/engine/story-invite.js` — пропуск на арену, Янот в сетке
@@ -26,6 +27,7 @@
 - `src/launcher/` — экран запуска (левый столбец команд, центр — арт)
 - `src/preload/` — мост без Node в странице
 - `world-intro.js` — лор арены после «любая кнопка»; сюжет Медведя — `assets/data/cats/campaign/` и меню «Кампания»
+- Титул: кадры `assets/data/cats/Titles/` (`titles.json`, HD и ультраширокий webp)
 - `armory.js` — оружейка, копируется так же
 - `manifest/integrity.json` — список ядра для проверки
 - `vendor-local/` — Three и quarks без CDN

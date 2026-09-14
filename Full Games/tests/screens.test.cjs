@@ -56,6 +56,7 @@ function bootUi() {
   g.__DIVAN_ENGINE_META__ = { name: 'DiVANEngine', abi: 1, host: 'game' };
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/runtime.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/cheats-gate.js'), 'utf8'), g);
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/title-bg.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/screens.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/render.js'), 'utf8'), g);
   return g;
@@ -70,10 +71,12 @@ test('Заезд подключает screens и render до кадра', () => 
   assert(out.indexOf('loop.js') < out.indexOf('presentation.js'));
   assert(engineFile('__engine/screens.js').endsWith('screens.js'));
   const src = fs.readFileSync(path.resolve(__dirname, '../src/engine/screens.js'), 'utf8');
-  assert.ok(src.includes('assets/image/cast/01.png'));
+  assert.ok(src.includes('assets/data/cats/Titles/'));
   assert.ok(!src.includes('drawTitleRace()'));
   assert.ok(!src.includes('drawVhsOverlay()'));
+  assert(out.includes('/__engine/title-bg.js'));
   assert(out.includes('/__engine/title-fx.js'));
+  assert(out.indexOf('title-bg.js') < out.indexOf('screens.js'));
   assert(out.indexOf('screens.js') < out.indexOf('title-fx.js'));
   assert(out.indexOf('title-fx.js') < out.indexOf('render.js'));
 });
@@ -98,6 +101,14 @@ test('Пункты меню и камера мира считаются без c
   const lay = g.DiVANEngine.screens.titleLayout({ H: 720, n: 8, logoH: 200, resetArm: false });
   assert.ok(lay.titleStep >= 22 && lay.titleStep <= 34);
   assert.equal(lay.colX, 52);
+  const wide = g.DiVANEngine.screens.titleLayout({ H: 720, n: 8, logoH: 200, resetArm: false, stageX: -220 });
+  assert.equal(wide.colX, -168);
+  const pick = g.DiVANEngine.screens.pickTitleBgSrc;
+  assert.ok(pick(1920 / 1080).indexOf('1920x1080') >= 0);
+  assert.ok(pick(3440 / 1440).indexOf('3440x1440') >= 0);
+  assert.ok(pick(2560 / 1080).indexOf('3440x1440') >= 0);
+  assert.ok(pick(1280 / 720).indexOf('1920x1080') >= 0);
+  assert.ok(pick(16 / 9, 3840, 2160).indexOf('1920x1080') >= 0);
   const cam = g.DiVANEngine.render.worldCamera({ cam: { x: 40, y: 80 }, sx: 2, sy: -3 }, 2, 0.5);
   assert.equal(cam.scale, 1);
   assert.equal(cam.tx, -38);

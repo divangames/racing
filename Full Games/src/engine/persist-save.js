@@ -108,9 +108,10 @@
     if (save.dev == null) save.dev = 0;
     if (!save.carOwned) save.carOwned = {};
     const own = charCarIdx(typeof save.char === 'number' ? save.char : 0);
-    save.carOwned[own] = true;
+    if (save.personalCarState === 'stolen') delete save.carOwned[own];
+    else save.carOwned[own] = true;
     CARS.forEach(function (c, i) {
-      if (c.custom) save.carOwned[i] = true;
+      if (c.custom && !(save.storySlice === 'bear_chapter_1' && save.storyFlags && save.storyFlags.garageRobbed)) save.carOwned[i] = true;
       if (!save.dev && c.owner != null && c.owner !== save.char) delete save.carOwned[i];
     });
     if (save.car == null || !CARS[save.car] || isForeignSignature(save.car)) save.car = own;

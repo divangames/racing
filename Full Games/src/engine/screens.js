@@ -7,13 +7,11 @@
 (function (global) {
   'use strict';
 
-  const TITLE_CAST_BG = 'assets/image/cast/01.png';
   const TITLE_STUDIO_LOGO = 'assets/divan_games/DIVAN_none.png';
   const TITLE_COL_X = 52;
   const TITLE_LOGO_W = 380;
   const TITLE_ITEM_W = 340;
 
-  let titleCastBg = null;
   let titleStudioLogo = null;
 
   /**
@@ -51,32 +49,54 @@
     return img;
   }
 
-  /** Фон каста и логотип студии — один раз. */
+  /** Левый край видимой сцены. @returns {number} */
+  function titleStageX() {
+    return (typeof viewW === 'number') ? (W - viewW) / 2 : 0;
+  }
+
+  /** Правый край подписи версии. @returns {number} */
+  function titleStageRight() {
+    const vw = (typeof viewW === 'number' && viewW > 0) ? viewW : W;
+    return titleStageX() + vw;
+  }
+
+  /** Фон под текущий экран и логотип студии. */
   function ensureTitleArt() {
-    if (!titleCastBg) titleCastBg = queueTitleImage(TITLE_CAST_BG);
+    if (engineTitleBg()) engineTitleBg().ensureTitleArt();
     if (!titleStudioLogo) titleStudioLogo = queueTitleImage(TITLE_STUDIO_LOGO);
     if (!(typeof BOOT !== 'undefined' && BOOT.ready)) return;
-    if (titleCastBg && !titleCastBg.naturalWidth) bindTitleSrc(titleCastBg, TITLE_CAST_BG);
     if (titleStudioLogo && !titleStudioLogo.naturalWidth) bindTitleSrc(titleStudioLogo, TITLE_STUDIO_LOGO);
   }
 
+  /** API пластины, если модуль уже вставлен. @returns {object|null} */
+  function engineTitleBg() {
+    return (global.DiVANEngine && global.DiVANEngine.titleBg) || null;
+  }
+
   /**
-   * Картинка на весь кадр без полей.
-   * @param {CanvasRenderingContext2D} ctx
-   * @param {HTMLImageElement} img
-   * @param {number} x
-   * @param {number} y
-   * @param {number} w
-   * @param {number} h
-   * @returns {boolean}
+   * Фон, чей кадр ближе к экрану.
+   * @param {number} [aspect]
+   * @param {number} [canvasW]
+   * @param {number} [canvasH]
+   * @returns {string}
    */
-  function blitCover(ctx, img, x, y, w, h) {
-    if (!img || !img.complete || !img.naturalWidth) return false;
-    const iw = img.naturalWidth, ih = img.naturalHeight;
-    const s = Math.max(w / iw, h / ih);
-    const dw = iw * s, dh = ih * s;
-    ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
-    return true;
+  function pickTitleBgSrc(aspect, canvasW, canvasH) {
+    const api = engineTitleBg();
+    if (api && typeof api.pickTitleBgSrc === 'function') return api.pickTitleBgSrc(aspect, canvasW, canvasH);
+    return 'assets/data/cats/Titles/title-medved_1920x1080.webp';
+  }
+
+  /**
+   * Ширина и высота из имени `…_1920x1080.webp`.
+   * @param {string} name
+   * @returns {{w:number,h:number,aspect:number}|null}
+   */
+  function parseTitleBgSize(name) {
+    const api = engineTitleBg();
+    if (api && typeof api.parseTitleBgSize === 'function') return api.parseTitleBgSize(name);
+    const m = String(name || '').match(/(\d+)\s*[x×]\s*(\d+)/i);
+    if (!m) return null;
+    return { w: +m[1], h: +m[2], aspect: +m[1] / +m[2] };
   }
 
   /**
@@ -119,7 +139,7 @@
 
   /**
    * Левая колонка: логотип сверху, список сразу под ним.
-   * @param {{H:number,n:number,logoH:number,resetArm:boolean}} opts
+   * @param {{H:number,n:number,logoH:number,resetArm:boolean,stageX?:number}} opts
    * @returns {{titleY0:number,titleStep:number,panelH:number,selFs:number,idleFs:number,colX:number,itemW:number,logoW:number}}
    */
   function titleLayout(opts) {
@@ -130,13 +150,14 @@
     const titleStep = Math.min(34, Math.max(22, span / n));
     const titleY0 = top;
     const panelH = Math.max(20, titleStep - 3);
+    const origin = opts.stageX == null ? 0 : opts.stageX;
     return {
       titleY0,
       titleStep,
       panelH,
       selFs: Math.min(20, Math.max(14, titleStep * 0.58)),
       idleFs: Math.min(16, Math.max(12, titleStep * 0.46)),
-      colX: TITLE_COL_X,
+      colX: origin + TITLE_COL_X,
       itemW: TITLE_ITEM_W,
       logoW: TITLE_LOGO_W
     };
@@ -150,16 +171,17 @@
    * @param {number} h
    */
   function drawTitleShade(x, y, w, h) {
-    const side = g.createLinearGradient(x, y, x + w * 0.58, y);
-    side.addColorStop(0, 'rgba(5,4,9,.82)');
-    side.addColorStop(0.42, 'rgba(5,4,9,.46)');
-    side.addColorStop(0.72, 'rgba(5,4,9,.12)');
+    const band = Math.min(520, Math.max(380, TITLE_COL_X + TITLE_ITEM_W + 90));
+    const side = g.createLinearGradient(x, y, x + band, y);
+    side.addColorStop(0, 'rgba(5,4,9,.58)');
+    side.addColorStop(0.38, 'rgba(5,4,9,.28)');
+    side.addColorStop(0.72, 'rgba(5,4,9,.08)');
     side.addColorStop(1, 'rgba(5,4,9,0)');
     g.fillStyle = side;
     g.fillRect(x, y, w, h);
-    const foot = g.createLinearGradient(x, y + h * 0.72, x, y + h);
+    const foot = g.createLinearGradient(x, y + h * 0.82, x, y + h);
     foot.addColorStop(0, 'rgba(5,4,9,0)');
-    foot.addColorStop(1, 'rgba(5,4,9,.55)');
+    foot.addColorStop(1, 'rgba(5,4,9,.38)');
     g.fillStyle = foot;
     g.fillRect(x, y, w, h);
   }
@@ -197,12 +219,18 @@
    */
   function drawTitleStageEngine() {
     ensureTitleArt();
-    const LX = (W - viewW) / 2, LY = (H - viewH) / 2;
-    g.fillStyle = '#050409';
-    g.fillRect(LX, LY, viewW, viewH);
-    blitCover(g, titleCastBg, LX, LY, viewW, viewH);
-    drawTitleShade(LX, LY, viewW, viewH);
-    drawTitleLogo(TITLE_COL_X, TITLE_LOGO_W);
+    const LX = titleStageX();
+    const LY = (typeof viewH === 'number') ? (H - viewH) / 2 : 0;
+    const vw = (typeof viewW === 'number' && viewW > 0) ? viewW : W;
+    const vh = (typeof viewH === 'number' && viewH > 0) ? viewH : H;
+    const api = engineTitleBg();
+    if (api && typeof api.drawTitlePlate === 'function') api.drawTitlePlate(g, LX, LY, vw, vh);
+    else {
+      g.fillStyle = '#050409';
+      g.fillRect(LX, LY, vw, vh);
+    }
+    drawTitleShade(LX, LY, vw, vh);
+    drawTitleLogo(LX + TITLE_COL_X, TITLE_LOGO_W);
     if (typeof drawTitleRain === 'function') drawTitleRain();
   }
 
@@ -215,7 +243,7 @@
       g.save();
       g.shadowColor = 'rgba(255,157,46,.9)';
       g.shadowBlur = 22;
-      txt(g, 'Нажмите любую кнопку', TITLE_COL_X, H - 118, 34, '#ffd23f', 'left');
+      txt(g, 'Нажмите любую кнопку', titleStageX() + TITLE_COL_X, H - 118, 34, '#ffd23f', 'left');
       g.restore();
     }
   }
@@ -246,7 +274,7 @@
     const items = titleItems(free, typeof isDev === 'function' && isDev(), story);
     if (selTitle >= items.length) selTitle = items.length - 1;
     const n = items.length;
-    const lay = titleLayout({ H: H, n: n, logoH: titleLogoHeight(), resetArm: !!resetArm });
+    const lay = titleLayout({ H: H, n: n, logoH: titleLogoHeight(), resetArm: !!resetArm, stageX: titleStageX() });
     const colX = lay.colX;
     items.forEach(function (t, i) {
       const y = lay.titleY0 + i * lay.titleStep, sel = i === selTitle;
@@ -267,7 +295,7 @@
     g._titleItemW = lay.itemW;
     drawStudioMark(colX);
     const ver = gameVersionLabel();
-    if (ver) txt(g, ver, W - 22, H - 16, 11, '#5a5468', 'right', F_B);
+    if (ver) txt(g, ver, titleStageRight() - 22, H - 16, 11, '#5a5468', 'right', F_B);
     g._titleItems = items;
     drawLabWarn();
     drawExitWarn();
@@ -345,7 +373,14 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.screens = { titleItems, titleLayout, paint, names: Object.keys(PAINTERS) };
+  engine.screens = {
+    titleItems,
+    titleLayout,
+    pickTitleBgSrc,
+    parseTitleBgSize,
+    paint,
+    names: Object.keys(PAINTERS)
+  };
   engine.replace('drawTitle', drawTitleEngine);
   engine.replace('drawTitleStage', drawTitleStageEngine);
   engine.replace('drawPressStart', drawPressStartEngine);

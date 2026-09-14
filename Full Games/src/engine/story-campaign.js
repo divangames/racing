@@ -95,13 +95,13 @@
    */
   function campaignIntroFallbackScenes() {
     return [
-      {img: 0, text: 'Дождь. Гараж. Янот курит, красный Camaro Медведя ещё цел. «Сколько тебя не будет?» — «Три дня».'},
-      {img: 1, text: 'Сообщение: не бери Лаурята в машину. Медведь стирает. Садится рядом с названым братом.'},
-      {img: 2, text: '«Ночь зубов». Карта врёт. Дроны, мины, ворота изнутри. На транспорте — знак арены, которой ещё нет.'},
-      {img: 3, text: 'Он вылезает один. Фото Янот: «Следующая». Уезжает. Спасает её. Ломает себя.'},
-      {img: 4, text: 'Башкир, Ерш, Бегемотик, Медведь. Их личные машины. Арена ставит на табло тех, кого нельзя убить.'},
-      {img: 5, text: 'Пустые крепления. Camaro на эвакуаторе. Чёрный ящик вынут. Лаурят сказал: он сам приедет.'},
-      {img: 6, text: 'Личную машину украли, не убили. Дешёвый кузов на время. Не умереть дешёвыми. Садись. Верни своё.'}
+      {img: 0, text: 'Нам сказали: «Обычная операция, Медведь. Зайди, зачисти и возвращайся». Когда военные говорят «обычная», это обычно значит: горит всё, кроме твоей задницы.'},
+      {img: 1, text: 'Потом приказ изменили. Маршрут — мясорубка. Машина вытащила его сама. Умная железка. Жаль, что рапорт за него написать не могла.'},
+      {img: 2, text: 'После войны он собрал её заново: броня, пушки, характер похуже его. «Чтобы переговоры были короткими».'},
+      {img: 3, text: 'Фотографии погибших рядом с подписями тех, кто отправил отряд. Медали им. Дырки в броне — нам.'},
+      {img: 4, text: 'Приглашение без имени: большой приз и доступ к закрытому серверу. «Участие добровольное». Как смерть от пули — тоже, если очень быстро бежать.'},
+      {img: 5, text: 'У арены тот же знак, что на военных документах. Ведущий обещает честную гонку. Честной здесь только цена патронов.'},
+      {img: 6, text: 'Приз — бонус. Нужен сервер: приказы, маршруты, имена. Сначала заезды А. Допуск в Б — десять тысяч. Потом внести.'}
     ];
   }
 
@@ -112,6 +112,8 @@
     save = typeof newSave === 'function' ? newSave() : save;
     if (!save) return;
     save.playMode = 'campaign';
+    save.storySlice = 'bear_chapter_1';
+    save.storyMission = 'race_a';
     if (typeof applyCharCar === 'function') applyCharCar(0);
     else save.char = 0;
     storyBeginIfMedved(0);
@@ -126,6 +128,7 @@
     const key = typeof STORY_SKEY === 'string' ? STORY_SKEY : 'rnr_ru_story_v1';
     if (typeof loadSave === 'function') loadSave(undefined, key);
     if (!save || save.playMode !== 'campaign') return;
+    if (typeof storyResumeBearChapter === 'function' && storyResumeBearChapter()) return;
     state = 'garage';
   }
 
@@ -133,6 +136,12 @@
    * Конец ролика кампании: ограбление, камера, затем времянка.
    */
   function storyFinishCampaignIntro() {
+    if (typeof storyFinishBearComic === 'function' && storyFinishBearComic()) return;
+    if (save && save.storySlice) {
+      if (typeof enterCameraSetup === 'function') enterCameraSetup('car');
+      else if (typeof enterCarSel === 'function') enterCarSel(save && save.car);
+      return;
+    }
     storyApplyGarageRobbery();
     if (typeof enterCameraSetup === 'function') enterCameraSetup('car');
     else if (typeof enterCarSel === 'function') enterCarSel(save && save.car);
@@ -144,6 +153,7 @@
    * @returns {boolean}
    */
   function storyApplyGarageRobbery() {
+    if (typeof storyBearChapterActive === 'function' && storyBearChapterActive()) return storyRobBearGarage();
     if (!save || save.char !== 0) return false;
     if (save.storyCampaign !== STORY_MEDVED) return false;
     if (save.storyFlags && save.storyFlags.garageRobbed) return false;
@@ -168,6 +178,7 @@
    */
   function storyMissionHud() {
     if (!save || save.playMode !== 'campaign') return '';
+    if (typeof storyBearChapterActive === 'function' && storyBearChapterActive()) return storyBearMissionHud();
     if (save.storyMission === MISSION_BRONE) return 'ЦЕЛЬ: НАЙТИ БРОНЕКУЗНЕЦА · ЗАВОД';
     if (save.storyMission === MISSION_REPAIR) return 'ЦЕЛЬ: СОБЕРИ ХОДОВУЮ · ОВАЛ';
     if (save.storyMission === MISSION_GIFT || save.storyMission === MISSION_MANUAL) {
@@ -255,7 +266,7 @@
   engine.wrap('carSelStatus', function (prev) {
     return function (i, owned) {
       if (storyCarStolenFromHero(save, i)) {
-        return { t: 'УКРАДЕНА · БРОНЕКУЗНЕЦ', col: '#ff6b4a' };
+        return { t: save.storySlice ? 'УКРАДЕНА' : 'УКРАДЕНА · БРОНЕКУЗНЕЦ', col: '#ff6b4a' };
       }
       if (typeof carOwnerIdx === 'function' && save && carOwnerIdx(i) === save.char) {
         if (save.personalCarState === 'recovering') {

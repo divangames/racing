@@ -55,6 +55,7 @@
         "audio.js",
         "soundtrack.js",
         "music-gate.js",
+        "title-bg.js",
         "screens.js",
         "title-fx.js",
         "render.js",
@@ -95,6 +96,7 @@
         "story-gift.js",
         "story-invite.js",
         "story-family.js",
+        "story-bear-chapter.js",
         "loop.js",
         "presentation.js",
         "telemetry.js"

@@ -97,15 +97,32 @@ function carTiresHalt() {
   carTireNpcs.length = 0;
 }
 
-/** Игрок сейчас орёт покрышками с диска. */
+/** На диске есть клипы покрышек — пилу-шум не включать. */
+function carTiresReady() {
+  return !!(carTireUrl('slide') || carTireUrl('drift'));
+}
+
+/** Игрок или соперник сейчас орёт покрышками с диска. */
 function carTiresLive() {
-  return !!(carTirePlayer && carTirePlayer.voice);
+  if (carTirePlayer && carTirePlayer.voice) return true;
+  for (let i = 0; i < carTireNpcs.length; i++) {
+    if (carTireNpcs[i] && carTireNpcs[i].voice) return true;
+  }
+  return false;
 }
 
 /**
- * Визг поля: игрок и ближайшие соперники.
+ * Визг поля: игрок и ближайшие соперники. Только живой заезд.
  */
 function tickCarTires(player, pack, base) {
+  if (typeof document !== 'undefined' && document.hidden) {
+    carTiresHalt();
+    return;
+  }
+  if (typeof state === 'string' && state !== 'race') {
+    carTiresHalt();
+    return;
+  }
   carTireTickSlot(carTirePlayer, player, base, 0);
   const list = pack || [];
   const cap = typeof carEngineNpcCap === 'function' ? Math.min(4, carEngineNpcCap()) : 4;

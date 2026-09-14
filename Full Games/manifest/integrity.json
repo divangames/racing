@@ -1,7 +1,7 @@
 {
   "id": "kolesnica-voyny",
-  "version": "0.2.2.9",
-  "created": "2026-09-14T13:59:24.983Z",
+  "version": "0.2.2.10",
+  "created": "2026-09-14T15:31:50.872Z",
   "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
   "files": [
     {
@@ -31,18 +31,18 @@
     },
     {
       "path": "car-audio.js",
-      "size": 11443,
-      "sha256": "b77791636d57ab57b2f3f49b870297ed340745821dbddbd7d3a18706014fd9d6"
+      "size": 11577,
+      "sha256": "3bcfa283ae8c4eb3baf76ffca30dcdde70c6a61b047a830ac2bbcbe550527216"
     },
     {
       "path": "car-audio-voice.js",
-      "size": 25698,
-      "sha256": "2b28ff234f83829c694c2d53da0b248ed4d841870590d77365b52c3e31904a74"
+      "size": 27125,
+      "sha256": "caf34870ce995128a886e05e2cd9ddd76ac711f7eea2511faffc045454bd4d49"
     },
     {
       "path": "car-tires.js",
-      "size": 4967,
-      "sha256": "9e48674a38c7bbd58b75a6ffb0ccec7e3e8f58130922707fcfc1f21fe96be28f"
+      "size": 5564,
+      "sha256": "ea74b56dc79e97d6aa90fd5eb6bc1e6565dc9287a04eac2b73fa3578d0ca51e6"
     },
     {
       "path": "car-nos.js",
@@ -207,7 +207,7 @@
     {
       "path": "assets/data/cars/12/car.json",
       "size": 2349,
-      "sha256": "fdf26f3077ca9fb02e9cca5dd9229dbcd43f2e48caf4315e5992e2c0a3b31344"
+      "sha256": "88b10e7fd46ddcc2f9f2eed992ae8978aa315086ba253f47d4a8c790f1c893ef"
     },
     {
       "path": "assets/data/cars/13/car.json",

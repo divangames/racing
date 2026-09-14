@@ -1,0 +1,21 @@
+{
+  "fallback": "assets/image/cast/01.png",
+  "plates": [
+    {
+      "file": "title-medved_1920x1080.webp",
+      "w": 1920,
+      "h": 1080,
+      "focusX": 0.64,
+      "focusY": 0.46,
+      "character": "medved"
+    },
+    {
+      "file": "title-medved_3440x1440.webp",
+      "w": 3440,
+      "h": 1440,
+      "focusX": 0.56,
+      "focusY": 0.47,
+      "character": "medved"
+    }
+  ]
+}

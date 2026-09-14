@@ -33,7 +33,9 @@ test('Папки музыки и FX лежат на диске', () => {
   ['money.mp3', 'CashBay.mp3', 'carPay.wav'].forEach(function (name) {
     assert.ok(fs.existsSync(path.join(fx, name)), 'нет эффекта: ' + name);
   });
-  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'image', 'cast', '01.png')), 'нет фона титула');
+  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'titles.json')), 'нет манифеста фонов титула');
+  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'title-medved_1920x1080.webp')), 'нет HD-фона титула');
+  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'title-medved_3440x1440.webp')), 'нет ультраширокого фона титула');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'divan_games', 'DIVAN_none.png')), 'нет марки студии');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'embirnt', 'rain.mp3')), 'нет эмбиента дождя');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'embirnt', 'grom.mp3')), 'нет грома');

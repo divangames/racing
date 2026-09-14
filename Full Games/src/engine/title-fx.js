@@ -8,10 +8,12 @@
   'use strict';
 
   const TITLE_RAIN_SRC = 'assets/sounds/embirnt/rain.mp3';
-  const RAIN_MIX = 0.48;
+  const RAIN_MIX = 0.78;
 
-  let rainEl = null;
-  let rainLoad = false;
+  let rainGain = null;
+  let rainSrc = null;
+  let rainBuf = null;
+  let rainBusy = false;
   let drops = [];
   let splashes = [];
 
@@ -43,11 +45,23 @@
     return 170;
   }
 
+  /** Левый край сцены. @returns {number} */
+  function rainOx() {
+    return (typeof viewW === 'number') ? (W - viewW) / 2 : 0;
+  }
+
+  /** Ширина сцены под капли. @returns {number} */
+  function rainVw() {
+    return (typeof viewW === 'number' && viewW > 0) ? viewW : W;
+  }
+
   /** Новая капля сверху кадра. */
   function spawnDrop() {
     const z = 0.55 + Math.random() * 0.9;
+    const ox = rainOx();
+    const vw = rainVw();
     return {
-      x: Math.random() * (W + 120) - 40,
+      x: ox + Math.random() * (vw + 80) - 40,
       y: -30 - Math.random() * 160,
       vx: (80 + Math.random() * 90) * z,
       vy: (500 + Math.random() * 420) * z,
@@ -58,39 +72,95 @@
   }
 
   /**
-   * Громкость эмбиента от ползунка эффектов.
+   * Справа слабее, чтобы не забивать Медведя.
+   * @param {number} x
+   * @returns {number}
+   */
+  function rainSideFade(x) {
+    const nx = (x - rainOx()) / rainVw();
+    if (nx < 0.42) return 1;
+    if (nx > 0.9) return 0.22;
+    return 1 - (nx - 0.42) / 0.48 * 0.78;
+  }
+
+  /**
+   * Громкость лупа. AU.sfx уже умножает ползунок — здесь доля дождя.
    * @returns {number}
    */
   function rainVol() {
     const snd = settings && settings.sound;
     if (!snd || snd.sfxOn === false) return 0;
-    return clamp((snd.sfx == null ? 80 : snd.sfx) / 100, 0, 1) * RAIN_MIX;
+    return RAIN_MIX;
   }
 
-  /** Вешает blob или прямой URL на луп. */
-  function bindRainSrc() {
-    if (!rainEl || rainLoad) return;
-    rainLoad = true;
+  /**
+   * Blob заставки или путь с диска.
+   * @returns {string}
+   */
+  function rainHref() {
     const cached = (typeof BOOT !== 'undefined' && BOOT.media) ? BOOT.media[TITLE_RAIN_SRC] : '';
-    if (cached) { rainEl.src = cached; return; }
-    if (typeof bootMediaSrc === 'function') {
-      const href = bootMediaSrc(TITLE_RAIN_SRC);
-      if (href && href !== TITLE_RAIN_SRC) { rainEl.src = href; return; }
-    }
-    if (typeof fetch !== 'function') { rainEl.src = TITLE_RAIN_SRC; return; }
-    fetch(TITLE_RAIN_SRC, { cache: 'no-store' }).then(function (res) {
-      if (!res.ok) { rainEl.src = TITLE_RAIN_SRC; return; }
-      return res.blob().then(function (blob) {
-        if (!blob || !blob.size) { rainEl.src = TITLE_RAIN_SRC; return; }
-        rainEl.src = URL.createObjectURL(blob);
-      });
-    }).catch(function () { rainEl.src = TITLE_RAIN_SRC; });
+    if (cached) return cached;
+    if (typeof bootMediaSrc === 'function') return bootMediaSrc(TITLE_RAIN_SRC);
+    return TITLE_RAIN_SRC;
   }
 
-  /** Останавливает луп дождя. */
+  /** Контекст после жеста заставки. */
+  function rainCtx() {
+    if (typeof AU !== 'undefined' && AU.ctx) return AU.ctx;
+    if (typeof audioInit === 'function') {
+      try { audioInit(); } catch (e) {}
+    }
+    return (typeof AU !== 'undefined' && AU.ctx) ? AU.ctx : null;
+  }
+
+  /** Снимает источник лупа. */
   function haltTitleRain() {
-    if (!rainEl) return;
-    try { rainEl.pause(); } catch (e) {}
+    if (rainSrc) {
+      try { rainSrc.stop(); } catch (e) {}
+      rainSrc = null;
+    }
+    const ctx = rainCtx();
+    if (rainGain && ctx) {
+      try { rainGain.gain.setTargetAtTime(0, ctx.currentTime, 0.04); } catch (e) {}
+    }
+  }
+
+  /** Запускает закольцованный буфер в канал эффектов. */
+  function startRainNode() {
+    const ctx = rainCtx();
+    if (!ctx || !rainBuf || rainSrc) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(function () {});
+    if (!rainGain) {
+      rainGain = ctx.createGain();
+      const dest = (typeof AU !== 'undefined' && AU.sfx) ? AU.sfx : ctx.destination;
+      rainGain.connect(dest);
+    }
+    rainGain.gain.setValueAtTime(rainVol(), ctx.currentTime);
+    rainSrc = ctx.createBufferSource();
+    rainSrc.buffer = rainBuf;
+    rainSrc.loop = true;
+    rainSrc.connect(rainGain);
+    try { rainSrc.start(); } catch (e) { rainSrc = null; }
+  }
+
+  /** Качает и декодирует rain.mp3 один раз. */
+  function ensureRainBuffer() {
+    if (rainBuf || rainBusy) return;
+    const ctx = rainCtx();
+    if (!ctx || typeof fetch !== 'function') return;
+    rainBusy = true;
+    fetch(rainHref(), { cache: 'no-store' }).then(function (res) {
+      if (!res.ok) throw new Error('rain');
+      return res.arrayBuffer();
+    }).then(function (raw) {
+      return ctx.decodeAudioData(raw.slice(0));
+    }).then(function (buf) {
+      rainBuf = buf;
+      rainBusy = false;
+      if (titleRainScreen() && rainVol() > 0) startRainNode();
+    }).catch(function () {
+      rainBusy = false;
+    });
   }
 
   /** Луп rain.mp3, пока открыт титул и эффекты включены. */
@@ -100,16 +170,10 @@
       haltTitleRain();
       return;
     }
-    if (typeof Audio === 'undefined') return;
-    if (!rainEl) {
-      rainEl = new Audio();
-      rainEl.loop = true;
-      rainEl.preload = 'auto';
-      rainEl.referrerPolicy = 'no-referrer';
-      bindRainSrc();
-    }
-    rainEl.volume = rainVol();
-    if (rainEl.paused) rainEl.play().catch(function () {});
+    ensureRainBuffer();
+    if (rainBuf) startRainNode();
+    const ctx = rainCtx();
+    if (rainGain && ctx) rainGain.gain.setTargetAtTime(rainVol(), ctx.currentTime, 0.05);
   }
 
   /**
@@ -137,7 +201,7 @@
         drops[i] = spawnDrop();
         continue;
       }
-      if (p.x > W + 40) drops[i] = spawnDrop();
+      if (p.x > rainOx() + rainVw() + 40) drops[i] = spawnDrop();
     }
     for (let i = splashes.length - 1; i >= 0; i--) {
       splashes[i].t += step * 3.2;
@@ -160,7 +224,7 @@
     for (let i = 0; i < drops.length; i++) {
       const p = drops[i];
       const a = Math.atan2(p.vy, p.vx);
-      const fade = 0.18 + p.z * 0.28;
+      const fade = (0.18 + p.z * 0.28) * rainSideFade(p.x);
       g.save();
       g.translate(p.x, p.y);
       g.rotate(a);
@@ -192,7 +256,8 @@
     engine.wrap('applyAudioSettings', function (orig) {
       return function () {
         orig();
-        if (rainEl) rainEl.volume = rainVol();
+        const ctx = rainCtx();
+        if (rainGain && ctx) rainGain.gain.setTargetAtTime(rainVol(), ctx.currentTime, 0.05);
         if (!titleRainScreen() || rainVol() <= 0) haltTitleRain();
       };
     });

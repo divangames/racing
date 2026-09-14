@@ -18,13 +18,22 @@
     tire = {source, filter, gain};
     return tire;
   }
+  /** Мгновенно глушит шум шин: setTarget один не снимает уже запланированный визг. */
+  function muteTire(now, hard) {
+    const bus = tireBus();
+    if (!bus) return;
+    try { bus.gain.gain.cancelScheduledValues(now); } catch (err) {}
+    if (hard) {
+      try { bus.gain.gain.value = 0; } catch (err) {}
+    }
+    bus.gain.gain.setTargetAtTime(0, now, hard ? .01 : .04);
+  }
   /** Семплы кузова глушат пилу; без файлов остаётся прежний тон. */
   DiVANEngine.replace('updEngine', function(player, isPaused, screen) {
     if (screen === 'title' || screen === 'press') {
       if (typeof carEngineHalt === 'function') carEngineHalt();
       if (AU.ctx && AU.engG) AU.engG.gain.setTargetAtTime(0, AU.ctx.currentTime, .04);
-      const quiet = tireBus();
-      if (quiet) quiet.gain.gain.setTargetAtTime(0, AU.ctx.currentTime, .04);
+      muteTire(AU.ctx ? AU.ctx.currentTime : 0, true);
       return;
     }
     if (typeof tickCarEngine === 'function') tickCarEngine(player, isPaused, screen);
@@ -46,12 +55,13 @@
     }
     const bus = tireBus();
     if (bus) {
-      const sampledTires = typeof carTiresLive === 'function' && carTiresLive();
-      if (sampledTires) {
-        bus.gain.gain.setTargetAtTime(0, now, .05);
+      const sampledTires = (typeof carTiresReady === 'function' && carTiresReady()) || (typeof carTiresLive === 'function' && carTiresLive());
+      if (sampledTires || !active) {
+        muteTire(now, !active);
       } else {
-        const slip = active && !player.air && !player.car.hov ? clamp((Math.abs(player.lat || 0) - 12) / 95, 0, 1) : 0;
-        bus.gain.gain.setTargetAtTime(slip * .055 * Math.min((active ? Math.abs(player.spd) / Math.max(1, player.st.top) : 0) * 3, 1), now, .08);
+        const hover = !!(player.car && player.car.hov);
+        const slip = !player.air && !hover ? clamp((Math.abs(player.lat || 0) - 12) / 95, 0, 1) : 0;
+        bus.gain.gain.setTargetAtTime(slip * .055 * Math.min((Math.abs(player.spd) / Math.max(1, player.st.top)) * 3, 1), now, .08);
       }
     }
   });
@@ -59,7 +69,7 @@
   document.addEventListener('visibilitychange', () => {
     if (document.hidden && AU.ctx) {
       AU.engG?.gain.setTargetAtTime(0, AU.ctx.currentTime, .025);
-      tire?.gain.gain.setTargetAtTime(0, AU.ctx.currentTime, .025);
+      muteTire(AU.ctx.currentTime, true);
       if (typeof carEngineHalt === 'function') carEngineHalt();
     }
   });
