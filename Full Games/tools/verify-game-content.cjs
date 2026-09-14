@@ -6,9 +6,13 @@ const path = require('path');
 const root = path.resolve(__dirname, '..', '..');
 const carsRoot = path.join(root, 'assets', 'data', 'cars');
 const soundsRoot = path.join(root, 'assets', 'sounds');
+const disclaimer = path.join(root, 'assets', 'ui', 'disclaimer', 'disclaimer-21plus.svg');
 
 if (!fs.existsSync(carsRoot) || !fs.existsSync(soundsRoot)) {
   throw new Error('Нет папок настроек машин или звуков: ' + root);
+}
+if (!fs.existsSync(disclaimer)) {
+  throw new Error('Нет дисклеймера 21+: ' + disclaimer);
 }
 
 const cars = fs.readdirSync(carsRoot)

@@ -15,7 +15,9 @@ const {
   listContentMembers,
   tarZipExcludeArgs,
   assertCoreSounds,
-  assertZipCoreSounds
+  assertCoreUi,
+  assertZipCoreSounds,
+  assertZipCoreUi
 } = require('./ensure-content.cjs');
 
 const DEFAULT_CLIENT = path.resolve(__dirname, '..');
@@ -70,6 +72,7 @@ function packGameRelease(opts) {
     throw new Error('Editor.html без панели звука двигателя');
   }
   assertCoreSounds(gameRoot);
+  assertCoreUi(gameRoot);
 
   fs.mkdirSync(path.dirname(zipPath), { recursive: true });
   if (fs.existsSync(leftoverStage)) {
@@ -109,6 +112,7 @@ function packGameRelease(opts) {
   }
   fs.rmSync(overlayDir, { recursive: true, force: true });
   assertZipCoreSounds(zipPath);
+  assertZipCoreUi(zipPath);
 
   const size = fs.statSync(zipPath).size;
   console.log('Архив:', zipPath);

@@ -45,8 +45,15 @@ const ASSET_DIRS = [
   'assets/machines',
   'assets/sounds',
   'assets/music',
-  'assets/object'
+  'assets/object',
+  'assets/ui'
 ];
+
+/** Доп. флаги robocopy для отдельных каталогов ассетов. */
+const ASSET_COPY_EXTRA = {
+  'assets/data': ['/XD', 'reference', '/XF', '*.md', 'car.backup.json'],
+  'assets/machines': ['/XF', 'TEMP.svg']
+};
 
 const TAR_EXCLUDES = ['reference', '*.md', 'car.backup.json', 'TEMP.svg'];
 
@@ -63,6 +70,11 @@ const CORE_SOUND_FILES = [
   'assets/sounds/cars/NOSZ/sound_011.wav'
 ];
 
+/** Дисклеймер 21+ на заставке — без файла чёрный экран вместо арта. */
+const CORE_UI_FILES = [
+  'assets/ui/disclaimer/disclaimer-21plus.svg'
+];
+
 /**
  * Проверяет, что в дереве игры лежат обязательные WAV.
  * @param {string} gameRoot
@@ -73,6 +85,19 @@ function assertCoreSounds(gameRoot) {
   });
   if (missing.length) {
     throw new Error('Нет звуков авто (двигатель / дрифт / нитро): ' + missing.join(', '));
+  }
+}
+
+/**
+ * Проверяет дисклеймер и прочий UI, который читает заставка.
+ * @param {string} gameRoot
+ */
+function assertCoreUi(gameRoot) {
+  const missing = CORE_UI_FILES.filter(function (rel) {
+    return !fs.existsSync(path.join(gameRoot, rel));
+  });
+  if (missing.length) {
+    throw new Error('Нет UI заставки: ' + missing.join(', '));
   }
 }
 
@@ -159,21 +184,13 @@ function ensureContent(unpackedDir) {
     copyDir(path.join(GAME_ROOT, dir), path.join(dest, dir));
   }
 
-  const assetsSrc = path.join(GAME_ROOT, 'assets');
-  const assetsDst = path.join(dest, 'assets');
-  copyDir(path.join(assetsSrc, 'data'), path.join(assetsDst, 'data'), [
-    '/XD', 'reference',
-    '/XF', '*.md', 'car.backup.json'
-  ]);
-  copyDir(path.join(assetsSrc, 'fonts'), path.join(assetsDst, 'fonts'));
-  copyDir(path.join(assetsSrc, 'image'), path.join(assetsDst, 'image'));
-  copyDir(path.join(assetsSrc, 'machines'), path.join(assetsDst, 'machines'), [
-    '/XF', 'TEMP.svg'
-  ]);
-  copyDir(path.join(assetsSrc, 'sounds'), path.join(assetsDst, 'sounds'));
+  for (const dir of ASSET_DIRS) {
+    const from = path.join(GAME_ROOT, dir);
+    const to = path.join(dest, dir);
+    copyDir(from, to, ASSET_COPY_EXTRA[dir] || []);
+  }
   assertCoreSounds(dest);
-  copyDir(path.join(assetsSrc, 'music'), path.join(assetsDst, 'music'));
-  copyDir(path.join(assetsSrc, 'object'), path.join(assetsDst, 'object'));
+  assertCoreUi(dest);
 
   if (!fs.existsSync(path.join(dest, 'rnr.html'))) {
     throw new Error('После копии нет rnr.html в Content');
@@ -215,24 +232,58 @@ function listContentMembers(gameRoot) {
 }
 
 /**
- * Zip обязан содержать якоря мотора и шин, иначе лаунчер уедет без звука.
+ * Читает имена файлов внутри zip.
  * @param {string} zipPath
+ * @returns {string[]}
  */
-function assertZipCoreSounds(zipPath) {
+function listZipNames(zipPath) {
   const listed = spawnSync('tar', ['-tf', zipPath], { encoding: 'utf8', windowsHide: true });
   if (listed.status !== 0) {
     throw new Error(String(listed.stderr || listed.stdout || 'Не прочитать zip').trim());
   }
-  const names = String(listed.stdout || '')
+  return String(listed.stdout || '')
     .split(/\r?\n/)
-    .map(function (n) { return n.replace(/\\/g, '/'); });
+    .map(function (n) { return n.replace(/\\/g, '/'); })
+    .filter(Boolean);
+}
+
+/**
+ * Есть ли относительный путь в списке имён zip.
+ * @param {string[]} names
+ * @param {string} rel
+ * @returns {boolean}
+ */
+function zipHasRel(names, rel) {
+  return names.some(function (n) {
+    return n === rel || n.slice(-rel.length) === rel;
+  });
+}
+
+/**
+ * Zip обязан содержать якоря мотора и шин, иначе лаунчер уедет без звука.
+ * @param {string} zipPath
+ */
+function assertZipCoreSounds(zipPath) {
+  const names = listZipNames(zipPath);
   const missing = CORE_SOUND_FILES.filter(function (rel) {
-    return !names.some(function (n) {
-      return n === rel || n.slice(-rel.length) === rel;
-    });
+    return !zipHasRel(names, rel);
   });
   if (missing.length) {
     throw new Error('В zip нет звуков мотора/шин: ' + missing.join(', '));
+  }
+}
+
+/**
+ * Zip обязан содержать дисклеймер 21+, иначе заставка без арта.
+ * @param {string} zipPath
+ */
+function assertZipCoreUi(zipPath) {
+  const names = listZipNames(zipPath);
+  const missing = CORE_UI_FILES.filter(function (rel) {
+    return !zipHasRel(names, rel);
+  });
+  if (missing.length) {
+    throw new Error('В zip нет UI заставки: ' + missing.join(', '));
   }
 }
 
@@ -252,11 +303,15 @@ module.exports = {
   ensureContent,
   GAME_ROOT,
   ROOT_FILES,
+  ASSET_DIRS,
   CORE_SOUND_FILES,
+  CORE_UI_FILES,
   assertCoreSounds,
+  assertCoreUi,
   listContentMembers,
   tarZipExcludeArgs,
-  assertZipCoreSounds
+  assertZipCoreSounds,
+  assertZipCoreUi
 };
 
 if (require.main === module) {

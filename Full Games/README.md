@@ -43,7 +43,7 @@
 - `Проверить-файлы.bat` — пересобрать манифест
 - `Синхронизировать-контент.bat` — копия кода в `dist-content`
 
-Ассеты в разработке читаются из соседней папки. **Сборка для другого человека** копирует их в `Content` целиком. Кузова — `assets/data/cars/NN/` (`NN.webp`, броня в `armor/`, повреждения в `damage/`; у Дьявола — `01_damage_1`…`6`). Музыка — файлы в `assets/music/{main,change,garage,intro,racing,Load,cast}/` (десктоп без CDN). Титул играет `cast`. Эффекты — `assets/sounds/FX/`. Мотор и шины — WAV в `assets/sounds/engine`, `assets/sounds/cars/wheels` и паках `assets/sounds/cars/engine`; клиент отдаёт их по `rnr://` целиком. Дождь quarks рождается над кадром, не на линзе.
+Ассеты в разработке читаются из соседней папки. **Сборка для другого человека** копирует их в `Content` целиком (`data`, `fonts`, `HUD`, `image`, `machines`, `sounds`, `music`, `object`, `ui`). Кузова — `assets/data/cars/NN/` (`NN.webp`, броня в `armor/`, повреждения в `damage/`; у Дьявола — `01_damage_1`…`6`). Музыка — файлы в `assets/music/{main,change,garage,intro,racing,Load,cast}/` (десктоп без CDN). Титул играет `cast`. Эффекты — `assets/sounds/FX/`. Мотор и шины — WAV в `assets/sounds/engine`, `assets/sounds/cars/wheels` и паках `assets/sounds/cars/engine`; клиент отдаёт их по `rnr://` целиком. Дисклеймер 21+ — `assets/ui/disclaimer/disclaimer-21plus.svg`. Дождь quarks рождается над кадром, не на линзе.
 
 ## Запуск
 

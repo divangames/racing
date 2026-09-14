@@ -49,6 +49,8 @@ function makeFixture() {
   fs.writeFileSync(path.join(root, 'assets', 'data', 'ok', 'car.json'), '{}');
   fs.writeFileSync(path.join(root, 'assets', 'data', 'notes.md'), 'skip');
   fs.writeFileSync(path.join(root, 'assets', 'data', 'players', '06', 'comics', 'reference', 'photo.jpg'), 'skip');
+  fs.mkdirSync(path.join(root, 'assets', 'ui', 'disclaimer'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'assets', 'ui', 'disclaimer', 'disclaimer-21plus.svg'), '<svg></svg>');
   return { root, client };
 }
 
@@ -66,6 +68,10 @@ test('Пакует store-zip без reference и markdown', () => {
   assert.ok(names.includes('install.json'));
   assert.ok(names.includes('desktop-manifest.json'));
   assert.ok(names.includes('assets/data/ok/car.json') || names.includes('assets\\data\\ok\\car.json'));
+  assert.ok(
+    names.includes('assets/ui/disclaimer/disclaimer-21plus.svg')
+    || names.includes('assets\\ui\\disclaimer\\disclaimer-21plus.svg')
+  );
   assert.equal(names.some((name) => name.endsWith('.md')), false);
   assert.equal(names.some((name) => /reference/i.test(name) && name.includes('photo')), false);
 });
