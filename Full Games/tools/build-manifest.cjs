@@ -46,7 +46,10 @@ const FILES = [
   'vfx/weather-audio.js',
   'vendor/three.module.js',
   'vendor/three.quarks.esm.js',
-  'assets/image/game-logo.webp'
+  'assets/image/game-logo.webp',
+  'assets/data/cats/Titles/titles.json',
+  'assets/data/cats/Titles/title-medved_1920x1080.webp',
+  'assets/data/cats/Titles/title-medved_3440x1440.webp'
 ];
 
 /**

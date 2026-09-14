@@ -51,6 +51,10 @@ function makeFixture() {
   fs.writeFileSync(path.join(root, 'assets', 'data', 'players', '06', 'comics', 'reference', 'photo.jpg'), 'skip');
   fs.mkdirSync(path.join(root, 'assets', 'ui', 'disclaimer'), { recursive: true });
   fs.writeFileSync(path.join(root, 'assets', 'ui', 'disclaimer', 'disclaimer-21plus.svg'), '<svg></svg>');
+  fs.mkdirSync(path.join(root, 'assets', 'data', 'cats', 'Titles'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'titles.json'), '{}');
+  fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-medved_1920x1080.webp'), 'hd');
+  fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-medved_3440x1440.webp'), 'uw');
   return { root, client };
 }
 
@@ -71,6 +75,14 @@ test('Пакует store-zip без reference и markdown', () => {
   assert.ok(
     names.includes('assets/ui/disclaimer/disclaimer-21plus.svg')
     || names.includes('assets\\ui\\disclaimer\\disclaimer-21plus.svg')
+  );
+  assert.ok(
+    names.includes('assets/data/cats/Titles/title-medved_1920x1080.webp')
+    || names.includes('assets\\data\\cats\\Titles\\title-medved_1920x1080.webp')
+  );
+  assert.ok(
+    names.includes('assets/data/cats/Titles/title-medved_3440x1440.webp')
+    || names.includes('assets\\data\\cats\\Titles\\title-medved_3440x1440.webp')
   );
   assert.equal(names.some((name) => name.endsWith('.md')), false);
   assert.equal(names.some((name) => /reference/i.test(name) && name.includes('photo')), false);

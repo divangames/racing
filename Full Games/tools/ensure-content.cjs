@@ -75,6 +75,13 @@ const CORE_UI_FILES = [
   'assets/ui/disclaimer/disclaimer-21plus.svg'
 ];
 
+/** Фон титула: манифест и оба кадра Медведя. */
+const CORE_TITLE_FILES = [
+  'assets/data/cats/Titles/titles.json',
+  'assets/data/cats/Titles/title-medved_1920x1080.webp',
+  'assets/data/cats/Titles/title-medved_3440x1440.webp'
+];
+
 /**
  * Проверяет, что в дереве игры лежат обязательные WAV.
  * @param {string} gameRoot
@@ -98,6 +105,19 @@ function assertCoreUi(gameRoot) {
   });
   if (missing.length) {
     throw new Error('Нет UI заставки: ' + missing.join(', '));
+  }
+}
+
+/**
+ * Проверяет кадры главного меню.
+ * @param {string} gameRoot
+ */
+function assertCoreTitles(gameRoot) {
+  const missing = CORE_TITLE_FILES.filter(function (rel) {
+    return !fs.existsSync(path.join(gameRoot, rel));
+  });
+  if (missing.length) {
+    throw new Error('Нет фонов титула: ' + missing.join(', '));
   }
 }
 
@@ -191,6 +211,7 @@ function ensureContent(unpackedDir) {
   }
   assertCoreSounds(dest);
   assertCoreUi(dest);
+  assertCoreTitles(dest);
 
   if (!fs.existsSync(path.join(dest, 'rnr.html'))) {
     throw new Error('После копии нет rnr.html в Content');
@@ -288,6 +309,20 @@ function assertZipCoreUi(zipPath) {
 }
 
 /**
+ * Zip обязан содержать пластины титула, иначе меню без кадра каста.
+ * @param {string} zipPath
+ */
+function assertZipCoreTitles(zipPath) {
+  const names = listZipNames(zipPath);
+  const missing = CORE_TITLE_FILES.filter(function (rel) {
+    return !zipHasRel(names, rel);
+  });
+  if (missing.length) {
+    throw new Error('В zip нет фонов титула: ' + missing.join(', '));
+  }
+}
+
+/**
  * Исключения bsdtar: референсы, заметки, бэкапы машин.
  * @returns {string[]}
  */
@@ -306,12 +341,15 @@ module.exports = {
   ASSET_DIRS,
   CORE_SOUND_FILES,
   CORE_UI_FILES,
+  CORE_TITLE_FILES,
   assertCoreSounds,
   assertCoreUi,
+  assertCoreTitles,
   listContentMembers,
   tarZipExcludeArgs,
   assertZipCoreSounds,
-  assertZipCoreUi
+  assertZipCoreUi,
+  assertZipCoreTitles
 };
 
 if (require.main === module) {

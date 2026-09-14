@@ -7,12 +7,18 @@ const root = path.resolve(__dirname, '..', '..');
 const carsRoot = path.join(root, 'assets', 'data', 'cars');
 const soundsRoot = path.join(root, 'assets', 'sounds');
 const disclaimer = path.join(root, 'assets', 'ui', 'disclaimer', 'disclaimer-21plus.svg');
+const titleJson = path.join(root, 'assets', 'data', 'cats', 'Titles', 'titles.json');
+const titleHd = path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-medved_1920x1080.webp');
+const titleUw = path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-medved_3440x1440.webp');
 
 if (!fs.existsSync(carsRoot) || !fs.existsSync(soundsRoot)) {
   throw new Error('Нет папок настроек машин или звуков: ' + root);
 }
 if (!fs.existsSync(disclaimer)) {
   throw new Error('Нет дисклеймера 21+: ' + disclaimer);
+}
+if (!fs.existsSync(titleJson) || !fs.existsSync(titleHd) || !fs.existsSync(titleUw)) {
+  throw new Error('Нет фонов титула: ' + path.join(root, 'assets', 'data', 'cats', 'Titles'));
 }
 
 const cars = fs.readdirSync(carsRoot)

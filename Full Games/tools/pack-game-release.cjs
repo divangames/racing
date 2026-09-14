@@ -16,8 +16,10 @@ const {
   tarZipExcludeArgs,
   assertCoreSounds,
   assertCoreUi,
+  assertCoreTitles,
   assertZipCoreSounds,
-  assertZipCoreUi
+  assertZipCoreUi,
+  assertZipCoreTitles
 } = require('./ensure-content.cjs');
 
 const DEFAULT_CLIENT = path.resolve(__dirname, '..');
@@ -73,6 +75,7 @@ function packGameRelease(opts) {
   }
   assertCoreSounds(gameRoot);
   assertCoreUi(gameRoot);
+  assertCoreTitles(gameRoot);
 
   fs.mkdirSync(path.dirname(zipPath), { recursive: true });
   if (fs.existsSync(leftoverStage)) {
@@ -113,6 +116,7 @@ function packGameRelease(opts) {
   fs.rmSync(overlayDir, { recursive: true, force: true });
   assertZipCoreSounds(zipPath);
   assertZipCoreUi(zipPath);
+  assertZipCoreTitles(zipPath);
 
   const size = fs.statSync(zipPath).size;
   console.log('Архив:', zipPath);

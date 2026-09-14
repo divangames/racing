@@ -1,7 +1,7 @@
 {
   "id": "kolesnica-voyny",
-  "version": "0.2.2.10",
-  "created": "2026-09-14T15:31:50.872Z",
+  "version": "0.2.2.11",
+  "created": "2026-09-14T15:42:43.896Z",
   "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
   "files": [
     {
@@ -148,6 +148,21 @@
       "path": "assets/image/game-logo.webp",
       "size": 1374512,
       "sha256": "4b1c82ceb9a195b7550753bd0bec3978a8bbb32aefc8b5f9b186acf1a3fe2ffb"
+    },
+    {
+      "path": "assets/data/cats/Titles/titles.json",
+      "size": 412,
+      "sha256": "5c6d47e97916b1ab89973fe5748b19dfa80f7b8a20a55342186d563be72674c7"
+    },
+    {
+      "path": "assets/data/cats/Titles/title-medved_1920x1080.webp",
+      "size": 837750,
+      "sha256": "3e8098b90847342f2205d0a518146d2f96ce1a902330d95d83cbb1657c00042d"
+    },
+    {
+      "path": "assets/data/cats/Titles/title-medved_3440x1440.webp",
+      "size": 1661374,
+      "sha256": "44c3d81e79824b609241b931e8fe248c81bdf95e268a654ef2073b25ece61d7f"
     },
     {
       "path": "assets/data/cars/01/car.json",
