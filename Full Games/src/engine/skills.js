@@ -8,6 +8,39 @@
 (function (global) {
   'use strict';
 
+  /** Процент дохода по уровням тренажёрки. */
+  const INCOME_PCTS = [0, 10, 15, 20, 25, 30];
+
+  /**
+   * Уровень дохода отдельного пилота.
+   * @param {number} [chIdx]
+   * @returns {number}
+   */
+  function incomeLevelEngine(chIdx) {
+    const i = chIdx == null ? ((save && save.char) | 0) : (chIdx | 0);
+    const cs = save && save.cstats && save.cstats[i];
+    return clamp((cs && cs.inc) | 0, 0, INCOME_PCTS.length - 1);
+  }
+
+  /**
+   * Текущая прибавка к гоночным доходам в процентах.
+   * @param {number} [chIdx]
+   * @returns {number}
+   */
+  function incomePctEngine(chIdx) {
+    return INCOME_PCTS[incomeLevelEngine(chIdx)];
+  }
+
+  /**
+   * Сумма с бонусом дохода текущего пилота.
+   * @param {number} amount
+   * @param {number} [chIdx]
+   * @returns {number}
+   */
+  function incomePayoutEngine(amount, chIdx) {
+    return Math.round((Number(amount) || 0) * (1 + incomePctEngine(chIdx) / 100));
+  }
+
   /**
    * Норма уровня скила 0…1.
    * @param {number} lvl
@@ -68,7 +101,20 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.skills = { skillT: skillTEngine, skillVal: skillValEngine, charEff: charEffEngine };
+  Object.assign(global, {
+    incomeLevel: incomeLevelEngine,
+    incomePct: incomePctEngine,
+    incomePayout: incomePayoutEngine
+  });
+  engine.skills = {
+    skillT: skillTEngine,
+    skillVal: skillValEngine,
+    charEff: charEffEngine,
+    incomeLevel: incomeLevelEngine,
+    incomePct: incomePctEngine,
+    incomePayout: incomePayoutEngine,
+    INCOME_PCTS: INCOME_PCTS.slice()
+  };
   engine.replace('skillT', skillTEngine);
   engine.replace('skillVal', skillValEngine);
   engine.replace('SKILL_DESC', skillDescEngine);

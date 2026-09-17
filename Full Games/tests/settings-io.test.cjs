@@ -58,5 +58,18 @@ test('Легаси Ctrl на огне сбрасывается, дырявый J
   g.settings = null;
   g.normalizeSettings();
   assert.equal(g.settings.sound.musicOn, true);
+  assert.equal(g.settings.sound.biome, 80);
+  assert.equal(g.settings.sound.crowd, 80);
   assert.equal(g.settings.graphics.cameraZoom, 2);
+  g.state = 'settings';
+  g.settings.sound.music = 10;
+  g.beginSettingsDraft();
+  g.settings.sound.music = 90;
+  g._wrote = null;
+  g.saveSettings();
+  assert.equal(g._wrote, null);
+  g.commitSettings();
+  assert.ok(g._wrote.indexOf('"music":90') >= 0);
+  g.resetSettingsPane('sound');
+  assert.equal(g.settings.sound.music, 50);
 });

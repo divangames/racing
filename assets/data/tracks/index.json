@@ -6,5 +6,17 @@
     "custom_04.json",
     "custom_05.json",
     "custom_06.json"
+  ],
+  "chapters": [
+    "chapters/ch1_arena_01.json",
+    "chapters/ch1_arena_02.json",
+    "chapters/ch1_arena_03.json",
+    "chapters/ch1_arena_04.json",
+    "chapters/ch1_arena_05.json",
+    "chapters/ch1_arena_06.json",
+    "chapters/ch1_arena_07.json",
+    "chapters/ch1_arena_08.json",
+    "chapters/ch1_arena_09.json",
+    "chapters/ch1_arena_10.json"
   ]
 }

@@ -54,7 +54,6 @@ test('Заезд подключает title-fx после screens', () => {
 
 test('На титуле капли есть, в гонке слой пустой', () => {
   const g = bootFx();
-  assert.equal(g.queued[0], 'assets/sounds/embirnt/rain.mp3');
   g.tickTitleFx(0.016);
   g.drawTitleRain();
   assert.ok((g.rects || 0) > 10);

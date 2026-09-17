@@ -14,9 +14,22 @@ function replaceOnce(source, before, after) {
   if (source.split(before).length !== 2) throw new Error('Не найден однозначный контракт редактора: ' + before.slice(0, 70));
   return source.replace(before, () => after);
 }
+
+/**
+ * Глобальная const MapData доступна по имени, но не как свойство window.
+ * Исправляет классификацию сюжетных трасс в актуальном редакторе контента.
+ * @param {string} source
+ * @returns {string}
+ */
+function fixChapterClassification(source) {
+  return source.replace(
+    'return !(window.MapData && MapData.isChapter && MapData.isChapter(d));',
+    "return !(typeof MapData !== 'undefined' && MapData.isChapter && MapData.isChapter(d));"
+  );
+}
 /** Добавляет историю и API документов, сохраняя новые инструменты исходного MapApp. */
 function enhanceEditorScript(source) {
-  let out = source.replace(/\r\n/g, '\n');
+  let out = fixChapterClassification(source.replace(/\r\n/g, '\n'));
   if (out.includes('getDocument:cur')) return out;
   out = replaceOnce(out, 'let hist = {list: [], at: -1};', 'let hist = new StudioHistory();\n  const histories = new WeakMap();\n  const saved = new WeakMap();');
   for (const name of ['commit', 'undo', 'redo', 'select', 'saveNow']) {

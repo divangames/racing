@@ -18,10 +18,25 @@ const el = {
   quit: document.getElementById('btn-quit'),
   close: document.getElementById('btn-close'),
   sync: document.getElementById('btn-sync'),
-  self: document.getElementById('btn-self')
+  self: document.getElementById('btn-self'),
+  stage: document.querySelector('.stage')
 };
 
 let fullscreen = true;
+
+/**
+ * Во время интро dock виден только при установке/обновлении.
+ * @param {object} [install]
+ * @param {object} [self]
+ */
+function paintBusy(install, self) {
+  if (!el.stage) return;
+  const gameBusy = Boolean(
+    install && (install.busy || install.needInstall || install.needUpdate)
+  );
+  const launcherBusy = Boolean(self && (self.busy || self.needUpdate));
+  el.stage.classList.toggle('is-busy', gameBusy || launcherBusy);
+}
 
 /**
  * Полоска прогресса 0–100.
@@ -122,6 +137,7 @@ async function runSync() {
   const result = await window.rnrLauncher.sync();
   if (result && result.ok) {
     paintInstall(result.install);
+    paintBusy(result.install, null);
     if (result.check && result.check.ok) applyCheck(result.check);
     else {
       setBar(100);
@@ -135,6 +151,7 @@ async function runSync() {
   const issues = (result && result.issues) || ['Не удалось скачать игру.'];
   setStatus(issues[0]);
   paintInstall(result && result.install);
+  paintBusy(result && result.install, null);
   el.sync.disabled = false;
 }
 
@@ -150,11 +167,13 @@ async function runSelfUpdate() {
   const result = await window.rnrLauncher.selfUpdate();
   if (result && result.applying) {
     setBar(100);
-    setStatus('Ставлю новый лаунчер. Окно закроется.');
+    setStatus('Установщик запущен. Лаунчер закроется и откроется снова.');
+    paintBusy(null, { busy: true, needUpdate: true });
     return;
   }
   if (result && result.ok) {
     paintSelf(result.selfUpdate);
+    paintBusy(null, result.selfUpdate);
     setStatus('Лаунчер уже свежий.');
     if (el.sync) el.sync.disabled = false;
     return;
@@ -162,6 +181,8 @@ async function runSelfUpdate() {
   const issues = (result && result.issues) || ['Не удалось обновить лаунчер.'];
   setStatus(issues[0]);
   paintSelf(result && result.selfUpdate);
+  paintBusy(null, result && result.selfUpdate);
+  el.self.disabled = false;
   if (el.sync) el.sync.disabled = false;
 }
 /**
@@ -213,12 +234,15 @@ async function boot() {
   applyCheck(data.check);
   paintInstall(inst);
   paintSelf(self);
+  paintBusy(inst, self);
   if (self.packaged && self.needUpdate && !self.remoteError) {
     setStatus('Нашёл новый лаунчер. Качаю и ставлю сам.');
+    paintBusy(inst, Object.assign({}, self, { busy: true }));
     runSelfUpdate();
     return;
   }
   if (inst.packaged && (inst.needInstall || inst.needUpdate) && !inst.remoteError) {
+    paintBusy(Object.assign({}, inst, { busy: true }), self);
     runSync();
   }
 }

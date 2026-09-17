@@ -88,6 +88,20 @@
       c.restore();
       return true;
     };
+    /** Блик поверх кузова, брони и мятости — иначе его не видно. */
+    const paintBodySpecular = function () {
+      const spec = global.DiVANEngine && global.DiVANEngine.carSpec;
+      if (!spec || !spec.paint || !layerOn('body') || !spriteOk(bodyImg)) return;
+      const iw = bodyImg.naturalWidth, ih = bodyImg.naturalHeight;
+      const s = 60 / Math.max(iw, ih) * bodyS;
+      const bx = isFinite(+bodyOffset.sx) && +bodyOffset.sx > 0 ? +bodyOffset.sx : 1;
+      const by = isFinite(+bodyOffset.sy) && +bodyOffset.sy > 0 ? +bodyOffset.sy : 1;
+      c.save();
+      c.translate(bodyOffset.x || 0, bodyOffset.y || 0);
+      if (rockVis) c.rotate(rockVis);
+      spec.paint(c, idx, r.ang, -iw * s * bx / 2, -ih * s * by / 2, iw * s * bx, ih * s * by);
+      c.restore();
+    };
     const placeWheel = function (n, wx, wy, steer, ww, wh, scale) {
       const q = editorCfg && editorCfg.w && editorCfg.w[n];
       if (q) {
@@ -239,6 +253,7 @@
         }
         if (!hasNitroLayer && idx === 6) drawNitro();
       }
+      paintBodySpecular();
       c.restore();
       c.restore();
       return;

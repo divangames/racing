@@ -12,7 +12,10 @@ const { contentRoot } = require('./paths');
 
 const PACK_RE = /^[a-z0-9_]{2,32}$/;
 const OBJ_RE = /^[a-z0-9_]{2,40}$/;
+const COLOR_RE = /^#[0-9a-f]{6}$/i;
 const EXT_OK = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif']);
+const SYSTEM_PACKS = new Set(['world']);
+const MAX_ASSET_BYTES = 32 * 1024 * 1024;
 
 /** Корень ассетов. */
 function objectRoot() {
@@ -22,6 +25,23 @@ function objectRoot() {
 /** JSON с диска. */
 function readJson(file) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (err) { return null; }
+}
+
+/** Безопасный цвет пака. */
+function packColor(value, fallback) {
+  return COLOR_RE.test(String(value || '')) ? String(value).toLowerCase() : fallback;
+}
+
+/** Метаданные пака с защитой системных полей. */
+function packMeta(folder, id) {
+  const raw = readJson(path.join(folder, 'pack.labr')) || {};
+  return {
+    id,
+    name: String(raw.name || id.toUpperCase()).slice(0, 42),
+    parent: PACK_RE.test(String(raw.parent || '')) ? String(raw.parent) : '',
+    color: packColor(raw.color, SYSTEM_PACKS.has(id) ? '#d4a84a' : '#79dce6'),
+    system: SYSTEM_PACKS.has(id)
+  };
 }
 
 /** Вершины полигона. */
@@ -61,7 +81,7 @@ function listPacks() {
     if (!fs.statSync(folder).isDirectory()) return;
     const packId = name.slice(0, -5);
     if (!PACK_RE.test(packId)) return;
-    const meta = readJson(path.join(folder, 'pack.labr')) || {};
+    const meta = packMeta(folder, packId);
     const rel = 'assets/object/' + name;
     const objects = fs.readdirSync(folder).filter((n) => n.toLowerCase().endsWith('.oblab')).sort().map((fn) => {
       const raw = readJson(path.join(folder, fn)) || {};
@@ -69,7 +89,8 @@ function listPacks() {
       const srcRaw = String(raw.src || (id + '.webp')).replace(/\\/g, '/');
       const srcName = srcRaw.split('/').pop();
       const src = srcRaw.indexOf('assets/') === 0 ? srcRaw : (rel + '/' + srcName);
-      const layer = raw.layer === 'over' ? 'over' : 'under';
+      const carLayer = raw.carLayer === 'over' || raw.layer === 'over' ? 'over' : 'under';
+      const roadLayer = raw.roadLayer === 'under' ? 'under' : 'over';
       return {
         pack: packId,
         id,
@@ -79,11 +100,13 @@ function listPacks() {
         w: Math.max(8, +raw.w || 128),
         h: Math.max(8, +raw.h || 128),
         lockRatio: raw.lockRatio !== false,
-        layer,
-        collision: collisionOf(raw.collision, layer)
+        layer: carLayer,
+        carLayer,
+        roadLayer,
+        collision: collisionOf(raw.collision, carLayer)
       };
     });
-    packs.push({id: packId, name: String(meta.name || packId.toUpperCase()), folder: rel, objects});
+    packs.push({...meta, folder: rel, objects});
   });
   return {packs};
 }
@@ -103,8 +126,50 @@ function writePack(data) {
   const folder = path.join(objectRoot(), id + '.labr');
   fs.mkdirSync(folder, {recursive: true});
   const name = String(data.name || id).slice(0, 42);
-  fs.writeFileSync(path.join(folder, 'pack.labr'), JSON.stringify({id, name, format: 'labr'}, null, 2));
+  const color = packColor(data.color, '#79dce6');
+  fs.writeFileSync(path.join(folder, 'pack.labr'), JSON.stringify({id, name, color, parent: '', format: 'labr'}, null, 2));
   return {ok: true, id, folder: 'assets/object/' + id + '.labr'};
+}
+
+/** Меняет, переносит или удаляет пользовательский пак. */
+function mutatePack(data) {
+  const id = String(data.id || '').toLowerCase();
+  const action = String(data.action || 'create');
+  if (!PACK_RE.test(id) || SYSTEM_PACKS.has(id)) return null;
+  if (action === 'create') {
+    const folder = path.join(objectRoot(), id + '.labr');
+    if (fs.existsSync(folder)) return null;
+    return writePack(data);
+  }
+  const folder = path.join(objectRoot(), id + '.labr');
+  if (!fs.existsSync(folder) || !fs.statSync(folder).isDirectory()) return null;
+  const current = packMeta(folder, id);
+  const all = listPacks().packs;
+  if (action === 'delete') {
+    if (all.some((pack) => pack.parent === id)) return {ok: false, error: 'Сначала перенесите вложенные паки'};
+    fs.rmSync(folder, {recursive: true, force: false});
+    return {ok: true, deleted: true, id};
+  }
+  if (action === 'update') {
+    const parent = String(data.parent || '').toLowerCase();
+    if (parent && (!PACK_RE.test(parent) || parent === id || !all.some((pack) => pack.id === parent))) return null;
+    let cursor = parent;
+    while (cursor) {
+      if (cursor === id) return {ok: false, error: 'Пак нельзя вложить в самого себя'};
+      const node = all.find((pack) => pack.id === cursor);
+      cursor = node ? node.parent : '';
+    }
+    const body = {
+      id,
+      name: String(data.name == null ? current.name : data.name).trim().slice(0, 42) || current.name,
+      color: packColor(data.color, current.color),
+      parent,
+      format: 'labr'
+    };
+    fs.writeFileSync(path.join(folder, 'pack.labr'), JSON.stringify(body, null, 2));
+    return {ok: true, ...body};
+  }
+  return null;
 }
 
 /** POST /__save-pack. */
@@ -117,9 +182,9 @@ async function handleSavePack(request) {
   } catch (err) {
     return new Response('Bad request', {status: 400});
   }
-  const out = writePack(data);
+  const out = mutatePack(data);
   if (!out) return new Response('Bad request', {status: 400});
-  return new Response(JSON.stringify(out), {status: 200, headers: {'content-type': 'application/json; charset=utf-8'}});
+  return new Response(JSON.stringify(out), {status: out.ok === false ? 409 : 200, headers: {'content-type': 'application/json; charset=utf-8'}});
 }
 
 /** POST /__save-oblab. */
@@ -164,7 +229,8 @@ async function handleSaveOblab(request) {
     srcIn = srcName;
     fs.writeFileSync(path.join(folder, srcName), buf);
   }
-  const layer = data.layer === 'over' ? 'over' : 'under';
+  const carLayer = data.carLayer === 'over' || data.layer === 'over' ? 'over' : 'under';
+  const roadLayer = data.roadLayer === 'under' ? 'under' : 'over';
   const storeSrc = srcIn.indexOf('assets/') === 0 ? srcIn : srcName;
   const body = {
     id,
@@ -173,8 +239,10 @@ async function handleSaveOblab(request) {
     w: Math.max(8, +data.w || 128),
     h: Math.max(8, +data.h || 128),
     lockRatio: data.lockRatio !== false,
-    layer,
-    collision: collisionOf(data.collision, layer)
+    layer: carLayer,
+    carLayer,
+    roadLayer,
+    collision: collisionOf(data.collision, carLayer)
   };
   fs.writeFileSync(path.join(folder, id + '.oblab'), JSON.stringify(body, null, 2));
   const outSrc = storeSrc.indexOf('assets/') === 0 ? storeSrc : ('assets/object/' + pack + '.labr/' + srcName);
@@ -184,4 +252,45 @@ async function handleSaveOblab(request) {
   });
 }
 
-module.exports = {handleListPacks, handleSavePack, handleSaveOblab, listPacks};
+/** POST /__save-oblab-file: импортирует картинку ассета исходными байтами. */
+async function handleSaveOblabFile(request, url) {
+  const pack = String(url.searchParams.get('pack') || '').toLowerCase();
+  const id = String(url.searchParams.get('id') || '').toLowerCase();
+  const ext = String(url.searchParams.get('ext') || 'webp').toLowerCase().replace('jpeg', 'jpg');
+  const name = String(url.searchParams.get('name') || id).trim().slice(0, 42) || id;
+  const width = Math.max(8, Math.min(16384, +url.searchParams.get('w') || 128));
+  const height = Math.max(8, Math.min(16384, +url.searchParams.get('h') || 128));
+  const declared = Number(request.headers.get('content-length')) || 0;
+  if (!PACK_RE.test(pack) || !OBJ_RE.test(id) || !EXT_OK.has(ext) || declared > MAX_ASSET_BYTES) {
+    return new Response('Bad request', {status: 400});
+  }
+  let bytes;
+  try { bytes = Buffer.from(await request.arrayBuffer()); }
+  catch (err) { return new Response('Bad request', {status: 400}); }
+  if (!bytes.length || bytes.length > MAX_ASSET_BYTES) return new Response('Bad request', {status: 400});
+  let folder = path.join(objectRoot(), pack + '.labr');
+  if (!fs.existsSync(folder)) {
+    const made = writePack({id: pack, name: pack});
+    if (!made) return new Response('Bad request', {status: 400});
+    folder = path.join(objectRoot(), pack + '.labr');
+  }
+  EXT_OK.forEach((old) => {
+    if (old === ext) return;
+    const stale = path.join(folder, id + '.' + old);
+    if (fs.existsSync(stale)) fs.unlinkSync(stale);
+  });
+  const srcName = id + '.' + ext;
+  fs.writeFileSync(path.join(folder, srcName), bytes);
+  const body = {
+    id, name, src: srcName, w: width, h: height, lockRatio: true,
+    layer: 'under', carLayer: 'under', roadLayer: 'over',
+    collision: collisionOf({solid: false, poly: [], bodies: []}, 'under')
+  };
+  fs.writeFileSync(path.join(folder, id + '.oblab'), JSON.stringify(body, null, 2));
+  return new Response(JSON.stringify({ok: true, pack, id, src: 'assets/object/' + pack + '.labr/' + srcName}), {
+    status: 200,
+    headers: {'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store'}
+  });
+}
+
+module.exports = {handleListPacks, handleSavePack, handleSaveOblab, handleSaveOblabFile, listPacks, mutatePack};

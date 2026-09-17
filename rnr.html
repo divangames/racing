@@ -1645,6 +1645,19 @@ const CAR_DAMAGE=CARS.map((_,i)=>{
  }
  return arr;
 });
+////////////////////////////////////////////////////////
+//
+// Блеск металла: data/cars/NN/NN_Specular. Пока грузим 01.
+//
+////////////////////////////////////////////////////////
+const CAR_SPECULAR=CARS.map((_,i)=>{
+ const img=new Image();
+ if(i!==0)return img;
+ const nn=String(i+1).padStart(2,'0');
+ const base='assets/data/cars/'+nn+'/'+nn+'_Specular';
+ bootEnqueue(img,['webp','png'].map(ext=>base+'.'+ext));
+ return img;
+});
 /** Загружает пользовательский корпус из настроек редактора. */
 function editorBodySprite(idx){
  const data=editorCarConfig(idx)&&editorCarConfig(idx).bodyData;
@@ -1806,6 +1819,7 @@ loadMapTiles('desert');
 loadMapTiles('snow');
 loadMapTiles('sand');
 loadMapTiles('garden');
+loadMapTiles('arena');
 /**
  * Ищем 01.webp / 01.png, 02… Потолок MAP_TILE_MAX.
  * Две дырки подряд — стоп (01 и 03 подхватятся, 01 без 02 и 03 — только единица).
@@ -1823,7 +1837,7 @@ async function bootDiscoverMapTiles(biome){
   }
  }catch(e){}
  const probe=new Image();
- const probeJob={img:probe,urls:[editor+'01.webp',editor+'01.png'],got:0,total:0,done:false,busy:true,ok:false,sticky:false};
+ const probeJob={img:probe,urls:[editor+'01.webp',editor+'01.png',editor+'01.jpg',editor+'01.jpeg',editor+'01.gif'],got:0,total:0,done:false,busy:true,ok:false,sticky:false};
  BOOT.jobs.push(probeJob);bootPaint();
  try{await bootRunJob(probeJob);}finally{probeJob.busy=false;}
  const useEditor=probe.complete&&probe.naturalWidth>0;
@@ -1839,7 +1853,7 @@ async function bootDiscoverMapTiles(biome){
   if(BOOT.giveUp)break;
   const n=String(i).padStart(2,'0');
   const img=new Image();
-  const job={img,urls:[prefix+n+'.webp',prefix+n+'.png'],got:0,total:0,done:false,busy:true,ok:false,sticky:false};
+  const job={img,urls:[prefix+n+'.webp',prefix+n+'.png',prefix+n+'.jpg',prefix+n+'.jpeg',prefix+n+'.gif'],got:0,total:0,done:false,busy:true,ok:false,sticky:false};
   BOOT.jobs.push(job);
   bootPaint();
   try{await bootRunJob(job);}
@@ -1864,12 +1878,11 @@ const MAP_TILE_CACHE=512;
 function mapTileList(biome){
  return (MAP_TILES[biome]||[]).filter(im=>im.complete&&im.naturalWidth>0);
 }
-/** Один случайный кадр из папки: 01 или 02 или любой другой — на весь заезд. */
-/** Случайный кадр биома. DiVANEngine подменяет pickMapTile. */
+/** Первый живой кадр биома (01), как превью и экспорт в редакторе. */
+/** Кадр биома. DiVANEngine подменяет pickMapTile. */
 function pickMapTile(biome){
  const tiles=mapTileList(biome);
- if(!tiles.length)return null;
- return tiles[(Math.random()*tiles.length)|0];
+ return tiles[0]||null;
 }
 /** Сжимаем исходник один раз в 512 px — дальше в кадре только этот холст. */
 /** Сжимаем исходник в 512 px. DiVANEngine подменяет bakeMapTile. */
@@ -2335,7 +2348,7 @@ let settings={
   fire:['KeyZ','KeyP'],nitro:['KeyX','BracketLeft'],ult:['KeyC','BracketRight'],
   handbrake:['Space'],pause:['Escape']
  },
- sound:{music:50,sfx:80,musicOn:true,sfxOn:true}
+ sound:{music:50,sfx:80,biome:80,crowd:80,musicOn:true,sfxOn:true}
 };
 const DEFAULT_CONTROLS={
  up:['KeyW','ArrowUp'],down:['KeyS','ArrowDown'],
@@ -2376,7 +2389,7 @@ function normalizeSettings(){
     fire:['KeyZ','KeyP'],nitro:['KeyX','BracketLeft'],ult:['KeyC','BracketRight'],
     handbrake:['Space'],pause:['Escape']
    },
-   sound:{music:50,sfx:80,musicOn:true,sfxOn:true}
+   sound:{music:50,sfx:80,biome:80,crowd:80,musicOn:true,sfxOn:true}
   };
   return;
  }
@@ -2384,10 +2397,12 @@ function normalizeSettings(){
   settings.graphics={resolution:0,particles:'high',skids:true,weather:true,shake:true,showFps:false,cameraZoom:2};
  else if(settings.graphics.cameraZoom==null)settings.graphics.cameraZoom=2;
  if(!settings.sound||typeof settings.sound!=='object')
-  settings.sound={music:50,sfx:80,musicOn:true,sfxOn:true};
+  settings.sound={music:50,sfx:80,biome:80,crowd:80,musicOn:true,sfxOn:true};
  else{
   if(settings.sound.music==null)settings.sound.music=50;
   if(settings.sound.sfx==null)settings.sound.sfx=80;
+  if(settings.sound.biome==null)settings.sound.biome=80;
+  if(settings.sound.crowd==null)settings.sound.crowd=80;
   if(settings.sound.musicOn==null)settings.sound.musicOn=true;
   if(settings.sound.sfxOn==null)settings.sound.sfxOn=true;
  }
@@ -2445,10 +2460,10 @@ function stageX0(){return -viewOX/viewS;}
 function stageY0(){return -viewOY/viewS;}
 ////////////////////////////////////////////////////////
 //
-// Зум камеры в гонке: 1.75 дальше, 2.2 ближе
+// Зум камеры в гонке: 1.25 дальше, 2.2 ближе
 //
 ////////////////////////////////////////////////////////
-const CAM_ZOOM_MIN=1.75,CAM_ZOOM_MAX=2.2,CAM_ZOOM_STEP=0.05,CAM_ZOOM_DEF=2;
+const CAM_ZOOM_MIN=1.25,CAM_ZOOM_MAX=2.2,CAM_ZOOM_STEP=0.05,CAM_ZOOM_DEF=2;
 /** Зум заезда. DiVANEngine подменяет raceZoom. */
 function raceZoom(){
  const z=settings.graphics&&settings.graphics.cameraZoom;
@@ -4986,6 +5001,7 @@ function drawRaceArena(){
  const vw=visW(),vh=visH();
  if(T.lab)drawLabWorldGrid(R.cam.x-64,R.cam.y-64,vw+128,vh+128);
  else fillMapTileWorld(R.cam.x-64,R.cam.y-64,vw+128,vh+128,T);
+ if(window.RnRObjects)RnRObjects.drawLayer(g,R.labObjects,'underRoad');
  g.drawImage(T.img,0,0);
  if(window.RnRObjects)RnRObjects.drawLayer(g,R.labObjects,'under');
  if(R.puddles&&R.weather&&R.weather.id==='rain'){
@@ -6057,6 +6073,8 @@ function sndOpts(){
  return [
   {label:'Громкость музыки',key:'music',type:'vol'},
   {label:'Громкость эффектов',key:'sfx',type:'vol'},
+  {label:'Атмосфера биома',key:'biome',type:'vol'},
+  {label:'Звук арены',key:'crowd',type:'vol'},
   {label:'Музыка',key:'musicOn',type:'bool'},
   {label:'Эффекты',key:'sfxOn',type:'bool'},
   {label:'НАЗАД',key:'_back',type:'back'}
@@ -6114,14 +6132,11 @@ function nudgeSound(dir){
  const opt=sndOpts()[settingsTab];
  if(!opt||opt.type==='back')return false;
  if(opt.type==='vol'){
-  settings.sound[opt.key]=clamp(settings.sound[opt.key]+dir*10,0,100);
-  if(AU.ctx){
-   if(opt.key==='music')applyAudioSettings();
-   else AU.sfx.gain.value=settings.sound.sfx/100*.9;
-  }
+  settings.sound[opt.key]=clamp((settings.sound[opt.key]||0)+dir*10,0,100);
+  if(typeof applyAudioSettings==='function')applyAudioSettings();
  }else if(opt.type==='bool'){
   settings.sound[opt.key]=!settings.sound[opt.key];
-  if(opt.key==='musicOn'&&AU.ctx)applyAudioSettings();
+  if(typeof applyAudioSettings==='function')applyAudioSettings();
  }
  saveSettings();
  return true;
@@ -6264,29 +6279,31 @@ function drawSettings(){
   txt(g,'← → менять • колесо — камера • ESC назад',px+pw/2,py+ph-22,12,'#6f6880','center',F_B);
  }
  else if(settingsState==='sound'){
-  txt(g,'ЗВУК',px+pw/2,py+42,26,'#ffd23f','center');
+  txt(g,'ЗВУК',px+pw/2,py+36,24,'#ffd23f','center');
   const opts=sndOpts();
   opts.forEach((opt,i)=>{
-   const y=py+120+i*72,sel=i===settingsTab,by=y-28,bh=56;
+   const y=py+88+i*54,sel=i===settingsTab,by=y-22,bh=46;
    if(sel)panel(g,px+16,by,pw-32,bh,'rgba(255,157,46,.12)','#ff9d2e',10);
    if(opt.type==='back'){
-    txt(g,opt.label,px+pw/2,y,18,sel?'#ffd23f':'#8f88a0','center',F_B);
+    txt(g,opt.label,px+pw/2,y,16,sel?'#ffd23f':'#8f88a0','center',F_B);
     g._setHits.push({act:'back',x:px+16,y:by,w:pw-32,h:bh});
     return;
    }
-   txt(g,opt.label,px+36,y-8,16,'#e8e2d0','left',F_B);
+   txt(g,opt.label,px+36,y-8,15,'#e8e2d0','left',F_B);
    g._setHits.push({act:'snd',i,x:px+16,y:by,w:pw-32,h:bh});
    if(opt.type==='vol'){
-    const v=settings.sound[opt.key]/100,col=opt.key==='music'?'#ffd23f':'#35e0ff';
-    g.fillStyle='#16131c';g.fillRect(px+36,y+10,pw-120,10);
-    g.fillStyle=col;g.fillRect(px+36,y+10,(pw-120)*v,10);
-    txt(g,settings.sound[opt.key]+'%',px+pw-36,y+16,15,col,'right');
+    const n=settings.sound[opt.key]==null?80:settings.sound[opt.key];
+    const v=n/100;
+    const col=opt.key==='music'?'#ffd23f':opt.key==='biome'?'#8ec8ff':opt.key==='crowd'?'#ff9d2e':'#35e0ff';
+    g.fillStyle='#16131c';g.fillRect(px+36,y+8,pw-120,8);
+    g.fillStyle=col;g.fillRect(px+36,y+8,(pw-120)*v,8);
+    txt(g,n+'%',px+pw-36,y+12,14,col,'right');
    }else{
     const on=settings.sound[opt.key];
-    txt(g,on?'ВКЛ':'ВЫКЛ',px+pw-36,y,18,on?'#58ff6b':'#ff3d2e','right');
+    txt(g,on?'ВКЛ':'ВЫКЛ',px+pw-36,y,16,on?'#58ff6b':'#ff3d2e','right');
    }
   });
-  txt(g,'← → менять • ESC назад',px+pw/2,py+ph-22,13,'#6f6880','center',F_B);
+  txt(g,'← → менять • ESC назад',px+pw/2,py+ph-22,12,'#6f6880','center',F_B);
  }
  else if(settingsState==='game'){
   txt(g,'ИГРА',px+pw/2,py+42,26,'#ffd23f','center');
@@ -8354,9 +8371,13 @@ function frame(now){
    else R.announcerT=(R.announcerT||0)+dt;
   }
  }
- if(state==='race'&&!paused)updRace(dt);
+ if(state==='race'&&!paused){
+  updRace(dt);
+  if(window.DiVANEngine&&DiVANEngine.arenaCrowd)DiVANEngine.arenaCrowd.afterRace(R,dt);
+  else if(window.RnRArenaCrowd)RnRArenaCrowd.tickBed(dt);
+ }else if(window.RnRArenaCrowd)RnRArenaCrowd.halt();
  if(state==='press'||state==='title'||state==='settings'||state==='cameraSetup')updateTitleRace(dt);
- if(window.RnRWeatherAudio&&state!=='race'&&state!=='press'&&state!=='title'&&state!=='settings'&&state!=='cameraSetup')RnRWeatherAudio.haltRain();
+ if(window.RnRWeatherAudio)RnRWeatherAudio.sync(state==='race'?R:null,settings);
  updEngine(P,paused,state);
  if(CHIP.on)CHIP.pump();
  if(state==='intro'&&!introDone){
@@ -8427,6 +8448,7 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 <script src="world-intro.js"></script>
 <script src="vfx/weather-fx.js"></script>
 <script src="vfx/weather-audio.js"></script>
+<script src="vfx/arena-crowd.js"></script>
 <script type="module" src="vfx/quarks-layer.js"></script>
 </body>
 </html>

@@ -56,6 +56,8 @@
     cameraSetupHint = false;
     settingsZoomDrag = false;
     if (next) cameraSetupNext = next;
+    // Переход состояния может случиться между audio-кадрами: не ждём тика демо.
+    if (typeof carTiresHalt === 'function') carTiresHalt();
     if (typeof ensureTitlePreview === 'function') ensureTitlePreview();
     state = 'cameraSetup';
   }
@@ -65,6 +67,8 @@
    */
   function finishCameraSetupEngine() {
     cameraSetupHint = false;
+    // Не даём отложенному play() визга пережить экран камеры.
+    if (typeof carTiresHalt === 'function') carTiresHalt();
     const next = cameraSetupNext || 'char';
     cameraSetupNext = 'char';
     if (next === 'car') {
@@ -103,6 +107,8 @@
   function enterTitleEngine() {
     if (typeof clearKeys === 'function') clearKeys();
     state = 'title';
+    selTitle = -1;
+    global.titleConfirm = null;
     global.titleSim = null;
     global.titleFocus = null;
     if (typeof carEngineHalt === 'function') carEngineHalt();
@@ -110,12 +116,11 @@
   }
 
   /**
-   * Любая кнопка на заставке: пролог или меню.
+   * Любая кнопка на заставке: сразу меню. Пролог запускается новой кампанией.
    */
   function dismissPressStartEngine() {
     if (state !== 'press') return;
-    if (typeof startWorldIntro === 'function') startWorldIntro();
-    else enterTitle();
+    enterTitle();
     sClick();
   }
 

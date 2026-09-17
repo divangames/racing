@@ -97,3 +97,31 @@ test('Стоящая машина не даёт скольжение', () => {
   assert.equal(z.slide, 0);
   assert.equal(z.drift, 0);
 });
+
+test('Обычный ход не включает визг покрышек', () => {
+  const { g } = loadTires({ state: 'race' });
+  g.paused = false;
+  const z = g.carTireSlip({ spd: 140, lat: 22, steerFlt: 0.2, car: { hov: false } });
+  assert.equal(z.slide, 0);
+  assert.equal(z.drift, 0);
+});
+
+test('Неактивный заезд глушит шины до тика моторов', () => {
+  const g = {
+    console,
+    settings: { sound: { sfxOn: true } },
+    document: { hidden: false, addEventListener: function () {} },
+    AU: { ctx: null, engG: null },
+    updEngine: function () {},
+    carTiresHalt: function () { g.halted = true; },
+    tickCarEngine: function () { assert.equal(g.halted, true); },
+    carEngineLive: function () { return false; }
+  };
+  g.window = g;
+  g.globalThis = g;
+  g.__DIVAN_ENGINE_META__ = { name: 'DiVANEngine', abi: 1, host: 'game' };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../src/engine/runtime.js'), 'utf8'), g);
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../src/engine/audio.js'), 'utf8'), g);
+  g.updEngine({}, false, 'cameraSetup');
+  assert.equal(g.halted, true);
+});

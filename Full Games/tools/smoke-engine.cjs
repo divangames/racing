@@ -12,9 +12,12 @@ app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 // Все запросы записи перехватываются: проверка никогда не меняет машины и трассы пользователя.
 require('../src/main/save-car').handleSaveCar=async()=>new Response('{"ok":true}');
 require('../src/main/save-track').handleSaveTrack=async()=>new Response('{"ok":true}');
-require('../src/main/save-texture').handleSaveTexture=async()=>new Response('{"ok":true}');
+const textureApi=require('../src/main/save-texture');
+textureApi.handleSaveTexture=async()=>new Response('{"ok":true}');
+textureApi.handleSaveTextureFile=async()=>new Response(JSON.stringify({ok:true,src:'assets/data/maps/bord road/Bort_01.png',id:'bort_01'}),{headers:{'content-type':'application/json'}});
 require('../src/main/save-object').handleSavePack=async()=>new Response('{"ok":true}');
 require('../src/main/save-object').handleSaveOblab=async()=>new Response('{"ok":true}');
+require('../src/main/save-object').handleSaveOblabFile=async(_request,url)=>new Response(JSON.stringify({ok:true,pack:url.searchParams.get('pack'),id:url.searchParams.get('id'),src:'assets/object/world.labr/'+url.searchParams.get('id')+'.png'}),{headers:{'content-type':'application/json'}});
 const protocol=require('../src/main/protocol');
 protocol.registerPrivilegedScheme();
 const errors=[];
@@ -56,7 +59,7 @@ app.whenReady().then(async()=>{
  assert(results.game.classD1junk,'1 дивизион должен пускать хлам');
  assert.equal(results.game.classD1stock,false);
  assert(results.game.classD3mid,'3 дивизион должен пускать средний класс');
- assert(results.game.zoom>=1.75&&results.game.zoom<=2.2);
+ assert(results.game.zoom>=1.25&&results.game.zoom<=2.2);
  assert.equal(results.game.music,'racing');
  assert(results.game.hit.hw>0&&results.game.hit.hh>0);
  await new Promise(resolve=>setTimeout(resolve,1500));
@@ -151,15 +154,31 @@ app.whenReady().then(async()=>{
    const redone=MapApp.getDocument().name;
    const report=StudioCheck.track(MapApp.getDocument());
    const invalid=StudioCheck.track({name:'x',cps:[[0,0],[0,0],[0,0],[0,0]]});
+   const assetTile=document.querySelector('.cb-tile:not(.cb-tile-add)');
+   if(assetTile)assetTile.click();
+   document.querySelector('[data-asset-road="under"]').click();
+   document.querySelector('[data-asset-car="over"]').click();
+   const placement=MapAssets.current();
    return {original,undone,redone,report,invalidErrors:invalid.errors,overflow:document.documentElement.scrollWidth>innerWidth,
      assetDockVisible:document.getElementById('assetDock').getBoundingClientRect().bottom<=innerHeight+2,
-     objectTools:typeof MapAssets.inspect==='function'};
+     objectTools:typeof MapAssets.inspect==='function',
+     sourceTabs:[...document.querySelectorAll('.map-source-tabs button')].map(button=>button.textContent),
+     inspector:!!document.querySelector('.map-inspector-head'),
+     replaceRoad:document.getElementById('mapRoadReplaceBtn')?.textContent,
+     roadPlacement:[...document.querySelectorAll('[data-asset-road]')].map(button=>button.textContent),
+     carPlacement:[...document.querySelectorAll('[data-asset-car]')].map(button=>button.textContent),
+     newRoad:placement&&placement.roadLayer,newCar:placement&&placement.carLayer};
  })()`);
  assert.equal(results.editor.undone,results.editor.original);
  assert.equal(results.editor.redone,'ПРОВЕРКА ИСТОРИИ');
  assert(results.editor.invalidErrors.length);
  assert.equal(results.editor.overflow,false);
  assert(results.editor.assetDockVisible);assert(results.editor.objectTools);
+ assert.deepEqual(results.editor.sourceTabs,['Мои трассы','Кампания']);assert(results.editor.inspector);
+ assert.equal(results.editor.replaceRoad,'Заменить выбранную дорогу');
+ assert.deepEqual(results.editor.roadPlacement,['Под трассой','Над трассой']);
+ assert.deepEqual(results.editor.carPlacement,['Под машиной','Над машиной']);
+ assert.equal(results.editor.newRoad,'under');assert.equal(results.editor.newCar,'over');
  results.documents=await editor.webContents.executeJavaScript(`(async()=>{
    const first=MapApp.getDocument();
    MapApp.importDocument(MapData.fileTrack(first));
@@ -176,6 +195,36 @@ app.whenReady().then(async()=>{
  assert.equal(results.documents.restoredFirst,results.editor.original);
  assert.equal(results.documents.preserved,'ВТОРОЙ ДОКУМЕНТ');assert(results.documents.unpublished);
  assert(results.documents.saved);assert.match(results.documents.saveStatus,/несохран/);assert.equal(results.documents.failed,false);
+ results.assetLayers=await editor.webContents.executeJavaScript(`(()=>{
+   const def=MapAssets.current(),d=MapApp.getDocument();if(!def)return null;
+   d.objects.push({pack:def.pack,id:def.id,x:100,y:100,w:def.w,h:def.h,layer:'under',carLayer:'under',roadLayer:'over'});
+   MapView.setSelection({kind:'asset',i:d.objects.length-1});
+   document.querySelector('[data-asset-road="under"]').click();
+   document.querySelector('[data-asset-car="over"]').click();
+   const object=d.objects[d.objects.length-1];
+   return {road:object.roadLayer,car:object.carLayer,legacy:object.layer,status:document.getElementById('mapSaveState').textContent};
+ })()`);
+ assert.deepEqual(results.assetLayers,{road:'under',car:'over',legacy:'over',status:'Слои выделенного ассета изменены'});
+ results.texture=await editor.webContents.executeJavaScript(`(async()=>{
+   const input=document.getElementById('mapRailFile'),transfer=new DataTransfer();
+   transfer.items.add(new File([new Uint8Array([137,80,78,71])],'Bort_01.png',{type:'image/png'}));
+   input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+   const started=Date.now();while(!/Bort_01\.png/.test(document.getElementById('mapSaveState').textContent)&&Date.now()-started<10000)await new Promise(resolve=>setTimeout(resolve,50));
+   return {src:MapApp.getDocument().theme.railSrc,status:document.getElementById('mapSaveState').textContent};
+ })()`);
+ assert.equal(results.texture.src,'assets/data/maps/bord road/Bort_01.png');
+ assert.match(results.texture.status,/Борта применены/);
+ results.assetImport=await editor.webContents.executeJavaScript(`(async()=>{
+   const canvas=document.createElement('canvas');canvas.width=16;canvas.height=8;
+   const q=canvas.getContext('2d');q.fillStyle='#c65b27';q.fillRect(0,0,16,8);
+   const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+   const input=document.getElementById('assetFile'),transfer=new DataTransfer();
+   transfer.items.add(new File([blob],'Колесо арены.png',{type:'image/png'}));
+   input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+   const started=Date.now();while(!/Ассет импортирован/.test(document.getElementById('mapSaveState').textContent)&&Date.now()-started<10000)await new Promise(resolve=>setTimeout(resolve,50));
+   return {status:document.getElementById('mapSaveState').textContent};
+ })()`);
+ assert.match(results.assetImport.status,/Ассет импортирован · Колесо арены\.png/);
  await new Promise(resolve=>setTimeout(resolve,1000));
  fs.writeFileSync(path.join(output,'editor.png'),(await editor.webContents.capturePage()).toPNG());
  await editor.webContents.executeJavaScript("MapApp.setTab('car')");

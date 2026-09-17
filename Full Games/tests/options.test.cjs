@@ -22,6 +22,11 @@ function bootOptions() {
     drawZoomBar: function () {},
     drawCameraSetup: function () {},
     drawSettings: function () {},
+    gfxOpts: function () { return []; },
+    gameOpts: function () { return []; },
+    controlOpts: function () { return []; },
+    sndOpts: function () { return []; },
+    nudgeSound: function () { return false; },
     drawIntro: function () {},
     drawPreRace: function () {}
   };
@@ -50,6 +55,9 @@ test('Заезд подключает options, intro и prerace до кадра'
 test('Зум камеры, панель интро и колонки ставки', () => {
   const g = bootOptions();
   assert.equal(g.DiVANEngine.options.SETTINGS_MAIN.join(','), 'НАСТРОЙКА ГРАФИКИ,НАСТРОЙКИ ЗВУКА,НАСТРОЙКА ИГРЫ,НАЗАД');
+  assert.equal(g.sndOpts().length, 6);
+  assert.ok(g.gfxOpts().every(function (o) { return o.type !== 'back'; }));
+  assert.equal(g.controlOpts().some(function (o) { return o.isReset; }), false);
   assert.equal(g.DiVANEngine.options.zoomT(1.5, 1, 2), 0.5);
   assert.equal(g.DiVANEngine.intro.introPanelH(720), 461);
   assert.equal(g.DiVANEngine.intro.skipRatio(0.5, 1), 0.5);

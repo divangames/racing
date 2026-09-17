@@ -15,7 +15,7 @@ const valid=()=>({id:'custom_01',name:'Полигон',cps:[[0,0],[1000,0],[1000
 /** Загружает обработчик с изолированным корнем файлов вместо каталога игры. */
 function handler(name,root){
  const file=path.resolve(__dirname,'../src/main/'+name+'.js'),realRequire=createRequire(file),module={exports:{}};
- const context={module,exports:module.exports,Response,console,require:id=>id==='./paths'?{contentRoot:()=>root}:realRequire(id)};
+ const context={module,exports:module.exports,Response,Buffer,console,require:id=>id==='./paths'?{contentRoot:()=>root}:realRequire(id)};
  vm.runInNewContext(fs.readFileSync(file,'utf8'),context,{filename:file});return module.exports;
 }
 /** Запрос редактора без сети. */
@@ -36,17 +36,46 @@ test('История загружается раньше приложения к
  const out=enhanceHtml('<head></head><body><main id="workMap"></main><script src="editor/map-app.js?v=1"></script></body>',{pathname:'/Editor.html'});
  assert(out.indexOf('/__engine/editor/history.js')<out.indexOf('src="editor/map-app'));
  assert(out.includes('workbench.css'));
+ assert(out.includes('busy.css'));
+ assert(out.includes('/__engine/editor/busy.js'));
  assert(out.includes('splash.css'));
  assert(out.includes('/__engine/runtime.js'));
  assert(out.includes('id="lab-splash"'));
  assert(out.includes('lab-splash-version'));
  assert(out.includes('lab-splash-files'));
 });
+test('Десктопная лаборатория подменяет модули дерева паков',()=>{
+ const {overrideEditorHtml}=require('../src/main/protocol');
+ const html='<html><head></head><body><script src="objects.js?v=1"></script><script src="editor/map-assets.js?v=1"></script><script src="editor/map-asset-coll.js?v=1"></script><script src="editor/map-asset-edit.js?v=1"></script></body></html>';
+ const out=overrideEditorHtml(html,'/Editor.html');
+ assert(out.includes('/__engine/editor/objects.js'));
+ assert(out.includes('/__engine/editor/map-assets.js'));
+ assert(out.includes('/__engine/editor/map-asset-coll.js'));
+ assert(out.includes('/__engine/editor/map-asset-edit.js'));
+ assert(out.includes('/__engine/editor/asset-library.css'));
+});
+test('Ассеты редактора рисуются на трассе и над трассой в правильном порядке',()=>{
+ const view=fs.readFileSync(path.resolve(__dirname,'../../editor/map-view.js'),'utf8');
+ const road=view.indexOf('MapPreview.strokeRoad');
+ const belowRoad=view.indexOf("RnRObjects.drawLayer(ctx, t.objects, 'underRoad'");
+ const onTrack=view.indexOf("RnRObjects.drawLayer(ctx, t.objects, 'under'");
+ const above=view.indexOf("RnRObjects.drawLayer(ctx, t.objects, 'over'");
+ assert(belowRoad>=0&&belowRoad<road&&onTrack>road&&above>onTrack);
+ const html=fs.readFileSync(path.resolve(__dirname,'../../Editor.html'),'utf8');
+ assert(html.includes('data-asset-road="under"'));
+ assert(html.includes('data-asset-road="over"'));
+ assert(html.includes('data-asset-car="under"'));
+ assert(html.includes('data-asset-car="over"'));
+ assert(html.includes('id="assetEditRoadUnder"'));
+ assert(html.includes('id="assetEditUnder"'));
+});
 test('Расширение текущего редактора сохраняет библиотеку объектов и стартовую клетку',()=>{
  const source=fs.readFileSync(path.resolve(__dirname,'../../editor/map-app.js'),'utf8');
  const enhanced=enhanceEditorScript(source);
  assert(enhanced.includes('MapAssets.init('));assert(enhanced.includes('MapAssets.setOpen('));
  assert(enhanced.includes('function addStart('));assert(enhanced.includes('getDocument:cur'));
+ assert(!enhanced.includes('window.MapData && MapData.isChapter'));
+ assert(enhanced.includes("typeof MapData !== 'undefined' && MapData.isChapter"));
  assert.throws(()=>enhanceEditorScript('const MapApp={};'),/контракт/);
 });
 test('Возврат из теста карты несёт id трассы',()=>{
@@ -120,10 +149,24 @@ test('Сохранение трассы обновляет индекс, уда�
   const api=handler('save-track',root),doc=valid();
   assert.equal((await api.handleSaveTrack(request({id:doc.id,track:doc}))).status,200);
   doc.name='Обновлённая';assert.equal((await api.handleSaveTrack(request({id:doc.id,track:doc}))).status,200);
-  assert.deepEqual(await api.handleListTracks().json(),{files:['custom_01.json']});
+  assert.deepEqual(await api.handleListTracks().json(),{files:['custom_01.json'],chapters:[]});
   assert.equal((await api.handleSaveTrack(request({id:doc.id,kind:'delete'}))).status,200);
-  assert.deepEqual(await api.handleListTracks().json(),{files:[]});
+  assert.deepEqual(await api.handleListTracks().json(),{files:[],chapters:[]});
   assert.equal(fs.readdirSync(path.join(root,'assets/data/tracks/.trash')).length,1);
+ }finally{fs.rmSync(root,{recursive:true,force:true});}
+});
+test('Сюжетная трасса пишется в chapters и не удаляется',async()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'rnr-ch-'));
+ try {
+  const api=handler('save-track',root);
+  const doc={id:'ch1_arena_01',name:'Ночной овал',chapter:1,cps:[[0,0],[1000,0],[1000,1000],[0,1000]],hazards:{ramps:[],mines:[]}};
+  assert.equal((await api.handleSaveTrack(request({id:doc.id,track:doc}))).status,200);
+  const listed=await api.handleListTracks().json();
+  assert.deepEqual(listed.files,[]);
+  assert.deepEqual(listed.chapters,['chapters/ch1_arena_01.json']);
+  assert.equal(fs.existsSync(path.join(root,'assets/data/tracks/chapters/ch1_arena_01.json')),true);
+  assert.equal((await api.handleSaveTrack(request({id:doc.id,track:doc,kind:'delete'}))).status,400);
+  assert.equal(fs.existsSync(path.join(root,'assets/data/tracks/chapters/ch1_arena_01.json')),true);
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
 test('Обработчики возвращают 400 для null и неизвестной операции без записи',async()=>{
@@ -146,6 +189,53 @@ test('Запись .oblab в клиенте сохраняет нескольк�
   assert.equal(obj.collision.bodies.length,2);
   assert.equal(obj.collision.poly.length,4);
  } finally {fs.rmSync(root,{recursive:true,force:true});}
+});
+test('Ассет импортируется исходными байтами и сохраняет русское название',async()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'rnr-obj-file-'));
+ try {
+  const api=handler('save-object',root);
+  const url=new URL('http://localhost/__save-oblab-file?pack=world&id=arena_koleso&name='+encodeURIComponent('Колесо арены')+'&ext=png&w=640&h=320');
+  const res=await api.handleSaveOblabFile(new Request(url,{method:'POST',body:Buffer.from('png-binary')}),url);
+  assert.equal(res.status,200);
+  const out=await res.json();
+  assert.equal(out.src,'assets/object/world.labr/arena_koleso.png');
+  assert.equal(fs.readFileSync(path.join(root,out.src),'utf8'),'png-binary');
+  const object=api.listPacks().packs[0].objects[0];
+  assert.equal(object.name,'Колесо арены');
+  assert.equal(object.w,640);assert.equal(object.h,320);assert.equal(object.layer,'under');
+ } finally {fs.rmSync(root,{recursive:true,force:true});}
+});
+test('Паки хранят цвет и дерево, а системный пак нельзя изменить',()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'rnr-pack-'));
+ try {
+  const api=handler('save-object',root);
+  assert.equal(api.mutatePack({action:'create',id:'parent_pack',name:'Родитель',color:'#123456'}).ok,true);
+  assert.equal(api.mutatePack({action:'create',id:'child_pack',name:'Дочерний',color:'#abcdef'}).ok,true);
+  assert.equal(api.mutatePack({action:'update',id:'child_pack',name:'Вложенный',color:'#fedcba',parent:'parent_pack'}).ok,true);
+  api.writePack && api.writePack({id:'world',name:'МИР'});
+  const packs=api.listPacks();
+  const child=packs.packs.find(pack=>pack.id==='child_pack');
+  assert.equal(child.parent,'parent_pack');
+  assert.equal(child.color,'#fedcba');
+  fs.mkdirSync(path.join(root,'assets','object','world.labr'),{recursive:true});
+  fs.writeFileSync(path.join(root,'assets','object','world.labr','pack.labr'),'{}');
+  assert.equal(api.listPacks().packs.find(pack=>pack.id==='world').system,true);
+  assert.equal(api.mutatePack({action:'delete',id:'world'}),null);
+ } finally {fs.rmSync(root,{recursive:true,force:true});}
+});
+test('Редактор ассета поддерживает двойной клик по ребру и Delete для вершины',()=>{
+ const coll=fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/map-asset-coll.js'),'utf8');
+ const edit=fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/map-asset-edit.js'),'utf8');
+ const context={window:{}};vm.runInNewContext(coll,context);
+ const api=context.window.MapAssetColl;
+ const def={layer:'over',collision:{solid:true,bodies:[{poly:[[-10,-10],[10,-10],[10,10],[-10,10]]}],poly:[]}};
+ assert.equal(api.onDoubleClick(def,{x:0,y:-10},1),true);
+ assert.equal(def.collision.bodies[0].poly.length,5);
+ api.onDown({button:0,altKey:false},def,{x:0,y:-10},1);
+ assert.equal(api.removeSelectedVertex(def),true);
+ assert.equal(def.collision.bodies[0].poly.length,4);
+ assert(edit.includes("addEventListener('dblclick', onDoubleClick)"));
+ assert(edit.includes("addEventListener('keydown', onKeyDown)"));
 });
 test('История сохраняет redo при повторе снимка и обрезает ветку при новой правке',()=>{
  const context={};vm.runInNewContext(fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/history.js'),'utf8')+'\nglobalThis.History=StudioHistory;',context);

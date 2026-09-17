@@ -1,0 +1,14 @@
+{
+  "id": "chatgpt_image_17_sent_2026_g_23_49_02",
+  "name": "ChatGPT Image 17 сент. 2026 г., 23_49_02",
+  "src": "assets/object/arena_5mu4jh.labr/chatgpt_image_17_sent_2026_g_23_49_02.png",
+  "w": 1254,
+  "h": 1254,
+  "lockRatio": true,
+  "layer": "over",
+  "collision": {
+    "solid": false,
+    "bodies": [],
+    "poly": []
+  }
+}

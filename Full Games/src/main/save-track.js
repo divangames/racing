@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////
 //
 // Запись JSON трассы из лаборатории (POST /__save-track).
+// Свои петли — в корне tracks, сюжетные — в tracks/chapters.
 //
 ////////////////////////////////////////////////////////
 
@@ -31,7 +32,26 @@ function tracksDir() {
 }
 
 /**
- * Имена файлов трасс.
+ * Папка сюжетных петель.
+ * @returns {string}
+ */
+function chaptersDir() {
+  return path.join(tracksDir(), 'chapters');
+}
+
+/**
+ * Сюжетный id или поле chapter.
+ * @param {string} id
+ * @param {object} [track]
+ * @returns {boolean}
+ */
+function isChapterTrack(id, track) {
+  if (track && ((track.chapter | 0) > 0 || track.chapterId)) return true;
+  return /^ch\d+_/.test(id);
+}
+
+/**
+ * Имена своих JSON.
  * @returns {string[]}
  */
 function listTrackFiles() {
@@ -43,10 +63,38 @@ function listTrackFiles() {
 }
 
 /**
- * Обновляет index.json.
+ * Пути сюжетных JSON относительно tracks/.
+ * @returns {string[]}
+ */
+function listChapterFiles() {
+  const folder = chaptersDir();
+  if (!fs.existsSync(folder)) return [];
+  return fs.readdirSync(folder)
+    .filter((name) => name.endsWith('.json') && name !== 'index.json' && ID_RE.test(path.basename(name, '.json')))
+    .sort((a, b) => a.localeCompare(b, 'en', {numeric: true}))
+    .map((name) => 'chapters/' + name);
+}
+
+/**
+ * Обновляет index.json своих и глав.
  */
 function writeIndex() {
-  writeJson(path.join(tracksDir(), 'index.json'), {files: listTrackFiles()});
+  writeJson(path.join(tracksDir(), 'index.json'), {files: listTrackFiles(), chapters: listChapterFiles()});
+  fs.mkdirSync(chaptersDir(), {recursive: true});
+  writeJson(path.join(chaptersDir(), 'index.json'), {
+    files: listChapterFiles().map((rel) => path.basename(rel))
+  });
+}
+
+/**
+ * Файл трассы: глава или своя.
+ * @param {string} id
+ * @param {object} [track]
+ * @returns {string}
+ */
+function destFor(id, track) {
+  if (isChapterTrack(id, track)) return path.join(chaptersDir(), id + '.json');
+  return path.join(tracksDir(), id + '.json');
 }
 
 /**
@@ -54,7 +102,7 @@ function writeIndex() {
  * @returns {Response}
  */
 function handleListTracks() {
-  return new Response(JSON.stringify({files: listTrackFiles()}), {
+  return new Response(JSON.stringify({files: listTrackFiles(), chapters: listChapterFiles()}), {
     status: 200,
     headers: {
       'content-type': 'application/json; charset=utf-8',
@@ -82,8 +130,11 @@ async function handleSaveTrack(request) {
   const kind = data.kind || 'work';
   if (!['work','delete'].includes(kind)) return new Response('Unknown operation', {status:400});
   if (typeof id !== 'string' || !ID_RE.test(id)) return new Response('Bad request', {status: 400});
-  const dest = path.join(tracksDir(), id + '.json');
+  const dest = destFor(id, data.track);
   if (kind === 'delete') {
+    if (isChapterTrack(id, data.track)) {
+      return new Response('Сюжетную трассу нельзя удалить', {status: 400});
+    }
     if (fs.existsSync(dest)) {
       const trash = path.join(tracksDir(), '.trash');
       fs.mkdirSync(trash, {recursive:true});
@@ -96,6 +147,10 @@ async function handleSaveTrack(request) {
   const error = validateTrack(track);
   if (error) return new Response(error, {status:400});
   track.id = id;
+  if (isChapterTrack(id, track) && !(track.chapter | 0)) {
+    const m = id.match(/^ch(\d+)_/);
+    track.chapter = m ? +m[1] : 1;
+  }
   writeJson(dest, track);
   writeIndex();
   return new Response('{"ok":true}', {status: 200, headers: {'content-type': 'application/json; charset=utf-8'}});

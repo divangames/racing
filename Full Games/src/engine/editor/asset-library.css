@@ -1,0 +1,140 @@
+/* Дополнения библиотеки ассетов: дерево, системные паки, меню и диалог. */
+.cb .cb-folder {
+  padding-left: calc(8px + var(--pack-depth, 0) * 16px);
+}
+
+.cb .cb-folder::before {
+  background: var(--pack-color, #d4a84a);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--pack-color, #d4a84a) 45%, transparent);
+}
+
+.cb .cb-folder.is-system {
+  color: #f2d99a;
+  background-image: linear-gradient(90deg, rgba(212, 168, 74, .12), transparent 72%);
+}
+
+.cb .cb-folder.is-system::after {
+  content: 'СИСТЕМА';
+  margin-left: auto;
+  padding: 2px 4px;
+  border: 1px solid rgba(212, 168, 74, .38);
+  border-radius: 3px;
+  color: #d4a84a;
+  font-size: 7px;
+  letter-spacing: .08em;
+}
+
+.cb .cb-folder.is-drop-target {
+  outline: 2px solid var(--cyan);
+  outline-offset: -2px;
+}
+
+.asset-context-menu {
+  position: fixed;
+  z-index: 90;
+  display: grid;
+  min-width: 220px;
+  padding: 5px;
+  border: 1px solid #435363;
+  border-radius: 6px;
+  background: #111820;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .62);
+}
+
+.asset-context-menu button {
+  min-height: 36px;
+  justify-content: flex-start;
+  border-color: transparent;
+  background: transparent;
+  text-align: left;
+}
+
+.asset-context-menu button:hover,
+.asset-context-menu button:focus-visible {
+  background: rgba(121, 220, 230, .14);
+  border-color: rgba(121, 220, 230, .32);
+}
+
+.asset-context-menu button.is-danger:not(:disabled) {
+  color: #ff8b7e;
+}
+
+.asset-pack-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 8, 12, .76);
+}
+
+.asset-pack-card {
+  display: grid;
+  gap: 14px;
+  width: min(390px, 100%);
+  padding: 20px;
+  border: 1px solid #435363;
+  border-radius: 8px;
+  background: #161d25;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, .62);
+}
+
+.asset-pack-card h2 {
+  margin: 0;
+  font: 700 20px/1.2 var(--display);
+}
+
+.asset-pack-card label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.asset-pack-card input[type='color'] {
+  width: 100%;
+  min-height: 44px;
+}
+
+.texture-export {
+  width: 100%;
+  min-height: 36px;
+  margin: 6px 0 10px;
+  color: var(--cyan);
+  background: rgba(121, 220, 230, .08);
+}
+
+.cb .cb-place {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 5px;
+  border: 1px solid #334352;
+  border-radius: 5px;
+  background: rgba(7, 12, 17, .72);
+}
+
+.cb .cb-place span {
+  margin-right: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.cb .cb-place button {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+.cb .cb-place button.is-on {
+  border-color: var(--cyan);
+  color: #071015;
+  background: var(--cyan);
+}
+
+#assetEditCanvas:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}

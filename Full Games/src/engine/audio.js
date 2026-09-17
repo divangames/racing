@@ -31,16 +31,19 @@
   /** Семплы кузова глушат пилу; без файлов остаётся прежний тон. */
   DiVANEngine.replace('updEngine', function(player, isPaused, screen) {
     if (screen === 'title' || screen === 'press') {
+      if (typeof carTiresHalt === 'function') carTiresHalt();
       if (typeof carEngineHalt === 'function') carEngineHalt();
       if (AU.ctx && AU.engG) AU.engG.gain.setTargetAtTime(0, AU.ctx.currentTime, .04);
       muteTire(AU.ctx ? AU.ctx.currentTime : 0, true);
       return;
     }
+    const active = screen === 'race' && !isPaused && !document.hidden && player && !player.dead && settings.sound.sfxOn;
+    if (!active && typeof carTiresHalt === 'function') carTiresHalt();
     if (typeof tickCarEngine === 'function') tickCarEngine(player, isPaused, screen);
+    if (!active && typeof carTiresHalt === 'function') carTiresHalt();
     const sampled = typeof carEngineLive === 'function' && carEngineLive();
     if (!AU.ctx || !AU.engG) return;
     const now = AU.ctx.currentTime;
-    const active = screen === 'race' && !isPaused && !document.hidden && player && !player.dead && settings.sound.sfxOn;
     if (sampled) {
       AU.engG.gain.setTargetAtTime(0, now, .04);
     } else {

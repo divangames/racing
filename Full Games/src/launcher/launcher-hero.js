@@ -1,40 +1,28 @@
 ////////////////////////////////////////////////////////
 //
-// Фон лаунчера: ролик → вспышка на весь экран → кадр.
+// Фон лаунчера: ролик один раз → вспышка → статичный кадр.
 //
 ////////////////////////////////////////////////////////
 
 'use strict';
 
 (function startLauncherHero() {
-  const HOLD_MS = 5000;
   const FLASH_LEAD_S = 0.28;
   const WHITE_PEAK_MS = 240;
   const VIDEO_SRC = 'media/launcher-hero.mp4';
 
+  const stage = document.querySelector('.stage');
   const video = document.getElementById('hero-video');
   const flash = document.getElementById('hero-flash');
   if (!video || !flash) return;
 
   const reduce = typeof matchMedia === 'function'
     && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce) return;
 
-  /** play | flash | hold */
-  let phase = 'hold';
-  let holdTimer = 0;
+  /** play | flash | done */
+  let phase = 'play';
   let peakTimer = 0;
-  let restarting = false;
-
-  /**
-   * Сбрасывает таймер паузы на кадре.
-   */
-  function clearHold() {
-    if (holdTimer) {
-      clearTimeout(holdTimer);
-      holdTimer = 0;
-    }
-  }
+  let revealTimer = 0;
 
   /**
    * Снимает таймер смены ролика на webp в пике белого.
@@ -47,6 +35,16 @@
   }
 
   /**
+   * Снимает запасной таймер открытия UI.
+   */
+  function clearReveal() {
+    if (revealTimer) {
+      clearTimeout(revealTimer);
+      revealTimer = 0;
+    }
+  }
+
+  /**
    * Прячет ролик: под ним уже webp.
    */
   function hideVideo() {
@@ -54,10 +52,46 @@
   }
 
   /**
+   * После вспышки открывает UI и больше не крутит ролик.
+   */
+  function finishIntro() {
+    if (phase === 'done') return;
+    phase = 'done';
+    clearPeak();
+    clearReveal();
+    flash.classList.remove('is-burst');
+    hideVideo();
+    video.pause();
+    if (stage) {
+      stage.classList.remove('is-intro');
+      stage.classList.add('is-ready');
+    }
+    document.dispatchEvent(new CustomEvent('launcher:intro-done'));
+  }
+
+  /**
+   * Сразу без ролика (reduced-motion или ошибка).
+   */
+  function skipIntro() {
+    clearPeak();
+    clearReveal();
+    hideVideo();
+    flash.classList.remove('is-burst');
+    finishIntro();
+  }
+
+  if (reduce) {
+    skipIntro();
+    return;
+  }
+
+  if (stage) stage.classList.add('is-intro');
+
+  /**
    * Fade всего экрана в белый и обратно.
    */
   function playScreenFade() {
-    if (phase === 'flash') return;
+    if (phase === 'flash' || phase === 'done') return;
     phase = 'flash';
     flash.classList.remove('is-burst');
     void flash.offsetWidth;
@@ -67,52 +101,22 @@
       video.pause();
       hideVideo();
     }, WHITE_PEAK_MS);
-  }
-
-  /**
-   * Пять секунд кадра, затем снова ролик.
-   */
-  function holdStill() {
-    phase = 'hold';
-    flash.classList.remove('is-burst');
-    hideVideo();
-    clearHold();
-    holdTimer = window.setTimeout(restartVideo, HOLD_MS);
+    clearReveal();
+    revealTimer = window.setTimeout(finishIntro, 1400);
   }
 
   /**
    * Показывает и запускает ролик с нуля.
    */
   function showAndPlay() {
-    restarting = false;
+    if (phase === 'done') return;
     flash.classList.remove('is-burst');
     video.classList.add('is-live');
     phase = 'play';
     const start = video.play();
     if (start && typeof start.catch === 'function') {
-      start.catch(() => {
-        hideVideo();
-        phase = 'hold';
-      });
+      start.catch(() => skipIntro());
     }
-  }
-
-  /**
-   * После паузы снова крутит ролик без чёрного кадра.
-   */
-  function restartVideo() {
-    if (restarting) return;
-    restarting = true;
-    clearHold();
-    const go = () => {
-      showAndPlay();
-    };
-    if (video.currentTime > 0.001) {
-      video.addEventListener('seeked', go, { once: true });
-      video.currentTime = 0;
-      return;
-    }
-    go();
   }
 
   /**
@@ -134,11 +138,11 @@
   }
 
   /**
-   * После спада белого держим webp.
+   * После спада белого открываем лаунчер.
    */
   function onFlashDone(event) {
     if (event.animationName !== 'hero-screen-fade') return;
-    holdStill();
+    finishIntro();
   }
 
   video.muted = true;
@@ -147,13 +151,7 @@
   video.src = VIDEO_SRC;
   video.addEventListener('timeupdate', onTime);
   video.addEventListener('ended', onEnded);
-  video.addEventListener('error', () => {
-    clearHold();
-    clearPeak();
-    hideVideo();
-    flash.classList.remove('is-burst');
-    phase = 'hold';
-  });
+  video.addEventListener('error', skipIntro);
   flash.addEventListener('animationend', onFlashDone);
 
   if (video.readyState >= 2) showAndPlay();

@@ -8,9 +8,15 @@
   'use strict';
 
   const TAU = Math.PI * 2;
+  const MAX_SMOOTH_SAMPLES = 960;
+  const CUSTOM_RAIL_HEIGHT_SCALE = 0.5;
+  const CUSTOM_RAIL_TEXTURE_SUPERSAMPLE = 4;
 
   /** Subdivide only the rendered ribbon; physics/progress retain their indices. */
   function smoothTrack(T) {
+    // Сплайн заезда уже плотный: повторное умножение его точек в четыре раза
+    // делает пользовательские текстуры бортов слишком дорогими для Canvas2D.
+    if (T.S.length * 4 > MAX_SMOOTH_SAMPLES) return T;
     if (T._ribbonSmooth && T._ribbonSmooth.source === T.S) {
       const samples=T._ribbonSmooth.samples;
       return Object.assign({},T,{S:samples,N:samples.length});
@@ -120,8 +126,18 @@
     if (!rb) return;
     const S = T.S, N = S.length, th = T.theme || {};
     deck = deck || 0;
-    const custom = rb.customRail(th);
+    const customSource = rb.customRail(th);
     const strips = global.DiVANEngine.trackStrip;
+    const sourceSize = customSource ? rb.texSize(customSource) : {w:0, h:0};
+    const originalRailHalf = customSource
+      ? Math.max(5, Math.min(16, ((sourceSize.h || 36) / 5) || 7))
+      : 9;
+    const railHalf = customSource ? originalRailHalf * CUSTOM_RAIL_HEIGHT_SCALE : originalRailHalf;
+    // Геометрия остаётся тонкой, а текстура готовится в четырёхкратном
+    // разрешении: финальное уменьшение Canvas2D сохраняет ржавчину и крепёж.
+    const custom = customSource && rb.compactStrip
+      ? rb.compactStrip(customSource, railHalf * 2 * CUSTOM_RAIL_TEXTURE_SUPERSAMPLE)
+      : customSource;
     const tex = custom || (strips && strips.bakeRailStrip());
     q.lineJoin = 'round';
     q.lineCap = 'butt';
@@ -135,7 +151,6 @@
       runs.push({ a: 0, len: N });
     }
     if (tex) {
-      const railHalf = custom ? Math.max(5, Math.min(16, ((rb.texSize(tex).h || 36) / 5) || 7)) : 9;
       for (let r = 0; r < runs.length; r++) {
         const run = runs[r];
         for (const side of [1, -1]) {
@@ -149,7 +164,7 @@
             const off = halfW + 8;
             const pa = { x: a.x + a.nx * side * off, y: a.y + a.ny * side * off, nx:a.nx, ny:a.ny };
             const pb = { x: b.x + b.nx * side * off, y: b.y + b.ny * side * off, nx:b.nx, ny:b.ny };
-            rb.blitSeg(q, pa, pb, tex, railHalf, dist);
+            rb.blitSeg(q, pa, pb, tex, railHalf, dist, !!customSource && side > 0);
             dist += Math.hypot(pb.x - pa.x, pb.y - pa.y);
           }
         }

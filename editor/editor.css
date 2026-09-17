@@ -321,6 +321,21 @@ button:disabled { opacity: .4; cursor: not-allowed; }
   .armor-card, .owner-card { box-shadow: none; }
 }
 .car-list button { min-width: 40px; padding: 0 8px; font-weight: 600; }
+.chapter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: min(32vh, 280px);
+  overflow-y: auto;
+  margin-top: 4px;
+}
+.chapter-list button {
+  width: 100%;
+  min-height: 34px;
+  text-align: left;
+  font-size: 12px;
+  letter-spacing: .04em;
+}
 .wheel-list { display: grid; grid-template-columns: 1fr 1fr; }
 .wheel-list button { text-align: left; font-size: 12px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .wheel-list button.active { border-color: var(--green); color: var(--green); background: #1a1a1a; }

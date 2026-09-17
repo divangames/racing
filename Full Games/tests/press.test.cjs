@@ -62,3 +62,17 @@ test('Сетка слотов, шаг курсора и хук press', () => {
   assert.equal(typeof g.DiVANEngine.pressNav.early, 'function');
   assert.equal(g.press.name, 'pressEngine');
 });
+
+test('ESC на титуле открывает выход на рабочий стол', () => {
+  const g = bootPress();
+  g.state = 'title';
+  g.resetArm = false;
+  g.selTitle = 0;
+  g.g = { _titleItems: ['КАМПАНИЯ', 'ВЫХОД'] };
+  g.isBack = function (c) { return c === 'Escape'; };
+  g.isConfirm = function () { return false; };
+  g.sClick = function () { g.clicks = (g.clicks || 0) + 1; };
+  g.openExitWarn = function () { g.exitOpened = true; };
+  g.DiVANEngine.pressHub.hub('Escape');
+  assert.equal(g.exitOpened, true);
+});

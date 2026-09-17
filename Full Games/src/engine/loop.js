@@ -29,10 +29,14 @@ function frameEngine(now){
    else R.announcerT=(R.announcerT||0)+dt;
   }
  }
- if(state==='race'&&!paused)updRace(dt);
+ if(state==='race'&&!paused){
+  updRace(dt);
+  if(window.DiVANEngine&&DiVANEngine.arenaCrowd)DiVANEngine.arenaCrowd.afterRace(R,dt);
+  else if(window.RnRArenaCrowd)RnRArenaCrowd.tickBed(dt);
+ }else if(window.RnRArenaCrowd)RnRArenaCrowd.halt();
  if(state==='settings'||state==='cameraSetup')updateTitleRace(dt);
  if(typeof tickTitleFx==='function')tickTitleFx(dt);
- if(window.RnRWeatherAudio&&state!=='race'&&state!=='title'&&state!=='press'&&state!=='settings'&&state!=='cameraSetup')RnRWeatherAudio.haltRain();
+ if(window.RnRWeatherAudio)RnRWeatherAudio.sync(state==='race'?R:null,settings);
  updEngine(P,paused,state);
  if(CHIP.on)CHIP.pump();
  if(state==='intro'&&!introDone){

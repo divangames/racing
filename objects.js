@@ -16,7 +16,8 @@ window.RnRObjects = (() => {
     const rawSrc = String(s.src || (id + '.webp')).replace(/\\/g, '/');
     const folderRel = folder || ('assets/object/' + pack + '.labr');
     const src = rawSrc.indexOf('/') >= 0 ? rawSrc : (folderRel + '/' + rawSrc);
-    const layer = s.layer === 'over' ? 'over' : 'under';
+    const carLayer = s.carLayer === 'over' || s.layer === 'over' ? 'over' : 'under';
+    const roadLayer = s.roadLayer === 'under' ? 'under' : 'over';
     return {
       pack: String(pack || s.pack || 'world'),
       id,
@@ -26,8 +27,10 @@ window.RnRObjects = (() => {
       w: Math.max(8, +s.w || 128),
       h: Math.max(8, +s.h || 128),
       lockRatio: s.lockRatio !== false,
-      layer,
-      collision: collOf(s.collision, layer)
+      layer: carLayer,
+      carLayer,
+      roadLayer,
+      collision: collOf(s.collision, carLayer)
     };
   }
 
@@ -147,8 +150,12 @@ window.RnRObjects = (() => {
   function drawLayer(ctx, list, layer, onload) {
     (list || []).forEach((o) => {
       const def = defOf(o);
-      const lay = o.layer || (def && def.layer) || 'under';
-      if (lay === layer) drawOne(ctx, o, onload);
+      const car = o.carLayer || o.layer || (def && (def.carLayer || def.layer)) || 'under';
+      const road = o.roadLayer || (def && def.roadLayer) || 'over';
+      const match = layer === 'underRoad' ? road === 'under' && car !== 'over'
+        : layer === 'over' ? car === 'over'
+        : road !== 'under' && car !== 'over';
+      if (match) drawOne(ctx, o, onload);
     });
   }
 
@@ -190,7 +197,8 @@ window.RnRObjects = (() => {
     const rad = 26;
     (list || []).forEach((inst) => {
       const def = defOf(inst);
-      if (!def || !def.collision.solid) return;
+      const carLayer = inst.carLayer || inst.layer || (def && (def.carLayer || def.layer)) || 'under';
+      if (!def || carLayer === 'under' || !def.collision.solid) return;
       const L = toLocal(inst, def, r.x, r.y);
       const bodies = (def.collision.bodies && def.collision.bodies.length)
         ? def.collision.bodies
@@ -221,7 +229,9 @@ window.RnRObjects = (() => {
       w: def.w,
       h: def.h,
       lockRatio: !!def.lockRatio,
-      layer: def.layer,
+      layer: def.carLayer || def.layer,
+      carLayer: def.carLayer || def.layer,
+      roadLayer: def.roadLayer || 'over',
       collision: def.collision
     };
   }

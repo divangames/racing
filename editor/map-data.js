@@ -85,16 +85,25 @@ const MapData = (() => {
     return doc;
   }
 
+  /** Сюжетная петля главы, не своя. */
+  function isChapter(doc) {
+    if (!doc) return false;
+    if ((doc.chapter | 0) > 0) return true;
+    return /^ch\d+_/.test(String(doc.id || ''));
+  }
+
   /** Снимок без лишнего. */
   function fileTrack(doc) {
     const t = RnRTracks.normalize(doc);
-    return {
+    const out = {
       id: t.id,
       name: t.name,
       published: t.published !== false,
       autoHazards: !!t.autoHazards,
       theme: t.theme,
       zones: t.zones,
+      gaps: t.gaps,
+      decks: t.decks,
       cps: t.cps,
       decals: t.decals,
       items: t.items,
@@ -103,6 +112,12 @@ const MapData = (() => {
       hazards: t.hazards,
       shortcuts: t.shortcuts
     };
+    if (isChapter(t)) {
+      out.chapter = t.chapter;
+      out.chapterId = t.chapterId;
+      out.chapterTitle = t.chapterTitle;
+    }
+    return out;
   }
 
   /** POST на локальный сервер / клиент. */
@@ -123,43 +138,69 @@ const MapData = (() => {
   }
 
   /** Список файлов с сервера. */
-  async function list() {
-    const files = [];
+  async function catalog() {
     try {
       const r = await fetch('/__tracks', {cache: 'no-store'});
       if (r.ok) {
         const data = await r.json();
-        if (data && Array.isArray(data.files)) return data.files;
+        if (data && Array.isArray(data.files)) {
+          return {files: data.files, chapters: Array.isArray(data.chapters) ? data.chapters : []};
+        }
       }
     } catch (err) { /* нет сервера */ }
     try {
       const r = await fetch('assets/data/tracks/index.json', {cache: 'no-store'});
-      if (r.ok) {
-        const data = await r.json();
-        if (data && Array.isArray(data.files)) return data.files;
+      const data = r.ok ? await r.json() : {};
+      let chapters = Array.isArray(data.chapters) ? data.chapters : [];
+      if (!chapters.length) {
+        const c = await fetch('assets/data/tracks/chapters/index.json', {cache: 'no-store'});
+        if (c.ok) {
+          const cj = await c.json();
+          chapters = (cj.files || []).map((n) => String(n).indexOf('/') >= 0 ? n : ('chapters/' + n));
+        }
       }
+      return {files: (data && data.files) || [], chapters};
     } catch (err2) { /* пусто */ }
-    return files;
+    return {files: [], chapters: []};
   }
 
-  /** Грузит все документы. */
+  /** Список своих файлов. */
+  async function list() {
+    return (await catalog()).files;
+  }
+
+  /** Читает один JSON. */
+  async function readFile(name) {
+    const url = name.indexOf('/') >= 0 ? ('assets/data/tracks/' + name.replace(/^assets\/data\/tracks\//, '')) : ('assets/data/tracks/' + name);
+    const r = await fetch(url, {cache: 'no-store'});
+    if (!r.ok) return null;
+    return RnRTracks.normalize(await r.json());
+  }
+
+  /** Грузит свои и сюжетные документы. */
   async function loadAll() {
-    const files = await list();
+    const cat = await catalog();
     const docs = [];
-    for (let i = 0; i < files.length; i++) {
-      const name = String(files[i] || '');
-      const url = name.indexOf('/') >= 0 ? name : ('assets/data/tracks/' + name);
+    const names = cat.files.concat(cat.chapters);
+    for (let i = 0; i < names.length; i++) {
+      const name = String(names[i] || '');
       try {
         if (typeof LabSplash !== 'undefined' && LabSplash.file) {
-          LabSplash.file('Карты · ' + name.replace(/^assets\/data\/tracks\//, '') + ' · ' + (i + 1) + ' / ' + files.length);
+          LabSplash.file('Карты · ' + name.replace(/^assets\/data\/tracks\//, '') + ' · ' + (i + 1) + ' / ' + names.length);
         }
-        const r = await fetch(url, {cache: 'no-store'});
-        if (!r.ok) continue;
-        docs.push(RnRTracks.normalize(await r.json()));
+        const doc = await readFile(name);
+        if (doc && doc.cps.length >= 4) docs.push(doc);
       } catch (err) { console.error(err); }
     }
+    const have = {};
+    docs.forEach((d) => { have[d.id] = 1; });
+    const generated = (RnRTracks.chapterTracks && RnRTracks.chapterTracks()) || [];
+    generated.forEach((st) => {
+      if (have[st.id]) return;
+      docs.push(RnRTracks.normalize(st));
+    });
     return docs;
   }
 
-  return {ovalCps, freshId, factory, fromStock, fileTrack, save, list, loadAll, ID_RE};
+  return {ovalCps, freshId, factory, fromStock, fileTrack, save, list, loadAll, ID_RE, isChapter};
 })();

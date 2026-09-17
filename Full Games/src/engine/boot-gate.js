@@ -7,6 +7,22 @@
 (function (global) {
   'use strict';
 
+  /** Показывает в лаборатории прогресс вместо чёрного экрана дисклеймера. */
+  function showLabLoading() {
+    if (typeof labTest === 'undefined' || !labTest || typeof BOOT === 'undefined' || !BOOT) return;
+    BOOT.disclaimerMs = 1;
+    const root = document.getElementById('boot-screen');
+    if (root) root.classList.remove('is-load', 'is-gate');
+    const heading = document.getElementById('boot-heading');
+    if (heading) heading.textContent = 'ТЕСТ ТРАССЫ';
+    const prompt = document.getElementById('boot-prompt');
+    if (prompt) prompt.hidden = true;
+    const load = document.getElementById('boot-load');
+    if (load) { load.hidden = false; load.style.display = 'block'; }
+    const disclaimer = document.getElementById('boot-disclaimer');
+    if (disclaimer) disclaimer.hidden = true;
+  }
+
   /**
    * Сколько ещё держать дисклеймер до минимума 5 с.
    * @returns {number}
@@ -41,7 +57,6 @@
     setTimeout(function () {
       try {
         if (labTest) startLabTest();
-        else if (typeof startWorldIntro === 'function') startWorldIntro();
         else enterTitle();
         if (cv && cv.focus) cv.focus();
       } catch (e) {
@@ -149,6 +164,7 @@
     try { if (typeof audioInit === 'function' && (!global.AU || !AU.ctx)) audioInit(); } catch (e) { console.error(e); }
     const el = bootEls();
     if (el.root) { el.root.classList.remove('is-gate'); el.root.classList.add('is-load'); }
+    showLabLoading();
     bootPaint();
     const tick = setInterval(bootPaint, 250);
     try {
@@ -167,7 +183,7 @@
       await bootWaitAll(8, [fonts, voice, maps, custom, packs]);
     } catch (e) { console.error(e); }
     finally { clearInterval(tick); }
-    const hold = bootDisclaimerHoldMs();
+    const hold = (typeof labTest !== 'undefined' && labTest) ? 0 : bootDisclaimerHoldMs();
     if (hold > 0) await bootSleep(hold);
     bootFinish();
   }
@@ -179,4 +195,5 @@
   engine.replace('bootPollGate', bootPollGateEngine);
   engine.replace('bootFxStart', bootFxStartEngine);
   engine.replace('bootGo', bootGoEngine);
+  showLabLoading();
 })(typeof window !== 'undefined' ? window : globalThis);

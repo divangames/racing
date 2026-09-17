@@ -13,8 +13,8 @@ const { protocol, app } = require('electron');
 const { game, contentRoot, vendorLocalRoot, clientRoot } = require('./paths');
 const { handleSaveCar } = require('./save-car');
 const { handleSaveTrack, handleListTracks } = require('./save-track');
-const { handleListTextures, handleSaveTexture } = require('./save-texture');
-const { handleListPacks, handleSavePack, handleSaveOblab } = require('./save-object');
+const { handleListTextures, handleSaveTexture, handleSaveTextureFile } = require('./save-texture');
+const { handleListPacks, handleSavePack, handleSaveOblab, handleSaveOblabFile } = require('./save-object');
 const { MIME, serveLocalFile } = require('./serve-file');
 const { engineFile, enhanceHtml } = require('./enhancements');
 const { enhanceEditorScript } = require('./editor-enhancements');
@@ -56,6 +56,20 @@ function safeJoin(root, rel) {
   return resolved;
 }
 
+/** Подменяет модули библиотеки ассетов в десктопной лаборатории. */
+function overrideEditorHtml(html, pathname) {
+  if (String(pathname || '').toLowerCase() !== '/editor.html') return html;
+  let out = html;
+  const overrides = ['objects.js', 'editor/map-assets.js', 'editor/map-asset-coll.js', 'editor/map-asset-edit.js'];
+  overrides.forEach((name) => {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    out = out.replace(new RegExp('src=["\']' + escaped + '(?:\\?[^"\']*)?["\']', 'i'), 'src="/__engine/editor/' + name.split('/').pop() + '"');
+  });
+  const style = '<link rel="stylesheet" href="/__engine/editor/asset-library.css">';
+  if (!out.includes(style) && out.includes('</head>')) out = out.replace('</head>', style + '</head>');
+  return out;
+}
+
 /**
  * Подмена CDN Three на локальные модули, скрытие браузерного донесения.
  * @param {string} html
@@ -94,6 +108,8 @@ function rewriteGameHtml(html, pathname) {
     'РОК-Н-РОЛЛ ГОНКИ — браузерный оммаж',
     'Колесница войны'
   );
+  // Модули оболочки не перезаписывают соседний браузерный проект.
+  out = overrideEditorHtml(out, pathname);
   let storeDump = {};
   try { storeDump = exportAll(); } catch (err) { storeDump = {}; }
   return enhanceHtml(out, { pathname, storeDump });
@@ -180,11 +196,17 @@ async function handleRnrRequest(request) {
     if (url.pathname === '/__save-texture' && request.method === 'POST') {
       return handleSaveTexture(request);
     }
+    if (url.pathname === '/__save-texture-file' && request.method === 'POST') {
+      return handleSaveTextureFile(request, url);
+    }
     if (url.pathname === '/__save-pack' && request.method === 'POST') {
       return handleSavePack(request);
     }
     if (url.pathname === '/__save-oblab' && request.method === 'POST') {
       return handleSaveOblab(request);
+    }
+    if (url.pathname === '/__save-oblab-file' && request.method === 'POST') {
+      return handleSaveOblabFile(request, url);
     }
     if (url.pathname === '/__object-packs') {
       return handleListPacks();
@@ -256,5 +278,7 @@ module.exports = {
   attachProtocol,
   gameStartUrl,
   labStartUrl,
-  resolveContentPath
+  resolveContentPath,
+  rewriteGameHtml,
+  overrideEditorHtml
 };

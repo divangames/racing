@@ -51,11 +51,13 @@
         "world.js",
         "input.js",
         "scene.js",
+        "arena-crowd.js",
         "driving.js",
         "audio.js",
         "soundtrack.js",
         "music-gate.js",
         "title-bg.js",
+        "title-menu.js",
         "screens.js",
         "title-fx.js",
         "render.js",
@@ -63,6 +65,7 @@
         "garage-act.js",
         "car-fx.js",
         "car-fallback.js",
+        "car-spec.js",
         "car-paint.js",
         "portraits.js",
         "vfx.js",
@@ -111,6 +114,7 @@
         "track-ribbon.js",
         "track-ribbon-deck.js",
         "editor/splash.js",
+        "editor/busy.js",
         "editor/workbench.js"
       ],
       "before": {
@@ -118,6 +122,7 @@
       },
       "styles": [
         "editor/splash.css",
+        "editor/busy.css",
         "editor/workbench.css"
       ]
     }

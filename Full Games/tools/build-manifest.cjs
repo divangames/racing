@@ -44,6 +44,7 @@ const FILES = [
   'vfx/quarks-weather.js',
   'vfx/weather-fx.js',
   'vfx/weather-audio.js',
+  'vfx/arena-crowd.js',
   'vendor/three.module.js',
   'vendor/three.quarks.esm.js',
   'assets/image/game-logo.webp',

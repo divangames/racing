@@ -13,6 +13,9 @@ protocol.registerPrivilegedScheme();
 app.whenReady().then(async () => {
   protocol.attachProtocol();
   const win = new BrowserWindow({ show: false, width: 1600, height: 900, webPreferences: { offscreen: true, backgroundThrottling: false } });
+  win.webContents.on('console-message', event => {
+    if (event.level === 'error') console.error('Renderer:', event.message);
+  });
   await win.loadURL('rnr://game/rnr.html?lab=1&car=0');
   const start = Date.now();
   while (!await win.webContents.executeJavaScript("typeof R !== 'undefined' && !!R && !!P && BOOT.ready")) {

@@ -19,6 +19,7 @@ function bootHub() {
     console,
     drawGarage: function () {},
     drawResults: function () {},
+    drawFinishZone: function () {},
     drawRaceArena: function () {}
   };
   g.window = g;
@@ -60,6 +61,11 @@ test('Колонки гаража, эфир доски и порядок маш�
   const order = g.DiVANEngine.render.racerDrawOrder([{ y: 30, id: 1 }, { y: 10, id: 2 }]);
   assert.equal(order[0].id, 2);
   assert.equal(order[1].id, 1);
+  const labels = g.DiVANEngine.render.finishLabelPoints({x:400,y:300,ang:Math.PI/2},100);
+  assert.equal(labels[0].x,400);
+  assert.equal(labels[1].x,400);
+  assert.equal(labels[0].y,182);
+  assert.equal(labels[1].y,418);
 });
 
 test('Мост закрывает нижние машины независимо от цели камеры, включая метки и щиты', () => {

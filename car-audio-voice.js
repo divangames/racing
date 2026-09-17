@@ -7,7 +7,7 @@
 
 const CAR_ENGINE_STD = 'assets/sounds/engine/';
 const CAR_ENGINE_LIB = 'assets/sounds/cars/engine/';
-const CAR_ENGINE_WAV = 0.62;
+const CAR_ENGINE_WAV = 0.84;
 const CAR_ENGINE_CLIPS = [1, 2, 3, 5];
 
 const carEngineShare = {

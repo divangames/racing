@@ -146,7 +146,12 @@
         if (dist < 34) {
           p.alive = false; p.rt = 9;
           r.pickups++;
-          if (p.type === 'money') { const v = p.val; r.moneyGot += v; if (r.isP) { save.cash += v; fl(p.x, p.y, '+$' + v, '#ffd23f'); SFX.play('money'); } }
+          if (p.type === 'money') {
+            const base = p.val;
+            const v = r.isP && typeof incomePayout === 'function' ? incomePayout(base) : base;
+            r.moneyGot += v;
+            if (r.isP) { save.cash += v; fl(p.x, p.y, '+$' + v, '#ffd23f'); SFX.play('money'); }
+          }
           else if (p.type === 'wrench') {
             if (typeof kitStarterWrench === 'function' && kitStarterWrench(r)) { if (r.isP) sPick(); }
             else if (typeof kitMidWrench === 'function' && kitMidWrench(r)) { if (r.isP) sPick(); }

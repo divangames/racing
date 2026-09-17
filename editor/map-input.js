@@ -209,7 +209,8 @@ const MapInput = (() => {
       const xy = snapP(w.x, w.y);
       t.objects.push({
         pack: def.pack, id: def.id, x: xy[0], y: xy[1],
-        w: def.w, h: def.h, ang: 0, layer: def.layer, lockRatio: def.lockRatio
+        w: def.w, h: def.h, ang: 0, layer: def.carLayer || def.layer,
+        carLayer: def.carLayer || def.layer, roadLayer: def.roadLayer || 'over', lockRatio: def.lockRatio
       });
       st.sel = {kind: 'asset', i: t.objects.length - 1};
       st.onChange(true); st.onSelect(st.sel); return;

@@ -24,7 +24,7 @@ function bootView() {
     console,
     W: 1280,
     H: 720,
-    CAM_ZOOM_MIN: 1.75,
+    CAM_ZOOM_MIN: 1.25,
     CAM_ZOOM_MAX: 2.2,
     CAM_ZOOM_STEP: 0.05,
     CAM_ZOOM_DEF: 2,
@@ -62,7 +62,7 @@ test('Зум в коридоре, snap к шагу, letterbox даёт поля'
   g.settings.graphics.cameraZoom = 9;
   assert.equal(g.raceZoom(), 2.2);
   g.settings.graphics.cameraZoom = 1;
-  assert.equal(g.raceZoom(), 1.75);
+  assert.equal(g.raceZoom(), 1.25);
   assert.equal(g.snapCameraZoom(1.77), 1.75);
   g.setCameraZoom(2.2);
   assert.equal(g.settings.graphics.cameraZoom, 2.2);

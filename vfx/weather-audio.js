@@ -1,6 +1,7 @@
 ////////////////////////////////////////////////////////
 //
-// Эмбиент биома: дождь, снег, гром из assets/sounds/embirnt.
+// Эмбиент биома: HTML-луп как моторы. В меню — дождь, в заезде — погода.
+// decodeAudioData по rnr:// на десктопе часто пустой — не используем.
 //
 ////////////////////////////////////////////////////////
 
@@ -8,79 +9,124 @@
   'use strict';
 
   const THUNDER_SRC = 'assets/sounds/embirnt/grom.mp3';
-  const THUNDER_MIX = 0.88;
+  const THUNDER_MIX = 0.68;
   const LOOPS = {
-    rain: { src: 'assets/sounds/embirnt/rain.mp3', mix: 0.44 },
-    snow: { src: 'assets/sounds/embirnt/Snow.mp3', mix: 0.4 }
+    rain: { src: 'assets/sounds/embirnt/rain.mp3', mix: 0.52 },
+    snow: { src: 'assets/sounds/embirnt/Snow.mp3', mix: 0.46 }
   };
 
   let loopEl = null;
   let loopKey = '';
   let lastMix = LOOPS.rain.mix;
+  let kickBusy = false;
 
   /**
-   * Настройки канала эффектов.
+   * Настройки звука.
    * @returns {object|null}
    */
   function snd() {
-    const s = root.settings;
+    const s = typeof settings !== 'undefined' ? settings : root.settings;
     return s && s.sound ? s.sound : null;
   }
 
   /**
-   * Громкость эффектов 0…1, с учётом выключателя.
+   * Ползунок атмосферы биома 0…1.
    * @returns {number}
    */
-  function sfxLevel() {
+  function biomeLevel() {
     const s = snd();
-    if (!s || s.sfxOn === false) return 0;
-    const n = s.sfx == null ? 80 : s.sfx;
+    if (!s) return 0;
+    const n = s.biome == null ? 80 : s.biome;
     return n < 0 ? 0 : n > 100 ? 1 : n / 100;
   }
 
   /**
-   * Blob заставки или локальный путь.
+   * Прямой URL протокола, без blob заставки (пустой blob = тишина).
    * @param {string} rel
    * @returns {string}
    */
   function mediaHref(rel) {
-    const cached = root.BOOT && root.BOOT.media ? root.BOOT.media[rel] : '';
-    if (cached) return cached;
-    if (typeof root.bootMediaSrc === 'function') return root.bootMediaSrc(rel);
-    return rel;
+    const slash = String(rel || '').replace(/\\/g, '/');
+    try {
+      if (typeof location !== 'undefined' && location.href) {
+        return new URL(slash, location.href).href;
+      }
+    } catch (e) {}
+    if (typeof root.bootMediaSrc === 'function') return root.bootMediaSrc(slash);
+    return slash;
   }
 
   /**
-   * Титул уже крутит rain.mp3 в title-fx.
+   * Комикс и заставка мира — без эмбиента.
    * @returns {boolean}
    */
-  function titleMenu() {
-    return root.state === 'title' || root.state === 'press';
+  function quietState() {
+    const s = typeof state !== 'undefined' ? state : root.state;
+    return s === 'intro' || s === 'worldIntro';
   }
 
   /**
-   * Какой луп нужен: rain, snow или пусто.
+   * Экраны главного меню, где дождь является частью заставки.
+   * @param {string} screen
+   * @returns {boolean}
+   */
+  function menuRainScreen(screen) {
+    return screen === 'press' || screen === 'title' ||
+      screen === 'settings' || screen === 'cameraSetup';
+  }
+
+  /**
+   * Какой луп: в меню всегда дождь, в заезде — дождь/снег биома.
    * @param {object|null} R
    * @param {object|null} settings
    * @returns {string}
    */
   function wantedKey(R, settings) {
-    if (titleMenu()) return '';
-    if (!settings || !settings.graphics || !settings.graphics.weather) return '';
-    if (!R || !R.weather || !LOOPS[R.weather.id]) return '';
-    if (sfxLevel() <= 0) return '';
+    const screen = typeof state !== 'undefined' ? state : root.state;
     if (typeof document !== 'undefined' && document.hidden) return '';
-    return R.weather.id;
+    if (biomeLevel() <= 0) return '';
+    if (quietState()) return '';
+    if (screen === 'race') {
+      if (!settings || !settings.graphics || !settings.graphics.weather) return '';
+      if (!R || R.demo || !R.weather || !LOOPS[R.weather.id]) return '';
+      return R.weather.id;
+    }
+    return menuRainScreen(screen) ? 'rain' : '';
   }
 
   /** Останавливает луп биома. */
   function haltLoop() {
+    kickBusy = false;
     if (!loopEl) return;
     try { loopEl.pause(); } catch (e) {}
   }
 
   /**
-   * Луп текущего биома, без наслоения на титульный дождь.
+   * HTML-тег в DOM — Chromium иначе режет play() вне жеста.
+   * @returns {HTMLAudioElement|null}
+   */
+  function ensureEl() {
+    if (typeof Audio === 'undefined') return null;
+    if (loopEl) return loopEl;
+    loopEl = new Audio();
+    loopEl.loop = true;
+    loopEl.preload = 'auto';
+    loopEl.referrerPolicy = 'no-referrer';
+    try { loopEl.setAttribute('playsinline', ''); } catch (e) {}
+    if (typeof document !== 'undefined' && document.body) {
+      loopEl.style.cssText = 'position:fixed;left:-9999px;width:1px;height:1px;opacity:0';
+      document.body.appendChild(loopEl);
+    }
+    if (loopEl && typeof loopEl.addEventListener === 'function') {
+      loopEl.addEventListener('error', function () {
+        loopKey = '';
+      });
+    }
+    return loopEl;
+  }
+
+  /**
+   * Луп биома или меню.
    * @param {object|null} R
    * @param {object|null} settings
    */
@@ -90,26 +136,36 @@
       haltLoop();
       return;
     }
-    if (typeof Audio === 'undefined') return;
+    if (typeof root.audioInit === 'function' && !(root.AU && root.AU.ctx)) {
+      try { root.audioInit(); } catch (e) {}
+    }
     const spec = LOOPS[key];
     lastMix = spec.mix;
-    if (!loopEl) {
-      loopEl = new Audio();
-      loopEl.loop = true;
-      loopEl.preload = 'auto';
-      loopEl.referrerPolicy = 'no-referrer';
-    }
-    if (loopKey !== key) {
+    const el = ensureEl();
+    if (!el) return;
+    const href = mediaHref(spec.src);
+    if (loopKey !== key || el._href !== href) {
       loopKey = key;
-      loopEl.src = mediaHref(spec.src);
+      el._href = href;
+      el.loop = true;
+      el.src = href;
+      try { el.load(); } catch (e) {}
     }
-    loopEl.volume = sfxLevel() * spec.mix;
-    if (loopEl.paused) loopEl.play().catch(function () {});
+    el.volume = biomeLevel() * spec.mix;
+    if (el.paused && !kickBusy) {
+      kickBusy = true;
+      const p = el.play();
+      if (p && typeof p.then === 'function') {
+        p.then(function () { kickBusy = false; }).catch(function () { kickBusy = false; });
+      } else {
+        kickBusy = false;
+      }
+    }
   }
 
   /** Одиночный удар грома. */
   function strike() {
-    const vol = sfxLevel() * THUNDER_MIX;
+    const vol = biomeLevel() * THUNDER_MIX;
     if (vol <= 0) return;
     if (typeof Audio === 'undefined') return;
     const a = new Audio();
@@ -121,7 +177,7 @@
 
   let wrapDone = false;
 
-  /** Громкость и выключатель после слайдера настроек. */
+  /** Слайдер атмосферы. */
   function tryWrap() {
     if (wrapDone) return;
     if (!root.DiVANEngine || typeof root.DiVANEngine.wrap !== 'function') return;
@@ -130,8 +186,8 @@
     root.DiVANEngine.wrap('applyAudioSettings', function (orig) {
       return function () {
         orig();
-        if (loopEl) loopEl.volume = sfxLevel() * lastMix;
-        if (sfxLevel() <= 0) haltLoop();
+        if (loopEl) loopEl.volume = biomeLevel() * lastMix;
+        if (biomeLevel() <= 0) haltLoop();
       };
     });
   }

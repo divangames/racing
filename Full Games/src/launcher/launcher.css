@@ -194,7 +194,7 @@ html, body {
 .chrome-tools {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 1px;
 }
 
 .btn-close, .btn-mute {
@@ -212,14 +212,8 @@ html, body {
   -webkit-app-region: no-drag;
   app-region: no-drag;
   box-shadow: inset 0 1px 0 rgba(255, 210, 63, .12);
-}
-
-.btn-close {
-  clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%);
-}
-
-.btn-mute {
-  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 100%, 8px 100%);
+  /* Параллелограмм: верх смещён вправо, обе грани косят одинаково. */
+  clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
 }
 
 .btn-mute .icon-off { display: none; }
@@ -272,6 +266,80 @@ html, body {
   filter: drop-shadow(0 12px 28px rgba(0, 0, 0, .8));
   transform: translateX(-50%) rotate(-.6deg);
   animation: sway 5.2s ease-in-out infinite;
+}
+
+/* Мелкий знак студии — правый нижний угол, не спорит с логотипом игры. */
+.studio-mark {
+  position: absolute;
+  z-index: 5;
+  right: 18px;
+  bottom: 14px;
+  width: clamp(56px, 7vw, 88px);
+  height: auto;
+  margin: 0;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  opacity: .88;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, .75));
+}
+
+////////////////////////////////////////////////////////
+//
+// Интро: только ролик, знак студии и (при обновлении) dock.
+//
+////////////////////////////////////////////////////////
+
+.stage.is-intro .chrome-title,
+.stage.is-intro .kicker,
+.stage.is-intro .logo,
+.stage.is-intro .actions,
+.stage.is-intro .ash,
+.stage.is-intro .vignette,
+.stage.is-intro .edge,
+.stage.is-intro .dock {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.stage.is-intro .logo {
+  animation: none;
+}
+
+/* Mute/close оставляем: безрамочное окно иначе не закрыть. */
+.stage.is-intro .chrome-title {
+  visibility: hidden;
+}
+
+.stage.is-intro.is-busy .dock {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.stage.is-intro.is-busy .meta {
+  display: none;
+}
+
+.stage.is-ready .chrome-title,
+.stage.is-ready .kicker,
+.stage.is-ready .logo,
+.stage.is-ready .actions,
+.stage.is-ready .ash,
+.stage.is-ready .vignette,
+.stage.is-ready .edge,
+.stage.is-ready .dock {
+  animation: ui-reveal .55s ease-out both;
+}
+
+.stage.is-ready .logo {
+  animation: ui-reveal .55s ease-out both, sway 5.2s ease-in-out .55s infinite;
+}
+
+@keyframes ui-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .actions {
@@ -399,6 +467,16 @@ html, body {
   .fill { box-shadow: none; transition: none; }
   .hero-video { display: none; }
   .hero-flash { display: none; animation: none; }
+  .stage.is-ready .logo,
+  .stage.is-ready .chrome-title,
+  .stage.is-ready .kicker,
+  .stage.is-ready .actions,
+  .stage.is-ready .ash,
+  .stage.is-ready .vignette,
+  .stage.is-ready .edge,
+  .stage.is-ready .dock {
+    animation: none;
+  }
   .dock {
     background: linear-gradient(90deg, rgba(6, 4, 10, .7), rgba(6, 4, 10, 0));
   }

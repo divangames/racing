@@ -31,9 +31,155 @@ window.StudioCheck = {
   }
 };
 (() => {
+  const MAX_TEXTURE_SIZE = 32 * 1024 * 1024;
+
   /** Создаёт доступную кнопку с действием. */
   function button(text, action) {
     const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=action;return b;
+  }
+
+  /** Имя файла без расширения для стабильного id в библиотеке. */
+  function textureId(file) {
+    return String(file && file.name || 'texture').replace(/\.[^.]+$/, '').toLowerCase()
+      .replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '').slice(0, 32) || 'texture';
+  }
+
+  /** Ждёт, пока Chromium действительно декодирует только что записанную картинку. */
+  function waitTexture(src) {
+    return new Promise((resolve, reject) => {
+      MapTex.forget(src);
+      const image=MapTex.img(src, null, true);
+      if (!image) { reject(new Error('Файл не загрузился')); return; }
+      const done=()=>image.naturalWidth>1?resolve(image):reject(new Error('Изображение повреждено'));
+      image.addEventListener('load',done,{once:true});
+      image.addEventListener('error',()=>reject(new Error('Формат изображения не поддерживается')),{once:true});
+      if (image.complete) done();
+    });
+  }
+
+  /** Передаёт исходные байты текстуры без Base64 и применяет файл после декодирования. */
+  async function uploadTrackTexture(file, kind, property, title, replaceId) {
+    if (!file) return;
+    if (file.size>MAX_TEXTURE_SIZE) throw new Error('Максимальный размер текстуры — 32 МБ');
+    const ext=(file.name.split('.').pop()||'png').toLowerCase().replace('jpeg','jpg');
+    const query=new URLSearchParams({kind,id:replaceId||textureId(file),ext});
+    const response=await fetch('/__save-texture-file?'+query.toString(),{
+      method:'POST',headers:{'Content-Type':file.type||'application/octet-stream'},body:file
+    });
+    if(!response.ok)throw new Error('Не удалось записать файл ('+response.status+')');
+    const out=await response.json();
+    if(!out.ok||!out.src)throw new Error('Редактор не вернул путь текстуры');
+    await MapTex.list();
+    await waitTexture(out.src);
+    const doc=MapApp.getDocument();
+    doc.theme[property]=out.src;
+    if(window.MapPreview&&MapPreview.invalidateRoad)MapPreview.invalidateRoad();
+    MapPanel.paint();
+    MapView.draw();
+    MapApp.commit();
+    const status=document.getElementById('mapSaveState');
+    if(status)status.textContent=title+' применены · '+file.name;
+  }
+
+  /** Подменяет медленную загрузку дороги и бортов на прямую передачу файла. */
+  function bindFastTextures() {
+    const specs=[
+      ['mapRoadFile','road','roadSrc','Дорога'],
+      ['mapRailFile','rail','railSrc','Борта']
+    ];
+    specs.forEach(([id,kind,property,title])=>{
+      const input=document.getElementById(id);if(!input)return;
+      input.onchange=async()=>{
+        const file=input.files&&input.files[0];input.value='';if(!file)return;
+        const run=()=>uploadTrackTexture(file,kind,property,title);
+        try {
+          if(window.LabBusy&&LabBusy.run)await LabBusy.run('Применяю: '+file.name,run);
+          else await run();
+        } catch(error) {
+          const status=document.getElementById('mapSaveState');
+          if(status)status.textContent=title+': '+error.message;
+        }
+      };
+    });
+    const roadInput=document.getElementById('mapRoadFile');
+    const roadLabel=roadInput&&roadInput.closest('label');
+    if(roadLabel&&!document.getElementById('mapRoadReplaceBtn')){
+      const replaceInput=document.createElement('input');replaceInput.type='file';replaceInput.accept=roadInput.accept;replaceInput.hidden=true;
+      const replaceBtn=button('Заменить выбранную дорогу',()=>{
+        const src=MapApp.getDocument().theme.roadSrc||'';
+        if(!/\/Textures\/road\//i.test(src)){
+          const status=document.getElementById('mapSaveState');
+          if(status)status.textContent='Сначала выберите дорогу из библиотеки';
+          return;
+        }
+        replaceInput.click();
+      });
+      replaceBtn.id='mapRoadReplaceBtn';replaceBtn.className='texture-replace';
+      replaceInput.onchange=async()=>{
+        const file=replaceInput.files&&replaceInput.files[0];replaceInput.value='';if(!file)return;
+        const src=MapApp.getDocument().theme.roadSrc||'';
+        const name=src.split('/').pop()||'';
+        const replaceId=name.replace(/\.[^.]+$/,'');
+        try{
+          const run=()=>uploadTrackTexture(file,'road','roadSrc','Дорога заменена',replaceId);
+          if(window.LabBusy&&LabBusy.run)await LabBusy.run('Заменяю дорогу: '+replaceId,run);else await run();
+        }catch(error){const status=document.getElementById('mapSaveState');if(status)status.textContent='Замена дороги: '+error.message;}
+      };
+      roadLabel.after(replaceBtn,replaceInput);
+    }
+  }
+
+  /** Делит обычные и сюжетные трассы на самостоятельные режимы списка. */
+  function splitTrackLists() {
+    const ownList=document.getElementById('mapList');
+    const chapterList=document.getElementById('mapChapterList');
+    const section=ownList&&ownList.closest('.section');
+    if(!section||!chapterList||section.querySelector('.map-source-tabs'))return;
+    const own=document.createElement('div');own.className='map-source-view';own.dataset.source='own';
+    const campaign=document.createElement('div');campaign.className='map-source-view';campaign.dataset.source='campaign';
+    const ownActions=document.getElementById('mapNewBtn')?.closest('.actions');
+    const stock=document.getElementById('mapStock')?.closest('.field');
+    const chapterTitle=chapterList.previousElementSibling;
+    const chapterHint=chapterList.nextElementSibling;
+    [ownList,ownActions,stock].forEach(node=>{if(node)own.append(node);});
+    [chapterTitle,chapterList,chapterHint].forEach(node=>{if(node)campaign.append(node);});
+    const tabs=document.createElement('div');tabs.className='map-source-tabs';tabs.setAttribute('role','tablist');
+    const ownBtn=button('Мои трассы',()=>show('own'));
+    const campaignBtn=button('Кампания',()=>show('campaign'));
+    ownBtn.setAttribute('role','tab');campaignBtn.setAttribute('role','tab');
+    tabs.append(ownBtn,campaignBtn);section.append(tabs,own,campaign);
+    function show(source) {
+      const campaignOn=source==='campaign';
+      own.hidden=campaignOn;campaign.hidden=!campaignOn;
+      ownBtn.classList.toggle('is-on',!campaignOn);campaignBtn.classList.toggle('is-on',campaignOn);
+      ownBtn.setAttribute('aria-selected',String(!campaignOn));campaignBtn.setAttribute('aria-selected',String(campaignOn));
+      try{localStorage.setItem('rnr.studio.trackSource',source);}catch(error){}
+    }
+    let saved='own';try{saved=localStorage.getItem('rnr.studio.trackSource')||'own';}catch(error){}
+    show(saved==='campaign'?'campaign':'own');
+  }
+
+  /** Добавляет в инспектор быстрые действия и навигацию по длинной панели. */
+  function enhanceInspector() {
+    const panel=document.querySelector('#workMap .panel');if(!panel||panel.querySelector('.map-inspector-head'))return;
+    splitTrackLists();
+    const head=document.createElement('div');head.className='map-inspector-head';
+    const title=document.createElement('div');title.className='map-inspector-title';title.innerHTML='<strong>Инструменты трассы</strong><span>Правки применяются к выбранной трассе</span>';
+    const actions=document.createElement('div');actions.className='map-inspector-actions';
+    const save=button('Сохранить',()=>document.getElementById('mapSaveBtn')?.click());save.className='primary';
+    const test=button('Тест',()=>document.getElementById('mapTestBtn')?.click());
+    actions.append(save,test);head.append(title,actions);
+    const nav=document.createElement('nav');nav.className='map-inspector-nav';nav.setAttribute('aria-label','Разделы инструментов');
+    const labels=[
+      ['mapList','Трассы'],['mapName','Карточка'],['mapRoadFile','Текстуры'],['mapZones','Покрытие'],['mapSaveBtn','Сохранение']
+    ];
+    labels.forEach(([id,label])=>{
+      const target=document.getElementById(id)?.closest('.section');if(!target)return;
+      target.classList.add('map-panel-card');
+      const link=button(label,()=>target.scrollIntoView({behavior:'smooth',block:'start'}));
+      nav.append(link);
+    });
+    panel.prepend(nav);panel.prepend(head);
   }
   /** Устанавливает инструменты после готовности исходного интерфейса. */
   function start() {
@@ -59,11 +205,15 @@ window.StudioCheck = {
     });
     input.onchange=async()=>{
       const file=input.files[0];input.value='';if(!file)return;
-      try {
+      const apply=async()=>{
         if(file.size>2000000)throw new Error('Размер JSON ограничен 2 МБ');
         const doc=JSON.parse(await file.text()),report=StudioCheck.track(doc);
         if(report.errors.length)throw new Error(report.errors.join(' · '));
         MapApp.importDocument(doc);status.textContent='Импортирован отдельный черновик. Сохраните его для игры.';
+      };
+      try {
+        if(window.LabBusy&&LabBusy.run) await LabBusy.run('Импортирую трассу',apply);
+        else await apply();
       } catch(error) {status.textContent='Импорт: '+error.message;}
     };
     const restore=button('Восстановить черновик',()=>{
@@ -89,6 +239,8 @@ window.StudioCheck = {
       const help=document.createElement('details'),title=document.createElement('summary');
       title.textContent='Управление холстом';help.className='studio-help';note.before(help);help.append(title,note);
     }
+    bindFastTextures();
+    enhanceInspector();
     /** Обновляет диагностику только при изменении документа и после загрузки редактора. */
     let previous='';
     setInterval(()=>{

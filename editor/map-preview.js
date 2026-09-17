@@ -22,6 +22,18 @@ const MapPreview = (() => {
   let last = 0;
   let groundPat = { key: '', pat: null };
   let roadBake = { key: '', c: null, x: 0, y: 0, w: 0, h: 0 };
+  let bakeJob = { token: 0, key: '', raf: 0 };
+
+  /** Плашка «применение», если модуль лаборатории загружен. */
+  function busy(fn, a, b) {
+    const api = typeof LabBusy !== 'undefined' ? LabBusy : null;
+    if (api && api[fn]) api[fn](a, b);
+  }
+
+  /** Перерисовать карту после отложенной печки. */
+  function kickView() {
+    if (typeof MapView !== 'undefined' && MapView.draw) MapView.draw();
+  }
 
   /** Материал зоны по доле круга. */
   function matAt(t, u) {
@@ -97,16 +109,15 @@ const MapPreview = (() => {
   }
 
   /**
-   * Лента во внеэкранный холст: на кадре одна картинка, не сотни blit.
+   * Синхронно печёт ленту в текущий кадр.
    * @param {object} t
    * @param {object[]} S
+   * @param {string} key
    * @returns {{c:HTMLCanvasElement,x:number,y:number,w:number,h:number}|null}
    */
-  function ensureRoadBake(t, S) {
+  function paintRoadNow(t, S, key) {
     const ribbon = window.DiVANEngine && DiVANEngine.trackRibbon;
     if (!ribbon || S.length < 8 || typeof Path2D !== 'function') return null;
-    const key = roadKey(t, S);
-    if (roadBake.key === key && roadBake.c) return roadBake;
     let minx = 1e9, miny = 1e9, maxx = -1e9, maxy = -1e9;
     for (let i = 0; i < S.length; i++) {
       minx = Math.min(minx, S[i].x);
@@ -142,8 +153,45 @@ const MapPreview = (() => {
       console.error(err);
       return null;
     }
-    roadBake = { key: key, c: c, x: minx - pad, y: miny - pad, w: bw, h: bh };
-    return roadBake;
+    return { key: key, c: c, x: minx - pad, y: miny - pad, w: bw, h: bh };
+  }
+
+  /**
+   * Лента: готовый холст или отложенная печка, пока на экране дешёвый штрих.
+   * @param {object} t
+   * @param {object[]} S
+   * @returns {{c:HTMLCanvasElement,x:number,y:number,w:number,h:number}|null}
+   */
+  function ensureRoadBake(t, S) {
+    const ribbon = window.DiVANEngine && DiVANEngine.trackRibbon;
+    if (!ribbon || S.length < 8 || typeof Path2D !== 'function') return null;
+    const key = roadKey(t, S);
+    if (roadBake.key === key && roadBake.c) return roadBake;
+    if (bakeJob.key === key && bakeJob.raf) return null;
+    bakeJob.token += 1;
+    const token = bakeJob.token;
+    bakeJob.key = key;
+    if (bakeJob.raf) cancelAnimationFrame(bakeJob.raf);
+    busy('begin', 'Применение изменений');
+    bakeJob.raf = requestAnimationFrame(function () {
+      bakeJob.raf = 0;
+      busy('progress', 0.4, 'Пеку полотно');
+      bakeJob.raf = requestAnimationFrame(function () {
+        bakeJob.raf = 0;
+        try {
+          if (token !== bakeJob.token) return;
+          busy('progress', 0.75, 'Накладываю текстуры');
+          const baked = paintRoadNow(t, S, key);
+          if (token !== bakeJob.token) return;
+          if (baked) roadBake = baked;
+          bakeJob.key = '';
+        } finally {
+          busy('end');
+          if (token === bakeJob.token) kickView();
+        }
+      });
+    });
+    return null;
   }
 
   /** Векторная петля без UV — пока тянут точку сплайна. */
@@ -283,6 +331,13 @@ const MapPreview = (() => {
   /** Сброс запечённой дороги после смены файла текстуры. */
   function invalidateRoad() {
     roadBake.key = '';
+    bakeJob.token += 1;
+    bakeJob.key = '';
+    if (bakeJob.raf) {
+      cancelAnimationFrame(bakeJob.raf);
+      bakeJob.raf = 0;
+      busy('end');
+    }
   }
 
   return {CELL, ROADW, fillGround, strokeRoad, drawItem, drawWeather, weatherId, matAt, snapWorld, invalidateRoad};

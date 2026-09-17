@@ -46,6 +46,10 @@
     if (state === 'press') { dismissPressStart(); return; }
     if (state === 'settings') { clickSettings(x, y); return; }
     if (state === 'cameraSetup') { clickCameraSetup(x, y); return; }
+    if (global.titleConfirm && typeof clickTitleConfirm === 'function') {
+      clickTitleConfirm(x, y);
+      return;
+    }
     if (state === 'title') {
       const items = g._titleItems || [];
       const lay = {

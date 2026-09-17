@@ -20,12 +20,12 @@
   }
 
   /**
-   * Тренажёрка: три стата и личный скил.
+   * Тренажёрка: три стата, доход и личный скил.
    */
   function drawGymEngine() {
     const chI = save.char, ch = CHARS[chI];
     if (!save.cstats) save.cstats = blankCstatsMap();
-    const cs = save.cstats[chI] || (save.cstats[chI] = { spd: 0, crn: 0, grt: 0 });
+    const cs = save.cstats[chI] || (save.cstats[chI] = { spd: 0, crn: 0, grt: 0, inc: 0 });
     const eff = charEff(chI);
     const lvl = save.skills[chI] || 1;
     const STAGE = HUB_STAGE_W, GAP = HUB_STAGE_GAP;
@@ -43,7 +43,7 @@
     txt(g, 'база и личный скил', RIGHT_X + RIGHT_W - 24, HUB_TOP + 28, 12, '#6f6880', 'right', F_B);
 
     g._gymBtns = [];
-    const rx = RIGHT_X + 20, rw = RIGHT_W - 40, rowH = 72, rowGap = 12;
+    const rx = RIGHT_X + 20, rw = RIGHT_W - 40, rowH = 62, rowGap = 8;
     const rows = [
       { key: 'spd', label: 'СКОРОСТЬ', val: eff.spd, base: ch.spd, col: '#ff6b4a', d: 'макс. скорость гонщика' },
       { key: 'crn', label: 'ПОВОРОТ', val: eff.crn, base: ch.crn, col: '#35e0ff', d: 'острее руль, меньше запаздывания' },
@@ -67,10 +67,26 @@
       g._gymBtns.push({ idx: i, x: rx, y: y, w: rw, h: rowH });
       y += rowH + rowGap;
     });
+    const incLvl = incomeLevel(chI);
+    const incMax = DiVANEngine.skills.INCOME_PCTS.length - 1;
+    const incSel = gymSel === 3;
+    const incMaxed = incLvl >= incMax;
+    const incCost = incMaxed ? null : SKILL_COSTS[Math.min(incLvl, SKILL_COSTS.length - 1)];
+    drawGarageRow(rx, y, rw, rowH, incSel, '#ffd23f', 'rgba(255,210,63,.14)',
+      'ДОХОД', 'бонус к призам и деньгам на трассе', incMaxed ? 'МАКС' : '', incMaxed ? '#58ff6b' : '#ffd23f');
+    statPipsN(g, rx + 168, y + 20, incLvl, incMax, '#ffd23f');
+    txt(g, '+' + incomePct(chI) + '%', rx + 168 + incMax * 16 + 10, y + 25, 11, '#ffd23f', 'left', F_B, false);
+    if (!incMaxed) {
+      const bx = rx + rw - 118, by = y + 11, bw = 100, bh = 40;
+      drawHubPlus(bx, by, bw, bh, save.cash >= incCost, incSel, fm(incCost));
+      g._gymBtns.push({ idx: 3, x: bx, y: by, w: bw, h: bh });
+    }
+    g._gymBtns.push({ idx: 3, x: rx, y: y, w: rw, h: rowH });
+    y += rowH + rowGap;
     y += 6;
     g.strokeStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.moveTo(rx, y); g.lineTo(rx + rw, y); g.stroke();
     y += 14;
-    const selS = gymSel === 3, skH = HUB_FOOT - (y + 16);
+    const selS = gymSel === 4, skH = HUB_FOOT - (y + 16);
     drawGarageRow(rx, y, rw, skH, selS, '#b478ff', 'rgba(180,120,255,.16)',
       SKILL_META[chI].n, SKILL_DESC(chI, lvl), lvl >= SKILL_MAX ? 'МАКС' : '', '#58ff6b');
     statPipsN(g, rx + 22, y + 50, lvl, SKILL_MAX, '#d4b0ff');
@@ -79,9 +95,9 @@
       const cost = SKILL_COSTS[lvl - 1], can = save.cash >= cost;
       const bx = rx + rw - 118, by = y + 16, bw = 100, bh = 40;
       drawHubPlus(bx, by, bw, bh, can, selS, fm(cost));
-      g._gymBtns.push({ idx: 3, x: bx, y: by, w: bw, h: bh });
+      g._gymBtns.push({ idx: 4, x: bx, y: by, w: bw, h: bh });
     }
-    g._gymBtns.push({ idx: 3, x: rx, y: y, w: rw, h: skH });
+    g._gymBtns.push({ idx: 4, x: rx, y: y, w: rw, h: skH });
 
     txt(g, '↑ ↓  выбор   ·   ENTER / «+»  качать   ·   ESC  в гараж', W / 2, H - 28, 13, '#6f6880', 'center', F_B);
     drawHubToast();

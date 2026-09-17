@@ -4,17 +4,18 @@
   "published": true,
   "autoHazards": true,
   "theme": {
-    "ground": "#b98a4e",
-    "dark": "#9a6f3a",
-    "road": "#43404b",
-    "line": "#d9c49a",
-    "deco": "rock",
-    "map": "sand",
+    "ground": "#16110e",
+    "dark": "#0a0807",
+    "road": "#2c2622",
+    "line": "#e08a3a",
+    "deco": "wreck",
+    "map": "arena",
     "weather": "",
-    "groundSrc": "",
-    "roadSrc": "",
-    "railSrc": "",
-    "groundScale": 2.3
+    "groundSrc": "assets/data/tracks/Textures/biomes/arena/01.png",
+    "roadSrc": "assets/data/tracks/Textures/road/road_asphalt_track2_png.png",
+    "railSrc": "assets/data/tracks/Textures/rails/bort_01.png",
+    "groundScale": 2.5,
+    "crowdSound": true
   },
   "zones": [
     {
@@ -23,6 +24,8 @@
       "material": "asphalt"
     }
   ],
+  "gaps": [],
+  "decks": [],
   "cps": [
     [
       1014.2857142857142,

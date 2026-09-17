@@ -50,7 +50,7 @@
           fire: ['KeyZ', 'KeyP'], nitro: ['KeyX', 'BracketLeft'], ult: ['KeyC', 'BracketRight'],
           handbrake: ['Space'], pause: ['Escape']
         },
-        sound: { music: 50, sfx: 80, musicOn: true, sfxOn: true }
+        sound: { music: 50, sfx: 80, biome: 80, crowd: 80, musicOn: true, sfxOn: true }
       };
       return;
     }
@@ -58,10 +58,12 @@
       settings.graphics = { resolution: 0, particles: 'high', skids: true, weather: true, shake: true, showFps: false, cameraZoom: 2 };
     else if (settings.graphics.cameraZoom == null) settings.graphics.cameraZoom = 2;
     if (!settings.sound || typeof settings.sound !== 'object')
-      settings.sound = { music: 50, sfx: 80, musicOn: true, sfxOn: true };
+      settings.sound = { music: 50, sfx: 80, biome: 80, crowd: 80, musicOn: true, sfxOn: true };
     else {
       if (settings.sound.music == null) settings.sound.music = 50;
       if (settings.sound.sfx == null) settings.sound.sfx = 80;
+      if (settings.sound.biome == null) settings.sound.biome = 80;
+      if (settings.sound.crowd == null) settings.sound.crowd = 80;
       if (settings.sound.musicOn == null) settings.sound.musicOn = true;
       if (settings.sound.sfxOn == null) settings.sound.sfxOn = true;
     }
@@ -80,17 +82,141 @@
   }
 
   /**
-   * Пишет текущие настройки.
+   * Пишет текущие настройки. В экране настроек — только по «Применить».
    */
   function saveSettingsEngine() {
+    if (settingsDraft && !settingsCommitLock && typeof state === 'string' && state === 'settings') return;
     persistWrite(SETTINGS_KEY, JSON.stringify(settings));
   }
 
+  /** Заводская графика. @returns {object} */
+  function defaultGraphics() {
+    return { resolution: 0, particles: 'high', skids: true, weather: true, shake: true, showFps: false, cameraZoom: 2 };
+  }
+
+  /** Заводской звук. @returns {object} */
+  function defaultSound() {
+    return { music: 50, sfx: 80, biome: 80, crowd: 80, musicOn: true, sfxOn: true };
+  }
+
+  /**
+   * Копия настроек без ссылок.
+   * @param {object} src
+   * @returns {object|null}
+   */
+  function cloneSettings(src) {
+    if (!src || typeof src !== 'object') return null;
+    try { return JSON.parse(JSON.stringify(src)); } catch (e) { return null; }
+  }
+
+  /** Разрешение и микшер после отката/сброса. */
+  function liveApplySettings() {
+    if (typeof applyResolution === 'function') applyResolution();
+    if (typeof applyAudioSettings === 'function') applyAudioSettings();
+  }
+
+  /** Снимок на входе в настройки. */
+  function beginSettingsDraft() {
+    settingsDraft = cloneSettings(settings);
+    settingsCommitLock = false;
+    global._settingsDraftOn = true;
+  }
+
+  /** Откат к снимку (ESC / Назад без «Применить»). */
+  function revertSettingsDraft() {
+    if (!settingsDraft) return;
+    settings = cloneSettings(settingsDraft);
+    if (typeof normalizeSettings === 'function') normalizeSettings();
+    liveApplySettings();
+  }
+
+  /** «Применить»: диск и новый снимок. */
+  function commitSettings() {
+    settingsCommitLock = true;
+    try {
+      persistWrite(SETTINGS_KEY, JSON.stringify(settings));
+      settingsDraft = cloneSettings(settings);
+    } finally {
+      settingsCommitLock = false;
+    }
+    liveApplySettings();
+  }
+
+  /**
+   * Заводские значения текущего раздела (или всех с корня).
+   * @param {string} [pane]
+   */
+  function resetSettingsPane(pane) {
+    const kind = pane || (typeof settingsState === 'string' ? settingsState : 'main');
+    if (!settings || typeof settings !== 'object') normalizeSettings();
+    switch (kind) {
+      case 'graphics':
+        settings.graphics = defaultGraphics();
+        break;
+      case 'sound':
+        settings.sound = defaultSound();
+        break;
+      case 'controls':
+        if (typeof resetControls === 'function') resetControls();
+        else if (typeof DEFAULT_CONTROLS === 'object') {
+          settings.controls = cloneSettings(DEFAULT_CONTROLS);
+        }
+        break;
+      case 'game':
+      case 'main':
+        settings.graphics = defaultGraphics();
+        settings.sound = defaultSound();
+        if (typeof resetControls === 'function') resetControls();
+        else if (typeof DEFAULT_CONTROLS === 'object') settings.controls = cloneSettings(DEFAULT_CONTROLS);
+        break;
+      default: {
+        const neverPane = kind;
+        void neverPane;
+        break;
+      }
+    }
+    liveApplySettings();
+  }
+
+  let settingsDraft = null;
+  let settingsCommitLock = false;
+
   const engine = global.DiVANEngine;
   if (!engine) return;
+  engine.settingsIo = {
+    defaultGraphics,
+    defaultSound,
+    cloneSettings,
+    beginSettingsDraft,
+    revertSettingsDraft,
+    commitSettings,
+    resetSettingsPane
+  };
+  global.beginSettingsDraft = beginSettingsDraft;
+  global.revertSettingsDraft = revertSettingsDraft;
+  global.commitSettings = commitSettings;
+  global.resetSettingsPane = resetSettingsPane;
   engine.replace('abilityBindsLookLegacy', abilityBindsLookLegacyEngine);
   engine.replace('normalizeControls', normalizeControlsEngine);
   engine.replace('normalizeSettings', normalizeSettingsEngine);
   engine.replace('loadSettings', loadSettingsEngine);
   engine.replace('saveSettings', saveSettingsEngine);
+  if (engine.get('openSettings')) {
+    engine.wrap('openSettings', function (orig) {
+      return function (from) {
+        orig(from);
+        beginSettingsDraft();
+      };
+    });
+  }
+  if (engine.get('leaveSettings')) {
+    engine.wrap('leaveSettings', function (orig) {
+      return function () {
+        revertSettingsDraft();
+        orig();
+        settingsDraft = null;
+        global._settingsDraftOn = false;
+      };
+    });
+  }
 })(typeof window !== 'undefined' ? window : globalThis);

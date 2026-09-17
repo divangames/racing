@@ -126,6 +126,9 @@ test('Заезд подключает track-paint после сплайна', ()
   assert(out.indexOf('track-ribbon-deck.js') < out.indexOf('track-paint.js'));
   assert(out.indexOf('track-paint.js') < out.indexOf('collision.js'));
   assert(engineFile('__engine/track-paint.js').endsWith('track-paint.js'));
+  const strip = fs.readFileSync(path.resolve(__dirname, '../src/engine/track-strip.js'), 'utf8');
+  assert(strip.includes('function mulberry32'));
+  assert(!strip.includes('typeof mulberry === \'function\''));
 });
 
 test('Тайл, полигон, запекание лаборатории и земли', () => {
@@ -188,4 +191,22 @@ test('Покрытие наносится после всей базы, а те�
   g.DiVANEngine.trackRibbon.blitSeg(q,{x:0,y:0,nx:0,ny:1},{x:20,y:0,nx:0,ny:1},strip,95,505);
   assert(transforms.length>=4,'UV wrap must render both sides of the repeat');
   assert(transforms.flat().every(Number.isFinite));
+  q.calls.length=0;
+  g.DiVANEngine.trackRibbon.blitSeg(q,{x:0,y:0,nx:0,ny:1},{x:20,y:0,nx:0,ny:1},strip,9,0,true);
+  assert(q.calls.includes('scale'),'вторая сторона борта должна отражаться поперёк ленты');
+});
+
+test('Пользовательский борт тонкий, пропорциональный и запекается с запасом качества', () => {
+  const g=bootPaint();
+  const original={width:934,height:108};
+  const strip=g.DiVANEngine.trackRibbon.compactStrip(original,64);
+  assert.equal(strip.height,64);
+  assert.equal(strip.width,Math.round(original.width/original.height*strip.height));
+  assert(strip.width<original.width);
+  assert.equal(strip.worldWidth,undefined,'отдельный горизонтальный масштаб искажает пропорции');
+  assert(strip._ctx.calls.includes('drawImage'));
+  const source=fs.readFileSync(path.resolve(__dirname,'../src/engine/track-ribbon-deck.js'),'utf8');
+  assert(source.includes('MAX_SMOOTH_SAMPLES'));
+  assert(source.includes('CUSTOM_RAIL_HEIGHT_SCALE = 0.5'));
+  assert(source.includes('CUSTOM_RAIL_TEXTURE_SUPERSAMPLE = 4'));
 });

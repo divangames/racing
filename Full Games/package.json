@@ -1,6 +1,6 @@
 {
   "name": "kolesnica-voyny",
-  "version": "0.2.2-7",
+  "version": "0.2.2-9",
   "description": "Лаунчер Колесницы войны. Игру он сам потом докачает.",
   "main": "src/main/boot.js",
   "author": "Divan Games",
@@ -9,6 +9,7 @@
   "scripts": {
     "test": "node --test tests/*.test.cjs",
     "test:engine": "electron tools/smoke-engine.cjs",
+    "test:audio": "electron tools/check-ambient-audio.cjs",
     "postinstall": "node tools/copy-vendor.cjs && node tools/sync-launcher-media.cjs",
     "start": "electron .",
     "start:lab": "electron . --lab",

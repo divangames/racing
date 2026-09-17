@@ -185,12 +185,14 @@
     const streakKey = save.winStreak | 0;
     if (R.place === 0 && CAREER_STREAK_PAY[streakKey]) {
       streakPay = Math.round(CAREER_STREAK_PAY[streakKey] * prizeDivMult(R.div));
+      if (typeof incomePayout === 'function') streakPay = incomePayout(streakPay);
       save.cash += streakPay;
     }
     let packPay = 0;
     if (counts) save.race++;
     if (counts && save.race > 0 && save.race % CAREER_PACK === 0) {
       packPay = Math.round(CAREER_PACK_PAY * prizeDivMult(R.div));
+      if (typeof incomePayout === 'function') packPay = incomePayout(packPay);
       save.cash += packPay;
     }
     if (typeof storyAfterCareerRace === 'function') storyAfterCareerRace(prevRace, counts);

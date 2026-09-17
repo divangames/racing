@@ -20,7 +20,8 @@ window.RnRTracks = (() => {
     {id: 'garden', name: 'Сад', ground: '#5c6b4a', dark: '#4a5739', road: '#3c3a42', line: '#c8d6a8', deco: 'skull', map: 'garden'},
     {id: 'desert', name: 'Каньон', ground: '#a05a3c', dark: '#83472e', road: '#4a4048', line: '#f0d9c0', deco: 'cactus', map: 'desert'},
     {id: 'snow', name: 'Лёд', ground: '#a8d5e8', dark: '#7fb3d4', road: '#2c4a5a', line: '#e8f4f8', deco: 'ice', map: 'snow'},
-    {id: 'lava', name: 'Вулкан', ground: '#3a1810', dark: '#2a0f08', road: '#1a1210', line: '#ff6b3a', deco: 'lava', map: ''}
+    {id: 'lava', name: 'Вулкан', ground: '#3a1810', dark: '#2a0f08', road: '#1a1210', line: '#ff6b3a', deco: 'lava', map: ''},
+    {id: 'arena', name: 'Арена', ground: '#16110e', dark: '#0a0807', road: '#2c2622', line: '#e08a3a', deco: 'wreck', map: 'arena'}
   ];
   const MATERIALS = [
     {id: 'asphalt', name: 'Асфальт'},
@@ -183,6 +184,168 @@ window.RnRTracks = (() => {
     });
   });
 
+  ////////////////////////////////////////////////////////
+  //
+  // Глава 1: тёмная арена, широкие петли без развязок.
+  //
+  ////////////////////////////////////////////////////////
+
+  /**
+   * Овал с лёгкой деформацией. Без пересечений ниток.
+   * @param {number} rx
+   * @param {number} ry
+   * @param {number} n
+   * @param {number} [rot]
+   * @param {number} [pinch]
+   * @param {number} [egg]
+   * @param {number} [wave]
+   * @returns {number[][]}
+   */
+  function easyLoop(rx, ry, n, rot, pinch, egg, wave) {
+    const c = Math.cos(rot || 0), s = Math.sin(rot || 0);
+    const a = [];
+    const count = n || 24;
+    for (let i = 0; i < count; i++) {
+      const t = i / count * Math.PI * 2;
+      let x = rx * Math.cos(t);
+      let y = ry * Math.sin(t);
+      if (pinch) x *= 1 + pinch * Math.cos(2 * t);
+      if (egg) y *= 1 + egg * Math.sin(t);
+      if (wave) {
+        const m = 1 + wave * Math.sin(3 * t);
+        x *= m;
+        y *= m;
+      }
+      a.push([1800 + x * c - y * s, 1200 + x * s + y * c]);
+    }
+    return a;
+  }
+
+  /**
+   * Стадион: две прямые и широкие дуги.
+   * @returns {number[][]}
+   */
+  function easyStadium() {
+    const x0 = 620, x1 = 2980, y0 = 480, y1 = 1920, rad = 420, pts = [];
+    const arc = function (cx, cy, a0, a1, steps) {
+      for (let i = 0; i <= steps; i++) {
+        const t = a0 + (a1 - a0) * i / steps;
+        pts.push([cx + rad * Math.cos(t), cy + rad * Math.sin(t)]);
+      }
+    };
+    const line = function (ax, ay, bx, by, steps) {
+      for (let i = 1; i < steps; i++) {
+        const u = i / steps;
+        pts.push([ax + (bx - ax) * u, ay + (by - ay) * u]);
+      }
+    };
+    line(x0 + rad, y1, x1 - rad, y1, 6);
+    arc(x1 - rad, y1 - rad, Math.PI / 2, 0, 7);
+    line(x1, y1 - rad, x1, y0 + rad, 6);
+    arc(x1 - rad, y0 + rad, 0, -Math.PI / 2, 7);
+    line(x1 - rad, y0, x0 + rad, y0, 6);
+    arc(x0 + rad, y0 + rad, -Math.PI / 2, -Math.PI, 7);
+    line(x0, y0 + rad, x0, y1 - rad, 6);
+    arc(x0 + rad, y1 - rad, Math.PI, Math.PI / 2, 7);
+    return pts;
+  }
+
+  /**
+   * Триовал: нижняя дуга чуть площе.
+   * @returns {number[][]}
+   */
+  function easyTriOval() {
+    const a = [];
+    for (let i = 0; i < 26; i++) {
+      const t = i / 26 * Math.PI * 2;
+      const sy = Math.sin(t) < 0 ? 0.72 : 1;
+      a.push([1800 + 1180 * Math.cos(t), 1180 + 640 * Math.sin(t) * sy]);
+    }
+    return a;
+  }
+
+  const ARENA_THEME = Object.assign({}, THEMES.find(function (t) { return t.id === 'arena'; }), {weather: 'clear'});
+  const CHAPTER_PACKS = [
+    {
+      chapter: 1,
+      id: 'ch1_arena',
+      title: 'Глава 1 · Арена',
+      tracks: [
+        {name: 'НОЧНОЙ ОВАЛ', cps: easyLoop(1120, 640, 24), zones: [{from: 0, to: 1, material: 'asphalt'}]},
+        {name: 'ЧАША ПЫЛИ', cps: easyLoop(880, 760, 24, 0.12), zones: [{from: 0, to: .55, material: 'asphalt'}, {from: .55, to: 1, material: 'dirt'}]},
+        {name: 'СТАДИОН РЖАВЧИНЫ', cps: easyStadium(), zones: [{from: 0, to: 1, material: 'asphalt'}]},
+        {name: 'ПОЧКА ВОРОНА', cps: easyLoop(1040, 620, 26, -0.18, 0.2), zones: [{from: 0, to: .4, material: 'asphalt'}, {from: .4, to: .78, material: 'sand'}, {from: .78, to: 1, material: 'asphalt'}]},
+        {name: 'ДЛИННЫЙ ЖЁЛОБ', cps: easyLoop(1380, 460, 24, 0.08), zones: [{from: 0, to: 1, material: 'asphalt'}]},
+        {name: 'КОЛЬЦО ФАКЕЛОВ', cps: easyLoop(640, 620, 22), zones: [{from: 0, to: .7, material: 'asphalt'}, {from: .7, to: 1, material: 'dirt'}]},
+        {name: 'ЯЙЦО АРЕНЫ', cps: easyLoop(980, 700, 24, 0.35, 0, 0.22), zones: [{from: 0, to: 1, material: 'asphalt'}]},
+        {name: 'ДВОЙНАЯ ЧАША', cps: easyLoop(1080, 580, 28, 0, 0.28), zones: [{from: 0, to: .5, material: 'dirt'}, {from: .5, to: 1, material: 'asphalt'}]},
+        {name: 'ТРИОВАЛ КЛЕТОК', cps: easyTriOval(), zones: [{from: 0, to: 1, material: 'asphalt'}]},
+        {name: 'КОНТУР БОЙНИ', cps: easyLoop(1000, 680, 28, -0.22, 0.08, 0, 0.07), zones: [{from: 0, to: .62, material: 'asphalt'}, {from: .62, to: 1, material: 'sand'}]}
+      ]
+    }
+  ];
+
+  /** Сюжетные петли: глава, имя, биом. */
+  const CHAPTER_TRACKS = [];
+  CHAPTER_PACKS.forEach(function (pack) {
+    pack.tracks.forEach(function (tr, i) {
+      CHAPTER_TRACKS.push({
+        name: tr.name,
+        chapter: pack.chapter,
+        chapterId: pack.id,
+        chapterTitle: pack.title,
+        id: pack.id + '_' + String(i + 1).padStart(2, '0'),
+        theme: Object.assign({}, ARENA_THEME),
+        zones: tr.zones,
+        gaps: [],
+        shortcuts: [],
+        autoHazards: false,
+        cps: tr.cps
+      });
+    });
+  });
+
+  /** JSON из папки глав перекрывает формулы. */
+  const chapterOverride = Object.create(null);
+
+  /**
+   * Берёт сохранённую петлю главы в живой каталог.
+   * @param {object} doc
+   */
+  function adoptChapter(doc) {
+    const t = normalize(doc);
+    if (!t.id || t.cps.length < 4) return;
+    if (!t.chapter) return;
+    chapterOverride[t.id] = t;
+  }
+
+  /**
+   * Петли сюжета. Без номера — все главы. Сначала файл, иначе формула.
+   * @param {number} [chapter]
+   * @returns {object[]}
+   */
+  function chapterTracks(chapter) {
+    const byId = Object.create(null);
+    CHAPTER_TRACKS.forEach(function (t) { byId[t.id] = t; });
+    Object.keys(chapterOverride).forEach(function (id) {
+      const t = chapterOverride[id];
+      if (t && t.cps && t.cps.length >= 4) byId[id] = t;
+    });
+    const list = Object.keys(byId).sort().map(function (id) { return byId[id]; });
+    if (chapter == null) return list.slice();
+    return list.filter(function (t) { return t.chapter === chapter; });
+  }
+
+  /**
+   * Пачки глав для списка редактора.
+   * @returns {object[]}
+   */
+  function chapterPacks() {
+    return CHAPTER_PACKS.map(function (p) {
+      return {chapter: p.chapter, id: p.id, title: p.title, count: p.tracks.length};
+    });
+  }
+
   const imgs = Object.create(null);
 
   /** Картинка по URL (земля, дорога, объект). */
@@ -222,6 +385,15 @@ window.RnRTracks = (() => {
     return 1;
   }
 
+  /**
+   * Звук трибуны: по умолчанию включён, выключается только явно.
+   * @param {object} [theme]
+   * @returns {boolean}
+   */
+  function crowdSoundOn(theme) {
+    return !theme || theme.crowdSound !== false;
+  }
+
   /** Клетка старта из первых точек петли. */
   function startFromCps(cps) {
     if (!cps || cps.length < 2) return null;
@@ -244,7 +416,8 @@ window.RnRTracks = (() => {
       groundSrc: themeIn.groundSrc ? String(themeIn.groundSrc) : '',
       roadSrc: themeIn.roadSrc ? String(themeIn.roadSrc) : '',
       railSrc: themeIn.railSrc ? String(themeIn.railSrc) : '',
-      groundScale: Math.max(0.25, Math.min(4, Number.isFinite(+themeIn.groundScale) ? +themeIn.groundScale : 1))
+      groundScale: Math.max(0.25, Math.min(4, Number.isFinite(+themeIn.groundScale) ? +themeIn.groundScale : 1)),
+      crowdSound: themeIn.crowdSound !== false
     };
     const cps = Array.isArray(src.cps)
       ? src.cps.map((p) => [+p[0] || 0, +p[1] || 0]).filter((p) => isFinite(p[0]) && isFinite(p[1]))
@@ -291,7 +464,9 @@ window.RnRTracks = (() => {
         w: Math.max(8, +o.w || 128),
         h: Math.max(8, +o.h || 128),
         ang: +o.ang || 0,
-        layer: o.layer === 'over' ? 'over' : 'under',
+        layer: o.carLayer === 'over' || o.layer === 'over' ? 'over' : 'under',
+        carLayer: o.carLayer === 'over' || o.layer === 'over' ? 'over' : 'under',
+        roadLayer: o.roadLayer === 'under' ? 'under' : 'over',
         lockRatio: o.lockRatio !== false
       })).filter((o) => o.id)
       : [];
@@ -315,11 +490,18 @@ window.RnRTracks = (() => {
         ty: p.ty == null ? undefined : +p.ty
       }))
       : [];
+    const id = String(src.id || 'custom').replace(/[^a-z0-9_]/gi, '_').toLowerCase() || 'custom';
+    const chMatch = id.match(/^ch(\d+)_/);
+    const chapter = Math.max(0, src.chapter | 0) || (chMatch ? +chMatch[1] : 0);
+    const isChapter = chapter > 0;
     return {
-      id: String(src.id || 'custom').replace(/[^a-z0-9_]/gi, '_').toLowerCase() || 'custom',
+      id,
       name: String(src.name || 'СВОЯ ТРАССА').slice(0, 42),
       published: src.published !== false,
-      custom: true,
+      custom: !isChapter,
+      chapter,
+      chapterId: src.chapterId ? String(src.chapterId) : (isChapter ? id.replace(/_\d+$/, '') : ''),
+      chapterTitle: src.chapterTitle ? String(src.chapterTitle) : '',
       theme,
       zones,
       gaps,
@@ -356,47 +538,79 @@ window.RnRTracks = (() => {
     })));
   }
 
-  /** Список JSON из индекса или ответа сервера. */
-  async function fetchIndex() {
+  /**
+   * Каталог своих и сюжетных JSON.
+   * @returns {Promise<{files:string[],chapters:string[]}>}
+   */
+  async function fetchCatalog() {
+    const empty = {files: [], chapters: []};
     try {
       const r = await fetch('/__tracks', {cache: 'no-store'});
       if (r.ok) {
         const data = await r.json();
-        if (data && Array.isArray(data.files)) return data.files;
+        if (data && Array.isArray(data.files)) {
+          return {
+            files: data.files,
+            chapters: Array.isArray(data.chapters) ? data.chapters : []
+          };
+        }
       }
     } catch (err) { /* file:// или нет сервера */ }
     try {
       const r = await fetch('assets/data/tracks/index.json', {cache: 'no-store'});
-      if (!r.ok) return [];
-      const data = await r.json();
-      return (data && data.files) || [];
+      const data = r.ok ? await r.json() : {};
+      let chapters = Array.isArray(data.chapters) ? data.chapters : [];
+      if (!chapters.length) {
+        try {
+          const c = await fetch('assets/data/tracks/chapters/index.json', {cache: 'no-store'});
+          if (c.ok) {
+            const cj = await c.json();
+            chapters = (cj.files || []).map(function (n) {
+              return String(n).indexOf('/') >= 0 ? n : ('chapters/' + n);
+            });
+          }
+        } catch (err2) { /* нет папки глав */ }
+      }
+      return {files: (data && data.files) || [], chapters: chapters};
     } catch (err) {
-      return [];
+      return empty;
     }
   }
 
-  /** Читает опубликованные трассы с диска. */
+  /** Читает JSON трассы по относительному имени. */
+  async function readTrackFile(name) {
+    if (!name) return null;
+    const url = name.indexOf('/') >= 0 ? ('assets/data/tracks/' + name.replace(/^assets\/data\/tracks\//, '')) : ('assets/data/tracks/' + name);
+    const r = await fetch(url, {cache: 'no-store'});
+    if (!r.ok) return null;
+    const def = normalize(await r.json());
+    if (def.cps.length < 4) return null;
+    if (def.theme.groundSrc) texOf(def.theme.groundSrc);
+    if (def.theme.roadSrc) texOf(def.theme.roadSrc);
+    if (def.theme.railSrc) texOf(def.theme.railSrc);
+    return def;
+  }
+
+  /** Читает опубликованные трассы с диска и перекрывает петли глав. */
   async function load() {
     await preloadDecals();
-    const files = await fetchIndex();
+    const cat = await fetchCatalog();
     const out = [];
-    for (let i = 0; i < files.length; i++) {
-      const name = String(files[i] || '');
-      if (!name) continue;
-      const url = name.indexOf('/') >= 0 ? name : ('assets/data/tracks/' + name);
+    for (let i = 0; i < cat.files.length; i++) {
       try {
-        const r = await fetch(url, {cache: 'no-store'});
-        if (!r.ok) continue;
-        const def = normalize(await r.json());
-        if (def.cps.length >= 4) {
-          out.push(def);
-          if (def.theme.groundSrc) texOf(def.theme.groundSrc);
-          if (def.theme.roadSrc) texOf(def.theme.roadSrc);
-          if (def.theme.railSrc) texOf(def.theme.railSrc);
-        }
+        const def = await readTrackFile(cat.files[i]);
+        if (def && !def.chapter) out.push(def);
       } catch (err) { console.error(err); }
     }
     custom = out;
+    Object.keys(chapterOverride).forEach(function (id) { delete chapterOverride[id]; });
+    for (let i = 0; i < cat.chapters.length; i++) {
+      try {
+        const def = await readTrackFile(cat.chapters[i]);
+        if (def) adoptChapter(def);
+      } catch (err) { console.error(err); }
+    }
+    if (typeof storySyncChapterTracks === 'function') storySyncChapterTracks();
     return custom;
   }
 
@@ -406,9 +620,9 @@ window.RnRTracks = (() => {
     return base.concat(custom.filter((t) => t.published !== false && t.cps && t.cps.length >= 4));
   }
 
-  /** Ищет свою трассу по id. */
+  /** Ищет свою или сюжетную трассу по id. */
   function find(id) {
-    return custom.find((t) => t.id === id) || null;
+    return custom.find((t) => t.id === id) || chapterTracks().find((t) => t.id === id) || null;
   }
 
   /** Рисует деколи в мировых координатах холста трассы. */
@@ -470,8 +684,8 @@ window.RnRTracks = (() => {
   }
 
   return {
-    DECALS, THEMES, MATERIALS, ITEMS, WEATHER, STOCK, normalize, startFromCps, preloadDecals, load, pickable, find,
-    paintDecals, nearest, fromPlan, themeById, texOf, groundScaleOf,
+    DECALS, THEMES, MATERIALS, ITEMS, WEATHER, STOCK, CHAPTER_TRACKS, normalize, startFromCps, preloadDecals, load, pickable, find,
+    paintDecals, nearest, fromPlan, themeById, texOf, groundScaleOf, crowdSoundOn, chapterTracks, chapterPacks, adoptChapter, adoptChapter,
     get custom() { return custom; }
   };
 })();

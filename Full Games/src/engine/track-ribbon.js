@@ -8,6 +8,8 @@
   'use strict';
 
   const TAU = Math.PI * 2;
+  const STRIP_MAX_WIDTH = 1024;
+  const compactCache = new WeakMap();
 
   /**
    * Размер картинки или запечённого холста.
@@ -19,6 +21,31 @@
       w: (tex && (tex.width || tex.naturalWidth)) || 0,
       h: (tex && (tex.height || tex.naturalHeight)) || 0
     };
+  }
+
+  /**
+   * Уменьшает исходную картинку до рабочей полосы перед тысячами операций запекания.
+   * @param {CanvasImageSource} tex
+   * @param {number} height
+   * @returns {CanvasImageSource}
+   */
+  function compactStrip(tex, height) {
+    if (!tex || typeof document === 'undefined') return tex;
+    const targetH = Math.max(8, Math.round(height || 32));
+    let byHeight = compactCache.get(tex);
+    if (!byHeight) { byHeight = Object.create(null); compactCache.set(tex, byHeight); }
+    if (byHeight[targetH]) return byHeight[targetH];
+    const size = texSize(tex);
+    if (size.w < 2 || size.h < 2) return tex;
+    const canvas = document.createElement('canvas');
+    canvas.height = targetH;
+    canvas.width = Math.max(8, Math.min(STRIP_MAX_WIDTH, Math.round(size.w / size.h * targetH)));
+    const context = canvas.getContext('2d', {alpha:true});
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = 'high';
+    context.drawImage(tex, 0, 0, canvas.width, canvas.height);
+    byHeight[targetH] = canvas;
+    return canvas;
   }
 
   /**
@@ -111,8 +138,9 @@
    * @param {CanvasImageSource} tex
    * @param {number} halfW
    * @param {number} dist
+   * @param {boolean} [flipAcross] Отражает текстуру поперёк ленты.
    */
-  function blitSeg(q, a, b, tex, halfW, dist) {
+  function blitSeg(q, a, b, tex, halfW, dist, flipAcross) {
     const sz = texSize(tex);
     const tw = sz.w, th = sz.h;
     const len = Math.hypot(b.x - a.x, b.y - a.y);
@@ -131,7 +159,11 @@
         y:a.y+(b.y-a.y)*t+(any+(bny-any)*t)*halfW*side };
     }
     while (remaining > 0.0001) {
-      const sx = ((uv % repeat) + repeat) % repeat;
+      let sx = ((uv % repeat) + repeat) % repeat;
+      // Из-за дробной длины повтора modulo иногда оставляет значение на доли
+      // пикселя перед правым краем. Считаем его началом следующего повтора,
+      // иначе цикл может делать практически нулевой шаг.
+      if (repeat - sx < 0.0001) sx = 0;
       const take = Math.min(remaining, repeat - sx);
       const p0=edge(along/len,-1), p1=edge((along+take)/len,-1);
       const p2=edge((along+take)/len,1), p3=edge(along/len,1);
@@ -153,6 +185,9 @@
         });
         q.closePath();q.clip();
         q.transform(xx,xy,yx,yy,p0.x,p0.y);
+        // На противоположном борту наружная кромка изображения должна
+        // смотреть в обратную сторону, не меняя продольный UV.
+        if (flipAcross) { q.translate(0, th); q.scale(1, -1); }
         // Draw beyond the clip so adjacent segments share opaque edge pixels.
         q.drawImage(tex,0,0,tw,th,-sx,-.1,repeat,th+.2);
         if(sx<.5)q.drawImage(tex,0,0,tw,th,-sx-repeat,-.1,repeat,th+.2);
@@ -351,6 +386,7 @@
     runPath: runPath,
     blitSeg: blitSeg,
     customRail: customRail,
+    compactStrip: compactStrip,
     texSize: texSize
   };
 })(typeof window !== 'undefined' ? window : globalThis);

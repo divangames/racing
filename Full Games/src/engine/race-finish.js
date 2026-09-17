@@ -113,13 +113,17 @@
     }
     const divMult = prizeDivMult(R.div);
     R.place = ord.indexOf(P);
-    R.prize = ord.map(function (r, i) { return Math.round(PRIZE[i] * divMult); });
+    R.prize = ord.map(function (r, i) {
+      const base = Math.round(PRIZE[i] * divMult);
+      return r.isP && typeof incomePayout === 'function' ? incomePayout(base) : base;
+    });
     save.cash += R.prize[R.place];
     let betPay = 0, betPlace = -1;
     if ((R.betStake || 0) > 0 && R.betOdds) {
       const tgt = R.racers.find(function (r) { return (r.fieldId | 0) === (R.betPick | 0); }) || (R.betPick === 0 ? P : null);
       betPlace = tgt ? ord.indexOf(tgt) : -1;
       betPay = betPayoutFor(R.betStake, R.betOdds, betPlace);
+      if (betPay > 0 && typeof incomePayout === 'function') betPay = incomePayout(betPay);
       if (betPay > 0) save.cash += betPay;
     }
     R.betPay = betPay;

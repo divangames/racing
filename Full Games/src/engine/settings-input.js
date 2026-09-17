@@ -60,6 +60,16 @@
     if (h.act === 'zoombar') {
       settingsTab = 0; setZoomFromPointer(x, h); settingsZoomDrag = true; sClick(); return;
     }
+    if (h.act === 'reset') {
+      if (typeof resetSettingsPane === 'function') resetSettingsPane();
+      sClick();
+      return;
+    }
+    if (h.act === 'apply') {
+      if (typeof commitSettings === 'function') commitSettings();
+      sClick();
+      return;
+    }
     if (h.act === 'main') {
       settingsTab = h.i; press('Enter'); return;
     }

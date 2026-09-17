@@ -12,6 +12,7 @@ const { contentRoot } = require('./paths');
 
 const ID_RE = /^[a-z0-9_]{2,32}$/;
 const EXT_OK = new Set(['png', 'jpg', 'jpeg', 'webp', 'gif']);
+const MAX_TEXTURE_BYTES = 32 * 1024 * 1024;
 
 /**
  * Корень библиотеки.
@@ -30,16 +31,26 @@ function stockRoot() {
 }
 
 /**
+ * Кадры биома по имени: 01, затем 02…
+ * @param {string} folder
+ * @returns {string[]}
+ */
+function folderImages(folder) {
+  if (!fs.existsSync(folder)) return [];
+  const names = fs.readdirSync(folder).filter((n) => EXT_OK.has(path.extname(n).slice(1).toLowerCase()));
+  names.sort((a, b) => a.localeCompare(b, 'en', {numeric: true}));
+  const preferred = names.find((n) => /^01\./i.test(n));
+  if (!preferred) return names;
+  return [preferred].concat(names.filter((n) => n !== preferred));
+}
+
+/**
  * Первый кадр в папке.
  * @param {string} folder
  * @returns {string|null}
  */
 function firstImage(folder) {
-  if (!fs.existsSync(folder)) return null;
-  const names = fs.readdirSync(folder).filter((n) => EXT_OK.has(path.extname(n).slice(1).toLowerCase()));
-  names.sort((a, b) => a.localeCompare(b, 'en', {numeric: true}));
-  const preferred = names.find((n) => /^01\./i.test(n));
-  return preferred || names[0] || null;
+  return folderImages(folder)[0] || null;
 }
 
 /**
@@ -75,6 +86,57 @@ function writeBiomeImage(folder, ext, buf) {
 }
 
 /**
+ * Нормализует имя файла библиотеки без повторного расширения в id.
+ * @param {string} value
+ * @returns {string}
+ */
+function textureId(value) {
+  const base = path.basename(String(value || ''), path.extname(String(value || '')));
+  return base.toLowerCase().replace(/[^a-z0-9_]/g, '_').replace(/^_+|_+$/g, '').slice(0, 32);
+}
+
+/**
+ * Записывает байты текстуры и возвращает её игровой путь.
+ * @param {string} kind
+ * @param {string} id
+ * @param {string} ext
+ * @param {Buffer} buf
+ * @returns {{ok: boolean, src: string, id: string}}
+ */
+function writeTexture(kind, id, ext, buf) {
+  if (!ID_RE.test(id) || !EXT_OK.has(ext) || !Buffer.isBuffer(buf) || !buf.length || buf.length > MAX_TEXTURE_BYTES) {
+    throw new Error('Bad texture');
+  }
+  let rel;
+  if (kind === 'ground') {
+    const folder = path.join(texRoot(), 'biomes', id);
+    writeBiomeImage(folder, ext, buf);
+    rel = 'assets/data/tracks/Textures/biomes/' + id + '/01.' + ext;
+  } else if (kind === 'road' || kind === 'rail') {
+    const dir = kind === 'rail' ? 'rails' : 'road';
+    const folder = path.join(texRoot(), dir);
+    fs.mkdirSync(folder, {recursive: true});
+    // Замена должна оставлять в каталоге ровно один файл этого id, даже если
+    // новый вариант загружен в другом формате.
+    EXT_OK.forEach((old) => {
+      if (old === ext) return;
+      const stale = path.join(folder, id + '.' + old);
+      if (fs.existsSync(stale)) fs.unlinkSync(stale);
+    });
+    rel = 'assets/data/tracks/Textures/' + dir + '/' + id + '.' + ext;
+    fs.writeFileSync(path.join(contentRoot(), rel), buf);
+  } else if (kind === 'object') {
+    const folder = path.join(texRoot(), 'objects');
+    fs.mkdirSync(folder, {recursive: true});
+    rel = 'assets/data/tracks/Textures/objects/' + id + '.' + ext;
+    fs.writeFileSync(path.join(contentRoot(), rel), buf);
+  } else {
+    throw new Error('Bad texture kind');
+  }
+  return {ok: true, src: rel.replace(/\\/g, '/'), id};
+}
+
+/**
  * Каталог для редактора.
  * @returns {{biomes: object[], roads: object[], rails: object[], objects: object[]}}
  */
@@ -85,11 +147,13 @@ function listTextures() {
     fs.readdirSync(stock).forEach((id) => {
       const folder = path.join(stock, id);
       if (!fs.statSync(folder).isDirectory()) return;
-      const file = firstImage(folder);
-      if (!file) return;
+      const files = folderImages(folder);
+      if (!files.length) return;
+      const rel = 'assets/image/textures/map/' + id + '/';
       byId[id] = {
         id,
-        src: 'assets/image/textures/map/' + id + '/' + file,
+        src: rel + files[0],
+        tiles: files.map((file) => rel + file),
         stock: true,
         scale: readScale(path.join(texRoot(), 'biomes', id))
       };
@@ -100,11 +164,13 @@ function listTextures() {
     fs.readdirSync(custom).forEach((id) => {
       const folder = path.join(custom, id);
       if (!fs.statSync(folder).isDirectory()) return;
-      const file = firstImage(folder);
-      if (!file) return;
+      const files = folderImages(folder);
+      if (!files.length) return;
+      const rel = 'assets/data/tracks/Textures/biomes/' + id + '/';
       byId[id] = {
         id,
-        src: 'assets/data/tracks/Textures/biomes/' + id + '/' + file,
+        src: rel + files[0],
+        tiles: files.map((file) => rel + file),
         stock: false,
         scale: readScale(folder)
       };
@@ -148,7 +214,7 @@ async function handleSaveTexture(request) {
     return new Response('Bad request', {status: 400});
   }
   const kind = data.kind;
-  const id = typeof data.id === 'string' ? data.id : '';
+  const id = textureId(typeof data.id === 'string' ? data.id : '');
   if (!ID_RE.test(id)) return new Response('Bad request', {status: 400});
   if (kind === 'meta') {
     const scale = Math.max(0.25, Math.min(4, Number.isFinite(+data.scale) ? +data.scale : 1));
@@ -167,28 +233,39 @@ async function handleSaveTexture(request) {
   }
   const buf = Buffer.from(payload.split('base64,')[1], 'base64');
   if (!buf.length) return new Response('Bad request', {status: 400});
-  let rel;
-  if (kind === 'ground') {
-    const folder = path.join(texRoot(), 'biomes', id);
-    writeBiomeImage(folder, ext, buf);
-    rel = 'assets/data/tracks/Textures/biomes/' + id + '/01.' + ext;
-  } else if (kind === 'road' || kind === 'rail') {
-    const dir = kind === 'rail' ? 'rails' : 'road';
-    fs.mkdirSync(path.join(texRoot(), dir), {recursive: true});
-    rel = 'assets/data/tracks/Textures/' + dir + '/' + id + '.' + ext;
-    fs.writeFileSync(path.join(contentRoot(), rel), buf);
-  } else if (kind === 'object') {
-    const folder = path.join(texRoot(), 'objects');
-    fs.mkdirSync(folder, {recursive: true});
-    rel = 'assets/data/tracks/Textures/objects/' + id + '.' + ext;
-    fs.writeFileSync(path.join(contentRoot(), rel), buf);
-  } else {
-    return new Response('Bad request', {status: 400});
-  }
-  return new Response(JSON.stringify({ok: true, src: rel.replace(/\\/g, '/'), id}), {
+  let result;
+  try { result = writeTexture(kind, id, ext, buf); }
+  catch (err) { return new Response('Bad request', {status: 400}); }
+  return new Response(JSON.stringify(result), {
     status: 200,
     headers: {'content-type': 'application/json; charset=utf-8'}
   });
 }
 
-module.exports = {handleListTextures, handleSaveTexture, listTextures};
+/**
+ * POST /__save-texture-file: принимает исходные байты без медленного Base64/JSON.
+ * @param {Request} request
+ * @param {URL} url
+ * @returns {Promise<Response>}
+ */
+async function handleSaveTextureFile(request, url) {
+  const kind = String(url.searchParams.get('kind') || '');
+  const ext = String(url.searchParams.get('ext') || 'png').toLowerCase().replace('jpeg', 'jpg');
+  const id = textureId(url.searchParams.get('id') || '');
+  const declared = Number(request.headers.get('content-length')) || 0;
+  if (!ID_RE.test(id) || !EXT_OK.has(ext) || declared > MAX_TEXTURE_BYTES) {
+    return new Response('Bad request', {status: 400});
+  }
+  let buf;
+  try { buf = Buffer.from(await request.arrayBuffer()); }
+  catch (err) { return new Response('Bad request', {status: 400}); }
+  let result;
+  try { result = writeTexture(kind, id, ext, buf); }
+  catch (err) { return new Response('Bad request', {status: 400}); }
+  return new Response(JSON.stringify(result), {
+    status: 200,
+    headers: {'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store'}
+  });
+}
+
+module.exports = {handleListTextures, handleSaveTexture, handleSaveTextureFile, listTextures, textureId};

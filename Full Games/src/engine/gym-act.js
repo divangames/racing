@@ -7,7 +7,7 @@
 (function (global) {
   'use strict';
 
-  /** Строки 0–2 — база, 3 — личный скил. */
+  /** Строки 0–2 — база, 3 — доход, 4 — личный скил. */
   const GYM_STAT_KEYS = ['spd', 'crn', 'grt'];
 
   /**
@@ -18,7 +18,7 @@
   function upgradeCharStatEngine(i, key) {
     if (!save.cstats) save.cstats = blankCstatsMap();
     const ch = CHARS[i];
-    const cs = save.cstats[i] || (save.cstats[i] = { spd: 0, crn: 0, grt: 0 });
+    const cs = save.cstats[i] || (save.cstats[i] = { spd: 0, crn: 0, grt: 0, inc: 0 });
     const maxAdd = 5 - ch[key];
     if (cs[key] >= maxAdd) { garMsg = 'МАКСИМУМ'; garMsgT = 2.2; sHit(); return; }
     const cost = STAT_COSTS[Math.min(cs[key], STAT_COSTS.length - 1)];
@@ -29,7 +29,7 @@
   }
 
   /**
-   * Покупка в тренажёрке: 0–2 база, 3 — скил текущего гонщика.
+   * Покупка в тренажёрке: 0–2 база, 3 — доход, 4 — скил текущего гонщика.
    * @param {number} idx
    */
   function buyGymEngine(idx) {
@@ -37,6 +37,18 @@
     const chI = save.char;
     if (idx < 3) {
       upgradeCharStat(chI, GYM_STAT_KEYS[idx]);
+      return;
+    }
+    if (idx === 3) {
+      const cs = save.cstats[chI] || (save.cstats[chI] = { spd: 0, crn: 0, grt: 0, inc: 0 });
+      const max = DiVANEngine.skills.INCOME_PCTS.length - 1;
+      const lvl = cs.inc | 0;
+      if (lvl >= max) { garMsg = 'ДОХОД: МАКСИМУМ'; garMsgT = 2.2; sHit(); return; }
+      const cost = SKILL_COSTS[Math.min(lvl, SKILL_COSTS.length - 1)];
+      if (save.cash >= cost) {
+        save.cash -= cost; cs.inc = lvl + 1; persist(); SFX.play('buy');
+        garMsg = 'ДОХОД: +' + incomePct(chI) + '%'; garMsgT = 2.2;
+      } else { garMsg = 'НЕ ХВАТАЕТ ' + fm(cost - save.cash); garMsgT = 2.2; sHit(); }
       return;
     }
     const lvl = save.skills[chI] || 1;

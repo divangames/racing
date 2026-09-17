@@ -12,7 +12,7 @@
 <link rel="icon" type="image/webp" href="assets/image/favicon.webp">
 <link rel="apple-touch-icon" href="assets/image/apple-touch-icon.png">
 <link rel="stylesheet" href="editor/fonts.css">
-<link rel="stylesheet" href="editor/editor.css?v=20260906s">
+<link rel="stylesheet" href="editor/editor.css?v=20260915a">
 <link rel="stylesheet" href="editor/content-browser.css?v=20260905o">
 </head>
 <body>
@@ -264,6 +264,9 @@
           <label for="mapStock">Клон стока</label>
           <select id="mapStock"><option value="">— взять петлю из игры —</option></select>
         </div>
+        <div class="section-title" style="margin-top:14px">ТРАССЫ ИЗ ГЛАВ</div>
+        <div class="car-list chapter-list" id="mapChapterList"></div>
+        <p class="hint">Глава 1 · биом «Арена». Правки пишутся в <code>tracks/chapters</code> и сразу едут в кампанию.</p>
       </section>
       <section class="section">
         <div class="section-title">КАРТОЧКА</div>
@@ -272,11 +275,12 @@
         <label class="hint" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input class="check" id="mapPublished" type="checkbox" checked> Показать в выборе трассы</label>
         <div class="field"><label for="mapTheme">Биом земли</label><select id="mapTheme"></select></div>
         <div class="field"><label for="mapWeather">Погода</label><select id="mapWeather"></select></div>
+        <label class="hint" style="display:flex;gap:8px;align-items:center"><input class="check" id="mapCrowdSound" type="checkbox" checked> Звук трибуны</label>
         <label class="hint" style="display:flex;gap:8px;align-items:center"><input class="check" id="mapAutoHz" type="checkbox" checked> Авто мины и трамплины (снимите, если расставили сами)</label>
       </section>
       <section class="section">
         <div class="section-title">ТЕКСТУРЫ</div>
-        <p class="hint">Земля — <code>Textures/biomes</code>, полотно — <code>Textures/road</code>, борта — <code>Textures/rails</code>. В заезде эти файлы перекрывают сток.</p>
+        <p class="hint">Земля — <code>Textures/biomes</code> перекрывает сток <code>textures/map</code>. Полотно и борта — только выбранный файл трассы, иначе холст заезда. Скачивание отдаёт эти же файлы, не превью.</p>
         <div class="tex-dest">
           <label><input type="radio" name="mapTexDest" id="mapTexDestCur" value="current" checked> В текущий биом</label>
           <label><input type="radio" name="mapTexDest" id="mapTexDestNew" value="new"> Новый биом</label>
@@ -325,6 +329,16 @@
             <button type="button" data-asset-filter="under">Под машиной</button>
             <button type="button" data-asset-filter="over">Над машиной</button>
           </div>
+          <div class="cb-place" role="group" aria-label="Положение относительно трассы">
+            <span>Трасса:</span>
+            <button type="button" data-asset-road="under">Под трассой</button>
+            <button type="button" data-asset-road="over" class="is-on">Над трассой</button>
+          </div>
+          <div class="cb-place" role="group" aria-label="Положение относительно машины">
+            <span>Машина:</span>
+            <button type="button" data-asset-car="under" class="is-on">Под машиной</button>
+            <button type="button" data-asset-car="over">Над машиной</button>
+          </div>
           <span id="assetCount" class="cb-count"></span>
           <button type="button" id="assetImportBtn">Импорт</button>
           <input id="assetFile" type="file" accept="image/png,image/webp,image/gif,image/jpeg" multiple hidden>
@@ -351,11 +365,16 @@
       <div class="asset-edit-side">
         <div class="field"><label for="assetEditName">Имя</label><input id="assetEditName" maxlength="42"></div>
         <fieldset class="asset-edit-layer">
-          <legend>Слой</legend>
+          <legend>Относительно трассы</legend>
+          <label><input type="radio" name="assetEditRoadLayer" id="assetEditRoadUnder" value="under"> Под полотном трассы</label>
+          <label><input type="radio" name="assetEditRoadLayer" id="assetEditRoadOver" value="over"> Над полотном трассы</label>
+        </fieldset>
+        <fieldset class="asset-edit-layer">
+          <legend>Относительно машины</legend>
           <label><input type="radio" name="assetEditLayer" id="assetEditUnder" value="under"> Под машиной</label>
           <label><input type="radio" name="assetEditLayer" id="assetEditOver" value="over"> Над машиной</label>
         </fieldset>
-        <p class="hint" id="assetEditUnderHint">Под машиной коллизия выключена: гонщик проезжает сверху.</p>
+        <p class="hint" id="assetEditUnderHint">Ассет лежит на полотне трассы под машиной. Коллизия выключена: гонщик проезжает сверху.</p>
         <div id="assetEditColl">
           <label class="hint" style="display:flex;gap:8px;align-items:center"><input class="check" id="assetEditSolid" type="checkbox" checked> Столкновение</label>
           <p class="hint">Бокс можно тянуть, масштабировать за углы, двигать вершины. «Точка» — вершина на ребре. ПКМ по точке — убрать.</p>
@@ -377,7 +396,7 @@
   </div>
 </div>
 <script src="chars.js?v=20260829fb"></script>
-<script src="tracks.js?v=20260905h"></script>
+<script src="tracks.js?v=20260915b"></script>
 <script src="objects.js?v=20260905m"></script>
 <script src="combat-kits.js?v=20260906s"></script>
 <script src="starter-kits.js?v=20260906s"></script>
@@ -387,10 +406,10 @@
 <script src="editor/view.js?v=20260913p"></script>
 <script src="editor/app.js?v=20260906s"></script>
 <script src="editor/lab-audio.js?v=20260907lab"></script>
-<script src="editor/map-data.js?v=20260905h"></script>
-<script src="editor/map-tex.js?v=20260913p"></script>
+<script src="editor/map-data.js?v=20260915b"></script>
+<script src="editor/map-tex.js?v=20260915tex"></script>
 <script src="editor/map-layout.js?v=20260913p"></script>
-<script src="editor/map-preview.js?v=20260913q"></script>
+<script src="editor/map-preview.js?v=20260915busy"></script>
 <script src="editor/map-marks.js?v=20260905h"></script>
 <script src="editor/map-gizmo.js?v=20260905h"></script>
 <script src="editor/map-coll.js?v=20260905g"></script>
@@ -400,6 +419,6 @@
 <script src="editor/map-input.js?v=20260913p"></script>
 <script src="editor/map-panel.js?v=20260913t"></script>
 <script src="editor/map-view.js?v=20260913q"></script>
-<script src="editor/map-app.js?v=20260913t"></script>
+<script src="editor/map-app.js?v=20260915b"></script>
 </body>
 </html>

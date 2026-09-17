@@ -91,3 +91,26 @@ test('Тема меню переключается на cast, когда тре�
   assert.equal(g.playedCat, 'cast');
   assert.equal(g.lastMusicCat, 'cast');
 });
+
+test('После заставки игра открывает меню без пролога', () => {
+  const g = bootSandbox();
+  Object.assign(g, {
+    labTest: false,
+    cv: null,
+    frame: function () {},
+    requestAnimationFrame: function () {},
+    setTimeout: function (fn) { fn(); return 1; },
+    cancelAnimationFrame: function () {},
+    bootFinish: function () {},
+    bootAcceptGate: function () {},
+    bootPollGate: function () {},
+    bootFxStart: function () {},
+    bootGo: function () {},
+    enterTitle: function () { g._title = true; },
+    startWorldIntro: function () { g._intro = true; }
+  });
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/boot-gate.js'), 'utf8'), g);
+  g.bootFinish();
+  assert.equal(g._title, true);
+  assert.equal(g._intro, undefined);
+});

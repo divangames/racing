@@ -1,0 +1,10 @@
+{
+  "dir": "assets/sounds/embirnt/arena/",
+  "note": "Клипы имя_NN. Новые файлы — в эту карту и в папку.",
+  "banks": {
+    "aplodisment": ["aplodisment_01.mp3", "aplodisment_02.mp3"],
+    "atmos": ["atmos_00.mp3", "atmos_01.mp3", "atmos_02.mp3", "atmos_03.mp3"],
+    "nedovolny": ["nedovolny_01.mp3", "nedovolny_02.mp3"],
+    "random": ["Random_01.mp3", "Random_02.mp3", "Random_03.mp3", "Random_04.mp3", "Random_05.mp3"]
+  }
+}

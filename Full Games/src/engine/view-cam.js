@@ -41,7 +41,7 @@
   function stageY0Engine() { return -viewOY / viewS; }
 
   /**
-   * Зум заезда: дальше 1.75, ближе 2.2.
+   * Зум заезда: дальше 1.25, ближе 2.2.
    * @returns {number}
    */
   function raceZoomEngine() {

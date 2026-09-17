@@ -31,14 +31,13 @@
   }
 
   /**
-   * Один случайный кадр из папки на весь заезд.
+   * Первый живой кадр биома — тот же 01, что в редакторе.
    * @param {string} biome
    * @returns {HTMLImageElement|null}
    */
   function pickMapTileEngine(biome) {
     const tiles = mapTileList(biome);
-    if (!tiles.length) return null;
-    return tiles[(Math.random() * tiles.length) | 0];
+    return tiles[0] || null;
   }
 
   /**
@@ -118,7 +117,7 @@
   }
 
   /**
-   * Декор за бровкой: камень, кактус, лёд, лава, череп.
+   * Декор за бровкой: камень, кактус, лёд, лава, обломки арены, череп.
    * @param {CanvasRenderingContext2D} q
    * @param {object} th
    */
@@ -140,6 +139,11 @@
       q.fillStyle = '#4a2820'; q.beginPath(); q.moveTo(-12, 8); q.lineTo(-8, -12); q.lineTo(6, -16); q.lineTo(14, 4); q.lineTo(10, 12); q.closePath(); q.fill();
       q.fillStyle = '#ff6b3a'; q.beginPath(); q.arc(-2, -4, 4, 0, TAU); q.fill();
       q.fillStyle = '#ff3d2e'; q.beginPath(); q.arc(4, 2, 3, 0, TAU); q.fill();
+    } else if (th.deco === 'wreck') {
+      q.fillStyle = 'rgba(0,0,0,.45)'; q.beginPath(); q.ellipse(4, 12, 16, 7, 0, 0, TAU); q.fill();
+      q.fillStyle = '#3a322c'; q.fillRect(-14, -4, 22, 10);
+      q.fillStyle = '#6a4a32'; q.fillRect(-8, -10, 14, 8);
+      q.fillStyle = '#c45a28'; q.fillRect(-12, -2, 5, 6); q.fillRect(4, 0, 6, 4);
     } else {
       q.fillStyle = 'rgba(0,0,0,.3)'; q.beginPath(); q.ellipse(2, 6, 13, 6, 0, 0, TAU); q.fill();
       q.fillStyle = '#d8d2c2'; q.beginPath(); q.arc(0, 0, 10, 0, TAU); q.fill(); q.fillRect(-6, 6, 12, 5);

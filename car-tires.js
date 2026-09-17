@@ -33,14 +33,20 @@ function carTireUrl(kind) {
 function carTireSlip(racer) {
   const z = {slide: 0, drift: 0};
   if (!racer || racer.dead || racer.air || (racer.car && racer.car.hov)) return z;
+  if (typeof state === 'string' && state !== 'race') return z;
+  if (typeof paused === 'boolean' && paused) return z;
   const spd = Math.abs(racer.spd || 0);
   const lat = Math.abs(racer.lat || 0);
   const steer = Math.abs(racer.steerFlt || 0);
   const hand = !!racer.handbrake;
-  const speedMul = Math.max(0, Math.min(1, (spd - 40) / 90));
-  z.slide = Math.max(0, Math.min(1, (lat - 14) / 90)) * speedMul;
-  if (hand && spd > 48) z.slide = Math.max(z.slide, Math.min(1, (spd - 48) / 110));
-  z.drift = spd > 85 ? Math.min(1, steer * Math.min(1, spd / 210) * 1.35) * speedMul : 0;
+  if (spd < 55) return z;
+  const sliding = lat > 52;
+  const drifting = spd > 100 && steer > 0.62 && lat > 36;
+  const handSpin = hand && spd > 70 && lat > 28;
+  if (!sliding && !drifting && !handSpin) return z;
+  const speedMul = Math.max(0, Math.min(1, (spd - 50) / 90));
+  z.slide = sliding || handSpin ? Math.max(0, Math.min(1, (lat - 40) / 70)) * speedMul : 0;
+  z.drift = drifting ? Math.min(1, steer * Math.min(1, spd / 210) * 1.15) * speedMul : 0;
   return z;
 }
 
@@ -120,6 +126,10 @@ function tickCarTires(player, pack, base) {
     return;
   }
   if (typeof state === 'string' && state !== 'race') {
+    carTiresHalt();
+    return;
+  }
+  if (typeof paused === 'boolean' && paused) {
     carTiresHalt();
     return;
   }

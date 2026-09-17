@@ -25,15 +25,17 @@
 
   /**
    * Карточка предупреждения.
-   * @param {'lab'|'exit'} kind
+   * @param {'lab'|'exit'|'wipe'} kind
    * @param {number} width
    * @param {number} height
    * @returns {{mx:number,my:number,mw:number,mh:number,pair:object}}
    */
   function warnCard(kind, width, height) {
     const lab = kind === 'lab';
-    const mw = lab ? 680 : 600, mh = lab ? 300 : 260;
-    const mx = width / 2 - mw / 2, my = height / 2 - (lab ? 150 : 130);
+    const wipe = kind === 'wipe';
+    const mw = lab ? 680 : (wipe ? 640 : 600);
+    const mh = lab ? 300 : (wipe ? 280 : 260);
+    const mx = width / 2 - mw / 2, my = height / 2 - mh / 2;
     return { mx, my, mw, mh, pair: warnPair(width / 2, my + mh - 72) };
   }
 
@@ -109,8 +111,70 @@
     const card = warnCard('exit', W, H);
     panel(g, card.mx, card.my, card.mw, card.mh, 'rgba(12,8,16,.97)', '#ff9d2e', 16);
     txt(g, 'ВЫХОД', W / 2, card.my + 48, 36, '#ffd23f', 'center');
-    txt(g, 'Закрыть игру и выйти?', W / 2, card.my + 100, 18, '#e8e2d0', 'center', F_B);
+    txt(g, 'Выйти на рабочий стол?', W / 2, card.my + 100, 18, '#e8e2d0', 'center', F_B);
     g._exitHits = paintWarnButtons(card.pair, exitWarnSel === 1, 'exitNo', 'exitYes');
+  }
+
+  /** Открывает «стереть сейв?» @param {'campaign-new'|'free-new'} kind */
+  function openTitleConfirm(kind) {
+    global.titleConfirm = kind;
+    global.titleConfirmSel = 0;
+  }
+
+  /** Закрывает подтверждение новой ветки. */
+  function closeTitleConfirm() {
+    global.titleConfirm = null;
+    if (typeof sClick === 'function') sClick();
+  }
+
+  /** Да — стереть и начать. */
+  function confirmTitleWarn() {
+    const kind = global.titleConfirm;
+    const yes = global.titleConfirmSel === 1;
+    global.titleConfirm = null;
+    if (!yes) {
+      if (typeof sClick === 'function') sClick();
+      return;
+    }
+    const menu = global.DiVANEngine && global.DiVANEngine.titleMenu;
+    if (menu && typeof menu.confirmTitleWipe === 'function') menu.confirmTitleWipe(kind);
+    if (typeof sClick === 'function') sClick();
+  }
+
+  /**
+   * Новая кампания или новый заезд сотрут текущий сейв.
+   */
+  function drawTitleConfirmEngine() {
+    const kind = global.titleConfirm;
+    if (!kind) return;
+    g.fillStyle = 'rgba(4,3,8,.7)'; g.fillRect(0, 0, W, H);
+    const card = warnCard('wipe', W, H);
+    panel(g, card.mx, card.my, card.mw, card.mh, 'rgba(12,8,16,.97)', '#ff9d2e', 16);
+    const camp = kind === 'campaign-new';
+    txt(g, camp ? 'НОВАЯ КАМПАНИЯ' : 'НОВЫЙ ЗАЕЗД', W / 2, card.my + 44, 28, '#ffd23f', 'center');
+    const body = camp
+      ? 'Начать заново главу Медведя? Текущий прогресс кампании будет стёрт.'
+      : 'Начать новый свободный заезд? Текущая карьера будет стёрта. Слоты не трогаем.';
+    const lines = typeof layoutLines === 'function' ? layoutLines(g, body, card.mw - 72, 16, F_B) : [body];
+    lines.forEach(function (ln, i) { txt(g, ln, W / 2, card.my + 96 + i * 22, 16, '#e8e2d0', 'center', F_B); });
+    g._titleConfirmHits = paintWarnButtons(card.pair, global.titleConfirmSel === 1, 'wipeNo', 'wipeYes');
+  }
+
+  /**
+   * Клик по «Нет / Да» стирания.
+   * @param {number} x
+   * @param {number} y
+   * @returns {boolean}
+   */
+  function clickTitleConfirmEngine(x, y) {
+    const hits = g._titleConfirmHits || [];
+    for (const b of hits) {
+      if (!hitInclusive(x, y, b)) continue;
+      global.titleConfirmSel = b.act === 'wipeYes' ? 1 : 0;
+      confirmTitleWarn();
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -132,7 +196,12 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.dialogs = { warnPair, warnCard, hitInclusive };
+  engine.dialogs = { warnPair, warnCard, hitInclusive, openTitleConfirm, closeTitleConfirm, confirmTitleWarn };
+  global.openTitleConfirm = openTitleConfirm;
+  global.closeTitleConfirm = closeTitleConfirm;
+  global.confirmTitleWarn = confirmTitleWarn;
+  global.drawTitleConfirm = drawTitleConfirmEngine;
+  global.clickTitleConfirm = clickTitleConfirmEngine;
   /**
    * На десктопе открывает отдельное окно редактора, в браузере — Editor.html.
    */

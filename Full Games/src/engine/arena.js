@@ -7,6 +7,86 @@
 (function (global) {
   'use strict';
 
+  const FINISH_LABEL_ALONG_SCALE = 1.18;
+  const FINISH_LABEL_SIZE = 18;
+  const FINISH_LABEL_COLOR = '#b59a46';
+
+  /**
+   * Центры подписей до и после линии без поперечного смещения.
+   * @param {{x:number,y:number,ang:number}} point
+   * @param {number} roadWidth
+   * @returns {Array<{text:string,x:number,y:number,seed:number}>}
+   */
+  function finishLabelPoints(point, roadWidth) {
+    const along = roadWidth * FINISH_LABEL_ALONG_SCALE;
+    const tx = Math.cos(point.ang), ty = Math.sin(point.ang);
+    return [
+      { text:'СТАРТ', x:point.x - tx * along, y:point.y - ty * along, seed:3 },
+      { text:'ФИНИШ', x:point.x + tx * along, y:point.y + ty * along, seed:7 }
+    ];
+  }
+
+  /**
+   * Горизонтальная потёртая подпись в мировых координатах.
+   * @param {CanvasRenderingContext2D} context
+   * @param {{text:string,x:number,y:number,seed:number}} label
+   */
+  function paintFinishLabel(context, label) {
+    const size = FINISH_LABEL_SIZE;
+    context.save();
+    context.translate(label.x, label.y);
+    context.globalAlpha = .72;
+    context.font = size + 'px ' + F_D;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillStyle = FINISH_LABEL_COLOR;
+    context.fillText(label.text, 0, 0);
+    context.globalAlpha = .24;
+    context.fillStyle = '#fff0a0';
+    context.fillText(label.text, -1, -1);
+    context.globalAlpha = .3;
+    context.fillStyle = '#24242a';
+    for (let i = 0; i < 14; i++) {
+      const q = (label.seed * 17 + i * 31) % 97;
+      context.fillRect(-size * .45 + (q % 13) * size / 15,
+        -size * .48 + ((q * 7) % 11) * size / 13, 2 + (q % 3), 1 + (q % 2));
+    }
+    context.restore();
+  }
+
+  /**
+   * Сохраняет декор финишной зоны, но переносит обе подписи на центр дороги
+   * и не поворачивает их вместе с трассой.
+   * @param {Function} original
+   * @returns {Function}
+   */
+  function horizontalFinishZone(original) {
+    return function (context, point) {
+      if (!R || !R.T || R.T.lab) return original(context, point);
+      const previousFillText = context.fillText;
+      const previousFillRect = context.fillRect;
+      let insideOldLabel = false;
+      context.fillText = function (text) {
+        if (text === 'СТАРТ' || text === 'ФИНИШ') {
+          insideOldLabel = true;
+          return;
+        }
+        return previousFillText.apply(this, arguments);
+      };
+      context.fillRect = function (x, y, width, height) {
+        if (insideOldLabel && this.fillStyle === '#24242a' && width <= 4 && height <= 2) return;
+        return previousFillRect.apply(this, arguments);
+      };
+      try {
+        original(context, point);
+      } finally {
+        context.fillText = previousFillText;
+        context.fillRect = previousFillRect;
+      }
+      for (const label of finishLabelPoints(point, ROADW)) paintFinishLabel(context, label);
+    };
+  }
+
   /**
    * Запас вокруг камеры, чтобы тайлы не вспыхивали на кромке.
    * @param {{x:number,y:number}} cam
@@ -278,5 +358,7 @@
   if (!engine.render) engine.render = {};
   engine.render.arenaPad = arenaPad;
   engine.render.racerDrawOrder = racerDrawOrder;
+  engine.render.finishLabelPoints = finishLabelPoints;
+  engine.wrap('drawFinishZone', horizontalFinishZone);
   engine.replace('drawRaceArena', drawRaceArenaEngine);
 })(typeof window !== 'undefined' ? window : globalThis);

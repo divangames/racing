@@ -1,11 +1,13 @@
 ////////////////////////////////////////////////////////
 //
-// Лаунчер качает свой MSI с GitHub и запускает установщик.
+// Лаунчер качает свой MSI, поднимает UAC и ставит себя.
 //
 ////////////////////////////////////////////////////////
 
 'use strict';
 
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 const { app } = require('electron');
@@ -65,38 +67,93 @@ async function snapshot() {
 }
 
 /**
- * После выхода: UAC → msiexec (замена per-machine) → снова exe.
- * Если установку отменили, старый клиент всё равно откроется.
+ * Пишет helper: ждёт выхода лаунчера → msiexec → снова exe.
  * @param {string} msiPath
+ * @param {string} exePath
+ * @param {number} pid
+ * @returns {string} путь к .ps1
  */
-function scheduleApply(msiPath) {
+function writeApplyHelper(msiPath, exePath, pid) {
+  const file = path.join(os.tmpdir(), 'kolesnica-apply-' + pid + '.ps1');
+  const body = [
+    '$ErrorActionPreference = "Stop"',
+    '$targetPid = ' + Number(pid),
+    '$msi = ' + psSingle(msiPath),
+    '$exe = ' + psSingle(exePath),
+    'for ($i = 0; $i -lt 120; $i++) {',
+    '  if (-not (Get-Process -Id $targetPid -ErrorAction SilentlyContinue)) { break }',
+    '  Start-Sleep -Seconds 1',
+    '}',
+    'Start-Sleep -Seconds 1',
+    '$args = @("/i", $msi, "/passive", "/norestart", "ALLUSERS=1", "REBOOT=ReallySuppress")',
+    '$proc = Start-Process -FilePath "msiexec.exe" -ArgumentList $args -Wait -PassThru',
+    'if ($proc.ExitCode -ne 0 -and $proc.ExitCode -ne 3010) {',
+    '  exit $proc.ExitCode',
+    '}',
+    'if (Test-Path -LiteralPath $exe) { Start-Process -FilePath $exe }',
+    'Remove-Item -LiteralPath $MyInvocation.MyCommand.Path -Force -ErrorAction SilentlyContinue',
+    ''
+  ].join('\r\n');
+  fs.writeFileSync(file, '\uFEFF' + body, 'utf8');
+  return file;
+}
+
+/**
+ * Поднимает UAC и запускает helper. Лаунчер ещё на экране.
+ * @param {string} helperPath
+ * @returns {Promise<void>}
+ */
+function elevateHelper(helperPath) {
+  return new Promise((resolve, reject) => {
+    const ps =
+      'try {' +
+      ' Start-Process -FilePath "powershell.exe" -ArgumentList @(' +
+      psSingle('-NoProfile') +
+      ',' +
+      psSingle('-ExecutionPolicy') +
+      ',' +
+      psSingle('Bypass') +
+      ',' +
+      psSingle('-File') +
+      ',' +
+      psSingle(helperPath) +
+      ') -Verb RunAs;' +
+      ' exit 0' +
+      '} catch {' +
+      ' exit 2' +
+      '}';
+    const child = spawn(
+      'powershell.exe',
+      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps],
+      {
+        windowsHide: false,
+        stdio: 'ignore'
+      }
+    );
+    let settled = false;
+    const done = (err) => {
+      if (settled) return;
+      settled = true;
+      if (err) reject(err);
+      else resolve();
+    };
+    child.on('error', (err) => done(err));
+    child.on('close', (code) => {
+      if (code === 0) done();
+      else done(new Error('Установка отменена или нет прав администратора.'));
+    });
+  });
+}
+
+/**
+ * UAC → helper ждёт наш выход → msiexec → снова exe.
+ * @param {string} msiPath
+ * @returns {Promise<void>}
+ */
+async function scheduleApply(msiPath) {
   const exe = process.execPath;
-  const args = ['/i', msiPath, '/qb!', '/norestart', 'ALLUSERS=1', 'REBOOT=ReallySuppress']
-    .map(psSingle)
-    .join(',');
-  const ps =
-    'Start-Sleep -Seconds 4; ' +
-    'try { Start-Process -FilePath msiexec -ArgumentList @(' +
-    args +
-    ') -Verb RunAs -Wait } catch {}; ' +
-    'if (Test-Path -LiteralPath ' +
-    psSingle(exe) +
-    ') { Start-Process -FilePath ' +
-    psSingle(exe) +
-    ' }';
-  spawn('powershell.exe', [
-    '-NoProfile',
-    '-WindowStyle',
-    'Hidden',
-    '-ExecutionPolicy',
-    'Bypass',
-    '-Command',
-    ps
-  ], {
-    detached: true,
-    stdio: 'ignore',
-    windowsHide: true
-  }).unref();
+  const helper = writeApplyHelper(msiPath, exe, process.pid);
+  await elevateHelper(helper);
   setTimeout(() => app.quit(), 400);
 }
 
@@ -127,6 +184,7 @@ async function applyLatest(onProgress) {
       busy = false;
       return { ok: true, applying: false };
     }
+    fs.mkdirSync(cache, { recursive: true });
     const msiPath = path.join(cache, remote.name || 'KolesnicaVoyny.msi');
     emit({
       phase: 'download',
@@ -134,9 +192,20 @@ async function applyLatest(onProgress) {
       label: 'Скачиваю ' + remote.name + ' (' + formatBytes(remote.size) + ')'
     });
     await downloadFile(remote.url, msiPath, emit);
-    emit({ phase: 'apply', pct: 98, label: 'Ставлю лаунчер. Окно закроется.' });
-    lastProgress = { phase: 'apply', pct: 99, label: 'Запускаю установщик…' };
-    scheduleApply(msiPath);
+    if (!fs.existsSync(msiPath) || fs.statSync(msiPath).size < 1024) {
+      throw new Error('MSI не скачался или файл пустой.');
+    }
+    emit({
+      phase: 'apply',
+      pct: 96,
+      label: 'Нужны права администратора — подтверди UAC…'
+    });
+    await scheduleApply(msiPath);
+    lastProgress = {
+      phase: 'apply',
+      pct: 99,
+      label: 'Установщик запущен. Лаунчер закроется и откроется снова.'
+    };
     return {
       ok: true,
       applying: true,
@@ -150,4 +219,4 @@ async function applyLatest(onProgress) {
   }
 }
 
-module.exports = { snapshot, applyLatest, localVersion };
+module.exports = { snapshot, applyLatest, localVersion, psSingle };

@@ -93,3 +93,14 @@ test('Призрак не таранит, живые разводятся, де�
   assert.equal(g.save.cash, 35);
   assert.equal(p.pickups, 1);
 });
+
+test('Доход увеличивает денежный сбор на трассе', () => {
+  const g = bootWorld();
+  g.incomePayout = function (v) { return Math.round(v * 1.1); };
+  const p = { x: 0, y: 0, spd: 0, dead: false, air: false, finished: false, isP: true, car: { idx: 0 }, pickups: 0, moneyGot: 0 };
+  g.R.racers = [p];
+  g.R.picks = [{ alive: true, type: 'money', val: 25, x: 0, y: 0, rt: 0 }];
+  g.resolveRaceContact(0.016);
+  assert.equal(g.save.cash, 38);
+  assert.equal(p.moneyGot, 28);
+});

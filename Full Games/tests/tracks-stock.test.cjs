@@ -52,11 +52,22 @@ function boot() {
   return g;
 }
 
+test('Экземпляр ассета отдельно сохраняет слой трассы и слой машины', () => {
+  const g = boot();
+  const track = g.RnRTracks.normalize({
+    id: 'layer_test', name: 'Слои', cps: [[0,0],[100,0],[100,100],[0,100]],
+    objects: [{pack:'world',id:'plane',x:50,y:50,roadLayer:'under',carLayer:'over'}]
+  });
+  assert.equal(track.objects[0].roadLayer, 'under');
+  assert.equal(track.objects[0].carLayer, 'over');
+  assert.equal(track.objects[0].layer, 'over');
+});
+
 test('У каждого биома три стоковые развязки с эстакадой', () => {
   const g = boot();
   const stock = g.RnRTracks.STOCK;
   assert.equal(stock.length, 15);
-  assert.equal(g.RnRTracks.THEMES.length, 5);
+  assert.equal(g.RnRTracks.THEMES.length, 6);
   const byMap = {};
   stock.forEach(function (t) {
     const id = t.theme.map || t.theme.deco || t.theme.id;
@@ -79,6 +90,47 @@ test('У каждого биома три стоковые развязки с �
   assert.ok(stock.some(function (t) { return String(t.name).indexOf('КРУШЕНИЕ') >= 0; }));
   assert.ok(stock.some(function (t) { return String(t.name).indexOf('ЛЕДЯН') >= 0; }));
   assert.ok(stock.some(function (t) { return String(t.name).indexOf('ОВАЛ') >= 0; }));
+});
+
+test('Глава 1: десять простых трасс биома Арена', () => {
+  const g = boot();
+  assert.equal(g.RnRTracks.chapterPacks().length, 1);
+  assert.equal(g.RnRTracks.chapterPacks()[0].title.indexOf('Арена') >= 0, true);
+  const ch = g.RnRTracks.chapterTracks(1);
+  assert.equal(ch.length, 10);
+  const names = {};
+  ch.forEach(function (t) {
+    assert.equal(t.theme.map, 'arena');
+    assert.equal(t.theme.deco, 'wreck');
+    assert.ok(t.cps.length >= 12);
+    assert.equal((t.gaps || []).length, 0);
+    assert.equal(t.autoHazards, false);
+    assert.ok(!names[t.name]);
+    names[t.name] = 1;
+    const T = g.buildTrack(t, 0);
+    assert.ok(T.N > 40, t.name);
+    let high = false;
+    for (let i = 0; i < T.N; i++) {
+      if (g.trackDeck(T, i / T.N) > 0) { high = true; break; }
+    }
+    assert.equal(high, false, t.name);
+  });
+});
+
+test('Сохранённый JSON главы перекрывает формулу', () => {
+  const g = boot();
+  const first = g.RnRTracks.chapterTracks(1)[0];
+  g.RnRTracks.adoptChapter(Object.assign({}, first, {name: 'ПРАВКА АРЕНЫ'}));
+  assert.equal(g.RnRTracks.chapterTracks(1)[0].name, 'ПРАВКА АРЕНЫ');
+  const dir = path.join(ROOT, 'assets/data/tracks/chapters');
+  const files = fs.readdirSync(dir).filter((f) => /^ch1_arena_\d+\.json$/.test(f));
+  assert.equal(files.length, 10);
+  const arenaRoad = 'assets/data/tracks/Textures/road/arena_dirt_01.png';
+  files.forEach((file) => {
+    const track = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+    assert.equal(track.theme.roadSrc, arenaRoad, file);
+  });
+  assert.equal(fs.existsSync(path.join(ROOT, arenaRoad)), true);
 });
 
 /** Enumerate true intersections without using the engine's detector. */

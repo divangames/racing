@@ -45,6 +45,7 @@ const MapTex = (() => {
 
   /** Пишет файл в Textures или в стоковый биом. */
   async function upload(file, kind, dest, biomeId) {
+    const work = async () => {
     if (!file) return {ok: false, error: 'Нет файла'};
     const data = await new Promise((res, rej) => {
       const fr = new FileReader();
@@ -65,6 +66,9 @@ const MapTex = (() => {
     await list();
     if (out && out.src) img(out.src, () => MapView && MapView.draw && MapView.draw(), true);
     return out;
+    };
+    if (typeof LabBusy !== 'undefined' && LabBusy.run) return LabBusy.run('Записываю текстуру', work);
+    return work();
   }
 
   /**
@@ -86,14 +90,26 @@ const MapTex = (() => {
     return out;
   }
 
-  /** Земля: свой файл или стоковый тайл биома. */
-  function groundOf(theme) {
-    if (theme && theme.groundSrc) return img(theme.groundSrc, () => MapView && MapView.draw && MapView.draw());
+  /**
+   * URL земли, которые реально читает заезд: свой файл или все кадры биома.
+   * @param {object} [theme]
+   * @returns {string[]}
+   */
+  function groundFiles(theme) {
+    if (theme && theme.groundSrc) return [String(theme.groundSrc).split('?')[0]];
     const id = theme && theme.map;
-    if (!id) return null;
+    if (!id) return [];
     const hit = (catalog.biomes || []).find((b) => b.id === id);
-    if (hit) return img(hit.src, () => MapView && MapView.draw && MapView.draw());
-    return img('assets/image/textures/map/' + id + '/01.webp', () => MapView && MapView.draw && MapView.draw());
+    if (hit && Array.isArray(hit.tiles) && hit.tiles.length) return hit.tiles.slice();
+    if (hit && hit.src) return [String(hit.src).split('?')[0]];
+    return ['assets/image/textures/map/' + id + '/01.webp'];
+  }
+
+  /** Земля: свой файл или первый кадр биома, как в заезде. */
+  function groundOf(theme) {
+    const files = groundFiles(theme);
+    if (!files.length) return null;
+    return img(files[0], () => MapView && MapView.draw && MapView.draw());
   }
 
   /** Полотно дороги. */
@@ -108,5 +124,5 @@ const MapTex = (() => {
     return null;
   }
 
-  return {img, list, upload, saveMeta, forget, groundOf, roadOf, railOf, get catalog() { return catalog; }};
+  return {img, list, upload, saveMeta, forget, groundFiles, groundOf, roadOf, railOf, get catalog() { return catalog; }};
 })();

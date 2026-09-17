@@ -118,23 +118,22 @@
     return 132;
   }
 
+  /** API пунктов, если модуль уже вставлен. @returns {object|null} */
+  function engineTitleMenu() {
+    return (global.DiVANEngine && global.DiVANEngine.titleMenu) || null;
+  }
+
   /**
-   * Пункты титульного меню. DiVANEngine — в dev; читы — не в публичном NSIS.
+   * Пункты титульного меню.
    * @param {object|null} saveObj
    * @param {boolean} dev
-   * @returns {string[]}
+   * @param {object|null} [storyObj]
+   * @returns {Array}
    */
   function titleItems(saveObj, dev, storyObj) {
-    const items = [];
-    if (storyObj && storyObj.storyCampaign) items.push('ПРОДОЛЖИТЬ КАМПАНИЮ');
-    items.push('КАМПАНИЯ');
-    if (saveObj) items.push('ПРОДОЛЖИТЬ (ЭТАП ' + (saveObj.race + 1) + ')');
-    items.push('НОВАЯ ИГРА', 'ЗАГРУЗИТЬ ИГРУ', 'НАСТРОЙКИ', 'ДОСТИЖЕНИЯ');
-    if (typeof cheatsAllowed !== 'function' || cheatsAllowed()) items.push('ЧИТЫ');
-    if (dev) items.push('ВЫБОР ТРАССЫ', 'DIVANENGINE');
-    if (saveObj) items.push('СБРОС ПРОГРЕССА');
-    items.push('ВЫХОД');
-    return items;
+    const api = engineTitleMenu();
+    if (api && typeof api.titleItems === 'function') return api.titleItems(saveObj, dev, storyObj);
+    return [];
   }
 
   /**
@@ -147,7 +146,7 @@
     const top = Math.min(268, 20 + opts.logoH + 12);
     const bottom = opts.H - (opts.resetArm ? 110 : 96);
     const span = Math.max(160, bottom - top);
-    const titleStep = Math.min(34, Math.max(22, span / n));
+    const titleStep = Math.min(34, Math.max(opts.minStep == null ? 22 : opts.minStep, span / n));
     const titleY0 = top;
     const panelH = Math.max(20, titleStep - 3);
     const origin = opts.stageX == null ? 0 : opts.stageX;
@@ -271,23 +270,31 @@
       : save;
     const storyKey = typeof STORY_SKEY === 'string' ? STORY_SKEY : 'rnr_ru_story_v1';
     const story = typeof persistPeekSave === 'function' ? persistPeekSave(storyKey) : null;
+    const menu = engineTitleMenu();
     const items = titleItems(free, typeof isDev === 'function' && isDev(), story);
+    if (selTitle < 0 && menu && typeof menu.titleDefaultIndex === 'function') selTitle = menu.titleDefaultIndex(items);
     if (selTitle >= items.length) selTitle = items.length - 1;
     const n = items.length;
-    const lay = titleLayout({ H: H, n: n, logoH: titleLogoHeight(), resetArm: !!resetArm, stageX: titleStageX() });
+    const hasHint = items.some(function (t) { return !!(t && t.hint); });
+    const lay = titleLayout({
+      H: H, n: n, logoH: titleLogoHeight(), resetArm: false, stageX: titleStageX(),
+      minStep: hasHint ? 28 : 22
+    });
     const colX = lay.colX;
+    const labOf = menu && menu.titleItemLabel;
+    const hintOf = menu && menu.titleItemHint;
     items.forEach(function (t, i) {
       const y = lay.titleY0 + i * lay.titleStep, sel = i === selTitle;
+      const label = labOf ? labOf(t) : (t && t.label) || '';
+      const hint = hintOf ? hintOf(t) : (t && t.hint) || '';
       if (sel) {
         txt(g, '▸', colX - 2, y - 2, Math.max(14, lay.selFs - 2), '#ff9d2e', 'right');
-        txt(g, t, colX, y - 2, lay.selFs, '#ffd23f', 'left');
+        txt(g, label, colX, y - 2, lay.selFs, '#ffd23f', 'left');
       } else {
-        txt(g, t, colX, y - 2, lay.idleFs, '#8f88a0', 'left');
+        txt(g, label, colX, y - 2, lay.idleFs, '#8f88a0', 'left');
       }
+      if (hint) txt(g, hint, colX, y + 12, 11, sel ? '#b9a46a' : '#5a5468', 'left', F_B);
     });
-    if (resetArm) {
-      txt(g, 'СБРОС ТЕКУЩЕЙ КАРЬЕРЫ. СЛОТЫ НЕ ТРОГАЕМ. ENTER — ДА', colX, lay.titleY0 + n * lay.titleStep + 4, 13, '#ff3d2e', 'left');
-    }
     g._titleY0 = lay.titleY0;
     g._titleStep = lay.titleStep;
     g._titleHit = lay.panelH / 2 + 4;
@@ -299,6 +306,7 @@
     g._titleItems = items;
     drawLabWarn();
     drawExitWarn();
+    if (typeof drawTitleConfirm === 'function') drawTitleConfirm();
     if (typeof drawClientNotice === 'function') drawClientNotice();
   }
 

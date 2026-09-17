@@ -69,9 +69,28 @@ const MapApp = (() => {
     if (!box) return;
     box.innerHTML = '';
     docs.forEach((d, i) => {
+      if (MapData.isChapter && MapData.isChapter(d)) return;
       const b = document.createElement('button');
       b.type = 'button';
       b.textContent = d.name || d.id;
+      if (i === idx) b.className = 'active';
+      b.onclick = () => select(i);
+      box.appendChild(b);
+    });
+    renderChapterList();
+  }
+
+  /** Список петель глав. */
+  function renderChapterList() {
+    const box = $('mapChapterList');
+    if (!box) return;
+    box.innerHTML = '';
+    docs.forEach((d, i) => {
+      if (!(MapData.isChapter && MapData.isChapter(d))) return;
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = 'Г' + (d.chapter || 1) + ' · ' + (d.name || d.id);
+      b.title = d.chapterTitle || d.id;
       if (i === idx) b.className = 'active';
       b.onclick = () => select(i);
       box.appendChild(b);
@@ -99,7 +118,10 @@ const MapApp = (() => {
     fillLock = true;
     const t = cur();
     if ($('mapName')) $('mapName').value = t.name;
-    if ($('mapId')) $('mapId').value = t.id;
+    if ($('mapId')) {
+      $('mapId').value = t.id;
+      $('mapId').disabled = !!(MapData.isChapter && MapData.isChapter(t));
+    }
     if ($('mapPublished')) $('mapPublished').checked = t.published !== false;
     if ($('mapAutoHz')) $('mapAutoHz').checked = !!t.autoHazards;
     MapPanel.paint();
@@ -119,34 +141,43 @@ const MapApp = (() => {
 
   /** Сохранить на диск. */
   async function saveNow() {
-    const t = cur();
-    t.id = ($('mapId') && $('mapId').value || t.id).toLowerCase().replace(/[^a-z0-9_]/g, '_');
-    if (!MapData.ID_RE.test(t.id)) {
-      if ($('mapSaveState')) $('mapSaveState').textContent = 'Id: латиница, цифры, _';
-      return false;
-    }
-    if (docs.some(d => d !== t && d.id === t.id)) {
-      $('mapSaveState').textContent = 'Этот ID уже занят другой трассой';
-      return false;
-    }
-    const snapshot = MapData.fileTrack(t);
-    const report = window.StudioCheck.track(snapshot);
-    if (report.errors.length) { $('mapSaveState').textContent = report.errors[0]; return false; }
-    const serialized = JSON.stringify(snapshot);
+    if (window.LabBusy) LabBusy.begin('Записываю трассу');
     try {
-      const res = await MapData.save(snapshot, 'work');
-      if (!res.ok) {
-        if ($('mapSaveState')) $('mapSaveState').textContent = res.error || 'Сбой записи';
+      const t = cur();
+      if (!MapData.isChapter(t)) {
+        t.id = ($('mapId') && $('mapId').value || t.id).toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      }
+      if (!MapData.ID_RE.test(t.id)) {
+        if ($('mapSaveState')) $('mapSaveState').textContent = 'Id: латиница, цифры, _';
         return false;
       }
-      saved.set(t, serialized);
-      try { if (JSON.stringify(MapData.fileTrack(t)) === serialized) localStorage.removeItem('rnr.studio.draft.' + t.id); } catch (err) {}
-      dirty = JSON.stringify(MapData.fileTrack(cur())) !== saved.get(cur());
-      if ($('mapSaveState')) $('mapSaveState').textContent = dirty ? 'Есть новые несохранённые правки' : 'Записано · ' + t.id + '.json';
-      return true;
-    } catch (err) {
-      if ($('mapSaveState')) $('mapSaveState').textContent = 'Не удалось записать файл: ' + err.message;
-      return false;
+      if (docs.some(d => d !== t && d.id === t.id)) {
+        $('mapSaveState').textContent = 'Этот ID уже занят другой трассой';
+        return false;
+      }
+      const snapshot = MapData.fileTrack(t);
+      const report = window.StudioCheck.track(snapshot);
+      if (report.errors.length) { $('mapSaveState').textContent = report.errors[0]; return false; }
+      const serialized = JSON.stringify(snapshot);
+      try {
+        const res = await MapData.save(snapshot, 'work');
+        if (!res.ok) {
+          if ($('mapSaveState')) $('mapSaveState').textContent = res.error || 'Сбой записи';
+          return false;
+        }
+        if (window.RnRTracks && RnRTracks.adoptChapter && MapData.isChapter(t)) RnRTracks.adoptChapter(snapshot);
+        if (typeof storySyncChapterTracks === 'function') storySyncChapterTracks();
+        saved.set(t, serialized);
+        try { if (JSON.stringify(MapData.fileTrack(t)) === serialized) localStorage.removeItem('rnr.studio.draft.' + t.id); } catch (err) {}
+        dirty = JSON.stringify(MapData.fileTrack(cur())) !== saved.get(cur());
+        if ($('mapSaveState')) $('mapSaveState').textContent = dirty ? 'Есть новые несохранённые правки' : 'Записано · ' + (MapData.isChapter(t) ? 'chapters/' : '') + t.id + '.json';
+        return true;
+      } catch (err) {
+        if ($('mapSaveState')) $('mapSaveState').textContent = 'Не удалось записать файл: ' + err.message;
+        return false;
+      }
+    } finally {
+      if (window.LabBusy) LabBusy.end();
     }
   }
 
@@ -210,17 +241,19 @@ const MapApp = (() => {
       const id = $('mapTheme').value;
       const stock = RnRTracks.THEMES.find((x) => x.id === id);
       const wx = cur().theme.weather;
+      const crowd = cur().theme.crowdSound !== false;
       const road = cur().theme.roadSrc;
       const rail = cur().theme.railSrc;
       const gscale = cur().theme.groundScale;
       const b = (MapTex.catalog.biomes || []).find((x) => x.id === id);
       const gsrc = b && !b.stock ? b.src : (b ? '' : cur().theme.groundSrc);
       if (stock) {
-        cur().theme = {ground: stock.ground, dark: stock.dark, road: stock.road, line: stock.line, deco: stock.deco, map: stock.map, weather: wx, groundSrc: gsrc, roadSrc: road, railSrc: rail, groundScale: gscale};
+        cur().theme = {ground: stock.ground, dark: stock.dark, road: stock.road, line: stock.line, deco: stock.deco, map: stock.map, weather: wx, crowdSound: crowd, groundSrc: gsrc, roadSrc: road, railSrc: rail, groundScale: gscale};
       } else {
         cur().theme.map = id;
         cur().theme.groundSrc = gsrc || cur().theme.groundSrc;
         cur().theme.weather = wx;
+        cur().theme.crowdSound = crowd;
         cur().theme.roadSrc = road;
         cur().theme.railSrc = rail;
         cur().theme.groundScale = gscale;
@@ -229,6 +262,10 @@ const MapApp = (() => {
     };
     if ($('mapWeather')) $('mapWeather').onchange = () => {
       cur().theme.weather = $('mapWeather').value;
+      dirty = true;
+    };
+    if ($('mapCrowdSound')) $('mapCrowdSound').onchange = () => {
+      cur().theme.crowdSound = $('mapCrowdSound').checked;
       dirty = true;
     };
     if ($('mapRoadPick')) $('mapRoadPick').onchange = () => {
@@ -304,6 +341,10 @@ const MapApp = (() => {
     };
     if ($('mapDelBtn')) $('mapDelBtn').onclick = async () => {
       if (docs.length < 1) return;
+      if (MapData.isChapter(cur())) {
+        $('mapSaveState').textContent = 'Сюжетную трассу нельзя удалить';
+        return;
+      }
       if (!confirm('Удалить файл трассы с диска?')) return;
       try {
         const result = await MapData.save(cur(), 'delete');
@@ -334,6 +375,7 @@ const MapApp = (() => {
         $('mapStock').value = '';
       };
     }
+    if ($('mapChapterList')) renderChapterList();
     if ($('mapSaveBtn')) $('mapSaveBtn').onclick = () => saveNow();
     if ($('mapTestBtn')) $('mapTestBtn').onclick = () => testDrive();
     if ($('mapUndoBtn')) $('mapUndoBtn').onclick = undo;

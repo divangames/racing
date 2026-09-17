@@ -13,6 +13,19 @@
   let feeAskYes = true;
 
   /**
+   * Каталог заезда: в главе 1 — десять петель арены, иначе сток карьеры.
+   */
+  function syncCatalog() {
+    if (typeof TRACKDEFS === 'undefined' || !Array.isArray(TRACKDEFS)) return;
+    const api = typeof RnRTracks !== 'undefined' ? RnRTracks : null;
+    if (!api || typeof api.chapterTracks !== 'function' || !api.STOCK || !api.STOCK.length) return;
+    const src = active() ? api.chapterTracks(1) : api.STOCK;
+    if (!src || !src.length) return;
+    TRACKDEFS.length = 0;
+    for (let i = 0; i < src.length; i++) TRACKDEFS.push(src[i]);
+  }
+
+  /**
    * Кампания Медведя на этом срезе.
    * @returns {boolean}
    */
@@ -238,7 +251,7 @@
   }
 
   /**
-   * Конец ролика.
+   * Конец ролика: машина уже выбрана, поэтому сразу в гараж.
    * @returns {boolean}
    */
   function finishComic() {
@@ -250,7 +263,7 @@
       flags().introComplete = true;
       save.storyChapter = 1;
       persist();
-      enterCameraSetup('car');
+      state = 'garage';
     } else if (buying()) enterCarSel(STARTER_LO);
     else state = 'garage';
     return true;
@@ -263,7 +276,15 @@
   function resume() {
     if (!active()) return false;
     if (pending()) return openComic(true);
-    if (!flags().introComplete) return openComic(false);
+    if (!flags().campaignLoreComplete) {
+      startCampaignIntro();
+      return true;
+    }
+    if (!flags().introComplete) {
+      if (flags().introCarChosen) return openComic(false);
+      enterCameraSetup('car');
+      return true;
+    }
     if (buying()) { enterCarSel(STARTER_LO); return true; }
     return false;
   }
@@ -346,15 +367,46 @@
     storyRequestBearEntry: requestPay,
     storyRobBearGarage: rob,
     storyFinishBearComic: finishComic,
-    storyResumeBearChapter: resume
+    storyResumeBearChapter: resume,
+    storySyncChapterTracks: syncCatalog
   });
+
+  const startCamp = global.storyStartNewCampaign;
+  if (typeof startCamp === 'function') {
+    global.storyStartNewCampaign = function () {
+      const r = startCamp.apply(this, arguments);
+      syncCatalog();
+      return r;
+    };
+  }
+  const contCamp = global.storyContinueCampaign;
+  if (typeof contCamp === 'function') {
+    global.storyContinueCampaign = function () {
+      const r = contCamp.apply(this, arguments);
+      syncCatalog();
+      return r;
+    };
+  }
 
   const engine = global.DiVANEngine;
   if (!engine) return;
   function wrap(name, factory) { if (engine.get(name)) engine.wrap(name, factory); }
 
   wrap('startCampaignIntro', prev => function () {
-    if (active()) openComic(false); else prev();
+    if (!active()) { prev(); return; }
+    startWorldIntro();
+    WORLD_INTRO.kind = 'campaignLore';
+  });
+  wrap('endWorldIntro', prev => function () {
+    if (!active() || WORLD_INTRO.kind !== 'campaignLore') return prev();
+    WORLD_INTRO.kind = 'lore';
+    WORLD_INTRO.dir = 'assets/data/cats/00/';
+    if (typeof worldIntroStopMusic === 'function') worldIntroStopMusic();
+    WORLD_INTRO.skipT = 0;
+    if (typeof lastMusicCat !== 'undefined') lastMusicCat = null;
+    flags().campaignLoreComplete = true;
+    persist();
+    enterCameraSetup('car');
   });
   wrap('worldIntroApplyJson', prev => function (data) {
     if (active() && WORLD_INTRO.kind === 'campaign') return;
@@ -370,7 +422,14 @@
         garMsgT = 3.4;
       }
     }
-    return prev.apply(this, arguments);
+    const out = prev.apply(this, arguments);
+    syncCatalog();
+    return out;
+  });
+  wrap('loadSave', prev => function () {
+    const r = prev.apply(this, arguments);
+    syncCatalog();
+    return r;
   });
   wrap('careerOpenFromResults', prev => function () {
     if (pending()) { openComic(true); return; }
@@ -416,6 +475,8 @@
     return buying() ? list.filter(junk) : list;
   });
   wrap('press', prev => function (c, k) {
+    const introPick = active() && !flags().introComplete && state === 'car' &&
+      isConfirm(c) && !carConfirmed;
     if (active()) {
       if (pressFeeAsk(c)) return;
       if (state === 'garage' && c === 'KeyF' && !(typeof garagePaused !== 'undefined' && garagePaused) && canPay()) {
@@ -427,7 +488,13 @@
         if (storyBlocksTake(i) || (buying() && !junk(i))) { sHit(); return; }
       }
     }
-    return prev(c, k);
+    const out = prev(c, k);
+    if (introPick && carConfirmed && save.car === selCar) {
+      flags().introCarChosen = true;
+      persist();
+      openComic(false);
+    }
+    return out;
   });
   wrap('drawGarage', prev => function () {
     prev();
@@ -446,4 +513,5 @@
     }
     return prev(x, y);
   });
+  syncCatalog();
 })(typeof window !== 'undefined' ? window : globalThis);

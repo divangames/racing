@@ -29,8 +29,8 @@ function bootSkills() {
     STAT_COSTS: [150000, 400000, 800000],
     STAT_NAME: { spd: 'СКОРОСТЬ', crn: 'ПОВОРОТ', grt: 'БРОНЯ' },
     CHARS: [{ spd: 3, crn: 1, grt: 2, name: 'МЕДВЕДЬ' }],
-    blankCstatsMap: function () { return { 0: { spd: 0, crn: 0, grt: 0 } }; },
-    save: { char: 0, cash: 200000, skills: { 0: 1 }, cstats: { 0: { spd: 1, crn: 0, grt: 0 } } },
+    blankCstatsMap: function () { return { 0: { spd: 0, crn: 0, grt: 0, inc: 0 } }; },
+    save: { char: 0, cash: 200000, skills: { 0: 1 }, cstats: { 0: { spd: 1, crn: 0, grt: 0, inc: 0 } } },
     garMsg: '',
     garMsgT: 0,
     skillT: function () { return 0; },
@@ -59,7 +59,7 @@ test('Заезд подключает скилы до трассы и качал
   assert(engineFile('__engine/skills.js').endsWith('skills.js'));
 });
 
-test('Лечение Медведя, статы качалки и потолок скила', () => {
+test('Лечение Медведя, статы, доход и потолок скила', () => {
   const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
   assert(html.includes('function skillVal('));
   assert(html.includes('function buyGym('));
@@ -74,18 +74,27 @@ test('Лечение Медведя, статы качалки и потолок
   assert.equal(eff.spd, 4);
   assert.equal(eff.crn, 1);
   assert.equal(eff.grt, 2);
+  assert.deepEqual(Array.from(g.DiVANEngine.skills.INCOME_PCTS), [0, 10, 15, 20, 25, 30]);
+  assert.equal(g.incomePct(0), 0);
+  assert.equal(g.incomePayout(125, 0), 125);
   g.save.cstats[0].spd = 0;
   g.save.cash = 200000;
   g.buyGym(0);
   assert.equal(g.save.cstats[0].spd, 1);
   assert.equal(g.save.cash, 50000);
   assert.equal(g.garMsg, 'НАКАЧАНО: СКОРОСТЬ');
-  g.save.skills[0] = 6;
+  g.save.cash = 200000;
   g.buyGym(3);
+  assert.equal(g.save.cstats[0].inc, 1);
+  assert.equal(g.incomePct(0), 10);
+  assert.equal(g.incomePayout(125, 0), 138);
+  assert.equal(g.garMsg, 'ДОХОД: +10%');
+  g.save.skills[0] = 6;
+  g.buyGym(4);
   assert.equal(g.garMsg, 'МАКСИМАЛЬНЫЙ УРОВЕНЬ');
   g.save.skills[0] = 1;
   g.save.cash = 200000;
-  g.buyGym(3);
+  g.buyGym(4);
   assert.equal(g.save.skills[0], 2);
   assert.equal(g._sfx, 'buy');
 });

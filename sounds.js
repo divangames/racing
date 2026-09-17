@@ -46,7 +46,10 @@ var SFX_TRACKS = {
  // Эмбиент снега
  ambientSnow: 'assets/sounds/embirnt/Snow.mp3',
  // Удар грома при молнии
- thunder: 'assets/sounds/embirnt/grom.mp3'
+ thunder: 'assets/sounds/embirnt/grom.mp3',
+ // Трибуна арены (первые клипы; полный набор — arena/index.json)
+ arenaCheer: 'assets/sounds/embirnt/arena/aplodisment_01.mp3',
+ arenaBoo: 'assets/sounds/embirnt/arena/nedovolny_01.mp3'
 };
 
 ////////////////////////////////////////////////////////

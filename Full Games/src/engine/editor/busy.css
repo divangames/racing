@@ -1,0 +1,49 @@
+/* Угол лаборатории: применение текстур и перепекание ленты. */
+.lab-busy {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 11000;
+  width: min(280px, calc(100vw - 32px));
+  padding: 12px 14px 14px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  background:
+    linear-gradient(180deg, rgba(28, 42, 54, .94), rgba(12, 18, 26, .96));
+  border: 1px solid #3a5162;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(121, 220, 230, .12);
+  color: #e9eff3;
+  transition: opacity .18s ease, transform .18s ease;
+}
+.lab-busy.is-on {
+  opacity: 1;
+  transform: none;
+}
+.lab-busy-label {
+  margin: 0 0 8px;
+  font: 600 11px/1.35 "Segoe UI", Montserrat, sans-serif;
+  letter-spacing: .04em;
+  color: #79dce6;
+}
+.lab-busy-track {
+  height: 6px;
+  overflow: hidden;
+  background: #0c1620;
+  border: 1px solid #2a3a49;
+  border-radius: 99px;
+}
+.lab-busy-fill {
+  display: block;
+  height: 100%;
+  width: 8%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4aa8b4, #79dce6 55%, #f2c66d);
+  box-shadow: 0 0 10px rgba(121, 220, 230, .45);
+  transition: width .2s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-busy,
+  .lab-busy-fill { transition: none; }
+}

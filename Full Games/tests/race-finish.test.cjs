@@ -119,3 +119,16 @@ test('Время, полигон без кассы, карьера с призо
   assert.equal(g.save.achievements.first_win, true);
   assert.equal(g._careerPrev, 2);
 });
+
+test('Доход пилота увеличивает приз и выигрыш ставки', () => {
+  const g = bootFinish();
+  g.labTest = false;
+  g.incomePayout = function (v) { return Math.round(v * 1.1); };
+  g.R.betStake = 350;
+  g.R.betOdds = { k1: 2, k2: 1.1, k3: 0.6 };
+  g.R.betPick = 0;
+  g.showResults();
+  assert.equal(g.R.prize[0], 528);
+  assert.equal(g.R.betPay, 770);
+  assert.equal(g.save.cash, 1000 + 528 + 770);
+});

@@ -50,6 +50,7 @@ function bootStory(slice) {
     },
     state: 'intro',
     selCar: 0,
+    carConfirmed: false,
     autoparkSel: 0,
     W: 1280,
     g: {},
@@ -130,6 +131,13 @@ function bootStory(slice) {
       playerComicsDir: () => 'comics/', worldIntroEnqueueImgs: () => {},
       worldIntroBeginScreen: () => { g.state = 'worldIntro'; },
       worldIntroApplyJson: () => { g._jsonApplied = true; },
+      worldIntroStopMusic: () => { g._introStopped = true; },
+      startWorldIntro: () => {
+        g.WORLD_INTRO.kind = 'lore';
+        g.WORLD_INTRO.scenes = [{ img: 0, text: 'Чёрный Пояс' }];
+        g.state = 'worldIntro';
+      },
+      endWorldIntro: () => { g.state = 'title'; },
       startCampaignIntro: () => {},
       careerVisitedIdx: () => [], careerPlaceWord: () => '',
       careerOpenFromResults: () => {}, careerDo: () => {}, careerEnterTrackPick: () => {},
@@ -137,7 +145,12 @@ function bootStory(slice) {
       enterPreRace: () => { g.state = 'prerace'; },
       isBack: c => c === 'Escape', enterTitle: () => { g.state = 'title'; },
       carCatalogOrder: () => [0, 11, 12, 13, 14, 15],
-      press: () => { g._pressed = true; }, hubClick: () => {},
+      press: c => {
+        g._pressed = true;
+        if (g.state !== 'car' || c !== 'Enter') return;
+        if (g.carConfirmed && g.save.car === g.selCar) g.state = 'garage';
+        else { g.save.car = g.selCar; g.carConfirmed = true; }
+      }, hubClick: () => {},
       loadSave: () => {},
     });
     vm.runInNewContext(fs.readFileSync(path.join(ENGINE, 'career-econ.js'), 'utf8'), g);
@@ -178,27 +191,40 @@ test('Заезд подключает сюжет после клавиатуры
 function beginChapter() {
   const g = bootStory(true);
   g.storyStartNewCampaign();
+  g.endWorldIntro();
+  g.finishCameraSetup();
+  g.press('Enter');
   g.storyFinishCampaignIntro();
   return g;
 }
 
-test('Новая глава: вступление сохраняет машину, деньги и тюнинг', () => {
+test('Новая глава: комикс Медведя идёт после выбора машины', () => {
   const g = bootStory(true);
   g.storyStartNewCampaign();
   assert.equal(g.state, 'worldIntro');
+  assert.equal(g.WORLD_INTRO.kind, 'campaignLore');
+  assert.equal(g.save.cstats[0].inc, 3);
+  g.endWorldIntro();
+  assert.equal(g.state, 'cameraSetup');
   assert.equal(g.save.storyMission, 'race_a');
+  assert.equal(g.save.storyFlags.campaignLoreComplete, true);
+  g.finishCameraSetup();
+  assert.equal(g.state, 'car');
+  g.save.tuning[0] = { eng: 3 };
+  g.press('Enter');
+  assert.equal(g.state, 'worldIntro');
+  assert.equal(g.WORLD_INTRO.kind, 'campaign');
   assert.ok(g.WORLD_INTRO.scenes.length >= 2);
   assert.match(g.WORLD_INTRO.scenes[g.WORLD_INTRO.scenes.length - 1].text, /десять тысяч/i);
   assert.equal(g.storyApplyGarageRobbery(), false);
   g.worldIntroApplyJson({ scenes: [{ text: 'Старая кража' }] });
   assert.equal(g._jsonApplied, undefined);
-  g.save.tuning[0] = { eng: 3 };
   g.storyFinishCampaignIntro();
   assert.equal(g.save.personalCarState, 'owned');
   assert.equal(g.save.car, 0);
   assert.equal(g.save.cash, 1000);
   assert.equal(g.save.tuning[0].eng, 3);
-  assert.equal(g.state, 'cameraSetup');
+  assert.equal(g.state, 'garage');
 });
 
 test('А не повышается автоматически; взнос после гонки списывается один раз', () => {
@@ -219,6 +245,24 @@ test('А не повышается автоматически; взнос пос
   assert.equal(g.save.race, g.TRACKDEFS.length);
   assert.equal(g.save.storyMission, 'race_b');
   assert.equal(g.storyPayBearEntry(), false);
+});
+
+test('Глава 1 подменяет календарь десятью трассами арены', () => {
+  const g = beginChapter();
+  const arena = [];
+  for (let i = 0; i < 10; i++) arena.push({ name: 'АРЕНА ' + (i + 1), theme: { map: 'arena' } });
+  g.RnRTracks = {
+    STOCK: [{ name: 'СТОК' }],
+    chapterTracks: function (n) { return n === 1 ? arena : []; }
+  };
+  g.storySyncChapterTracks();
+  assert.equal(g.TRACKDEFS.length, 10);
+  assert.equal(g.TRACKDEFS[0].theme.map, 'arena');
+  g.save.playMode = 'career';
+  g.save.storySlice = null;
+  g.storySyncChapterTracks();
+  assert.equal(g.TRACKDEFS.length, 1);
+  assert.equal(g.TRACKDEFS[0].name, 'СТОК');
 });
 
 test('Б: порог после призов, комикс после ложного взноса, деньги сохраняются', () => {
@@ -273,6 +317,7 @@ test('Перезагрузка возобновляет комикс и обяз
   assert.equal(g.state, 'car');
   assert.deepEqual(Array.from(g.carCatalogOrder()), [11, 12, 13, 14, 15]);
   g.selCar = 0;
+  g._pressed = undefined;
   g.press('Enter');
   assert.equal(g._pressed, undefined);
   g.save.cash -= g.CARS[11].price;

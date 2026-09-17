@@ -40,6 +40,8 @@ test('Папки музыки и FX лежат на диске', () => {
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'embirnt', 'rain.mp3')), 'нет эмбиента дождя');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'embirnt', 'grom.mp3')), 'нет грома');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'embirnt', 'Snow.mp3')), 'нет эмбиента снега');
+  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'embirnt', 'arena', 'index.json')), 'нет каталога трибуны');
+  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'embirnt', 'arena', 'atmos_00.mp3')), 'нет атмосферы арены');
 });
 
 test('Десктоп даёт только локальные URL музыки и FX', () => {

@@ -35,6 +35,7 @@ fs.mkdirSync(dest, { recursive: true });
 copyIf(path.join(game, 'assets', 'image', 'launcher-hero.webp'), path.join(dest, 'launcher-hero.webp'));
 copyIf(path.join(game, 'assets', 'image', 'launcher-hero.mp4'), path.join(dest, 'launcher-hero.mp4'));
 copyIf(path.join(game, 'assets', 'image', 'game-logo.webp'), path.join(dest, 'game-logo.webp'));
+copyIf(path.join(game, 'assets', 'divan_games', 'DIVAN_none.png'), path.join(dest, 'studio-mark.png'));
 copyIf(path.join(game, 'assets', 'sounds', 'FX', 'PianoHit.mp3'), path.join(dest, 'play-ready.mp3'));
 
 const fontSrc = path.join(game, 'assets', 'fonts', 'bender');

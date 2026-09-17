@@ -19,11 +19,11 @@
 
   /**
    * Статы тренажёрки на каждого пилота.
-   * @returns {Object<string, {spd:number,crn:number,grt:number}>}
+   * @returns {Object<string, {spd:number,crn:number,grt:number,inc:number}>}
    */
   function blankCstatsMapEngine() {
     const o = {};
-    for (let i = 0; i < CHARS.length; i++) o[i] = { spd: 0, crn: 0, grt: 0 };
+    for (let i = 0; i < CHARS.length; i++) o[i] = { spd: 0, crn: 0, grt: 0, inc: 0 };
     return o;
   }
 
@@ -119,10 +119,11 @@
     for (let i = 0; i < CHARS.length; i++) if (save.skills[i] == null) save.skills[i] = 1;
     if (!save.cstats) save.cstats = blankCstatsMap();
     for (let i = 0; i < CHARS.length; i++) {
-      if (!save.cstats[i]) save.cstats[i] = { spd: 0, crn: 0, grt: 0 };
+      if (!save.cstats[i]) save.cstats[i] = { spd: 0, crn: 0, grt: 0, inc: 0 };
       save.cstats[i].spd = save.cstats[i].spd || 0;
       save.cstats[i].crn = save.cstats[i].crn || 0;
       save.cstats[i].grt = save.cstats[i].grt || 0;
+      save.cstats[i].inc = save.cstats[i].inc || 0;
     }
     if (typeof save.bet !== 'number') save.bet = 0;
     if (!save.achievements) save.achievements = {};

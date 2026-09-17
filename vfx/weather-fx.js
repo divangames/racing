@@ -23,6 +23,7 @@
   const map = T.theme.map, deco = T.theme.deco;
   if (deco === 'lava') return CATALOG.ash;
   if (map === 'snow' || deco === 'ice') return CATALOG.snow;
+  if (map === 'arena' || deco === 'wreck') return CATALOG.clear;
   if (map === 'sand' || map === 'desert' || deco === 'cactus' || deco === 'rock') return CATALOG.sand;
   if (map === 'garden' || deco === 'skull') return CATALOG.rain;
   return CATALOG.clear;

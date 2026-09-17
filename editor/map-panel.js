@@ -74,6 +74,16 @@ const MapPanel = (() => {
     sel.value = getDoc().theme.weather || '';
   }
 
+  /** Звук трибуны: по умолчанию включён. */
+  function fillCrowd() {
+    const box = $('mapCrowdSound');
+    if (!box) return;
+    const on = typeof RnRTracks !== 'undefined' && RnRTracks.crowdSoundOn
+      ? RnRTracks.crowdSoundOn(getDoc().theme)
+      : getDoc().theme.crowdSound !== false;
+    box.checked = on;
+  }
+
   /** Превью картинки темы. */
   function fillPreview(id, im) {
     const prev = $(id);
@@ -172,6 +182,7 @@ const MapPanel = (() => {
       fillTheme();
       fillGround();
       fillWeather();
+      fillCrowd();
       fillRoads();
       fillZones();
       fillDecals();

@@ -60,7 +60,7 @@ const MapView = (() => {
     const x0 = cam.x - cssW / 2 / cam.z, y0 = cam.y - cssH / 2 / cam.z;
     const x1 = cam.x + cssW / 2 / cam.z, y1 = cam.y + cssH / 2 / cam.z;
     if (t) MapPreview.fillGround(ctx, t, x0, y0, x1, y1);
-    if (t && window.RnRObjects) RnRObjects.drawLayer(ctx, t.objects, 'under', () => {});
+    if (t && window.RnRObjects) RnRObjects.drawLayer(ctx, t.objects, 'underRoad', () => {});
     const gridStep = cell * cam.z;
     if (gridStep >= 6) {
       ctx.strokeStyle = st.snapGrid ? 'rgba(232,197,71,.22)' : 'rgba(0,0,0,.18)';
@@ -84,6 +84,9 @@ const MapView = (() => {
       ctx.drawImage(im, -w / 2, -h / 2, w, h);
       ctx.restore();
     });
+    // Слой under означает «на трассе»: как и в заезде, он находится поверх
+    // запечённого полотна дороги и деколей, но под машинами и маркерами.
+    if (window.RnRObjects) RnRObjects.drawLayer(ctx, t.objects, 'under', () => {});
     t.cps.forEach((p, i) => {
       ctx.fillStyle = st.sel && st.sel.kind === 'cp' && st.sel.i === i ? '#3d9eff' : '#ededed';
       ctx.beginPath();
@@ -241,6 +244,18 @@ const MapView = (() => {
     setItem: (id) => { if (st.canvas) st.canvas.dataset.item = id; },
     selection: () => st.sel,
     setSelection: (s) => { st.sel = s; kick(); },
+    setSelectedAssetLayers: (layers) => {
+      const t = doc(), sel = st.sel;
+      if (!t || !sel || sel.kind !== 'asset' || !t.objects || !t.objects[sel.i]) return false;
+      const object = t.objects[sel.i];
+      object.roadLayer = layers && layers.roadLayer === 'under' ? 'under' : 'over';
+      object.carLayer = layers && layers.carLayer === 'over' ? 'over' : 'under';
+      object.layer = object.carLayer;
+      st.onChange(true);
+      st.onSelect(sel);
+      kick();
+      return true;
+    },
     confirmSel: () => {
       if (!st.sel) return;
       st.sel = null;

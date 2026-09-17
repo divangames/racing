@@ -22,6 +22,27 @@
   }
 
   /**
+   * Кнопки «Сбросить» и «Применить» внизу панели.
+   * @param {number} cx
+   * @param {number} by
+   * @param {number} [tabBase]
+   * @param {number} [tabCount]
+   */
+  function drawSettingsActions(cx, by, tabBase, tabCount) {
+    const bw = 188, bh = 44, gap = 18;
+    const rx = cx - gap / 2 - bw, ax = cx + gap / 2;
+    const extra = tabCount != null && tabBase != null;
+    const resetSel = extra && settingsTab === tabBase;
+    const applySel = extra && settingsTab === tabBase + 1;
+    panel(g, rx, by, bw, bh, resetSel ? 'rgba(255,61,46,.2)' : 'rgba(20,17,28,.9)', resetSel ? '#ff3d2e' : '#3a3548', 10);
+    txt(g, 'СБРОСИТЬ', rx + bw / 2, by + 22, 16, resetSel ? '#ff3d2e' : '#8f88a0', 'center');
+    panel(g, ax, by, bw, bh, applySel ? 'rgba(255,210,63,.2)' : 'rgba(20,17,28,.9)', applySel ? '#ffd23f' : '#3a3548', 10);
+    txt(g, 'ПРИМЕНИТЬ', ax + bw / 2, by + 22, 16, applySel ? '#ffd23f' : '#c8c2d4', 'center');
+    g._setHits.push({ act: 'reset', x: rx, y: by, w: bw, h: bh });
+    g._setHits.push({ act: 'apply', x: ax, y: by, w: bw, h: bh });
+  }
+
+  /**
    * Фон демо-заезда под панелями.
    * @param {boolean} heavy
    */
@@ -103,6 +124,7 @@
    * Разделы графики, звука, игры и раскладки.
    */
   function drawSettingsEngine() {
+    if (typeof beginSettingsDraft === 'function' && !global._settingsDraftOn) beginSettingsDraft();
     drawSettingsBackdrop(settingsState !== 'graphics');
     g._setHits = [];
     if (settingsState === 'graphics') drawSideShade();
@@ -118,7 +140,8 @@
         txt(g, t, W / 2, y, sel ? 24 : 20, sel ? '#ffd23f' : '#c8c2d4', 'center');
         g._setHits.push({ act: 'main', i: i, x: bx, y: by, w: bw, h: bh });
       });
-      txt(g, 'ENTER — открыть • ESC — выход', W / 2, H - 28, 14, '#6f6880', 'center', F_B);
+      drawSettingsActions(W / 2, H - 96, 4, 2);
+      txt(g, 'ENTER — открыть • ESC — выход без записи • ПРИМЕНИТЬ — на диск', W / 2, H - 28, 13, '#6f6880', 'center', F_B);
       return;
     }
 
@@ -154,30 +177,35 @@
         }
       });
       txt(g, '← → менять • колесо — камера • ESC назад', px + pw / 2, py + ph - 22, 12, '#6f6880', 'center', F_B);
+      drawSettingsActions(px + pw / 2, py + ph - 74, gfxOpts().length, 2);
     } else if (settingsState === 'sound') {
-      txt(g, 'ЗВУК', px + pw / 2, py + 42, 26, '#ffd23f', 'center');
+      txt(g, 'ЗВУК', px + pw / 2, py + 36, 24, '#ffd23f', 'center');
       const opts = sndOpts();
       opts.forEach(function (opt, i) {
-        const y = py + 120 + i * 72, sel = i === settingsTab, by = y - 28, bh = 56;
+        const y = py + 88 + i * 54, sel = i === settingsTab, by = y - 22, bh = 46;
         if (sel) panel(g, px + 16, by, pw - 32, bh, 'rgba(255,157,46,.12)', '#ff9d2e', 10);
         if (opt.type === 'back') {
-          txt(g, opt.label, px + pw / 2, y, 18, sel ? '#ffd23f' : '#8f88a0', 'center', F_B);
+          txt(g, opt.label, px + pw / 2, y, 16, sel ? '#ffd23f' : '#8f88a0', 'center', F_B);
           g._setHits.push({ act: 'back', x: px + 16, y: by, w: pw - 32, h: bh });
           return;
         }
-        txt(g, opt.label, px + 36, y - 8, 16, '#e8e2d0', 'left', F_B);
+        txt(g, opt.label, px + 36, y - 8, 15, '#e8e2d0', 'left', F_B);
         g._setHits.push({ act: 'snd', i: i, x: px + 16, y: by, w: pw - 32, h: bh });
         if (opt.type === 'vol') {
-          const v = settings.sound[opt.key] / 100, col = opt.key === 'music' ? '#ffd23f' : '#35e0ff';
-          g.fillStyle = '#16131c'; g.fillRect(px + 36, y + 10, pw - 120, 10);
-          g.fillStyle = col; g.fillRect(px + 36, y + 10, (pw - 120) * v, 10);
-          txt(g, settings.sound[opt.key] + '%', px + pw - 36, y + 16, 15, col, 'right');
+          const raw = settings.sound[opt.key];
+          const n = raw == null ? 80 : raw;
+          const v = n / 100;
+          const col = opt.key === 'music' ? '#ffd23f' : opt.key === 'biome' ? '#8ec8ff' : opt.key === 'crowd' ? '#ff9d2e' : '#35e0ff';
+          g.fillStyle = '#16131c'; g.fillRect(px + 36, y + 8, pw - 120, 8);
+          g.fillStyle = col; g.fillRect(px + 36, y + 8, (pw - 120) * v, 8);
+          txt(g, n + '%', px + pw - 36, y + 12, 14, col, 'right');
         } else {
           const on = settings.sound[opt.key];
-          txt(g, on ? 'ВКЛ' : 'ВЫКЛ', px + pw - 36, y, 18, on ? '#58ff6b' : '#ff3d2e', 'right');
+          txt(g, on ? 'ВКЛ' : 'ВЫКЛ', px + pw - 36, y, 16, on ? '#58ff6b' : '#ff3d2e', 'right');
         }
       });
-      txt(g, '← → менять • ESC назад', px + pw / 2, py + ph - 22, 13, '#6f6880', 'center', F_B);
+      txt(g, '← → менять • ESC назад', px + pw / 2, py + ph - 22, 12, '#6f6880', 'center', F_B);
+      drawSettingsActions(px + pw / 2, py + ph - 74, sndOpts().length, 2);
     } else if (settingsState === 'game') {
       txt(g, 'ИГРА', px + pw / 2, py + 42, 26, '#ffd23f', 'center');
       const opts = gameOpts();
@@ -189,6 +217,7 @@
         g._setHits.push({ act: opt.type === 'back' ? 'back' : 'game', i: i, x: px + 16, y: by, w: pw - 32, h: bh });
       });
       txt(g, 'ENTER — открыть • ESC назад', px + pw / 2, py + ph - 22, 13, '#6f6880', 'center', F_B);
+      drawSettingsActions(px + pw / 2, py + ph - 74, gameOpts().length, 2);
     } else if (settingsState === 'controls') {
       txt(g, 'УПРАВЛЕНИЕ', px + pw / 2, py + 36, 22, '#ffd23f', 'center');
       txt(g, 'Раскладка клавиатуры', px + pw / 2, py + 62, 13, '#9a93a8', 'center', F_B);
@@ -222,15 +251,99 @@
         g._setHits.push({ act: 'ctrl', i: i, x: px + 16, y: by, w: pw - 32, h: bh });
       });
       txt(g, 'ENTER — изменить • BACKSPACE — стереть • ESC — отмена', px + pw / 2, py + ph - 22, 12, '#6f6880', 'center', F_B);
+      drawSettingsActions(px + pw / 2, py + ph - 74, controlOpts().length, 2);
     }
   }
 
   const engine = global.DiVANEngine;
   if (!engine) return;
   engine.options = { SETTINGS_MAIN, zoomT };
+  /**
+   * Пункты звука: музыка, эффекты, биом и арена отдельно.
+   * @returns {object[]}
+   */
+  function sndOptsEngine() {
+    return [
+      { label: 'Громкость музыки', key: 'music', type: 'vol' },
+      { label: 'Громкость эффектов', key: 'sfx', type: 'vol' },
+      { label: 'Атмосфера биома', key: 'biome', type: 'vol' },
+      { label: 'Звук арены', key: 'crowd', type: 'vol' },
+      { label: 'Музыка', key: 'musicOn', type: 'bool' },
+      { label: 'Эффекты', key: 'sfxOn', type: 'bool' }
+    ];
+  }
+
+  /**
+   * Графика без «Назад»: выход — ESC, запись — «Применить».
+   * @returns {object[]}
+   */
+  function gfxOptsEngine() {
+    return [
+      { label: 'Камера', key: 'cameraZoom', type: 'zoom' },
+      { label: 'Разрешение экрана', key: 'resolution', type: 'res' },
+      { label: 'Частицы', key: 'particles', type: 'enum', values: ['low', 'medium', 'high'], labels: ['Низкое', 'Среднее', 'Высокое'] },
+      { label: 'Следы от шин', key: 'skids', type: 'bool' },
+      { label: 'Эффекты погоды', key: 'weather', type: 'bool' },
+      { label: 'Тряска камеры', key: 'shake', type: 'bool' },
+      { label: 'Показывать FPS', key: 'showFps', type: 'bool' }
+    ];
+  }
+
+  /**
+   * Игра: только переход к раскладке.
+   * @returns {object[]}
+   */
+  function gameOptsEngine() {
+    return [
+      { label: 'Настройки управления', key: '_controls', type: 'goto', to: 'controls' }
+    ];
+  }
+
+  /**
+   * Клавиши без сброса в списке — сброс кнопкой внизу.
+   * @returns {object[]}
+   */
+  function controlOptsEngine() {
+    return [
+      { label: 'Газ', key: 'up' },
+      { label: 'Тормоз', key: 'down' },
+      { label: 'Влево', key: 'left' },
+      { label: 'Вправо', key: 'right' },
+      { label: 'Оружие', key: 'fire' },
+      { label: 'Нитро', key: 'nitro' },
+      { label: 'Ульта', key: 'ult' },
+      { label: 'Ручник', key: 'handbrake' },
+      { label: 'Пауза', key: 'pause' }
+    ];
+  }
+
+  /**
+   * Шаг ползунка или тумблера; все каналы через applyAudioSettings.
+   * @param {number} dir
+   * @returns {boolean}
+   */
+  function nudgeSoundEngine(dir) {
+    const opt = sndOpts()[settingsTab];
+    if (!opt || opt.type === 'back' || opt.type === 'apply' || opt.type === 'reset') return false;
+    if (opt.type === 'vol') {
+      settings.sound[opt.key] = clamp((settings.sound[opt.key] || 0) + dir * 10, 0, 100);
+      if (typeof applyAudioSettings === 'function') applyAudioSettings();
+    } else if (opt.type === 'bool') {
+      settings.sound[opt.key] = !settings.sound[opt.key];
+      if (typeof applyAudioSettings === 'function') applyAudioSettings();
+    }
+    if (typeof saveSettings === 'function') saveSettings();
+    return true;
+  }
+
   engine.replace('drawSettingsBackdrop', drawSettingsBackdropEngine);
   engine.replace('drawSideShade', drawSideShadeEngine);
   engine.replace('drawZoomBar', drawZoomBarEngine);
   engine.replace('drawCameraSetup', drawCameraSetupEngine);
   engine.replace('drawSettings', drawSettingsEngine);
+  engine.replace('sndOpts', sndOptsEngine);
+  engine.replace('gfxOpts', gfxOptsEngine);
+  engine.replace('gameOpts', gameOptsEngine);
+  engine.replace('controlOpts', controlOptsEngine);
+  engine.replace('nudgeSound', nudgeSoundEngine);
 })(typeof window !== 'undefined' ? window : globalThis);

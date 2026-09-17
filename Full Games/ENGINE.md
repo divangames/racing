@@ -24,7 +24,7 @@
 - `theatre.js`: хуки фона театра, трофеев и тоста эфира.
 - `boot.js` / `boot-net.js` / `boot-gate.js`: очередь заставки, сеть, жест и `bootGo`. На десктопе внешний http(s) заставки не качается.
 - `track.js`: хуки `buildTrack`, покрытие, смесь зон.
-- `track-span.js`: разрывы полотна с трамплином, развязки (пересечение ниток → эстакада на опорах). Сток — три развязки на биом. Промах — обочина, без пропасти.
+- `track-span.js`: разрывы полотна с трамплином, развязки (пересечение ниток → эстакада на опорах). Сток — три развязки на биом. Глава 1 — биом «Арена», десять простых петель. Промах — обочина, без пропасти.
 - `track-rail.js`: отскок от рельса (`keepOnTrack` / `keepAllOnTrack`).
 - `track-strip.js`: детальные полосы асфальта, песка и ржавого рельса.
 - `track-ribbon.js`: UV-лента полотна и ржавые борта при запекании.
@@ -51,7 +51,7 @@
 - `render.js`: хук `drawRaceWorld` (зум, blit VFX, погода на экране).
 - `hub.js`: хуки `drawGarage`, `drawResults`.
 - `garage-act.js`: хук `garageAction`.
-- `car-fx.js` / `car-paint.js` / `car-fallback.js`: тень, щит, кузов на холсте.
+- `car-fx.js` / `car-spec.js` / `car-paint.js` / `car-fallback.js`: тень, щит, карта блеска `NN_Specular`, кузов на холсте.
 - `portraits.js`: хуки портрета, роста и метки хозяина.
 - `vfx.js`: хук `vfxLive` (гейт quarks).
 - `faces.js`: хуки `avatarImage`, `fullbodyImage`, `kickPlayerImg`.

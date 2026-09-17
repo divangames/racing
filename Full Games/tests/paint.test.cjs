@@ -35,6 +35,7 @@ function bootPaint() {
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/runtime.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/car-fx.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/car-fallback.js'), 'utf8'), g);
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/car-spec.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/car-paint.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/portraits.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/vfx.js'), 'utf8'), g);
@@ -46,8 +47,11 @@ test('Заезд подключает кузов, портреты и vfx до �
   assert(out.includes('/__engine/car-paint.js'));
   assert(out.includes('/__engine/portraits.js'));
   assert(out.includes('/__engine/vfx.js'));
+  assert(out.includes('/__engine/car-spec.js'));
+  assert(engineFile('__engine/car-spec.js').endsWith('car-spec.js'));
   assert(out.indexOf('car-fx.js') < out.indexOf('car-fallback.js'));
-  assert(out.indexOf('car-fallback.js') < out.indexOf('car-paint.js'));
+  assert(out.indexOf('car-fallback.js') < out.indexOf('car-spec.js'));
+  assert(out.indexOf('car-spec.js') < out.indexOf('car-paint.js'));
   assert(out.indexOf('car-paint.js') < out.indexOf('portraits.js'));
   assert(out.indexOf('vfx.js') < out.indexOf('arena.js'));
   assert(engineFile('__engine/portraits.js').endsWith('portraits.js'));
@@ -56,6 +60,8 @@ test('Заезд подключает кузов, портреты и vfx до �
 test('Вынос колёс, портрет ×2, гейт quarks', () => {
   const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
   assert(html.includes('function drawCar('));
+  assert(html.includes('CAR_SPECULAR'));
+  assert.ok(fs.existsSync(path.resolve(__dirname, '../../assets/data/cars/01/01_Specular.png')));
   assert(html.includes('function drawPortrait('));
   assert(html.includes('function vfxLive('));
   const g = bootPaint();
@@ -78,4 +84,10 @@ test('Вынос колёс, портрет ×2, гейт quarks', () => {
   assert.equal(vfx({ ok: true }, { particles: 'low' }, false), false);
   assert.equal(vfx({ ok: true }, { particles: 'high' }, true), false);
   assert.equal(vfx({ ok: false }, { particles: 'high' }, false), false);
+  assert.equal(g.DiVANEngine.carSpec.paint({ save: function () {}, restore: function () {} }, 0, 0, 0, 0, 10, 10), false);
+  const light = g.DiVANEngine.carSpec.localLight(0, 0);
+  assert.ok(Math.abs(light.x) + Math.abs(light.y) > 0.9);
+  const moved = g.DiVANEngine.carSpec.localLight(0, 1);
+  assert.notEqual(moved.x, light.x);
+  assert.notEqual(moved.sweep, light.sweep);
 });

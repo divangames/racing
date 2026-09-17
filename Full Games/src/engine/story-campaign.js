@@ -72,6 +72,9 @@
     if (s.temporaryCar === undefined) s.temporaryCar = null;
     if (!s.garageState) s.garageState = 'home';
     if (!s.storyFlags || typeof s.storyFlags !== 'object') s.storyFlags = {};
+    if (s.playMode === 'campaign' && s.storyFlags.introComplete && s.storyFlags.campaignLoreComplete == null) {
+      s.storyFlags.campaignLoreComplete = true;
+    }
     storyFixActiveCar(s);
   }
 
@@ -116,6 +119,9 @@
     save.storyMission = 'race_a';
     if (typeof applyCharCar === 'function') applyCharCar(0);
     else save.char = 0;
+    if (!save.cstats) save.cstats = typeof blankCstatsMap === 'function' ? blankCstatsMap() : {};
+    if (!save.cstats[0]) save.cstats[0] = { spd: 0, crn: 0, grt: 0, inc: 0 };
+    save.cstats[0].inc = 3;
     storyBeginIfMedved(0);
     if (typeof persist === 'function') persist();
     if (typeof startCampaignIntro === 'function') startCampaignIntro();

@@ -7,13 +7,6 @@
 (function (global) {
   'use strict';
 
-  const TITLE_RAIN_SRC = 'assets/sounds/embirnt/rain.mp3';
-  const RAIN_MIX = 0.78;
-
-  let rainGain = null;
-  let rainSrc = null;
-  let rainBuf = null;
-  let rainBusy = false;
   let drops = [];
   let splashes = [];
 
@@ -84,100 +77,7 @@
   }
 
   /**
-   * Громкость лупа. AU.sfx уже умножает ползунок — здесь доля дождя.
-   * @returns {number}
-   */
-  function rainVol() {
-    const snd = settings && settings.sound;
-    if (!snd || snd.sfxOn === false) return 0;
-    return RAIN_MIX;
-  }
-
-  /**
-   * Blob заставки или путь с диска.
-   * @returns {string}
-   */
-  function rainHref() {
-    const cached = (typeof BOOT !== 'undefined' && BOOT.media) ? BOOT.media[TITLE_RAIN_SRC] : '';
-    if (cached) return cached;
-    if (typeof bootMediaSrc === 'function') return bootMediaSrc(TITLE_RAIN_SRC);
-    return TITLE_RAIN_SRC;
-  }
-
-  /** Контекст после жеста заставки. */
-  function rainCtx() {
-    if (typeof AU !== 'undefined' && AU.ctx) return AU.ctx;
-    if (typeof audioInit === 'function') {
-      try { audioInit(); } catch (e) {}
-    }
-    return (typeof AU !== 'undefined' && AU.ctx) ? AU.ctx : null;
-  }
-
-  /** Снимает источник лупа. */
-  function haltTitleRain() {
-    if (rainSrc) {
-      try { rainSrc.stop(); } catch (e) {}
-      rainSrc = null;
-    }
-    const ctx = rainCtx();
-    if (rainGain && ctx) {
-      try { rainGain.gain.setTargetAtTime(0, ctx.currentTime, 0.04); } catch (e) {}
-    }
-  }
-
-  /** Запускает закольцованный буфер в канал эффектов. */
-  function startRainNode() {
-    const ctx = rainCtx();
-    if (!ctx || !rainBuf || rainSrc) return;
-    if (ctx.state === 'suspended') ctx.resume().catch(function () {});
-    if (!rainGain) {
-      rainGain = ctx.createGain();
-      const dest = (typeof AU !== 'undefined' && AU.sfx) ? AU.sfx : ctx.destination;
-      rainGain.connect(dest);
-    }
-    rainGain.gain.setValueAtTime(rainVol(), ctx.currentTime);
-    rainSrc = ctx.createBufferSource();
-    rainSrc.buffer = rainBuf;
-    rainSrc.loop = true;
-    rainSrc.connect(rainGain);
-    try { rainSrc.start(); } catch (e) { rainSrc = null; }
-  }
-
-  /** Качает и декодирует rain.mp3 один раз. */
-  function ensureRainBuffer() {
-    if (rainBuf || rainBusy) return;
-    const ctx = rainCtx();
-    if (!ctx || typeof fetch !== 'function') return;
-    rainBusy = true;
-    fetch(rainHref(), { cache: 'no-store' }).then(function (res) {
-      if (!res.ok) throw new Error('rain');
-      return res.arrayBuffer();
-    }).then(function (raw) {
-      return ctx.decodeAudioData(raw.slice(0));
-    }).then(function (buf) {
-      rainBuf = buf;
-      rainBusy = false;
-      if (titleRainScreen() && rainVol() > 0) startRainNode();
-    }).catch(function () {
-      rainBusy = false;
-    });
-  }
-
-  /** Луп rain.mp3, пока открыт титул и эффекты включены. */
-  function tickTitleRainAudio() {
-    const on = titleRainScreen() && rainVol() > 0 && !(typeof document !== 'undefined' && document.hidden);
-    if (!on) {
-      haltTitleRain();
-      return;
-    }
-    ensureRainBuffer();
-    if (rainBuf) startRainNode();
-    const ctx = rainCtx();
-    if (rainGain && ctx) rainGain.gain.setTargetAtTime(rainVol(), ctx.currentTime, 0.05);
-  }
-
-  /**
-   * Шаг капель.
+   * Шаг капель. Звук дождя — RnRWeatherAudio, не Web Audio.
    * @param {number} dt
    */
   function tickTitleRainDrops(dt) {
@@ -214,7 +114,6 @@
    * @param {number} dt
    */
   function tickTitleFxEngine(dt) {
-    tickTitleRainAudio();
     tickTitleRainDrops(dt);
   }
 
@@ -245,21 +144,9 @@
     }
   }
 
-  if (typeof bootEnqueueFetch === 'function') bootEnqueueFetch([TITLE_RAIN_SRC], true);
-
   const engine = global.DiVANEngine;
   if (!engine) return;
   global.tickTitleFx = tickTitleFxEngine;
   global.drawTitleRain = drawTitleRainEngine;
-  engine.titleFx = { tick: tickTitleFxEngine, draw: drawTitleRainEngine, halt: haltTitleRain };
-  if (typeof applyAudioSettings === 'function') {
-    engine.wrap('applyAudioSettings', function (orig) {
-      return function () {
-        orig();
-        const ctx = rainCtx();
-        if (rainGain && ctx) rainGain.gain.setTargetAtTime(rainVol(), ctx.currentTime, 0.05);
-        if (!titleRainScreen() || rainVol() <= 0) haltTitleRain();
-      };
-    });
-  }
+  engine.titleFx = { tick: tickTitleFxEngine, draw: drawTitleRainEngine };
 })(typeof window !== 'undefined' ? window : globalThis);

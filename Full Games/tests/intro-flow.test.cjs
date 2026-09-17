@@ -24,6 +24,7 @@ function bootIntro() {
     console,
     CHAR_INTROS: [{ name: 'МЕДВЕДЬ' }, null],
     save: { char: 0 },
+    selTitle: 0,
     selChar: -1,
     bioOpen: 3,
     state: 'bio',
@@ -51,8 +52,10 @@ function bootIntro() {
     persist: function () { g._persisted = true; },
     newSave: function () { return { char: 0 }; },
     carEngineHalt: function () { g._engHalt = true; },
+    carTiresHalt: function () { g._tiresHalted = (g._tiresHalted || 0) + 1; },
     initTitleRace: function () { g._titleRace = true; },
     sClick: function () { g._click = true; },
+    startWorldIntro: function () { g._worldIntro = true; },
     clearKeys: function () { g._keys = true; },
     cameraSetupHint: false,
     cameraSetupNext: 'char',
@@ -99,11 +102,14 @@ test('Комикс Медведя, выбор машины и титул', () =>
   g.state = 'press';
   g.dismissPressStart();
   assert.equal(g.state, 'title');
+  assert.equal(g._worldIntro, undefined);
   g.save = { car: 11 };
   g.enterCameraSetup('car');
   assert.equal(g.state, 'cameraSetup');
   assert.equal(g.cameraSetupNext, 'car');
+  assert.equal(g._tiresHalted, 1);
   g.finishCameraSetup();
+  assert.equal(g._tiresHalted, 2);
   assert.equal(g.state, 'car');
   assert.equal(g.selCar, 11);
 });

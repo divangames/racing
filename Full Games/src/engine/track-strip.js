@@ -44,13 +44,27 @@
   }
 
   /**
-   * Генератор зерна.
+   * Тот же mulberry32, что в заезде — без глобала, иначе лаборатория рисует пустую полосу.
+   * @param {number} seed
+   * @returns {function():number}
+   */
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0;
+      seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  /**
+   * Генератор зерна по ключу материала.
    * @param {string} key
    * @returns {function():number}
    */
   function rngOf(key) {
-    if (typeof mulberry === 'function') return mulberry(91 + key.length * 19 + (key.charCodeAt(0) || 0) * 7);
-    return function () { return 0.5; };
+    return mulberry32(91 + key.length * 19 + (key.charCodeAt(0) || 0) * 7);
   }
 
   /**

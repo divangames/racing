@@ -51,6 +51,23 @@
       if (isConfirm(c)) { confirmExitWarn(); return true; }
       return true;
     }
+    if (global.titleConfirm) {
+      if (c === 'ArrowLeft' || c === 'ArrowRight' || c === 'ArrowUp' || c === 'ArrowDown') {
+        global.titleConfirmSel = global.titleConfirmSel ? 0 : 1;
+        sClick();
+        return true;
+      }
+      if (isBack(c)) {
+        if (typeof closeTitleConfirm === 'function') closeTitleConfirm();
+        else global.titleConfirm = null;
+        return true;
+      }
+      if (isConfirm(c)) {
+        if (typeof confirmTitleWarn === 'function') confirmTitleWarn();
+        return true;
+      }
+      return true;
+    }
     void k;
     return false;
   }
@@ -132,6 +149,32 @@
   }
 
   /**
+   * Нижние кнопки раздела: сброс, затем применить.
+   * @param {number} rows
+   * @param {string} c
+   * @returns {'nav'|'reset'|'apply'|'row'|''}
+   */
+  function settingsFooter(rows, c) {
+    const n = rows + 2;
+    if (c === 'ArrowUp') { settingsTab = (settingsTab + n - 1) % n; sClick(); return 'nav'; }
+    if (c === 'ArrowDown') { settingsTab = (settingsTab + 1) % n; sClick(); return 'nav'; }
+    if (typeof isConfirm === 'function' ? isConfirm(c) : (c === 'Enter' || c === 'NumpadEnter')) {
+      if (settingsTab === rows) {
+        if (typeof resetSettingsPane === 'function') resetSettingsPane();
+        sClick();
+        return 'reset';
+      }
+      if (settingsTab === rows + 1) {
+        if (typeof commitSettings === 'function') commitSettings();
+        sClick();
+        return 'apply';
+      }
+      return 'row';
+    }
+    return '';
+  }
+
+  /**
    * Разделы настроек и захват клавиш управления.
    * @param {string} c
    * @returns {boolean}
@@ -139,54 +182,53 @@
   function options(c) {
     if (state !== 'settings') return false;
     if (settingsState === 'main') {
-      if (c === 'ArrowUp') { settingsTab = (settingsTab + 3) % 4; sClick(); }
-      if (c === 'ArrowDown') { settingsTab = (settingsTab + 1) % 4; sClick(); }
+      const n = 6;
+      if (c === 'ArrowUp') { settingsTab = (settingsTab + n - 1) % n; sClick(); }
+      if (c === 'ArrowDown') { settingsTab = (settingsTab + 1) % n; sClick(); }
       if (isConfirm(c)) {
-        if (settingsTab === 0) { settingsState = 'graphics'; settingsTab = 0; }
-        else if (settingsTab === 1) { settingsState = 'sound'; settingsTab = 0; }
-        else if (settingsTab === 2) { settingsState = 'game'; settingsTab = 0; }
-        else leaveSettings();
-        sClick();
+        if (settingsTab === 4) { if (typeof resetSettingsPane === 'function') resetSettingsPane('main'); sClick(); }
+        else if (settingsTab === 5) { if (typeof commitSettings === 'function') commitSettings(); sClick(); }
+        else if (settingsTab === 0) { settingsState = 'graphics'; settingsTab = 0; sClick(); }
+        else if (settingsTab === 1) { settingsState = 'sound'; settingsTab = 0; sClick(); }
+        else if (settingsTab === 2) { settingsState = 'game'; settingsTab = 0; sClick(); }
+        else { leaveSettings(); sClick(); }
       }
       if (isBack(c)) { leaveSettings(); sClick(); return true; }
     } else if (settingsState === 'graphics') {
-      const n = gfxOpts().length;
+      const rows = gfxOpts().length;
       if (isBack(c)) { settingsState = 'main'; settingsTab = 0; sClick(); return true; }
-      if (c === 'ArrowUp') { settingsTab = (settingsTab + n - 1) % n; sClick(); }
-      if (c === 'ArrowDown') { settingsTab = (settingsTab + 1) % n; sClick(); }
-      if (isConfirm(c)) {
+      const foot = settingsFooter(rows, c);
+      if (foot === 'nav' || foot === 'reset' || foot === 'apply') return true;
+      if (foot === 'row' && isConfirm(c)) {
         const opt = gfxOpts()[settingsTab];
-        if (opt.type === 'back') { settingsBack(); sClick(); }
-        else if (opt.type !== 'zoom' && nudgeGraphics(1)) sClick();
+        if (opt && opt.type !== 'zoom' && nudgeGraphics(1)) sClick();
       }
       if (c === 'ArrowLeft' || c === 'ArrowRight') {
-        if (nudgeGraphics(c === 'ArrowRight' ? 1 : -1)) sClick();
+        if (settingsTab < rows && nudgeGraphics(c === 'ArrowRight' ? 1 : -1)) sClick();
       }
     } else if (settingsState === 'sound') {
-      const n = sndOpts().length;
+      const rows = sndOpts().length;
       if (isBack(c)) { settingsState = 'main'; settingsTab = 0; sClick(); return true; }
-      if (c === 'ArrowUp') { settingsTab = (settingsTab + n - 1) % n; sClick(); }
-      if (c === 'ArrowDown') { settingsTab = (settingsTab + 1) % n; sClick(); }
-      if (isConfirm(c)) {
-        if (sndOpts()[settingsTab].type === 'back') { settingsState = 'main'; settingsTab = 0; sClick(); }
-        else if (nudgeSound(1)) sClick();
+      const foot = settingsFooter(rows, c);
+      if (foot === 'nav' || foot === 'reset' || foot === 'apply') return true;
+      if (foot === 'row' && isConfirm(c)) {
+        if (nudgeSound(1)) sClick();
       }
       if (c === 'ArrowLeft' || c === 'ArrowRight') {
-        if (nudgeSound(c === 'ArrowRight' ? 1 : -1)) sClick();
+        if (settingsTab < rows && nudgeSound(c === 'ArrowRight' ? 1 : -1)) sClick();
       }
     } else if (settingsState === 'game') {
-      const n = gameOpts().length;
+      const rows = gameOpts().length;
       if (isBack(c)) { settingsBack(); sClick(); return true; }
-      if (c === 'ArrowUp') { settingsTab = (settingsTab + n - 1) % n; sClick(); }
-      if (c === 'ArrowDown') { settingsTab = (settingsTab + 1) % n; sClick(); }
-      if (isConfirm(c)) {
+      const foot = settingsFooter(rows, c);
+      if (foot === 'nav' || foot === 'reset' || foot === 'apply') return true;
+      if (foot === 'row' && isConfirm(c)) {
         const opt = gameOpts()[settingsTab];
-        if (opt.type === 'back') { settingsBack(); sClick(); }
-        else if (opt.to) { settingsState = opt.to; settingsTab = 0; sClick(); }
+        if (opt && opt.to) { settingsState = opt.to; settingsTab = 0; sClick(); }
       }
     } else if (settingsState === 'controls') {
       const keysList = controlOpts();
-      const n = keysList.length;
+      const rows = keysList.length;
       if (isBack(c)) {
         if (controlCaptureKey) {
           if (captureBackup) settings.controls[controlCaptureKey] = captureBackup;
@@ -223,13 +265,11 @@
         saveSettings(); sClick();
         return true;
       }
-      if (c === 'ArrowUp') { settingsTab = (settingsTab + n - 1) % n; sClick(); }
-      if (c === 'ArrowDown') { settingsTab = (settingsTab + 1) % n; sClick(); }
-      if (isConfirm(c)) {
+      const foot = settingsFooter(rows, c);
+      if (foot === 'nav' || foot === 'reset' || foot === 'apply') return true;
+      if (foot === 'row' && isConfirm(c)) {
         const key = keysList[settingsTab];
-        if (key.type === 'back') { settingsBack(); sClick(); }
-        else if (key.key === '_reset') { resetControls(); sClick(); }
-        else {
+        if (key && key.key && key.key !== '_reset') {
           controlCaptureKey = key.key;
           captureBackup = (settings.controls[key.key] || []).slice();
           settings.controls[key.key] = captureBackup.slice();

@@ -30,8 +30,8 @@
     }
     if (state === 'gym') {
       if (isBack(c)) { state = 'garage'; sClick(); return true; }
-      if (c === 'ArrowUp') { gymSel = (gymSel + 3) % 4; sClick(); return true; }
-      if (c === 'ArrowDown') { gymSel = (gymSel + 1) % 4; sClick(); return true; }
+      if (c === 'ArrowUp') { gymSel = (gymSel + 4) % 5; sClick(); return true; }
+      if (c === 'ArrowDown') { gymSel = (gymSel + 1) % 5; sClick(); return true; }
       if (isConfirm(c)) { buyGym(gymSel); return true; }
       return true;
     }
@@ -184,37 +184,25 @@
    */
   function hub(c) {
     if (state === 'title') {
+      if (typeof isBack === 'function' ? isBack(c) : c === 'Escape') {
+        if (typeof openExitWarn === 'function') openExitWarn();
+        sClick();
+        return true;
+      }
       const n = g._titleItems ? g._titleItems.length : 2;
-      if (c === 'ArrowUp') { selTitle = (selTitle + n - 1) % n; resetArm = false; sClick(); }
-      if (c === 'ArrowDown') { selTitle = (selTitle + 1) % n; resetArm = false; sClick(); }
+      if (c === 'ArrowUp') { selTitle = (selTitle + n - 1) % n; sClick(); }
+      if (c === 'ArrowDown') { selTitle = (selTitle + 1) % n; sClick(); }
       if (isConfirm(c)) {
         const items = g._titleItems || [];
-        const it = items[selTitle];
-        if (!it) return true;
-        if (it === 'КАМПАНИЯ') {
-          resetArm = false;
-          if (typeof storyStartNewCampaign === 'function') storyStartNewCampaign();
-        } else if (it === 'ПРОДОЛЖИТЬ КАМПАНИЮ') {
-          resetArm = false;
-          if (typeof storyContinueCampaign === 'function') storyContinueCampaign();
-        } else if (it && it.startsWith('НОВАЯ')) {
-          resetArm = false; save = newSave(); persist();
-          selChar = 0; selCar = 0; carConfirmed = false; enterCameraSetup();
-        } else if (it && it.startsWith('ПРОДОЛЖИТЬ')) { resetArm = false; loadSave(); state = 'garage'; }
-        else if (it && it.startsWith('ЗАГРУЗИТЬ')) { resetArm = false; slotReturn = 'title'; state = 'slotSelect'; slotSelectMode = 'load'; slotSelectIndex = 0; }
-        else if (it && it.startsWith('НАСТРОЙКИ')) { resetArm = false; openSettings('title'); }
-        else if (it && it.startsWith('ДОСТИЖЕНИЯ')) { resetArm = false; openAchievements('title'); }
-        else if (it && it.startsWith('ЧИТЫ')) { resetArm = false; state = 'cheats'; cheatMsgT = 0; }
-        else if (it && it.startsWith('ВЫБОР ТРАССЫ')) { resetArm = false; enterTrackPick('title'); }
-        else if (it && (it.startsWith('DIVANENGINE') || it.startsWith('ЛАБОРАТОРИЯ'))) { resetArm = false; openLabWarn(); }
-        else if (it && it.startsWith('СБРОС')) {
-          if (!resetArm) { resetArm = true; sClick(); }
-          else {
-            persistDrop(SKEY);
-            save = null;
-            resetArm = false; sBoom();
-          }
-        } else if (it && it.startsWith('ВЫХОД')) { resetArm = false; openExitWarn(); }
+        const row = items[selTitle];
+        const menu = global.DiVANEngine && global.DiVANEngine.titleMenu;
+        const id = menu && menu.titleItemId ? menu.titleItemId(row) : (row && row.id) || '';
+        const storyKey = typeof STORY_SKEY === 'string' ? STORY_SKEY : 'rnr_ru_story_v1';
+        const peek = {
+          free: (typeof persistPeekSave === 'function' && typeof SKEY === 'string') ? persistPeekSave(SKEY) : save,
+          story: typeof persistPeekSave === 'function' ? persistPeekSave(storyKey) : null
+        };
+        if (menu && typeof menu.applyTitleAction === 'function') menu.applyTitleAction(id, peek);
         sClick();
       }
       return true;
