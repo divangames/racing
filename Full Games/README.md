@@ -75,7 +75,7 @@
 ## Деплой для сайта
 
 Презентация на GitHub Pages: https://divangames.github.io/racing/  
-Скачать лаунчер: https://github.com/divangames/racing/releases/download/launcher-0.2.2.10/KolesnicaVoyny-0.2.2.10.msi
+Скачать лаунчер: https://github.com/divangames/racing/releases/download/launcher-0.2.2.11/KolesnicaVoyny-0.2.2.11.msi
 
 На сайте отдаём MSI лаунчера. Игра — отдельный zip в GitHub Releases. После первой установки лаунчер обновляет **сам себя** с тега `launcher-*`, игру — с тега `game-*`.
 
