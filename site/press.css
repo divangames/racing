@@ -209,7 +209,7 @@ h3 { font-size: 1.35rem; margin: 0 0 0.5rem; text-transform: uppercase; }
 .nav__links {
   margin-left: auto;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: flex-end;
   gap: 1.2rem;
 }
@@ -223,6 +223,7 @@ h3 { font-size: 1.35rem; margin: 0 0 0.5rem; text-transform: uppercase; }
 }
 
 .nav__links a:hover { color: var(--gold); }
+.nav__links a:focus-visible { outline: 2px solid var(--gold); outline-offset: 5px; }
 
 .hero {
   position: relative;

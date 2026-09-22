@@ -73,13 +73,11 @@
 
 .roster {
   background: var(--void);
-  height: 100dvh;
-  box-sizing: border-box;
-  padding: 4.8rem var(--pad) 0.8rem;
+  min-height: 100dvh;
+  padding: 4.8rem var(--pad) 1.6rem;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(30rem, auto) auto;
   gap: 0.7rem;
-  overflow: hidden;
 }
 
 .roster .sec {
@@ -96,7 +94,7 @@
   grid-template-columns: 13.2rem minmax(0, 1fr);
   gap: 0.8rem;
   min-height: 0;
-  height: 100%;
+  height: min(68dvh, 42rem);
 }
 
 .roster__list {
@@ -143,6 +141,7 @@
 }
 
 .pilot.is-on img { filter: none; }
+.pilot:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
 
 .dossier {
   position: relative;
@@ -290,10 +289,10 @@ blockquote {
 }
 
 @media (max-width: 1100px) {
+  .world, .roster, .fight, .shots, .plan, .invite,
+  .plan__drop, .plan__todo { scroll-margin-top: 7rem; }
+
   .roster {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
     grid-template-rows: auto auto auto;
   }
 
@@ -301,6 +300,14 @@ blockquote {
   .fight__grid { grid-template-columns: 1fr; }
 
   .roster__layout { height: auto; }
+  .roster__list {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.4rem;
+    scroll-snap-type: x proximity;
+  }
+  .pilot { flex: 0 0 11rem; scroll-snap-align: start; }
   .dossier { height: min(70dvh, 36rem); }
   .dossier__hero img:first-child { max-width: 100%; }
   .dossier__text {
@@ -309,15 +316,41 @@ blockquote {
     justify-content: flex-end;
   }
 
-  .nav__links { display: none; }
+  .nav { flex-wrap: wrap; gap: 0.55rem 1rem; }
+  .nav__links {
+    order: 3;
+    flex: 0 0 100%;
+    justify-content: flex-start;
+    gap: 1.1rem;
+    margin: 0;
+    padding: 0.35rem 0 0.2rem;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+  .nav__links a { flex: 0 0 auto; white-space: nowrap; }
+  .nav > .btn { margin-left: auto; }
 }
 
 @media (max-width: 720px) {
+  .nav { padding-block: 0.55rem; }
+  .nav__brand { min-width: 0; font-size: 0.77rem; }
+  .nav__brand span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nav > .btn { padding-inline: 0.6rem; font-size: 0.75rem; }
   .hero { min-height: 92vh; }
   .hero__copy { padding-top: 6.5rem; }
   .hero__stamp { display: none; }
   .world__frame img { height: 22rem; }
   .comics img { height: 7.2rem; }
+  .dossier { height: auto; }
+  .dossier__hero { position: relative; height: 18rem; }
+  .dossier__hero img:first-child { max-width: 100%; }
+  .dossier__text {
+    position: relative;
+    width: 100%;
+    padding: 1.2rem;
+    background: #120d12;
+    overflow: visible;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
