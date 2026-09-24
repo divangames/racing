@@ -66,7 +66,7 @@ test('Заезд подключает career-econ до отрисовки кар
 });
 
 test('Третья победа даёт бонус серии, реванш не двигает этап', () => {
-  const src = fs.readFileSync(path.resolve(__dirname, '../../career.js'), 'utf8');
+  const src = fs.readFileSync(path.resolve(__dirname, '../content/career.js'), 'utf8');
   assert(src.includes('function careerAfterResults('));
   const g = bootEcon();
   g.careerAfterResults(2, []);
@@ -84,4 +84,68 @@ test('Третья победа даёт бонус серии, реванш н�
   g.careerDo('rematch');
   assert.equal(g.raceTrackOverride, 1);
   assert.equal(g.state, 'garage');
+});
+
+test('Сход оставляет этап доступным для повтора', () => {
+  const g = bootEcon();
+  g.R.dnf = true;
+  g.R.place = 1;
+  g.R.prize = [200, 0, 50];
+  g.careerAfterResults(2, []);
+  assert.equal(g.save.race, 2);
+  assert.equal(g.save.winStreak, 0);
+  assert.equal(g.R.career.news[0].title, 'СХОД');
+});
+
+test('Финиш вне подиума даёт небольшой бюджет, подиум остаётся выгоднее', () => {
+  [3, 4, 5].forEach(function (place) {
+    const g = bootEcon();
+    g.P = { finished: true };
+    g.save.race = 0;
+    g.R.place = place;
+    g.R.prize = [480, 300, 180, 70, 0, 0];
+    const paidForPlace = g.R.prize[place];
+    g.careerAfterResults(0, []);
+    const total = paidForPlace + g.R.finishSupportPay;
+    assert.equal(total, [120, 96, 72][place - 3]);
+    assert(total < g.R.prize[2]);
+    assert.equal(g.save.cash, 1000 + g.R.finishSupportPay);
+    assert(g.R.career.news.some(function (n) { return n.kind === 'finish'; }));
+  });
+});
+
+test('Бонус дохода учитывается один раз; реванш, сход и незаконченный заезд не дают поддержки', () => {
+  const g = bootEcon();
+  g.P = { finished: true };
+  g.save.race = 0;
+  g.R.place = 3;
+  g.R.prize = [480, 300, 180, 77, 0, 0];
+  g.incomePayout = function (n) { return Math.round(n * 1.1); };
+  g.careerAfterResults(0, []);
+  assert.equal(g.R.finishSupportPay, 55);
+  const cash = g.save.cash;
+  g.careerAfterResults(1, []);
+  assert.equal(g.save.cash, cash, 'один результат не даёт повторной поддержки');
+  [function () { g.R.countsForCareer = false; }, function () { g.R.dnf = true; }, function () { g.P.finished = false; }].forEach(function (setup) {
+    g.R.countsForCareer = true;
+    g.R.dnf = false;
+    g.P.finished = true;
+    setup();
+    assert.equal(g.DiVANEngine.careerEcon.finishSupportPay(), 0);
+  });
+});
+
+test('Сход с первым местом не считается победой, лаборатория не меняет карьеру', () => {
+  const g = bootEcon();
+  g.R.dnf = true;
+  g.careerAfterResults(2, []);
+  assert.equal(g.save.careerWins, 2);
+  assert.equal(g.save.winStreak, 0);
+  assert.equal(g.save.cash, 1000);
+  assert.equal(g.save.race, 2);
+  g.labTest = true;
+  g.R.dnf = false;
+  const before = JSON.stringify(g.save);
+  g.careerAfterResults(2, []);
+  assert.equal(JSON.stringify(g.save), before);
 });

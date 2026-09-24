@@ -5,13 +5,16 @@
 ////////////////////////////////////////////////////////
 (function () {
 function frameEngine(now){
- const dt=Math.min(.1,Math.max(0,(now-last)/1000));last=now;gt+=dt;
+ const elapsed=Math.max(0,(now-last)/1000);
+ const dt=elapsed>.5?0:Math.min(.25,elapsed);last=now;gt+=dt;
+ if(window.DiVANEngine&&DiVANEngine.input&&DiVANEngine.input.pollPad)DiVANEngine.input.pollPad(state,dt,press);
  if(window.RnRVfx&&RnRVfx.ok)RnRVfx.tick(state==='race'&&paused?0:dt);
- fpsSmooth=lerp(fpsSmooth,1/dt,.1);
+ if(elapsed>0)fpsSmooth=lerp(fpsSmooth,1/elapsed,.1);
  if(saveFlash>0)saveFlash-=dt;
  if(garMsgT>0)garMsgT-=dt;
  if(cheatMsgT>0)cheatMsgT-=dt;
  updateView();
+ if(DiVANEngine.audioMix)DiVANEngine.audioMix.sync();
  g.setTransform(1,0,0,1,0,0);
  g.fillStyle='#050409';g.fillRect(0,0,cv.width,cv.height);
  if(viewOX>0||viewOY>0){

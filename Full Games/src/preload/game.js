@@ -10,6 +10,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('rnrDesktop', {
   isDesktop: true,
+  screenState() {
+    return ipcRenderer.sendSync('game:screen-state');
+  },
+  setScreen(patch) {
+    return ipcRenderer.invoke('game:set-screen', patch);
+  },
   quit() {
     return ipcRenderer.invoke('game:quit');
   },

@@ -86,7 +86,7 @@ test('Заданный автором верхний маршрут не доп�
 });
 
 test('Квадрат контрольных точек даёт замкнутый сплайн и зоны', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function buildTrack('));
   assert(html.includes('function roadMaterial('));
   const g = bootTrack();

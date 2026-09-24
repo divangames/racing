@@ -75,7 +75,7 @@ test('Заезд подключает gfx, театр и persist-io до кол�
 });
 
 test('Деньги, кэф, перенос строк, эфир и диск сейва', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function fm('));
   assert(html.includes('function drawTheatreBack('));
   assert(html.includes('function persistRead('));

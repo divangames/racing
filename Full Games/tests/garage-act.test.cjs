@@ -45,7 +45,7 @@ test('Заезд подключает действие гаража и мода�
 });
 
 test('Строки гаража, пара Нет/Да и край модалки', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function garageAction('));
   assert(html.includes('function drawLabWarn('));
   assert(html.includes('function enterLabEditor('));
@@ -66,4 +66,36 @@ test('Строки гаража, пара Нет/Да и край модалки
   const hit = g.DiVANEngine.dialogs.hitInclusive;
   assert.equal(hit(0, 10, { x: 0, y: 0, w: 20, h: 20 }), true);
   assert.equal(hit(-1, 10, { x: 0, y: 0, w: 20, h: 20 }), false);
+});
+
+test('Превью двигателя совпадает с купленными характеристиками и не меняет сейв', () => {
+  const g = bootGarage();
+  g.CHARS = [{ spd: 3, crn: 3, grt: 3 }];
+  g.CARS = [{ idx: 0, hp: 100, top: 1, acc: 1, crn: 1 }];
+  g.save = { char: 0, car: 0, cash: 900, tuning: { 0: {} }, cstats: {} };
+  g.UP_COSTS = { eng: [900, 1600, 2800, 4800, 8000, 13000] };
+  g.UP_INFO = { eng: { n: 'ДВИГАТЕЛЬ', d: '+6% скорость' } };
+  g.clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  g.stats = function () {};
+  g.persist = function () { g._persisted = true; };
+  g.SFX = { play: function () {} };
+  g.fm = String;
+  g.sHit = function () {};
+  g.garMsg = '';
+  g.garMsgT = 0;
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/stats.js'), 'utf8'), g);
+  const before = JSON.stringify(g.save);
+  const preview = g.DiVANEngine.garageAct.tuningPreview(g.CHARS[0], g.CARS[0], g.save.tuning[0], 'eng');
+  assert.match(preview, /162 → 171 км\/ч · разгон \+8%/);
+  assert.equal(JSON.stringify(g.save), before);
+  g.garageAction(0, 1);
+  assert.equal(g.save.cash, 0);
+  assert.equal(g.save.tuning[0].eng, 1);
+  assert.equal(Math.round(g.stats(g.CHARS[0], g.CARS[0], g.save.tuning[0]).top * .45), 171);
+  assert.equal(g.garMsg, preview);
+  assert.equal(g._persisted, true);
+  g.garageAction(0, 1);
+  assert.equal(g.save.cash, 0);
+  assert.equal(g.save.tuning[0].eng, 1);
+  assert.match(g.garMsg, /НЕ ХВАТАЕТ 1600/);
 });

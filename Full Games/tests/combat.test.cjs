@@ -92,7 +92,7 @@ test('Заезд подключает бой после финиша', () => {
 });
 
 test('Щит, лазер, смерть, респаун Дьявола, мина и нитро', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function dmgRacer('));
   assert(html.includes('function killRacer('));
   assert(html.includes('function respawn('));

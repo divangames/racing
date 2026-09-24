@@ -2,6 +2,8 @@
   "id": "custom_02",
   "name": "ЭСТАКАДА ВЬЮГИ · ЧЕРНОВИК",
   "published": true,
+  "tactics": null,
+  "crossingMode": "overpass",
   "autoHazards": true,
   "theme": {
     "ground": "#a8d5e8",
@@ -14,7 +16,8 @@
     "groundSrc": "",
     "roadSrc": "",
     "railSrc": "",
-    "groundScale": 1
+    "groundScale": 1,
+    "crowdSound": true
   },
   "zones": [
     {
@@ -33,6 +36,8 @@
       "material": "asphalt"
     }
   ],
+  "gaps": [],
+  "decks": [],
   "cps": [
     [
       1800,
@@ -167,12 +172,12 @@
       "bonus": 230,
       "radius": 88,
       "entry": [
-        750,
-        900
+        1253.6949200474176,
+        1408.0231140563128
       ],
       "exit": [
-        2650,
-        1300
+        3153.6949200474173,
+        1808.0231140563128
       ]
     }
   ]

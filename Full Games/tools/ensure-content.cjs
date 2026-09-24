@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const GAME_ROOT = path.resolve(__dirname, '../..');
+const GAME_ROOT = path.resolve(__dirname, '..', require('../config/game.json').contentDevRelative);
 
 const ROOT_FILES = [
   'rnr.html',
@@ -46,7 +46,8 @@ const ASSET_DIRS = [
   'assets/sounds',
   'assets/music',
   'assets/object',
-  'assets/ui'
+  'assets/ui',
+  'assets/video'
 ];
 
 /** Доп. флаги robocopy для отдельных каталогов ассетов. */
@@ -72,7 +73,8 @@ const CORE_SOUND_FILES = [
 
 /** Дисклеймер 21+ на заставке — без файла чёрный экран вместо арта. */
 const CORE_UI_FILES = [
-  'assets/ui/disclaimer/disclaimer-21plus.svg'
+  'assets/ui/disclaimer/disclaimer-21plus.svg',
+  'assets/video/divan_intro.mp4'
 ];
 
 /** Фон титула: манифест и оба кадра Медведя. */

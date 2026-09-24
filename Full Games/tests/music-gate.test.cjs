@@ -40,13 +40,17 @@ test('Заезд подключает music-gate после soundtrack', () => {
 });
 
 test('Гонка — racing, гараж — garage, выключатель глушит', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function musicOn('));
   assert(html.includes('function musicCat('));
   const g = bootMusic();
   g.state = 'title';
   assert.equal(g.musicCat(), 'cast');
   g.state = 'press';
+  assert.equal(g.musicCat(), 'cast');
+  g.state = 'settings';
+  assert.equal(g.musicCat(), 'cast');
+  g.state = 'cameraSetup';
   assert.equal(g.musicCat(), 'cast');
   g.state = 'race';
   assert.equal(g.musicCat(), 'racing');

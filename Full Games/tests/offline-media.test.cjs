@@ -12,7 +12,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const ROOT = path.resolve(__dirname, '../..');
+const ROOT = path.resolve(__dirname, '../content');
 const CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load', 'cast'];
 const AUDIO_EXT = /\.(mp3|ogg|wav|m4a)$/i;
 

@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const ROOT = path.resolve(__dirname, '../..');
+const ROOT = path.resolve(__dirname, '../content');
 const ENGINE = path.resolve(__dirname, '../src/engine');
 const CFG = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../config/engine.json'), 'utf8'));
 

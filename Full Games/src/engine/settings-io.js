@@ -13,7 +13,7 @@
    * @returns {boolean}
    */
   function abilityBindsLookLegacyEngine(arr) {
-    if (!arr || !arr.length) return true;
+    if (!Array.isArray(arr) || !arr.length) return true;
     const modern = new Set(['KeyZ', 'KeyP', 'KeyX', 'KeyC', 'BracketLeft', 'BracketRight']);
     if (arr.some(function (k) { return modern.has(k); })) return false;
     const legacy = new Set(['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'Space', 'ShiftLeft', 'ShiftRight']);
@@ -24,10 +24,14 @@
    * Дописывает отсутствующие действия из каталога HTML.
    */
   function normalizeControlsEngine() {
-    if (!settings.controls) settings.controls = {};
+    if (!settings.controls || typeof settings.controls !== 'object' || Array.isArray(settings.controls)) settings.controls = {};
+    const reserved = new Set(['KeyM', 'KeyR', 'F3']);
     for (const k of Object.keys(DEFAULT_CONTROLS)) {
-      if (!settings.controls[k] || !settings.controls[k].length)
-        settings.controls[k] = DEFAULT_CONTROLS[k].slice();
+      const raw = settings.controls[k];
+      const valid = Array.isArray(raw) ? raw.filter(function (code) {
+        return typeof code === 'string' && code.length > 0 && code.length < 64 && !reserved.has(code);
+      }).slice(0, 2) : [];
+      settings.controls[k] = valid.length ? Array.from(new Set(valid)) : DEFAULT_CONTROLS[k].slice();
     }
     if (abilityBindsLookLegacy(settings.controls.fire)) {
       settings.controls.fire = DEFAULT_CONTROLS.fire.slice();
@@ -43,7 +47,7 @@
   function normalizeSettingsEngine() {
     if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
       settings = {
-        graphics: { resolution: 0, particles: 'high', skids: true, weather: true, shake: true, showFps: false, cameraZoom: 2 },
+        graphics: defaultGraphics(),
         controls: {
           up: ['KeyW', 'ArrowUp'], down: ['KeyS', 'ArrowDown'],
           left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'],
@@ -54,18 +58,28 @@
       };
       return;
     }
-    if (!settings.graphics || typeof settings.graphics !== 'object')
-      settings.graphics = { resolution: 0, particles: 'high', skids: true, weather: true, shake: true, showFps: false, cameraZoom: 2 };
-    else if (settings.graphics.cameraZoom == null) settings.graphics.cameraZoom = 2;
-    if (!settings.sound || typeof settings.sound !== 'object')
-      settings.sound = { music: 50, sfx: 80, biome: 80, crowd: 80, musicOn: true, sfxOn: true };
-    else {
-      if (settings.sound.music == null) settings.sound.music = 50;
-      if (settings.sound.sfx == null) settings.sound.sfx = 80;
-      if (settings.sound.biome == null) settings.sound.biome = 80;
-      if (settings.sound.crowd == null) settings.sound.crowd = 80;
-      if (settings.sound.musicOn == null) settings.sound.musicOn = true;
-      if (settings.sound.sfxOn == null) settings.sound.sfxOn = true;
+    const graphics = defaultGraphics();
+    if (!settings.graphics || typeof settings.graphics !== 'object' || Array.isArray(settings.graphics)) settings.graphics = {};
+    for (const key of Object.keys(graphics)) {
+      const value = settings.graphics[key];
+      if (typeof graphics[key] === 'boolean') settings.graphics[key] = typeof value === 'boolean' ? value : graphics[key];
+    }
+    settings.graphics.resolution = Number.isInteger(settings.graphics.resolution) && settings.graphics.resolution >= 0 &&
+      (typeof RESOLUTIONS === 'undefined' || settings.graphics.resolution < RESOLUTIONS.length) ? settings.graphics.resolution : 0;
+    settings.graphics.displayId = Number.isInteger(settings.graphics.displayId) ? settings.graphics.displayId : null;
+    settings.graphics.particles = ['low', 'medium', 'high', 'off'].includes(settings.graphics.particles) ? settings.graphics.particles : graphics.particles;
+    const zoomMin = typeof CAM_ZOOM_MIN === 'number' ? CAM_ZOOM_MIN : 1;
+    const zoomMax = typeof CAM_ZOOM_MAX === 'number' ? CAM_ZOOM_MAX : 3;
+    settings.graphics.cameraZoom = Number.isFinite(settings.graphics.cameraZoom)
+      ? Math.max(zoomMin, Math.min(zoomMax, settings.graphics.cameraZoom)) : graphics.cameraZoom;
+    settings.graphics.shakeStrength = Number.isFinite(settings.graphics.shakeStrength)
+      ? Math.max(0, Math.min(100, settings.graphics.shakeStrength)) : settings.graphics.shake === false ? 0 : 60;
+    const sound = defaultSound();
+    if (!settings.sound || typeof settings.sound !== 'object' || Array.isArray(settings.sound)) settings.sound = {};
+    for (const key of Object.keys(sound)) {
+      const value = settings.sound[key];
+      if (typeof sound[key] === 'boolean') settings.sound[key] = typeof value === 'boolean' ? value : sound[key];
+      else settings.sound[key] = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : sound[key];
     }
     normalizeControls();
   }
@@ -91,7 +105,7 @@
 
   /** Заводская графика. @returns {object} */
   function defaultGraphics() {
-    return { resolution: 0, particles: 'high', skids: true, weather: true, shake: true, showFps: false, cameraZoom: 2 };
+    return { resolution: 0, fullscreen: true, displayId: null, particles: 'high', skids: true, weather: true, shake: true, shakeStrength: 60, showFps: false, cameraZoom: 2, combatHud: true };
   }
 
   /** Заводской звук. @returns {object} */
@@ -117,6 +131,14 @@
 
   /** Снимок на входе в настройки. */
   function beginSettingsDraft() {
+    if (global.rnrDesktop && typeof global.rnrDesktop.screenState === 'function') {
+      try {
+        const state = global.rnrDesktop.screenState();
+        global.rnrDisplayChoices = state.displays || [];
+        settings.graphics.fullscreen = state.settings.fullscreen;
+        settings.graphics.displayId = state.settings.displayId;
+      } catch (err) { /* браузерный режим и старый клиент */ }
+    }
     settingsDraft = cloneSettings(settings);
     settingsCommitLock = false;
     global._settingsDraftOn = true;
@@ -140,6 +162,11 @@
       settingsCommitLock = false;
     }
     liveApplySettings();
+    if (global.rnrDesktop && typeof global.rnrDesktop.setScreen === 'function') {
+      global.rnrDesktop.setScreen({ fullscreen: settings.graphics.fullscreen, displayId: settings.graphics.displayId })
+        .then(function (next) { settings.graphics.displayId = next.displayId; })
+        .catch(function (err) { console.error('Не удалось применить настройки экрана', err); });
+    }
   }
 
   /**

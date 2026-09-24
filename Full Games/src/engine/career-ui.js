@@ -13,6 +13,7 @@
    * @returns {string}
    */
   function careerHeroLine(place) {
+    if (typeof R !== 'undefined' && R && R.dnf) return 'ЭТАП ЖДЁТ РЕВАНША';
     if (place === 0) return 'ТЫ РАЗОРВАЛ КЛЕТКУ';
     if (place <= 2) return 'ПОДИУМ. ДЕНЬГИ ЕСТЬ.';
     return 'СЛЕДУЮЩИЙ ЗАЕЗД ВСЁ ЕЩЁ ТВОЙ';
@@ -108,7 +109,7 @@
     const age = reduce ? 9 : Math.max(0, gt - (brief.t0 || 0));
     drawTheatreBack();
     const pad = 40;
-    const ink = R.place === 0 ? '#ffd23f' : R.place <= 2 ? '#ff9d2e' : '#e8e2d0';
+    const ink = R.dnf ? '#ff6b4a' : R.place === 0 ? '#ffd23f' : R.place <= 2 ? '#ff9d2e' : '#e8e2d0';
     txt(g, 'ЧТО ДАЛЬШЕ', pad, 52, 32, ink);
     txt(g, (R.T && R.T.name) || '', W / 2, 48, 14, '#8f88a0', 'center', F_B);
     const cash = fm(save.cash);
@@ -119,12 +120,10 @@
 
     const heroY = 88;
     const heroH = 118;
-    rr(g, pad, heroY, W - pad * 2, heroH, 16);
-    g.fillStyle = 'rgba(18,15,26,.92)'; g.fill();
-    g.strokeStyle = ink + '66'; g.lineWidth = 2; g.stroke();
+    panel(g, pad, heroY, W - pad * 2, heroH, '#141c23', '#364550', 7);
     const pop = reduce ? 1 : Math.min(1, age / 0.28);
     g.globalAlpha = pop;
-    txt(g, careerPlaceWord(R.place), pad + 28, heroY + 36, 18, ink, 'left', F_B);
+    txt(g, R.dnf ? 'СХОД' : careerPlaceWord(R.place), pad + 28, heroY + 36, 18, ink, 'left', F_B);
     const nextDef = TRACKDEFS[save.race % TRACKDEFS.length];
     txt(g, careerHeroLine(R.place), pad + 28, heroY + 72, 28, '#e8e2d0', 'left');
     txt(g, nextDef ? ('этап ' + (save.race + 1) + ' · ' + nextDef.name) : '', pad + 28, heroY + 98, 14, '#8f88a0', 'left', F_B);
@@ -139,9 +138,8 @@
       const y = listTop + i * (rowH + gap);
       const a = reduce ? 1 : Math.min(1, Math.max(0, (age - 0.12 - i * 0.07) / 0.2));
       g.globalAlpha = a;
-      rr(g, pad, y, W - pad * 2, rowH, 10);
-      g.fillStyle = 'rgba(16,13,22,.94)'; g.fill();
-      g.fillStyle = n.col || '#ffd23f';
+      panel(g, pad, y, W - pad * 2, rowH, '#141c23', '#364550', 7);
+      g.fillStyle = global.DiVANEngine && global.DiVANEngine.menu ? global.DiVANEngine.menu.color(n.col || '#ffd23f') : n.col || '#ffd23f';
       g.fillRect(pad, y + 10, 4, rowH - 20);
       txt(g, n.title, pad + 24, y + rowH * 0.38, 14, n.col || '#ffd23f', 'left', F_B);
       txt(g, n.text, pad + 24, y + rowH * 0.72, 12, '#9a93a8', 'left', F_B);

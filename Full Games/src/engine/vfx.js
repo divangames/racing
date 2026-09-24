@@ -16,7 +16,7 @@
    */
   function vfxAllowed(vfx, gfx, reduce) {
     if (!vfx || !vfx.ok) return false;
-    if (!gfx || gfx.particles === 'low') return false;
+    if (!gfx || gfx.particles === 'off' || gfx.particles === 'low') return false;
     if (reduce) return false;
     return true;
   }

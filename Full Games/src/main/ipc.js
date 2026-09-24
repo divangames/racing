@@ -9,19 +9,21 @@
 const { app, ipcMain } = require('electron');
 const { game, contentRoot } = require('./paths');
 const { quickCheck, fullVerify } = require('./integrity');
-const { loadSettings, saveSettings } = require('./settings');
-const { playGame, createLabWindow } = require('./windows');
+const { loadSettings } = require('./settings');
+const { playGame, createLabWindow, gameDisplays, applyGameScreen } = require('./windows');
 const { snapshot, installLatest } = require('./update/service');
 const { snapshot: launcherSnapshot, applyLatest, localVersion } = require('./update/launcher-self');
 const playerStore = require('./player-store');
+const { readChangelog } = require('./changelog');
 
 /**
  * Подписка на каналы прелоада лаунчера.
  */
 function bindLauncherIpc() {
+  ipcMain.handle('launcher:changelog', () => readChangelog(app.isPackaged, process.resourcesPath));
+
   ipcMain.handle('launcher:status', async () => {
     const check = quickCheck();
-    const settings = loadSettings();
     const install = await snapshot();
     const selfUpdate = await launcherSnapshot();
     return {
@@ -29,7 +31,6 @@ function bindLauncherIpc() {
       version: game.version,
       launcherVersion: localVersion(),
       contentRoot: contentRoot(),
-      fullscreen: settings.fullscreen,
       check,
       install,
       selfUpdate
@@ -81,9 +82,10 @@ function bindLauncherIpc() {
     return {ok:true};
   });
 
-  ipcMain.handle('launcher:set-fullscreen', async (_event, value) => {
-    return saveSettings({ fullscreen: Boolean(value) });
+  ipcMain.on('game:screen-state', (event) => {
+    event.returnValue = { settings: loadSettings(), displays: gameDisplays() };
   });
+  ipcMain.handle('game:set-screen', (_event, patch) => applyGameScreen(patch || {}));
 
   ipcMain.handle('launcher:quit', async () => {
     app.quit();

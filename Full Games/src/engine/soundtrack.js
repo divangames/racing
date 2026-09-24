@@ -10,9 +10,7 @@
     element.preload = 'auto';
     element.referrerPolicy = 'no-referrer';
     element.addEventListener('ended', () => { if(musicOn())MUSIC.next(); });
-    element.addEventListener('error', () => {
-      if(musicOn())CHIP.start(MUSIC.curCat);
-    });
+    element.addEventListener('error', () => { CHIP.stop(); });
     MUSIC.el = element;
     return element;
   }
@@ -20,19 +18,19 @@
   function playCurrent() {
     const token = ++generation;
     const audio = player();
-    audio.volume = clamp((settings.sound.music ?? 50)/100,0,1);
+    audio.volume = DiVANEngine.audioMix ? DiVANEngine.audioMix.musicLevel() : clamp((settings.sound.music ?? 50)/100,0,1);
     audio.play().then(() => {
       if(token === generation)CHIP.stop();
     }).catch(error => {
       if(token !== generation || error.name === 'AbortError' || !musicOn())return;
       if(error.name !== 'NotAllowedError')console.warn('Музыкальный файл недоступен:', MUSIC.cur);
-      CHIP.start(MUSIC.curCat);
+      CHIP.stop();
     });
   }
   /** Продолжает существующую случайную очередь, не повторяя последнюю композицию. */
   MUSIC.next = function() {
     if(!musicOn())return;
-    if(!this.list(this.curCat).length) { CHIP.start(this.curCat); return; }
+    if(!this.list(this.curCat).length) { CHIP.stop(); return; }
     this.playedCount++;
     if(!this.bag?.length)this.reshuffle();
     this.cur=this.bag.shift();
@@ -47,6 +45,8 @@
     if(!musicOn())return;
     if(element?.src)playCurrent();else if(this.curCat)this.play(this.curCat);
   };
+  // При отсутствии локальной музыки не возвращаем старый синтезированный трек.
+  CHIP.start = function() { CHIP.stop(); };
   /** Микшер применяет выключатель эффектов ко всему каналу, включая двигатель. */
   DiVANEngine.wrap('applyAudioSettings', function (applyBase) {
     return function() {

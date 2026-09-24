@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const client = path.resolve(__dirname, '..');
-const game = path.resolve(client, '..');
+const game = path.resolve(client, require('../config/game.json').contentDevRelative);
 const dest = path.join(client, 'src', 'launcher', 'media');
 const musicSrc = path.join(game, 'assets', 'music', 'Load');
 

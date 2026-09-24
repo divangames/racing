@@ -30,7 +30,7 @@
   }
   /** Семплы кузова глушат пилу; без файлов остаётся прежний тон. */
   DiVANEngine.replace('updEngine', function(player, isPaused, screen) {
-    if (screen === 'title' || screen === 'press') {
+    if (screen !== 'race' || isPaused || document.hidden) {
       if (typeof carTiresHalt === 'function') carTiresHalt();
       if (typeof carEngineHalt === 'function') carEngineHalt();
       if (AU.ctx && AU.engG) AU.engG.gain.setTargetAtTime(0, AU.ctx.currentTime, .04);

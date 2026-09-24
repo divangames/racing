@@ -84,20 +84,46 @@
       const i = (r.trackIdx + k + N) % N, dx = r.x - S[i].x, dy = r.y - S[i].y, d = dx * dx + dy * dy;
       if (d < bd) { bd = d; best = i; }
     }
-    if (r.trackIdx > N * 0.75 && best < N * 0.25) {
+    const previous = r.trackIdx;
+    let delta = best - previous;
+    if (delta > N / 2) delta -= N;
+    if (delta < -N / 2) delta += N;
+    const forwardWrap = previous > N * 0.75 && best < N * 0.25 && delta > 0;
+    const reverseWrap = previous < N * 0.25 && best > N * 0.75 && delta < 0;
+    if (delta > 0 && !forwardWrap && r.lap >= 0) {
+      r._lapCheckpoint = Math.max(r._lapCheckpoint || 0, Math.min(3, Math.floor(best * 4 / N)));
+    } else if (delta < 0 && !reverseWrap) {
+      r._lapCheckpoint = Math.min(r._lapCheckpoint || 0, Math.min(3, Math.floor(best * 4 / N)));
+    }
+    if (forwardWrap) {
       if (r.finished) {
         r.trackIdx = best;
         r.prog = r.lap * N + best;
         return;
       }
-      r.lap++;
-      resetLapDoors(r);
-      const lt = R.time - r.lapStart;
-      r.lastLap = lt;
-      r.lapStart = R.time;
-      if (r.isP && r.lap >= 1 && (!r.bestLap || lt < r.bestLap)) r.bestLap = lt;
-      onLapComplete(r, lt);
-    } else if (r.trackIdx < N * 0.25 && best > N * 0.75) r.lap--;
+      if (r.lap < 0 || (r._lapCheckpoint || 0) >= 3) {
+        const restoring = !!r._lapRestore;
+        r.lap++;
+        r._lapCheckpoint = 0;
+        r._lapRestore = false;
+        resetLapDoors(r);
+        if (r.lap === 0) {
+          r.lapStart = R.time;
+        } else if (!restoring) {
+          const lt = R.time - r.lapStart;
+          r.lastLap = lt;
+          r.lapStart = R.time;
+          if (r.isP && (!r.bestLap || lt < r.bestLap)) r.bestLap = lt;
+          onLapComplete(r, lt);
+        }
+      } else {
+        r._lapCheckpoint = 0;
+      }
+    } else if (reverseWrap && r.lap >= 0) {
+      r.lap--;
+      r._lapCheckpoint = 3;
+      r._lapRestore = true;
+    }
     r.trackIdx = best;
     r.prog = r.lap * N + best;
   }

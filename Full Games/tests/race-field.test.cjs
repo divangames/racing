@@ -82,7 +82,7 @@ test('Заезд подключает ИИ и сетку после сборки
 });
 
 test('Тюнинг ИИ, фаворит дешевле, Бык-босс и касса ставки', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function planRaceField('));
   assert(html.includes('function computeFieldOdds('));
   const g = bootField();

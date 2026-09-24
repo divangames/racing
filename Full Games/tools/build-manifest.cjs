@@ -12,7 +12,7 @@ const fs = require('fs');
 const path = require('path');
 
 const client = path.resolve(__dirname, '..');
-const content = path.resolve(client, '..');
+const content = path.resolve(client, require('../config/game.json').contentDevRelative);
 const outFile = path.join(client, 'manifest', 'integrity.json');
 const game = JSON.parse(fs.readFileSync(path.join(client, 'config', 'game.json'), 'utf8'));
 const pkg = JSON.parse(fs.readFileSync(path.join(client, 'package.json'), 'utf8'));

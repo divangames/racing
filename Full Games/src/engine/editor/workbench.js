@@ -4,6 +4,7 @@ window.StudioCheck = {
   track(doc) {
     const errors=[],warnings=[];
     if(!doc || typeof doc!=='object' || Array.isArray(doc))return {errors:['Нужен JSON-объект трассы'],warnings,length:0,turns:0};
+    if(window.RnRTactics && RnRTactics.validate(doc.tactics)) errors.push(RnRTactics.validate(doc.tactics));
     const points=doc.cps;
     if(!Array.isArray(points)||points.length<4||points.length>2048)return {errors:['Нужно от 4 до 2048 точек трассы'],warnings,length:0,turns:0};
     if(points.some(p=>!Array.isArray(p)||p.length<2||!p.slice(0,2).every(n=>Number.isFinite(n)&&Math.abs(n)<=100000))) {
@@ -36,6 +37,75 @@ window.StudioCheck = {
   /** Создаёт доступную кнопку с действием. */
   function button(text, action) {
     const b=document.createElement('button');b.type='button';b.textContent=text;b.onclick=action;return b;
+  }
+
+  /** Даёт вкладкам один Tab-stop и навигацию стрелками, не передавая их холсту. */
+  function bindTabKeys(list, panels) {
+    if(!list || list.dataset.keyboardTabs)return;
+    list.dataset.keyboardTabs='true';
+    const tabs=[...list.querySelectorAll('[role="tab"]')];
+    tabs.forEach((tab,index)=>{
+      const panel=panels[index];if(!panel)return;
+      if(!tab.id)tab.id=panel.id+'Tab';
+      tab.setAttribute('aria-controls',panel.id);
+      panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',tab.id);
+    });
+    const sync=()=>tabs.forEach(tab=>{tab.tabIndex=tab.getAttribute('aria-selected')==='true'?0:-1;});
+    sync();
+    new MutationObserver(sync).observe(list,{subtree:true,attributes:true,attributeFilter:['aria-selected']});
+    list.addEventListener('keydown',event=>{
+      const tab=event.target.closest('[role="tab"]'),index=tabs.indexOf(tab);
+      if(index<0 || event.ctrlKey || event.metaKey || event.altKey)return;
+      let next=index;
+      if(event.key==='ArrowRight')next=(index+1)%tabs.length;
+      else if(event.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;
+      else if(event.key==='Home')next=0;
+      else if(event.key==='End')next=tabs.length-1;
+      else return;
+      event.preventDefault();event.stopPropagation();
+      tabs[next].click();sync();tabs[next].focus();
+    });
+  }
+
+  /** Сохранение и его результат остаются видны при прокрутке настроек машины. */
+  function enhanceCarInspector() {
+    const panel=document.querySelector('#workCar .panel');
+    if(!panel || panel.querySelector('.car-inspector-head'))return;
+    const head=document.createElement('div');head.className='car-inspector-head';
+    const row=document.createElement('div');row.className='car-inspector-actions';
+    const title=document.createElement('strong');title.textContent='Настройки машины';
+    const save=button('Сохранить',()=>document.getElementById('saveBtn')?.click());
+    save.id='carQuickSave';save.className='primary';save.title='Сохранить настройки машины · Ctrl+S';
+    row.append(title,save);
+    const summary=document.createElement('p');summary.id='carSaveSummary';summary.className='car-save-summary';
+    summary.setAttribute('role','status');summary.setAttribute('aria-live','polite');
+    const source=document.getElementById('saveState');
+    if(source){
+      const sync=()=>{
+        const text=source.textContent||'';summary.textContent=text;
+        summary.dataset.state=/не удалось|ошибка|сбой|не запис/i.test(text)?'error':/несохран|сохранени|записыва/i.test(text)?'dirty':/записан|сохранен|сохранён|не изменены/i.test(text)?'saved':'neutral';
+      };
+      sync();new MutationObserver(sync).observe(source,{childList:true,characterData:true,subtree:true});
+    }
+    const nav=document.createElement('nav');nav.className='car-inspector-nav';nav.setAttribute('aria-label','Настройки машины');
+    [['carList','Машины'],['layers','Слои'],['carLightsPanel','Свет'],['statName','Параметры']].forEach(([id,label])=>{
+      nav.append(button(label,()=>{
+        const target=document.getElementById(id);if(!target)return;
+        if(id==='carLightsPanel'&&!target.open)document.getElementById('carLightsToggle')?.click();
+        const section=target.closest('.section')||target;
+        section.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+      }));
+    });
+    head.append(row,summary,nav);
+    const status=document.getElementById('status');if(status)head.append(status);
+    panel.prepend(head);
+    const note=document.querySelector('#workCar .stage-note');
+    if(note){
+      const help=document.createElement('details'),heading=document.createElement('summary');
+      help.className='studio-help car-canvas-help';heading.textContent='Управление холстом и горячие клавиши';
+      note.before(help);help.append(heading,note);
+      help.addEventListener('toggle',()=>{if(typeof EditorView!=='undefined')EditorView.resize();});
+    }
   }
 
   /** Имя файла без расширения для стабильного id в библиотеке. */
@@ -137,6 +207,7 @@ window.StudioCheck = {
     if(!section||!chapterList||section.querySelector('.map-source-tabs'))return;
     const own=document.createElement('div');own.className='map-source-view';own.dataset.source='own';
     const campaign=document.createElement('div');campaign.className='map-source-view';campaign.dataset.source='campaign';
+    own.id='mapOwnTracks';campaign.id='mapCampaignTracks';
     const ownActions=document.getElementById('mapNewBtn')?.closest('.actions');
     const stock=document.getElementById('mapStock')?.closest('.field');
     const chapterTitle=chapterList.previousElementSibling;
@@ -157,6 +228,7 @@ window.StudioCheck = {
     }
     let saved='own';try{saved=localStorage.getItem('rnr.studio.trackSource')||'own';}catch(error){}
     show(saved==='campaign'?'campaign':'own');
+    bindTabKeys(tabs,[own,campaign]);
   }
 
   /** Добавляет в инспектор быстрые действия и навигацию по длинной панели. */
@@ -164,10 +236,11 @@ window.StudioCheck = {
     const panel=document.querySelector('#workMap .panel');if(!panel||panel.querySelector('.map-inspector-head'))return;
     splitTrackLists();
     const head=document.createElement('div');head.className='map-inspector-head';
-    const title=document.createElement('div');title.className='map-inspector-title';title.innerHTML='<strong>Инструменты трассы</strong><span>Правки применяются к выбранной трассе</span>';
+    const title=document.createElement('div');title.className='map-inspector-title';title.innerHTML='<strong>Инструменты трассы</strong><span>Тест черновика не записывает трассу</span>';
     const actions=document.createElement('div');actions.className='map-inspector-actions';
     const save=button('Сохранить',()=>document.getElementById('mapSaveBtn')?.click());save.className='primary';
     const test=button('Тест',()=>document.getElementById('mapTestBtn')?.click());
+    test.title='Проверить текущие правки в игре без сохранения на диск';
     actions.append(save,test);head.append(title,actions);
     const nav=document.createElement('nav');nav.className='map-inspector-nav';nav.setAttribute('aria-label','Разделы инструментов');
     const labels=[
@@ -183,6 +256,8 @@ window.StudioCheck = {
   }
   /** Устанавливает инструменты после готовности исходного интерфейса. */
   function start() {
+    enhanceCarInspector();
+    bindTabKeys(document.querySelector('.app-tabs'),[document.getElementById('workCar'),document.getElementById('workMap')]);
     if (typeof MapApp === 'undefined' || typeof MapApp.getDocument !== 'function') {
       const notice=document.createElement('p');notice.className='studio-report';notice.setAttribute('role','status');
       notice.textContent='Базовый редактор доступен. Для расширенной истории и импорта этой версии контента обновите клиент.';
@@ -241,6 +316,11 @@ window.StudioCheck = {
     }
     bindFastTextures();
     enhanceInspector();
+    const testButton=document.getElementById('mapTestBtn');
+    if(testButton){
+      testButton.textContent='Тест черновика';
+      testButton.title='Проверить текущие правки в игре; после возврата документы и история сохранятся';
+    }
     /** Обновляет диагностику только при изменении документа и после загрузки редактора. */
     let previous='';
     setInterval(()=>{

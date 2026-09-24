@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////
 //
-// Настройки клиента: полный экран, не смешиваются с браузером.
+// Настройки окна игры.
 //
 ////////////////////////////////////////////////////////
 
@@ -10,19 +10,21 @@ const fs = require('fs');
 const { settingsPath } = require('./paths');
 
 const DEFAULTS = {
-  fullscreen: true
+  fullscreen: true,
+  displayId: null
 };
 
 /**
  * Читает настройки или заводские значения.
- * @returns {{fullscreen: boolean}}
+ * @returns {{fullscreen: boolean, displayId: number|null}}
  */
 function loadSettings() {
   try {
     const raw = fs.readFileSync(settingsPath(), 'utf8');
     const data = JSON.parse(raw);
     return {
-      fullscreen: data.fullscreen !== false
+      fullscreen: data.fullscreen !== false,
+      displayId: Number.isInteger(data.displayId) ? data.displayId : null
     };
   } catch (err) {
     return { ...DEFAULTS };
@@ -31,8 +33,8 @@ function loadSettings() {
 
 /**
  * Пишет настройки на диск пользователя.
- * @param {{fullscreen?: boolean}} patch
- * @returns {{fullscreen: boolean}}
+ * @param {{fullscreen?: boolean, displayId?: number|null}} patch
+ * @returns {{fullscreen: boolean, displayId: number|null}}
  */
 function saveSettings(patch) {
   const next = { ...loadSettings(), ...patch };

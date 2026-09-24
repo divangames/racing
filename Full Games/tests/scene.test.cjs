@@ -61,3 +61,38 @@ test('Ось ввода и камера не выезжает за карту', 
   assert.ok(big.cam.x >= 0 && big.cam.x <= 4000 - 800);
   assert.ok(big.cam.y >= 0 && big.cam.y <= 4000 - 450);
 });
+
+test('После финиша соперников игрок получает 60 секунд, полигон без лимита', () => {
+  const g = bootScene();
+  const player = { isP: true };
+  const ai = { isP: false, ch: { short: 'ИИ' } };
+  const race = { racers: [player, ai], phase: 'go', endTimer: null };
+  const messages = [];
+  const tick = g.DiVANEngine.scene.advanceFinishWindow;
+  tick(race, [player], 1, true, t => messages.push(t));
+  assert.equal(race.endTimer, null);
+  tick(race, [player], 1, false, t => messages.push(t));
+  assert.equal(race.endTimer, 59);
+  assert.equal(race.endTimerType, 'player');
+  assert.equal(messages.length, 1);
+  tick(race, [player], 59, false, t => messages.push(t));
+  assert.equal(race.dnf, true);
+  assert.equal(race.phase, 'done');
+  const other = { racers: [player, ai], phase: 'go', endTimer: null };
+  tick(other, [ai], 1, false, () => {});
+  assert.equal(other.endTimer, 29);
+  assert.equal(other.endTimerType, 'ai');
+});
+
+test('Камера видит направление сноса и плавно меняет упреждение при развороте', () => {
+  const follow = bootScene().DiVANEngine.scene.followCam;
+  const race = { cam: { x: 1500, y: 1500 }, T: { w: 5000, h: 5000 } };
+  const player = { x: 2000, y: 2000, ang: 0, spd: 300, lat: 100 };
+  follow(race, player, 1, { w: 800, h: 450 });
+  assert(race.cam.lookX > 0 && race.cam.lookY > 0);
+  const before = race.cam.lookX;
+  player.ang = Math.PI;
+  follow(race, player, 1 / 120, { w: 800, h: 450 });
+  assert(race.cam.lookX > 0 && race.cam.lookX < before);
+  assert(Math.abs(race.cam.lookY) <= 450 * .2);
+});

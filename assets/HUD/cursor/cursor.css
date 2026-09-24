@@ -1,0 +1,20 @@
+/* Общий курсор Колесницы войны для игрового полотна и сайта. */
+html, body, canvas {
+  cursor: url("./cursor.png") 0 0, auto;
+}
+
+:is(a, button, summary, [role="button"], input[type="button"], input[type="submit"]):not(:disabled) {
+  cursor: url("./cursor.png") 0 0, pointer !important;
+}
+
+#boot-screen.is-gate {
+  cursor: url("./cursor.png") 0 0, pointer;
+}
+
+:is(input, textarea, [contenteditable="true"]):not([type="button"]):not([type="submit"]) {
+  cursor: text !important;
+}
+
+:is(button, input):disabled {
+  cursor: not-allowed !important;
+}

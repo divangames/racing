@@ -51,7 +51,7 @@ test('Заезд подключает владение кузовом после
 });
 
 test('Чужой личный, кастом, этап и смена пилота', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function carIsOwned('));
   assert(html.includes('function applyCharCar('));
   const g = bootOwn();

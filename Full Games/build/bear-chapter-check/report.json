@@ -1,0 +1,66 @@
+{
+  "intro": {
+    "state": "worldIntro",
+    "mission": "race_a",
+    "car": 0,
+    "stolen": "owned",
+    "scenes": 8
+  },
+  "a": {
+    "mission": "race_a",
+    "tuning": 1,
+    "paidEarly": false,
+    "div": 1
+  },
+  "b": {
+    "mission": "race_b",
+    "cash": 0,
+    "div": 2,
+    "state": "race"
+  },
+  "robbery": {
+    "early": {
+      "state": "career"
+    },
+    "paid": true,
+    "state": "worldIntro",
+    "title": "МЕДВЕДЬ · ОГРАБЛЕНИЕ ГАРАЖА",
+    "pending": true,
+    "cash": 20000
+  },
+  "purchase": {
+    "state": "car",
+    "cash": 20000,
+    "owned": false,
+    "mission": "buy_junk",
+    "catalog": [
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "flags": {
+      "introComplete": true,
+      "raceACompleted": true,
+      "entryBPaid": true,
+      "raceBCompleted": true,
+      "robberyPending": false,
+      "garageRobbed": true
+    },
+    "loadedMission": "buy_junk"
+  },
+  "restart": {
+    "state": "race",
+    "paid": 200,
+    "price": 200,
+    "mission": "restart_races",
+    "car": 11,
+    "owned": true,
+    "stolen": false,
+    "div": 1,
+    "hunt": false,
+    "race": 0
+  },
+  "errors": []
+}

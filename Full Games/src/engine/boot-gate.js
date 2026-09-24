@@ -29,8 +29,85 @@
    */
   function bootDisclaimerHoldMs() {
     const need = (BOOT && BOOT.disclaimerMs) || 5000;
-    const t0 = (BOOT && BOOT.t0) || performance.now();
+    const t0 = BOOT && BOOT.disclaimerT0 != null ? BOOT.disclaimerT0 : performance.now();
     return Math.max(0, need - (performance.now() - t0));
+  }
+
+  /** После пяти секунд дисклеймера показывает прогресс, если очередь ещё не закончилась. */
+  function showBootProgress() {
+    const root = document.getElementById('boot-screen');
+    if (root) root.classList.remove('is-load');
+    const prompt = document.getElementById('boot-prompt');
+    if (prompt) prompt.hidden = true;
+    const load = document.getElementById('boot-load');
+    if (load) { load.hidden = false; load.style.display = 'block'; }
+  }
+
+  /** Ролик создателя завершается только событием ended. Загрузка идёт параллельно. */
+  function bootPlayCreatorIntro() {
+    if (typeof labTest !== 'undefined' && labTest) return Promise.resolve();
+    const root = bootEls().root;
+    if (!root) return new Promise(function () {});
+    const stage = document.createElement('div');
+    stage.className = 'boot-creator-intro';
+    const video = document.createElement('video');
+    video.className = 'boot-creator-video';
+    video.preload = 'auto';
+    video.autoplay = true;
+    video.playsInline = true;
+    video.controls = false;
+    video.disablePictureInPicture = true;
+    video.disableRemotePlayback = true;
+    const message = document.createElement('p');
+    message.className = 'boot-creator-message';
+    message.hidden = true;
+    stage.appendChild(video);
+    stage.appendChild(message);
+    root.appendChild(stage);
+    root.classList.add('is-creator-intro');
+    BOOT.creatorIntroPlaying = true;
+    return new Promise(function (resolve) {
+      const retry = function () {
+        if (video.error || video.paused === false) return;
+        let attempt;
+        try { attempt = video.play(); }
+        catch (e) {
+          message.textContent = 'Нажмите, чтобы воспроизвести заставку';
+          message.hidden = false;
+          return;
+        }
+        if (attempt && attempt.then) attempt.then(function () {
+          message.hidden = true;
+        }).catch(function () {
+          if (video.error) return;
+          message.textContent = 'Нажмите, чтобы воспроизвести заставку';
+          message.hidden = false;
+        });
+      };
+      const keyRetry = function () { retry(); };
+      stage.addEventListener('pointerdown', retry);
+      global.addEventListener('keydown', keyRetry);
+      video.addEventListener('error', function () {
+        message.textContent = 'Не удалось воспроизвести заставку. Проверьте файлы игры и перезапустите её.';
+        message.hidden = false;
+      });
+      video.addEventListener('ended', function () {
+        stage.removeEventListener('pointerdown', retry);
+        global.removeEventListener('keydown', keyRetry);
+        video.pause();
+        video.removeAttribute('src');
+        video.load();
+        stage.remove();
+        root.classList.remove('is-creator-intro');
+        root.classList.remove('creator-intro-pending');
+        root.classList.add('creator-intro-done');
+        BOOT.creatorIntroPlaying = false;
+        bootPlayMenuIfReady();
+        resolve();
+      }, { once: true });
+      video.src = 'assets/video/divan_intro.mp4';
+      retry();
+    });
   }
 
   /** Снимает заставку и открывает интро или меню. */
@@ -156,35 +233,43 @@
     requestAnimationFrame(tick);
   }
 
-  /** Полная очередь: дисклеймер минимум 5 с, файлы могут держать дольше. */
+  /** Ролик и очередь идут вместе; затем дисклеймер минимум 5 с. */
   async function bootGoEngine() {
     if (BOOT.started) return;
     BOOT.started = true;
     BOOT.t0 = performance.now();
+    const intro = bootPlayCreatorIntro();
     try { if (typeof audioInit === 'function' && (!global.AU || !AU.ctx)) audioInit(); } catch (e) { console.error(e); }
     const el = bootEls();
     if (el.root) { el.root.classList.remove('is-gate'); el.root.classList.add('is-load'); }
     showLabLoading();
     bootPaint();
     const tick = setInterval(bootPaint, 250);
-    try {
-      if (typeof EditorData !== 'undefined' && EditorData.hydrateFromDisk) {
-        await EditorData.hydrateFromDisk();
-        reloadEditorCars();
-      }
-      if (typeof musicDiscoverAll === 'function') await musicDiscoverAll();
-      bootEnqueueAudioCatalog();
-      bootEnqueueSfx();
-      const fonts = bootFontsJob();
-      const voice = (typeof voicePreload === 'function') ? Promise.resolve(voicePreload()) : Promise.resolve();
-      const maps = (labTest && !LAB_TRACK_KEY) ? Promise.resolve() : bootDiscoverAllMapTiles();
-      const custom = (global.RnRTracks && RnRTracks.load) ? RnRTracks.load() : Promise.resolve();
-      const packs = (global.RnRObjects && RnRObjects.list) ? RnRObjects.list() : Promise.resolve();
-      await bootWaitAll(8, [fonts, voice, maps, custom, packs]);
-    } catch (e) { console.error(e); }
-    finally { clearInterval(tick); }
+    let loadingDone = false;
+    const loading = (async function () {
+      try {
+        if (typeof EditorData !== 'undefined' && EditorData.hydrateFromDisk) {
+          await EditorData.hydrateFromDisk();
+          reloadEditorCars();
+        }
+        if (typeof musicDiscoverAll === 'function') await musicDiscoverAll();
+        bootEnqueueAudioCatalog();
+        bootEnqueueSfx();
+        const fonts = bootFontsJob();
+        const voice = (typeof voicePreload === 'function') ? Promise.resolve(voicePreload()) : Promise.resolve();
+        const maps = (labTest && !LAB_TRACK_KEY) ? Promise.resolve() : bootDiscoverAllMapTiles();
+        const custom = (global.RnRTracks && RnRTracks.load) ? RnRTracks.load() : Promise.resolve();
+        const packs = (global.RnRObjects && RnRObjects.list) ? RnRObjects.list() : Promise.resolve();
+        await bootWaitAll(8, [fonts, voice, maps, custom, packs]);
+      } catch (e) { console.error(e); }
+      finally { loadingDone = true; clearInterval(tick); }
+    })();
+    await intro;
+    BOOT.disclaimerT0 = performance.now();
     const hold = (typeof labTest !== 'undefined' && labTest) ? 0 : bootDisclaimerHoldMs();
     if (hold > 0) await bootSleep(hold);
+    if (!loadingDone && !(typeof labTest !== 'undefined' && labTest)) showBootProgress();
+    await loading;
     bootFinish();
   }
 

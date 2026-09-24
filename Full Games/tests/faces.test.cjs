@@ -61,8 +61,8 @@ test('Заезд подключает лица до арены', () => {
 });
 
 test('Слот готов или догрузка webp из папки гонщика', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
-  const chars = fs.readFileSync(path.resolve(__dirname, '../../chars.js'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
+  const chars = fs.readFileSync(path.resolve(__dirname, '../content/chars.js'), 'utf8');
   assert(html.includes('function avatarImage('));
   assert(html.includes('function kickPlayerImg('));
   assert(chars.includes('assets/data/players/'));

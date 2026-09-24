@@ -51,7 +51,7 @@
   }
 
   /**
-   * Две кнопки модалки: нет — зелёная, да — красная.
+   * Две кнопки модалки: отмена — общая подсветка, подтверждение — предупреждение.
    * @param {object} pair
    * @param {boolean} yesSel
    * @param {string} noAct
@@ -60,8 +60,8 @@
    */
   function paintWarnButtons(pair, yesSel, noAct, yesAct) {
     const noSel = !yesSel;
-    panel(g, pair.nx, pair.by, pair.bw, pair.bh, noSel ? 'rgba(88,255,107,.16)' : 'rgba(20,17,28,.9)', noSel ? '#58ff6b' : '#3a3548', 10);
-    txt(g, 'НЕТ', pair.nx + pair.bw / 2, pair.by + 24, 20, noSel ? '#58ff6b' : '#8f88a0', 'center');
+    panel(g, pair.nx, pair.by, pair.bw, pair.bh, '#141c23', noSel ? '#93bac7' : '#364550', 7);
+    txt(g, 'НЕТ', pair.nx + pair.bw / 2, pair.by + 24, 20, noSel ? '#e5ebef' : '#a6b3bd', 'center');
     panel(g, pair.yx, pair.by, pair.bw, pair.bh, yesSel ? 'rgba(255,61,46,.2)' : 'rgba(20,17,28,.9)', yesSel ? '#ff3d2e' : '#3a3548', 10);
     txt(g, 'ДА', pair.yx + pair.bw / 2, pair.by + 24, 20, yesSel ? '#ff3d2e' : '#8f88a0', 'center');
     return [
@@ -77,7 +77,7 @@
     if (!labWarn) return;
     g.fillStyle = 'rgba(4,3,8,.7)'; g.fillRect(0, 0, W, H);
     const card = warnCard('lab', W, H);
-    panel(g, card.mx, card.my, card.mw, card.mh, 'rgba(16,10,14,.97)', '#ff3d2e', 16);
+    panel(g, card.mx, card.my, card.mw, card.mh, '#141c23', '#364550', 7);
     txt(g, 'ОПАСНО', W / 2, card.my + 44, 32, '#ff3d2e', 'center');
     const warn = 'В редакторе DiVANEngine легко сломать посадку колёс и кузов. Если вы не участник разработки проекта — лучше туда не лезть.';
     const lines = layoutLines(g, warn, card.mw - 72, 16, F_B);
@@ -109,7 +109,7 @@
     if (!exitWarn) return;
     g.fillStyle = 'rgba(4,3,8,.7)'; g.fillRect(0, 0, W, H);
     const card = warnCard('exit', W, H);
-    panel(g, card.mx, card.my, card.mw, card.mh, 'rgba(12,8,16,.97)', '#ff9d2e', 16);
+    panel(g, card.mx, card.my, card.mw, card.mh, '#141c23', '#364550', 7);
     txt(g, 'ВЫХОД', W / 2, card.my + 48, 36, '#ffd23f', 'center');
     txt(g, 'Выйти на рабочий стол?', W / 2, card.my + 100, 18, '#e8e2d0', 'center', F_B);
     g._exitHits = paintWarnButtons(card.pair, exitWarnSel === 1, 'exitNo', 'exitYes');
@@ -149,7 +149,7 @@
     if (!kind) return;
     g.fillStyle = 'rgba(4,3,8,.7)'; g.fillRect(0, 0, W, H);
     const card = warnCard('wipe', W, H);
-    panel(g, card.mx, card.my, card.mw, card.mh, 'rgba(12,8,16,.97)', '#ff9d2e', 16);
+    panel(g, card.mx, card.my, card.mw, card.mh, '#141c23', '#364550', 7);
     const camp = kind === 'campaign-new';
     txt(g, camp ? 'НОВАЯ КАМПАНИЯ' : 'НОВЫЙ ЗАЕЗД', W / 2, card.my + 44, 28, '#ffd23f', 'center');
     const body = camp

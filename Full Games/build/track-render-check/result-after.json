@@ -1,0 +1,50 @@
+{
+  "name": "КЛЕВЕР МОГИЛЬНИКА · ЧЕРНОВИК",
+  "bakeMs": 2116.400000002235,
+  "traversal": [
+    {
+      "branch": "under",
+      "direction": 1,
+      "ok": true
+    },
+    {
+      "branch": "under",
+      "direction": -1,
+      "ok": true
+    },
+    {
+      "branch": "over",
+      "direction": 1,
+      "ok": true
+    },
+    {
+      "branch": "over",
+      "direction": -1,
+      "ok": true
+    }
+  ],
+  "occlusion": {
+    "underHidden": true,
+    "jumpHidden": true,
+    "overVisible": true,
+    "entryPartial": true,
+    "exitPartial": true
+  },
+  "size": [
+    5714,
+    4403
+  ],
+  "world": [
+    3624.7920719083595,
+    2793.408319914891
+  ],
+  "decks": [
+    {
+      "from": 0.9703125,
+      "to": 0.028125,
+      "z": 1
+    }
+  ],
+  "upperIdx": 639,
+  "lowIdx": 320
+}

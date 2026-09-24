@@ -114,8 +114,8 @@
     });
     const span = global.DiVANEngine && global.DiVANEngine.trackSpan;
     const gaps = span ? span.normalizeGaps(def.gaps) : (def.gaps || []);
-    let decks = span ? span.normalizeDecks(def.decks) : (def.decks || []);
-    if (span && span.detectCrossingDecks && !decks.length) {
+    let decks = def.crossingMode === 'junction' ? [] : (span ? span.normalizeDecks(def.decks) : (def.decks || []));
+    if (span && span.detectCrossingDecks && !decks.length && def.crossingMode !== 'junction') {
       const auto = span.detectCrossingDecks(S, N, typeof ROADW === 'number' ? ROADW : 95);
       decks = span.mergeDecks((decks || []).concat(auto));
     }

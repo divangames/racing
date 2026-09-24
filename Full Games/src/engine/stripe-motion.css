@@ -1,0 +1,10 @@
+/* The 38px gradient period projects to 38 / sin(29.8deg) horizontally. */
+body::before,
+.boot-stripes {
+  animation-duration: 4.778922s;
+}
+
+@keyframes bootStripeShift {
+  from { transform: translateX(0); }
+  to { transform: translateX(76.46276px); }
+}

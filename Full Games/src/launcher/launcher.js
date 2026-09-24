@@ -14,15 +14,71 @@ const el = {
   meta: document.getElementById('meta'),
   play: document.getElementById('btn-play'),
   verify: document.getElementById('btn-verify'),
-  screen: document.getElementById('btn-screen'),
   quit: document.getElementById('btn-quit'),
   close: document.getElementById('btn-close'),
   sync: document.getElementById('btn-sync'),
   self: document.getElementById('btn-self'),
+  changes: document.getElementById('btn-changes'),
+  changesDialog: document.getElementById('changes-dialog'),
+  changesContent: document.getElementById('changes-content'),
+  changesClose: document.getElementById('changes-close'),
   stage: document.querySelector('.stage')
 };
 
-let fullscreen = true;
+
+function changelogText(line) {
+  return line.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/\*\*|`/g, '').trim();
+}
+
+function renderChangelog(markdown) {
+  const content = el.changesContent;
+  content.replaceChildren();
+  let section = null;
+  let list = null;
+  for (const raw of String(markdown || '').split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || /^#\s/.test(line)) continue;
+    if (/^##\s+/.test(line)) {
+      section = document.createElement('section');
+      section.className = 'changes-entry';
+      const heading = document.createElement('h3');
+      heading.textContent = changelogText(line.replace(/^##\s+/, ''));
+      section.append(heading);
+      content.append(section);
+      list = null;
+      continue;
+    }
+    if (!section) continue;
+    if (/^-\s+/.test(line)) {
+      if (!list) {
+        list = document.createElement('ul');
+        section.append(list);
+      }
+      const item = document.createElement('li');
+      item.textContent = changelogText(line.replace(/^-\s+/, ''));
+      list.append(item);
+    } else {
+      list = null;
+      const paragraph = document.createElement('p');
+      paragraph.textContent = changelogText(line);
+      section.append(paragraph);
+    }
+  }
+  if (!content.childElementCount) content.textContent = 'Записей пока нет.';
+  content.scrollTop = 0;
+}
+
+async function openChangelog() {
+  if (!el.changesDialog || !window.rnrLauncher) return;
+  el.changesDialog.showModal();
+  el.changesContent.textContent = 'Загружаю изменения…';
+  try {
+    renderChangelog(await window.rnrLauncher.changelog());
+  } catch (err) {
+    el.changesContent.textContent = 'Не удалось открыть журнал изменений: ' + (err.message || String(err));
+  }
+  el.changesContent.focus();
+}
 
 /**
  * Во время интро dock виден только при установке/обновлении.
@@ -186,13 +242,6 @@ async function runSelfUpdate() {
   if (el.sync) el.sync.disabled = false;
 }
 /**
- * Подпись режима экрана.
- */
-function paintScreen() {
-  el.screen.textContent = fullscreen ? 'Полный экран' : 'В окне';
-}
-
-/**
  * Картинки нельзя утащить на рабочий стол и сохранить из меню.
  */
 function lockMedia() {
@@ -226,8 +275,6 @@ async function boot() {
     if (info.label) setStatus(info.label);
   });
   const data = await window.rnrLauncher.status();
-  fullscreen = data.fullscreen !== false;
-  paintScreen();
   const inst = data.install || {};
   const self = data.selfUpdate || {};
   paintMeta(data);
@@ -266,12 +313,6 @@ el.verify.addEventListener('click', async () => {
   el.verify.disabled = false;
 });
 
-el.screen.addEventListener('click', async () => {
-  fullscreen = !fullscreen;
-  await window.rnrLauncher.setFullscreen(fullscreen);
-  paintScreen();
-});
-
 /**
  * Закрывает клиент.
  */
@@ -281,6 +322,8 @@ function quitLauncher() {
 
 el.quit.addEventListener('click', quitLauncher);
 el.close.addEventListener('click', quitLauncher);
+el.changes.addEventListener('click', openChangelog);
+el.changesClose.addEventListener('click', () => el.changesDialog.close());
 
 if (el.sync) {
   el.sync.addEventListener('click', () => {

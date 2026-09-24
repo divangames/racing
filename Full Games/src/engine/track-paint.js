@@ -246,11 +246,6 @@
       paintMatMarks(hq, T, 1);
       T.imgHigh = hi;
     }
-    const p0 = S[0]; q.save(); q.translate(p0.x, p0.y); q.rotate(p0.ang);
-    for (let cxI = -24; cxI < 24; cxI += 12) for (let cyI = -96; cyI < 96; cyI += 12) {
-      q.fillStyle = ((cxI / 12 + cyI / 12) % 2 === 0) ? '#eee' : '#15141a'; q.fillRect(cxI, cyI, 12, 12);
-    }
-    q.restore();
     if (global.RnRTracks && T.decals) RnRTracks.paintDecals(q, T.decals);
     return c;
   }

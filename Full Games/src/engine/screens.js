@@ -9,8 +9,9 @@
 
   const TITLE_STUDIO_LOGO = 'assets/divan_games/DIVAN_none.png';
   const TITLE_COL_X = 52;
-  const TITLE_LOGO_W = 380;
-  const TITLE_ITEM_W = 340;
+  const TITLE_LOGO_W = 310;
+  const TITLE_LOGO_Y = 4;
+  const TITLE_ITEM_W = 414;
 
   let titleStudioLogo = null;
 
@@ -143,12 +144,14 @@
    */
   function titleLayout(opts) {
     const n = Math.max(opts.n, 1);
-    const top = Math.min(268, 20 + opts.logoH + 12);
+    // titleY0 — центр строки: оставляем зазор и до её верхней границы.
+    const logoH = Math.min(opts.logoH, 208);
+    const top = TITLE_LOGO_Y + logoH + 22 + 24;
     const bottom = opts.H - (opts.resetArm ? 110 : 96);
     const span = Math.max(160, bottom - top);
-    const titleStep = Math.min(34, Math.max(opts.minStep == null ? 22 : opts.minStep, span / n));
+    const titleStep = Math.min(48, Math.max(28, span / n));
     const titleY0 = top;
-    const panelH = Math.max(20, titleStep - 3);
+    const panelH = Math.max(24, titleStep - 5);
     const origin = opts.stageX == null ? 0 : opts.stageX;
     return {
       titleY0,
@@ -158,7 +161,9 @@
       idleFs: Math.min(16, Math.max(12, titleStep * 0.46)),
       colX: origin + TITLE_COL_X,
       itemW: TITLE_ITEM_W,
-      logoW: TITLE_LOGO_W
+      logoW: TITLE_LOGO_W,
+      logoY: TITLE_LOGO_Y,
+      logoH: logoH
     };
   }
 
@@ -172,15 +177,15 @@
   function drawTitleShade(x, y, w, h) {
     const band = Math.min(520, Math.max(380, TITLE_COL_X + TITLE_ITEM_W + 90));
     const side = g.createLinearGradient(x, y, x + band, y);
-    side.addColorStop(0, 'rgba(5,4,9,.58)');
-    side.addColorStop(0.38, 'rgba(5,4,9,.28)');
-    side.addColorStop(0.72, 'rgba(5,4,9,.08)');
-    side.addColorStop(1, 'rgba(5,4,9,0)');
+    side.addColorStop(0, 'rgba(3,12,20,.8)');
+    side.addColorStop(0.38, 'rgba(3,12,20,.55)');
+    side.addColorStop(0.72, 'rgba(3,12,20,.15)');
+    side.addColorStop(1, 'rgba(3,12,20,0)');
     g.fillStyle = side;
     g.fillRect(x, y, w, h);
     const foot = g.createLinearGradient(x, y + h * 0.82, x, y + h);
-    foot.addColorStop(0, 'rgba(5,4,9,0)');
-    foot.addColorStop(1, 'rgba(5,4,9,.38)');
+    foot.addColorStop(0, 'rgba(3,12,20,0)');
+    foot.addColorStop(1, 'rgba(3,12,20,.5)');
     g.fillStyle = foot;
     g.fillRect(x, y, w, h);
   }
@@ -188,12 +193,14 @@
   /** Логотип игры: левый край совпадает с пунктами. */
   function drawTitleLogo(colX, logoW) {
     if (titleLogo && titleLogo.complete && titleLogo.naturalWidth) {
-      const logoH = logoW * titleLogo.naturalHeight / titleLogo.naturalWidth;
+      const naturalH = logoW * titleLogo.naturalHeight / titleLogo.naturalWidth;
+      const logoH = Math.min(naturalH, 208);
+      const drawW = logoW * logoH / naturalH;
       g.save();
       g.shadowColor = 'rgba(0,0,0,.7)';
-      g.shadowBlur = 18;
-      g.shadowOffsetY = 8;
-      g.drawImage(titleLogo, colX, 16, logoW, logoH);
+      g.shadowBlur = 12;
+      g.shadowOffsetY = 4;
+      g.drawImage(titleLogo, colX + (TITLE_ITEM_W - drawW) / 2 - 8, TITLE_LOGO_Y, drawW, logoH);
       g.restore();
       return;
     }
@@ -287,13 +294,21 @@
       const y = lay.titleY0 + i * lay.titleStep, sel = i === selTitle;
       const label = labOf ? labOf(t) : (t && t.label) || '';
       const hint = hintOf ? hintOf(t) : (t && t.hint) || '';
-      if (sel) {
-        txt(g, '▸', colX - 2, y - 2, Math.max(14, lay.selFs - 2), '#ff9d2e', 'right');
-        txt(g, label, colX, y - 2, lay.selFs, '#ffd23f', 'left');
-      } else {
-        txt(g, label, colX, y - 2, lay.idleFs, '#8f88a0', 'left');
+      const M = global.DiVANEngine.menu;
+      if (M) {
+        M.row(g, colX - 8, y - lay.panelH / 2 - 2, lay.itemW, lay.panelH, label, sel,
+          {id: 'title-' + i, size: lay.panelH < 36 ? 13 : 15, hint: lay.panelH >= 36 ? hint : '',
+            number: String(i + 1).padStart(2, '0'), danger: t.id === 'exit', focus: () => { selTitle = i; }});
+        return;
       }
-      if (hint) txt(g, hint, colX, y + 12, 11, sel ? '#b9a46a' : '#5a5468', 'left', F_B);
+      if (sel) {
+        if (global.DiVANEngine.cyberKit) global.DiVANEngine.cyberKit.frame(g, colX - 16, y - lay.panelH / 2 - 2, lay.itemW + 24, lay.panelH + (hint ? 10 : 0));
+        txt(g, '▸', colX - 2, y - 2, Math.max(14, lay.selFs - 2), '#21ddff', 'right');
+        txt(g, label, colX + 10, y - 2, lay.selFs, '#b9efff', 'left');
+      } else {
+        txt(g, label, colX + 10, y - 2, lay.idleFs, '#78a5b8', 'left');
+      }
+      if (hint) txt(g, hint, colX + 10, y + 12, 11, sel ? '#78a5b8' : '#567d8f', 'left', F_B);
     });
     g._titleY0 = lay.titleY0;
     g._titleStep = lay.titleStep;
@@ -368,14 +383,29 @@
    */
   function paint(mode) {
     const job = PAINTERS[mode];
-    if (typeof job === 'function') {
-      job();
-      return;
-    }
-    if (!Array.isArray(job)) return;
-    for (let i = 0; i < job.length; i++) {
-      const fn = global[job[i]];
-      if (typeof fn === 'function') fn();
+    const previousTheme = global.__rnrMenuTheme;
+    global.__rnrMenuTheme = mode !== 'race' && mode !== 'intro' && mode !== 'worldIntro';
+    try {
+      if (typeof job === 'function') {
+        job();
+      } else if (Array.isArray(job)) {
+        for (let i = 0; i < job.length; i++) {
+          const fn = global[job[i]];
+          if (typeof fn === 'function') fn();
+        }
+      }
+      if (job && global.__rnrMenuTheme && !global.DiVANEngine.menu) {
+        const kit = global.DiVANEngine && global.DiVANEngine.cyberKit;
+        if (kit && kit.rule) {
+          g.save();
+          g.globalAlpha = .55;
+          kit.rule(g, 18, 18, 140);
+          kit.rule(g, W - 158, H - 18, 140);
+          g.restore();
+        }
+      }
+    } finally {
+      global.__rnrMenuTheme = previousTheme;
     }
   }
 

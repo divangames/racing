@@ -37,6 +37,7 @@ const MIME = {
   '.woff2': 'font/woff2',
   '.otf': 'font/otf',
   '.ttf': 'font/ttf',
+  '.mp4': 'video/mp4',
   '.webm': 'video/webm'
 };
 

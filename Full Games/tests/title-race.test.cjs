@@ -71,7 +71,7 @@ test('Заезд подключает title-race после intro-flow', () => {
 });
 
 test('Демо не оставляет R, лидер по prog, искры гаснут, шесть машин', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function initTitleRace('));
   assert(html.includes('function withTitleSim('));
   const g = bootTitle();

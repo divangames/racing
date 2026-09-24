@@ -1,0 +1,147 @@
+{
+  "editor": {
+    "rail": "assets/data/tracks/Textures/rails/bort_01.png",
+    "road": "assets/data/tracks/Textures/road/arena_dirt_01.png",
+    "preview": 934,
+    "roadPreview": 1959,
+    "selected": "assets/data/tracks/Textures/rails/bort_01.png",
+    "selectedRoad": "assets/data/tracks/Textures/road/arena_dirt_01.png",
+    "campaignCount": 10,
+    "campaignLabels": [
+      "Г1 · НОЧНОЙ ОВАЛ",
+      "Г1 · ЧАША ПЫЛИ",
+      "Г1 · СТАДИОН РЖАВЧИНЫ",
+      "Г1 · ПОЧКА ВОРОНА",
+      "Г1 · ДЛИННЫЙ ЖЁЛОБ",
+      "Г1 · КОЛЬЦО ФАКЕЛОВ",
+      "Г1 · ЯЙЦО АРЕНЫ",
+      "Г1 · ДВОЙНАЯ ЧАША",
+      "Г1 · ТРИОВАЛ КЛЕТОК",
+      "Г1 · КОНТУР БОЙНИ"
+    ],
+    "campaignSelection": {
+      "id": "ch1_arena_01",
+      "chapter": 1,
+      "idLocked": true
+    },
+    "catalog": {
+      "files": [
+        "custom_01.json",
+        "custom_02.json",
+        "custom_03.json",
+        "custom_04.json",
+        "custom_05.json",
+        "custom_06.json"
+      ],
+      "chapters": [
+        "chapters/ch1_arena_01.json",
+        "chapters/ch1_arena_02.json",
+        "chapters/ch1_arena_03.json",
+        "chapters/ch1_arena_04.json",
+        "chapters/ch1_arena_05.json",
+        "chapters/ch1_arena_06.json",
+        "chapters/ch1_arena_07.json",
+        "chapters/ch1_arena_08.json",
+        "chapters/ch1_arena_09.json",
+        "chapters/ch1_arena_10.json"
+      ]
+    },
+    "generated": [
+      "ch1_arena_01",
+      "ch1_arena_02",
+      "ch1_arena_03",
+      "ch1_arena_04",
+      "ch1_arena_05",
+      "ch1_arena_06",
+      "ch1_arena_07",
+      "ch1_arena_08",
+      "ch1_arena_09",
+      "ch1_arena_10"
+    ],
+    "loaded": [
+      {
+        "id": "custom_01",
+        "chapter": 0
+      },
+      {
+        "id": "custom_02",
+        "chapter": 0
+      },
+      {
+        "id": "custom_03",
+        "chapter": 0
+      },
+      {
+        "id": "custom_04",
+        "chapter": 0
+      },
+      {
+        "id": "custom_05",
+        "chapter": 0
+      },
+      {
+        "id": "custom_06",
+        "chapter": 0
+      },
+      {
+        "id": "ch1_arena_01",
+        "chapter": 1
+      },
+      {
+        "id": "ch1_arena_02",
+        "chapter": 1
+      },
+      {
+        "id": "ch1_arena_03",
+        "chapter": 1
+      },
+      {
+        "id": "ch1_arena_04",
+        "chapter": 1
+      },
+      {
+        "id": "ch1_arena_05",
+        "chapter": 1
+      },
+      {
+        "id": "ch1_arena_06",
+        "chapter": 1
+      },
+      {
+        "id": "ch1_arena_07",
+        "chapter": 1
+      },
+      {
+        "id": "ch1_arena_08",
+        "chapter": 1
+      },
+      {
+        "id": "ch1_arena_09",
+        "chapter": 1
+      },
+      {
+        "id": "ch1_arena_10",
+        "chapter": 1
+      }
+    ]
+  },
+  "loading": {
+    "heading": "ТЕСТ ТРАССЫ",
+    "box": "block",
+    "load": "block",
+    "disclaimer": "none"
+  },
+  "game": {
+    "phase": "go",
+    "track": "НОЧНОЙ ОВАЛ",
+    "rail": "assets/data/tracks/Textures/rails/bort_01.png",
+    "light": 56753,
+    "canvas": [
+      1440,
+      900
+    ]
+  },
+  "readyMs": 9157,
+  "totalMs": 10487,
+  "errors": []
+}

@@ -7,6 +7,17 @@
 
 (function (global) {
   'use strict';
+  let rangeDrag = null;
+  function setRange(h, x) {
+    const value = Math.round(Math.max(0, Math.min(1, (x - h.start) / h.width)) * 10) * 10;
+    if (h.act === 'sndRange') {
+      settings.sound[h.key] = value;
+      if (typeof applyAudioSettings === 'function') applyAudioSettings();
+    } else {
+      settings.graphics[h.key] = value; settings.graphics.shake = value > 0;
+    }
+    settingsTab = h.i; saveSettings();
+  }
 
   /**
    * Верхний хит среди попаданий, края входят.
@@ -57,6 +68,10 @@
   function clickSettingsEngine(x, y) {
     const h = hitSettings(x, y);
     if (!h) return;
+    if (h.act === 'gfxRange' || h.act === 'sndRange') {
+      rangeDrag = { hit: h, pane: settingsState };
+      setRange(h, x); sClick(); return;
+    }
     if (h.act === 'zoombar') {
       settingsTab = 0; setZoomFromPointer(x, h); settingsZoomDrag = true; sClick(); return;
     }
@@ -95,6 +110,17 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
+  if (typeof cv !== 'undefined' && cv.addEventListener) {
+    cv.addEventListener('mousemove', function (event) {
+      if (!rangeDrag) return;
+      if (state !== 'settings' || settingsState !== rangeDrag.pane || !(event.buttons & 1)) { rangeDrag = null; return; }
+      const rect = cv.getBoundingClientRect();
+      setRange(rangeDrag.hit, ((event.clientX - rect.left) * cv.width / rect.width - viewOX) / viewS);
+    });
+    const release = () => { rangeDrag = null; };
+    cv.addEventListener('mouseleave', release);
+    if (global.addEventListener) { global.addEventListener('mouseup', release); global.addEventListener('blur', release); }
+  }
   engine.settingsInput = { hitSettingsAt };
   engine.replace('hitSettings', hitSettingsEngine);
   engine.replace('clickCameraSetup', clickCameraSetupEngine);

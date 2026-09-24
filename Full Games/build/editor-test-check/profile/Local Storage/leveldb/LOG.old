@@ -1,0 +1,14 @@
+2026/09/17-23:50:43.467 51e8 Reusing MANIFEST E:\Программирование\!!!GAMES\Racing\Full Games\build\editor-test-check\profile\Local Storage\leveldb/MANIFEST-000001
+2026/09/17-23:50:43.471 51e8 Recovering log #23
+2026/09/17-23:50:43.471 51e8 Level-0 table #25: started
+2026/09/17-23:50:43.486 51e8 Level-0 table #25: 21712 bytes OK
+2026/09/17-23:50:43.500 51e8 Delete type=0 #23
+2026/09/17-23:50:43.500 51e8 Compacting 4@0 + 1@1 files
+2026/09/17-23:50:43.506 51e8 Generated table #27@0: 8 keys, 11014 bytes
+2026/09/17-23:50:43.506 51e8 Compacted 4@0 + 1@1 files => 11014 bytes
+2026/09/17-23:50:43.518 51e8 compacted to: files[ 0 1 0 0 0 0 0 ]
+2026/09/17-23:50:43.518 51e8 Delete type=2 #14
+2026/09/17-23:50:43.519 51e8 Delete type=2 #16
+2026/09/17-23:50:43.529 51e8 Delete type=2 #19
+2026/09/17-23:50:43.529 51e8 Delete type=2 #22
+2026/09/17-23:50:43.529 51e8 Delete type=2 #25

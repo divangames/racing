@@ -13,7 +13,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const TAU = Math.PI * 2;
-const ROOT = path.resolve(__dirname, '../..');
+const ROOT = path.resolve(__dirname, '../content');
 const ENGINE = path.resolve(__dirname, '../src/engine');
 
 /** Песочница каталога трасс и сплайна. */

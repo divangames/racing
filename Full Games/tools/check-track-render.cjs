@@ -26,7 +26,7 @@ app.whenReady().then(async () => {
   const trackId=trackArg ? trackArg.slice(8) : null;
   if(trackId){
     assert(/^custom_\d+$/.test(trackId));
-    const def=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../assets/data/tracks',trackId+'.json'),'utf8'));
+    const def=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../content/assets/data/tracks',trackId+'.json'),'utf8'));
     await win.webContents.executeJavaScript('window.__renderTrackDef='+JSON.stringify(def));
   }
   const result = await win.webContents.executeJavaScript(`(() => {

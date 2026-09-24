@@ -212,8 +212,14 @@
       return true;
     }
     if (state === 'results') {
+      const canReplay = !labTest && R.startSpec && global.DiVANEngine.race;
+      if (canReplay && c === 'KeyR') { global.DiVANEngine.race.replayLastRace(); sClick(); return true; }
+      if (canReplay && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(c)) {
+        R.resultAction = R.resultAction === 0 ? 1 : 0; sClick(); return true;
+      }
       if (isConfirm(c)) {
-        if (labTest) exitLabTest();
+        if (canReplay && R.resultAction === 0) global.DiVANEngine.race.replayLastRace();
+        else if (labTest) exitLabTest();
         else if (typeof careerOpenFromResults === 'function') careerOpenFromResults();
         else state = 'garage';
         sClick();

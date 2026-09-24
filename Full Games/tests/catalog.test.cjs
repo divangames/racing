@@ -59,7 +59,7 @@ test('Заезд подключает ленту и статы до трассы
 });
 
 test('Магазин по цене, личные по хозяину, ХП Медведя и гандикап', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function carCatalogOrder('));
   assert(html.includes('function stats('));
   const g = bootCatalog();
@@ -103,4 +103,36 @@ test('Чужие личные спрятаны, дальние закрытые 
   assert.equal(g.carCatalogOrder().join(), '0,1,4,3');
   g.isDev = function () { return true; };
   assert.equal(g.carCatalogOrder().length, 5);
+});
+
+test('Неполный старый тюнинг безопасен, вычисления не превышают предел прокачки', () => {
+  const g = bootCatalog();
+  const car = { idx: 0, hp: 100, top: 1, acc: 1, crn: 1 };
+  const stock = g.stats(g.medved, car, { arm: 0, eng: 0, tir: 0, shk: 0 }, null);
+  const old = g.stats(g.medved, car, {}, null);
+  assert.deepEqual(old, stock);
+  const raw = { arm: 100, eng: 100, tir: 100, shk: 100 };
+  const capped = g.stats(g.medved, car, raw, { spd: 100, crn: 100, grt: 100 });
+  const max = g.stats(g.medved, car, { arm: 6, eng: 6, tir: 6, shk: 6 }, { spd: 2, crn: 2, grt: 2 });
+  assert.deepEqual(capped, max);
+  assert.equal(raw.eng, 100, 'расчёт не переписывает сохранённые данные');
+  const broken = g.stats(g.medved, car, { eng: NaN, arm: Infinity, tir: -1 }, null);
+  assert.deepEqual(broken, stock);
+});
+
+test('Каждый купленный уровень шин даёт умеренный эффект парящему кузову', () => {
+  const g = bootCatalog();
+  const car = { idx: 3, hp: 80, top: 1, acc: 1, crn: 1 };
+  let prev = g.stats(g.medved, car, {}, null);
+  const initial = prev;
+  for (let lvl = 1; lvl <= 6; lvl++) {
+    const next = g.stats(g.medved, car, { tir: lvl }, null);
+    assert(next.crn > prev.crn);
+    assert(next.grip > prev.grip);
+    assert.equal(next.off, 1);
+    assert.equal(next.top, initial.top);
+    prev = next;
+  }
+  assert(Math.abs(prev.crn / initial.crn - 1.15) < .00001);
+  assert(prev.grip <= 1.2);
 });

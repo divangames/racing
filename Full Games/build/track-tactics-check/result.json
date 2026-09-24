@@ -1,0 +1,19 @@
+{
+  "editor": {
+    "id": "custom_07",
+    "mode": "heat",
+    "undo": null,
+    "redo": "heat"
+  },
+  "measurements": {
+    "mode": "heat",
+    "short": 1043.022404846184,
+    "long": 1141.0046687413696,
+    "risky": 8.5,
+    "safe": 0,
+    "ai": 8.5,
+    "shortcuts": 0
+  },
+  "writes": 0,
+  "errors": []
+}

@@ -41,7 +41,7 @@ test('Заезд подключает race-class до сетки', () => {
 });
 
 test('Дивизион 1 режет сток, 3 пускает средний, 5 — все', () => {
-  const kits = fs.readFileSync(path.resolve(__dirname, '../../mid-kits.js'), 'utf8');
+  const kits = fs.readFileSync(path.resolve(__dirname, '../content/mid-kits.js'), 'utf8');
   assert(kits.includes('function fieldCarClassOk('));
   const g = bootClass();
   assert.equal(g.fieldCarClassOk(12, 1), true);

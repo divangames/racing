@@ -44,7 +44,7 @@ test('Заезд подключает слоты и press до кадра', () =
 });
 
 test('Сетка слотов, шаг курсора и хук press', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function press('));
   assert(html.includes('function drawSlotSelect('));
   assert(html.includes('function drawHelp('));
@@ -75,4 +75,13 @@ test('ESC на титуле открывает выход на рабочий с
   g.openExitWarn = function () { g.exitOpened = true; };
   g.DiVANEngine.pressHub.hub('Escape');
   assert.equal(g.exitOpened, true);
+});
+
+test('Служебные клавиши нельзя назначить на управление', () => {
+  const g = bootPress();
+  assert.deepEqual(['KeyM', 'KeyR', 'F3'].filter(k => g.DiVANEngine.pressNav.CAPTURE_BLOCK.includes(k)), ['KeyM', 'KeyR', 'F3']);
+  g.state = 'settings';
+  g.labWarn = null;
+  g.exitWarn = null;
+  assert.equal(g.DiVANEngine.pressNav.early('KeyM'), false);
 });

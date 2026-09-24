@@ -6,8 +6,11 @@
 'use strict';
 
 window.MapAssets = (() => {
-  let $, getDoc, setToolUi, packId = '', stampId = '', itemId = 'money', layerFilter = 'all', placeRoad = 'over', placeCar = 'under', query = '';
+  let $, getDoc, setDirty, setToolUi, packId = '', stampId = '', itemId = 'money', layerFilter = 'all', placeRoad = 'over', placeCar = 'under', query = '';
   let contextMenu = null;
+  let objectClipboard = null;
+  const PASTE_OFFSET = 24;
+  const MIN_OBJECT_SIZE = 8;
   const ITEM_COL = {money: '#ffd23f', wrench: '#58ff6b', wep: '#ff6b4a', ult: '#b478ff', nit: '#ff9d2e', shield: '#35e0ff', bolt: '#7df9ff'};
   const ITEM_MARK = {money: '$', wrench: '+', wep: 'Z', ult: '*', nit: 'N', shield: 'O', bolt: '!'};
 
@@ -364,6 +367,147 @@ window.MapAssets = (() => {
     if ($('assetCount')) $('assetCount').textContent = rows.length + ' шт.';
   }
 
+  ////////////////////////////////////////////////////////
+  //
+  // Опции экземпляра на карте
+  //
+  ////////////////////////////////////////////////////////
+
+  /** Возвращает выделенный экземпляр ассета на карте. */
+  function selectedObject() {
+    const selection = MapView.selection && MapView.selection();
+    const doc = getDoc && getDoc();
+    if (!selection || selection.kind !== 'asset' || !doc || !doc.objects) return null;
+    return doc.objects[selection.i] || null;
+  }
+
+  /** Сообщает карте о законченном изменении экземпляра. */
+  function commitObject(message) {
+    if (setDirty) setDirty(true);
+    if (MapView.draw) MapView.draw();
+    if ($('mapSaveState') && message) $('mapSaveState').textContent = message;
+    inspect();
+  }
+
+  /** Клонирует только сериализуемые поля экземпляра. */
+  function cloneObject(object) {
+    return object ? JSON.parse(JSON.stringify(object)) : null;
+  }
+
+  /** Копирует выделенный объект во внутренний буфер карты. */
+  function copySelected() {
+    const object = selectedObject();
+    if (!object) return false;
+    objectClipboard = cloneObject(object);
+    if ($('mapSaveState')) $('mapSaveState').textContent = 'Объект скопирован · Ctrl+V — вставить';
+    return true;
+  }
+
+  /** Вставляет копию с небольшим смещением и выделяет её. */
+  function pasteObject(source) {
+    const doc = getDoc && getDoc();
+    const copy = cloneObject(source || objectClipboard);
+    if (!doc || !copy) return false;
+    doc.objects = doc.objects || [];
+    copy.x = (+copy.x || 0) + PASTE_OFFSET;
+    copy.y = (+copy.y || 0) + PASTE_OFFSET;
+    doc.objects.push(copy);
+    objectClipboard = cloneObject(copy);
+    MapView.setSelection({kind: 'asset', i: doc.objects.length - 1});
+    commitObject('Копия объекта добавлена');
+    return true;
+  }
+
+  /** Отражает изображение и его коллизию в выбранном экземпляре. */
+  function flipSelected(axis) {
+    const object = selectedObject();
+    if (!object) return;
+    if (axis === 'x') object.flipX = !object.flipX;
+    else object.flipY = !object.flipY;
+    commitObject(axis === 'x' ? 'Объект отражён по горизонтали' : 'Объект отражён по вертикали');
+  }
+
+  /** Меняет размеры экземпляра с необязательной фиксацией пропорций. */
+  function resizeSelected(axis, value) {
+    const object = selectedObject();
+    if (!object) return;
+    const width = Math.max(MIN_OBJECT_SIZE, +object.w || MIN_OBJECT_SIZE);
+    const height = Math.max(MIN_OBJECT_SIZE, +object.h || MIN_OBJECT_SIZE);
+    const next = Math.max(MIN_OBJECT_SIZE, +value || MIN_OBJECT_SIZE);
+    const locked = !$('assetInstanceRatio') || $('assetInstanceRatio').checked;
+    if (axis === 'w') {
+      object.w = next;
+      if (locked) object.h = Math.max(MIN_OBJECT_SIZE, height * next / width);
+    } else {
+      object.h = next;
+      if (locked) object.w = Math.max(MIN_OBJECT_SIZE, width * next / height);
+    }
+    object.lockRatio = locked;
+    commitObject('Размер объекта изменён вместе с коллизией');
+  }
+
+  /** Создаёт компактную панель операций над выбранным объектом. */
+  function bindObjectInspector() {
+    const workspace = document.querySelector('.workspace-map .map-stage-wrap');
+    if (!workspace || $('assetInstanceTools')) return;
+    const panel = document.createElement('div');
+    panel.id = 'assetInstanceTools';
+    panel.className = 'asset-instance-tools';
+    panel.hidden = true;
+    panel.innerHTML = '<div class="asset-instance-head"><strong>Выбранный объект</strong><span>изменения видны сразу</span></div>'
+      + '<div class="asset-instance-size"><label>Ширина <input id="assetInstanceW" type="number" min="8" step="1"></label>'
+      + '<label>Высота <input id="assetInstanceH" type="number" min="8" step="1"></label>'
+      + '<label class="asset-instance-ratio"><input id="assetInstanceRatio" type="checkbox" checked> Пропорционально</label>'
+      + '</div><div class="asset-instance-actions">'
+      + '<button type="button" id="assetInstanceDuplicate" title="Создать копию рядом">⧉ Дублировать</button>'
+      + '<button type="button" id="assetInstanceFlipX" title="Зеркально отразить слева направо">↔ Отразить горизонтально</button>'
+      + '<button type="button" id="assetInstanceFlipY" title="Зеркально отразить сверху вниз">↕ Отразить вертикально</button>'
+      + '</div>';
+    workspace.appendChild(panel);
+    $('assetInstanceW').onchange = (event) => resizeSelected('w', event.target.value);
+    $('assetInstanceH').onchange = (event) => resizeSelected('h', event.target.value);
+    $('assetInstanceRatio').onchange = (event) => {
+      const object = selectedObject();
+      if (!object) return;
+      object.lockRatio = event.target.checked;
+      commitObject(event.target.checked ? 'Пропорции размера закреплены' : 'Размеры меняются независимо');
+    };
+    $('assetInstanceDuplicate').onclick = () => pasteObject(selectedObject());
+    $('assetInstanceFlipX').onclick = () => flipSelected('x');
+    $('assetInstanceFlipY').onclick = () => flipSelected('y');
+    const stage = $('mapStage');
+    if (stage) stage.addEventListener('pointerup', () => setTimeout(inspect, 0));
+  }
+
+  /** Синхронизирует панель с текущим выделением карты. */
+  function inspect() {
+    const panel = $('assetInstanceTools');
+    if (!panel) return;
+    const object = selectedObject();
+    panel.hidden = !object;
+    if (!object) return;
+    $('assetInstanceW').value = Math.round(+object.w || MIN_OBJECT_SIZE);
+    $('assetInstanceH').value = Math.round(+object.h || MIN_OBJECT_SIZE);
+    $('assetInstanceRatio').checked = object.lockRatio !== false;
+    $('assetInstanceFlipX').classList.toggle('active', !!object.flipX);
+    $('assetInstanceFlipY').classList.toggle('active', !!object.flipY);
+  }
+
+  /** Ctrl+C / Ctrl+V работают внутри открытой карты и не перехватывают поля ввода. */
+  function bindClipboard() {
+    window.addEventListener('keydown', (event) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      if ($('workMap') && $('workMap').hidden) return;
+      if (event.target && /INPUT|TEXTAREA|SELECT/.test(event.target.tagName)) return;
+      const code = event.code || '';
+      if (code === 'KeyC' || (event.key || '').toLowerCase() === 'c' || event.key === 'с') {
+        if (copySelected()) event.preventDefault();
+      } else if (code === 'KeyV' || (event.key || '').toLowerCase() === 'v' || event.key === 'м') {
+        if (pasteObject()) event.preventDefault();
+      }
+    });
+  }
+
   /** Перерисовать. */
   function paint() {
     fillTree();
@@ -421,7 +565,7 @@ window.MapAssets = (() => {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        pack: dest, id: def.id, name: def.name, src: def.src.indexOf('assets/') === 0 ? def.src : def.file,
+        pack: dest, id: def.id, name: def.name, src: def.src.indexOf('assets/') === 0 ? def.src.split('?')[0] : def.file,
         w: def.w, h: def.h, lockRatio: def.lockRatio,
         layer: def.carLayer || def.layer, carLayer: def.carLayer || def.layer,
         roadLayer: def.roadLayer || 'over', collision: def.collision
@@ -603,8 +747,11 @@ window.MapAssets = (() => {
   function init(opts) {
     $ = opts.$;
     getDoc = opts.getDoc;
+    setDirty = opts.setDirty;
     setToolUi = opts.setToolUi;
     bindTextureExports();
+    bindObjectInspector();
+    bindClipboard();
     document.addEventListener('pointerdown', (event) => { if (contextMenu && !contextMenu.contains(event.target)) closeMenu(); });
     window.addEventListener('blur', closeMenu);
     if ($('assetPackNew')) $('assetPackNew').onclick = () => createPack();
@@ -668,5 +815,5 @@ window.MapAssets = (() => {
     }
   }
 
-  return {init, paint, inspect: () => {}, current, setOpen, packId: () => packId, writePack};
+  return {init, paint, inspect, current, setOpen, packId: () => packId, writePack};
 })();

@@ -22,8 +22,10 @@ FakePath.prototype.closePath = function () {};
 /** Контекст 2D с журналом вызовов. */
 function fakeCtx() {
   const calls = [];
+  const rects = [];
   return {
     calls: calls,
+    rects: rects,
     fillStyle: '',
     strokeStyle: '',
     lineWidth: 0,
@@ -32,7 +34,7 @@ function fakeCtx() {
     globalAlpha: 1,
     imageSmoothingEnabled: true,
     imageSmoothingQuality: '',
-    fillRect: function () { calls.push('fillRect'); },
+    fillRect: function (...args) { calls.push('fillRect'); rects.push(args); },
     stroke: function () { calls.push('stroke'); },
     beginPath: function () {},
     moveTo: function () {},
@@ -132,7 +134,7 @@ test('Заезд подключает track-paint после сплайна', ()
 });
 
 test('Тайл, полигон, запекание лаборатории и земли', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function prerender('));
   assert(html.includes('function bakeMapTile('));
   const g = bootPaint();
@@ -155,6 +157,7 @@ test('Тайл, полигон, запекание лаборатории и з�
   const cWorld = g.prerender(world);
   assert(cWorld._ctx.calls.includes('fillRect'));
   assert(cWorld._ctx.calls.includes('drawImage'));
+  assert(!cWorld._ctx.rects.some(([x, y, w, h]) => x === -24 && y === -96 && w === 12 && h === 12), 'старая ровная шашка не должна запекаться под новым финишем');
   assert(g.DiVANEngine.trackRibbon);
   g.fillMapTileWorld(0, 0, 10, 10, { theme: { ground: '#abc' } });
   assert(g.g.calls.includes('fillRect'));

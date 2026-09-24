@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////
 //
 // Протокол rnr:// — игра как обычный origin, не file://.
-// HTML при отдаче правится только в памяти, диск браузерной игры цел.
+// Десктопный контент получает актуальные модули движка при загрузке.
 //
 ////////////////////////////////////////////////////////
 
@@ -17,7 +17,8 @@ const { handleListTextures, handleSaveTexture, handleSaveTextureFile } = require
 const { handleListPacks, handleSavePack, handleSaveOblab, handleSaveOblabFile } = require('./save-object');
 const { MIME, serveLocalFile } = require('./serve-file');
 const { engineFile, enhanceHtml } = require('./enhancements');
-const { enhanceEditorScript } = require('./editor-enhancements');
+const { enhanceEditorScript, enhanceMapViewScript, enhanceMapPreviewScript } = require('./editor-enhancements');
+const { enhanceTacticsContent } = require('./tactics-content');
 const { listLabSounds } = require('./lab-sounds');
 const { exportAll } = require('./player-store');
 const { desktopHeadScript } = require('./build-flags');
@@ -108,7 +109,7 @@ function rewriteGameHtml(html, pathname) {
     'РОК-Н-РОЛЛ ГОНКИ — браузерный оммаж',
     'Колесница войны'
   );
-  // Модули оболочки не перезаписывают соседний браузерный проект.
+  // Подключаем актуальные модули оболочки к локальному контенту.
   out = overrideEditorHtml(out, pathname);
   let storeDump = {};
   try { storeDump = exportAll(); } catch (err) { storeDump = {}; }
@@ -240,6 +241,10 @@ async function handleRnrRequest(request) {
       return new Response('Not found', { status: 404, headers: { 'content-type': 'text/plain' } });
     }
     const ext = path.extname(filePath).toLowerCase();
+    if (url.pathname === '/tracks.js' || url.pathname === '/editor/map-data.js') {
+      const body = enhanceTacticsContent(fs.readFileSync(filePath, 'utf8'), url.pathname);
+      return serveLocalFile(filePath, request, {body, type: MIME['.js']});
+    }
     if (url.pathname === '/editor/map-app.js') {
       const original = fs.readFileSync(filePath, 'utf8');
       let body;
@@ -248,6 +253,12 @@ async function handleRnrRequest(request) {
         console.warn('Расширения редактора несовместимы с этой версией контента:', error.message);
         body = original;
       }
+      return serveLocalFile(filePath, request, {body, type:MIME['.js']});
+    }
+    if (url.pathname === '/editor/map-view.js' || url.pathname === '/editor/map-preview.js') {
+      const original = fs.readFileSync(filePath, 'utf8');
+      const body = url.pathname === '/editor/map-view.js'
+        ? enhanceMapViewScript(original) : enhanceMapPreviewScript(original);
       return serveLocalFile(filePath, request, {body, type:MIME['.js']});
     }
     if (ext === '.html') {

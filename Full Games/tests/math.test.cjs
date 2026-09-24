@@ -39,7 +39,7 @@ test('Заезд подключает math сразу после runtime', () =>
 });
 
 test('angDiff кратчайший, wrap через ноль, mulberry стабилен', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function angDiff('));
   assert(html.includes('function wrapBetween('));
   assert(html.includes('function mulberry('));

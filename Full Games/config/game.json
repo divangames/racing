@@ -1,11 +1,11 @@
 {
   "id": "kolesnica-voyny",
   "title": "Колесница войны",
-  "version": "0.2.2.13",
+  "version": "0.2.2.18",
   "scheme": "rnr",
   "host": "game",
   "entry": "rnr.html",
   "runtime": "html-legacy",
-  "contentDevRelative": "..",
+  "contentDevRelative": "content",
   "contentInstallName": "Content"
 }

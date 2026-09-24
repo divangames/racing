@@ -43,7 +43,7 @@
         <button class="btn" type="button" id="btn-self" hidden>Обновить лаунчер</button>
         <button class="btn" type="button" id="btn-sync" hidden>Установить игру</button>
         <button class="btn" type="button" id="btn-verify">Проверить файлы</button>
-        <button class="btn" type="button" id="btn-screen">Полный экран</button>
+        <button class="btn" type="button" id="btn-changes">Изменения</button>
         <button class="btn ghost" type="button" id="btn-quit">Выход</button>
       </nav>
       <div class="dock">
@@ -56,6 +56,16 @@
       </div>
     </aside>
   </div>
+  <dialog class="changes-dialog" id="changes-dialog" aria-labelledby="changes-title">
+    <div class="changes-header">
+      <div>
+        <p class="changes-kicker">КОЛЕСНИЦА ВОЙНЫ · ЖУРНАЛ</p>
+        <h2 id="changes-title">Изменения</h2>
+      </div>
+      <button class="changes-close" type="button" id="changes-close" aria-label="Закрыть изменения">Закрыть ×</button>
+    </div>
+    <div class="changes-content" id="changes-content" tabindex="0" aria-live="polite"></div>
+  </dialog>
   <script src="ash.js"></script>
   <script src="launcher-hero.js"></script>
   <script src="launcher-audio.js"></script>

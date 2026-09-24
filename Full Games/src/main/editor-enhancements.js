@@ -43,8 +43,20 @@ function enhanceEditorScript(source) {
     if (!match) throw new Error('Нет дополнения редактора: ' + name);
     return match[0];
   }).join('\n\n');
-  out = replaceOnce(out, '  return {start, mapOn, saveNow, setTab};', helpers + '\n\n  return {start, mapOn, saveNow, setTab, getDocument:cur, importDocument, restoreDocument, commit};');
-  out = replaceOnce(out, '    await saveNow();', '    if (!await saveNow()) return;');
+  const testAdapter = `  const testSession = window.StudioTestSession.create({
+    documents: () => docs, current: cur, commit, setToolUi,
+    history: doc => doc === docs[idx] ? hist : histories.get(doc),
+    baseline: doc => saved.get(doc),
+    restoreHistory: (doc, history) => histories.set(doc, history),
+    restoreBaseline: (doc, baseline) => saved.set(doc, baseline),
+    replaceDocuments: next => { docs = next; idx = 0; hist = new StudioHistory(); },
+    select: id => select(Math.max(0, docs.findIndex(doc => doc.id === id)))
+  });`;
+  out = replaceOnce(out, '  return {start, mapOn, saveNow, setTab};', helpers + '\n\n' + testAdapter + '\n\n  return {start, mapOn, saveNow, setTab, getDocument:cur, importDocument, restoreDocument, commit};');
+  const testDrive = out.match(functionPattern('testDrive'))?.[0];
+  if (!testDrive) throw new Error('Нет функции редактора: testDrive');
+  out = replaceOnce(out, testDrive, '  function testDrive() {\n    return testSession.start();\n  }');
+  out = replaceOnce(out, '    applyStartDoc();', '    if (!testSession.restore()) applyStartDoc();');
   out = replaceOnce(out, "cur().name = $('mapName').value; dirty = true; fill();", "cur().name = $('mapName').value; dirty = true; renderList();");
   out = replaceOnce(out, '      const loaded = await MapData.loadAll();', '      const loaded = await MapData.loadAll();\n      loaded.forEach(d => saved.set(d, JSON.stringify(MapData.fileTrack(d))));');
   out = replaceOnce(out, "      try { await MapData.save(cur(), 'delete'); } catch (err) {}", `      try {
@@ -59,10 +71,55 @@ function enhanceEditorScript(source) {
       if (e.target.closest('#workMap')) setTimeout(() => { if (!window.__mapFillLock) commit(); }, 0);
     });
     window.addEventListener('beforeunload', e => {
+      if (testSession.leaving) return;
       commit();
       if (docs.some(d => JSON.stringify(MapData.fileTrack(d)) !== saved.get(d))) { e.preventDefault(); e.returnValue = ''; }
     });`);
   new vm.Script(out, {filename:'editor/map-app.js'});
   return out;
 }
-module.exports = {enhanceEditorScript};
+
+/** Показывает ручки контрольных точек только во время правки геометрии. */
+function enhanceMapViewScript(source) {
+  const before = `    t.cps.forEach((p, i) => {
+      ctx.fillStyle = st.sel && st.sel.kind === 'cp' && st.sel.i === i ? '#3d9eff' : '#ededed';
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], (st.sel && st.sel.kind === 'cp' && st.sel.i === i ? 10 : 7) / cam.z, 0, TAU);
+      ctx.fill();
+    });`;
+  const after = `    if (st.tool === 'point') t.cps.forEach((p, i) => {
+      const selected = st.sel && st.sel.kind === 'cp' && st.sel.i === i;
+      ctx.beginPath();
+      ctx.arc(p[0], p[1], (selected ? 10 : 7) / cam.z, 0, TAU);
+      ctx.fillStyle = selected ? '#ffd166' : '#87e7ef';
+      ctx.fill();
+      ctx.lineWidth = 2 / cam.z;
+      ctx.strokeStyle = '#09202b';
+      ctx.stroke();
+    });`;
+  let out = replaceOnce(source.replace(/\r\n/g, '\n'), before, after);
+  out = replaceOnce(out, '    MapGizmo.draw(ctx, cam, MapGizmo.resolve(t, st.sel), st.gizmoHover);',
+    "    if (!(st.tool === 'point' && st.sel && st.sel.kind === 'cp')) MapGizmo.draw(ctx, cam, MapGizmo.resolve(t, st.sel), st.gizmoHover);");
+  new vm.Script(out, {filename:'editor/map-view.js'});
+  return out;
+}
+
+/** В редакторе рисует пересечение на том же этаже, который получит заезд. */
+function enhanceMapPreviewScript(source) {
+  let out = source.replace(/\r\n/g, '\n');
+  out = replaceOnce(out, "      (th.railSrc || '') + '|' + rw + '|' + lw + '|' + zs + '|' + S.length;",
+    "      (th.railSrc || '') + '|' + rw + '|' + lw + '|' + zs + '|' + (t.crossingMode || '') + '|' + JSON.stringify(t.decks || []) + '|' + S.length;");
+  out = replaceOnce(out, '    const T = { S: S, N: S.length, theme: t.theme || {}, zones: t.zones || [] };',
+    `    const span = window.DiVANEngine && DiVANEngine.trackSpan;
+    let decks = t.crossingMode === 'junction' ? [] : (span ? span.normalizeDecks(t.decks) : (t.decks || []));
+    if (span && !decks.length && t.crossingMode !== 'junction') {
+      decks = span.detectCrossingDecks(S, S.length, ROADW);
+    }
+    const T = { S: S, N: S.length, theme: t.theme || {}, zones: t.zones || [], decks };`);
+  out = replaceOnce(out, "      if (typeof ribbon.paintDeck === 'function') ribbon.paintDeck(q, T, ROADW, 0);",
+    "      if (typeof ribbon.paintDeck === 'function') {\n        ribbon.paintDeck(q, T, ROADW, 0);\n        if (decks.length) ribbon.paintDeck(q, T, ROADW, 1);\n      }");
+  new vm.Script(out, {filename:'editor/map-preview.js'});
+  return out;
+}
+
+module.exports = {enhanceEditorScript, enhanceMapViewScript, enhanceMapPreviewScript};

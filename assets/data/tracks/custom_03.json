@@ -2,6 +2,8 @@
   "id": "custom_03",
   "name": "РАЗВЯЗКА УЩЕЛЬЯ · ЧЕРНОВИК",
   "published": true,
+  "tactics": null,
+  "crossingMode": "overpass",
   "autoHazards": true,
   "theme": {
     "ground": "#a05a3c",
@@ -14,7 +16,8 @@
     "groundSrc": "",
     "roadSrc": "",
     "railSrc": "",
-    "groundScale": 1
+    "groundScale": 1,
+    "crowdSound": true
   },
   "zones": [
     {
@@ -33,6 +36,8 @@
       "material": "dirt"
     }
   ],
+  "gaps": [],
+  "decks": [],
   "cps": [
     [
       1708.7800175521966,
@@ -199,11 +204,11 @@
       "bonus": 190,
       "radius": 82,
       "entry": [
-        950,
+        1398.3260500323913,
         900
       ],
       "exit": [
-        2500,
+        2948.3260500323913,
         1550
       ]
     }

@@ -21,6 +21,33 @@
     return { left, stage, rightX, rightW, chipW: (rightW - 64) / 2 };
   }
 
+  /** Нижняя панель: все действия стоят на одной сетке и не прилипают к краю. */
+  function preraceBottomLayout(width, height, pad) {
+    const dockY = height - 132;
+    const dockH = 92;
+    const stakeW = 132;
+    const stakeGap = 10;
+    const ctaW = 190;
+    const ctaX = width - pad - 20 - ctaW;
+    const payoutX = pad + 20 + (stakeW + stakeGap) * 3 + 28;
+    return {
+      dockX: pad,
+      dockY,
+      dockW: width - pad * 2,
+      dockH,
+      contentFoot: dockY - 14,
+      controlY: dockY + 34,
+      stakeX: pad + 20,
+      stakeW,
+      stakeGap,
+      payoutX,
+      payoutW: Math.max(220, ctaX - payoutX - 28),
+      ctaX,
+      ctaW,
+      footerY: height - 30
+    };
+  }
+
   /**
    * Старт: на кого ставим, сумма, выплата, вход в бой.
    */
@@ -40,7 +67,8 @@
     drawHubBackdrop(who.isBoss ? 'rgba(196,90,26,.06)' : 'rgba(255,210,63,.04)');
     drawHubHeader('СТАРТ', (raceTrackOverride != null ? 'реванш · ' : 'этап ' + (save.race + 1) + '  ·  ') + track.name + '  ·  ' + DIVN[Math.min(3, divI)], accent);
     const col = preraceColumns(W, HUB_PAD);
-    const foot = 548;
+    const bottom = preraceBottomLayout(W, H, HUB_PAD);
+    const foot = bottom.contentFoot;
     const top = HUB_TOP, stageH = foot - top;
     const tag = who.isP ? 'ТЫ' : (who.isBoss ? 'БОСС' : 'ПЕЛОТОН');
     drawPilotStage(col.left, top, col.stage, stageH, who.ch, { title: who.ch.short || who.ch.name, sub: who.car.name + '  ·  ' + tag, subCol: accent });
@@ -75,33 +103,40 @@
       txt(g, (sp.isP ? 'ты  ·  ' : sp.isBoss ? 'босс  ·  ' : '') + sp.car.name, col.rightX + 84, y + h / 2 + 12, 11, sel ? ac : '#7a7388', 'left', F_B);
       txt(g, fmtOdds(board.odds[i].k1), col.rightX + col.rightW - 36, y + h / 2, sel ? 22 : 18, ac, 'right', F_D);
     });
-    const barY = foot + 14;
-    txt(g, 'СУММА', HUB_PAD, barY + 6, 11, '#6f6880', 'left', F_B);
+    const menu = global.DiVANEngine && global.DiVANEngine.menu;
+    if (menu) menu.frame(g, bottom.dockX, bottom.dockY, bottom.dockW, bottom.dockH, false, false, 'prerace-actions');
+    else panel(g, bottom.dockX, bottom.dockY, bottom.dockW, bottom.dockH, 'rgba(14,20,27,.96)', '#364550', 8);
+    txt(g, 'СУММА СТАВКИ', bottom.stakeX, bottom.dockY + 18, 11, '#8f88a0', 'left', F_B);
     BET_TABLE.forEach(function (b, i) {
       const can = save.cash >= b.cost, sel = (save.bet | 0) === i;
-      const bw = 132, bh = 40, x = HUB_PAD + i * (bw + 10), y = barY + 16;
-      panel(g, x, y, bw, bh, sel && can ? 'rgba(255,210,63,.16)' : (can ? 'rgba(16,13,22,.9)' : 'rgba(10,8,14,.7)'), sel ? (can ? '#ffd23f' : '#5a5468') : (can ? '#3a3548' : '#2a2630'), 8);
-      txt(g, b.name, x + bw / 2, y + 20, 15, can ? b.col : '#4a4554', 'center', F_B);
+      const bw = bottom.stakeW, bh = 42, x = bottom.stakeX + i * (bw + bottom.stakeGap), y = bottom.controlY;
+      if (menu) menu.frame(g, x, y, bw, bh, sel, !can, 'prerace-stake-' + i);
+      else panel(g, x, y, bw, bh, sel && can ? 'rgba(147,186,199,.16)' : '#141c23', sel ? '#93bac7' : '#364550', 7);
+      txt(g, b.name, x + bw / 2, y + bh / 2, 15, can ? (sel ? '#e5ebef' : '#a6b3bd') : '#64727c', 'center', F_B);
       g._preHits.push({ act: 'stake', i: i, x: x, y: y, w: bw, h: bh, locked: !can });
     });
     const pays = [betPayoutFor(cost, od, 0), betPayoutFor(cost, od, 1), betPayoutFor(cost, od, 2)];
     const pcols = ['#ffd23f', '#d8d4e0', '#e09a5a'];
-    const px = W / 2 - 20;
+    const px = bottom.payoutX;
     if (cost > 0) {
-      txt(g, 'ВЫПЛАТА', px, barY + 6, 11, '#6f6880', 'left', F_B);
+      txt(g, 'ВОЗМОЖНАЯ ВЫПЛАТА', px, bottom.dockY + 18, 11, '#8f88a0', 'left', F_B);
+      const payStep = bottom.payoutW / 3;
       ['1', '2', '3'].forEach(function (lb, i) {
-        txt(g, lb + '  ' + fm(pays[i]), px + i * 118, barY + 36, 18, pcols[i], 'left', F_D);
+        txt(g, lb, px + i * payStep, bottom.controlY + 21, 12, '#84939f', 'left', F_B);
+        txt(g, fm(pays[i]), px + i * payStep + 18, bottom.controlY + 21, 17, pcols[i], 'left', F_D);
       });
-    } else txt(g, 'без ставки — только приз за место', px, barY + 34, 14, '#6f6880', 'left', F_B);
-    const cta = 'ENTER  —  В БОЙ';
-    g.font = '15px ' + F_D;
-    const ctaW = Math.ceil(g.measureText(cta).width) + 40;
-    const ctaX = W - HUB_PAD - ctaW, ctaY = barY + 14;
-    rr(g, ctaX, ctaY, ctaW, 36, 8); g.fillStyle = accent + '22'; g.fill();
-    g.strokeStyle = accent + '99'; g.lineWidth = 1.5; g.stroke();
-    txt(g, cta, ctaX + ctaW / 2, ctaY + 18, 15, accent, 'center', F_B, false);
-    g._preHits.push({ act: 'go', x: ctaX, y: ctaY, w: ctaW, h: 36 });
-    txt(g, '← →  пилот   ·   ↑ ↓  сумма   ·   ESC  гараж', W / 2, H - 18, 12, '#6f6880', 'center', F_B);
+    } else {
+      txt(g, 'ВЫПЛАТА', px, bottom.dockY + 18, 11, '#8f88a0', 'left', F_B);
+      txt(g, 'без ставки · только приз за место', px, bottom.controlY + 21, 14, '#a6b3bd', 'left', F_B);
+    }
+    const ctaY = bottom.dockY + 23;
+    if (menu) menu.frame(g, bottom.ctaX, ctaY, bottom.ctaW, 52, true, false, 'prerace-go');
+    else panel(g, bottom.ctaX, ctaY, bottom.ctaW, 52, 'rgba(147,186,199,.16)', '#93bac7', 7);
+    txt(g, 'В БОЙ', bottom.ctaX + 24, ctaY + 21, 17, '#e5ebef', 'left', F_B);
+    txt(g, 'ENTER', bottom.ctaX + 24, ctaY + 39, 10, '#93bac7', 'left', F_B);
+    txt(g, '›', bottom.ctaX + bottom.ctaW - 24, ctaY + 26, 24, '#93bac7', 'center', F_B);
+    g._preHits.push({ act: 'go', x: bottom.ctaX, y: ctaY, w: bottom.ctaW, h: 52 });
+    txt(g, '← →  ПИЛОТ     ↑ ↓  СУММА     ESC  ГАРАЖ', W / 2, bottom.footerY, 11, '#84939f', 'center', F_B);
     if (!reduce && who.isBoss) {
       g.globalAlpha = .08 + .04 * Math.sin(gt * 2.2);
       g.strokeStyle = '#c45a1a'; g.lineWidth = 2;
@@ -112,6 +147,6 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.prerace = { preraceColumns };
+  engine.prerace = { preraceColumns, preraceBottomLayout };
   engine.replace('drawPreRace', drawPreRaceEngine);
 })(typeof window !== 'undefined' ? window : globalThis);

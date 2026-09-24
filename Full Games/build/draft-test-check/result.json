@@ -1,0 +1,11 @@
+{
+  "existingReadyMs": 10001,
+  "freshReadyMs": 9712,
+  "restoredHistory": true,
+  "restoredSelection": true,
+  "preservedOtherDocuments": true,
+  "previewWrites": 0,
+  "explicitSaveCalls": 1,
+  "diskUnchanged": true,
+  "errors": []
+}

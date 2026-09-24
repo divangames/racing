@@ -6,6 +6,8 @@
 
 (function (global) {
   'use strict';
+  let replayRequest = null;
+  const copy = value => JSON.parse(JSON.stringify(value));
 
   /**
    * Индекс трассы: лаборатория, карьера, оверрайд или этап сейва.
@@ -73,6 +75,21 @@
     return WEATHER_CLEAR;
   }
 
+  /** Настройки тестового заезда, переданные редактором карты. */
+  function labTestOptions() {
+    if (!labTest || !global.DiVANLabPreview || typeof global.DiVANLabPreview.testOptions !== 'function') {
+      return {opponents: 0, difficulty: 'normal', laps: 3};
+    }
+    return global.DiVANLabPreview.testOptions();
+  }
+
+  /** Дивизион используется как понятная шкала сложности тестовых соперников. */
+  function labDifficultyDivision(level) {
+    if (level === 'easy') return 1;
+    if (level === 'hard') return 6;
+    return 3;
+  }
+
   /**
    * Гонщик: статы, магазины, слот.
    * @param {object} ch
@@ -138,21 +155,33 @@
    * Собирает R: полотно, сетка, погода, ставка, миникарта.
    */
   function buildRaceEngine() {
-    const tIdx = raceTrackIndex();
-    const div = raceDivision();
+    const replay = replayRequest, start = replay && replay.start;
+    const tIdx = start ? start.tIdx : raceTrackIndex();
+    const preview = labTestOptions();
+    const div = start ? start.div : labTest ? (preview.opponents > 0 ? labDifficultyDivision(preview.difficulty) : 1) : raceDivision();
     raceDiv = div;
-    const def = labTest ? resolveLabTrack() : (raceTrackCustom || TRACKDEFS[tIdx]);
+    if (labTest && typeof raceLaps !== 'undefined') raceLaps = Math.max(1, Math.min(9, +preview.laps || 3));
+    if (start) raceLaps = start.laps;
+    const def = start ? copy(start.def) : labTest ? resolveLabTrack() : (raceTrackCustom || TRACKDEFS[tIdx]);
     const T = buildTrack(def, tIdx); T.img = prerender(T);
     makeTrackPattern(T, tIdx);
-    const hz = placeTrackHazards(T, 100 + tIdx * 13 + (save.race || 0) * 7);
+    const seed = start ? start.seed : 100 + tIdx * 13 + (save.race || 0) * 7;
+    const hz = placeTrackHazards(T, seed);
     const pads = hz.pads, ramps = hz.ramps, mines = hz.mines, oils = hz.oils, picks = hz.picks;
-    const S = T.S, N = T.N, Rz = mulberry(100 + tIdx * 13 + (save.race || 0) * 7);
+    const S = T.S, N = T.N, Rz = mulberry(seed);
     const racers = [];
     const pCh = CHARS[save.char];
     const pCar = CARS[save.car];
     const pLvl = save.tuning[save.car] || { arm: 0, eng: 0, tir: 0, shk: 0, nit: 0 };
     const pl = makeRacer(pCh, pCar, true, pLvl, 5);
-    if (!labTest && raceBoard && raceBoard.specs && raceBoard.specs.length) {
+    if (start) {
+      for (const sp of start.specs) {
+        const r = makeRacer(sp.ch, sp.car, sp.isP, copy(sp.lvl), sp.slot);
+        Object.assign(r, copy(sp.values));
+        r.st = copy(sp.st); r.hp = r.maxhp = sp.st.maxhp;
+        resetWepMag(r); racers.push(r);
+      }
+    } else if (!labTest && raceBoard && raceBoard.specs && raceBoard.specs.length) {
       racers.length = 0;
       for (const sp of raceBoard.specs) {
         const r = makeRacer(
@@ -172,7 +201,17 @@
       }
     } else {
       racers.push(pl);
-      if (!labTest) {
+      if (labTest && preview.opponents > 0) {
+        const specs = planRaceField(div).slice(1, 1 + preview.opponents);
+        for (const sp of specs) {
+          const r = makeRacer(sp.ch, sp.car, false, sp.lvl, sp.slot);
+          r.aiCol = sp.ch.col;
+          r.skill = sp.skill;
+          r.isBoss = !!sp.isBoss;
+          r.fieldId = sp.id;
+          racers.push(r);
+        }
+      } else if (!labTest) {
         const specs = planRaceField(div);
         racers.length = 0;
         for (const sp of specs) {
@@ -188,6 +227,10 @@
       }
     }
     const racePl = racers.find(function (r) { return r.isP; }) || pl;
+    const startSpec = start || { tIdx, div, def: copy(def), seed, laps: raceLaps,
+      specs: racers.map(r => ({ ch: r.ch, car: r.car, isP: r.isP, lvl: copy(r.lvl), slot: r.slot, st: copy(r.st),
+        values: { aiCol: r.aiCol, skill: r.skill, isBoss: r.isBoss, isAlly: r.isAlly, chIdx: r.chIdx,
+          fieldId: r.fieldId, skillLvl: r.skillLvl, dmgMul: r.dmgMul, nitLvl: r.nitLvl, wepLvl: r.wepLvl, ultLvl: r.ultLvl } })) };
     placeRacersOnGrid(racers, S, N, Rz);
     let mnx = 1e9, mny = 1e9, mxx = -1e9, mxy = -1e9;
     for (const p of S) { mnx = Math.min(mnx, p.x); mny = Math.min(mny, p.y); mxx = Math.max(mxx, p.x); mxy = Math.max(mxy, p.y); }
@@ -201,25 +244,37 @@
       over: false, overT: 0, firstDone: null, endTimer: null, hintT: labTest ? 0 : (save.race === 0 ? 9 : 0), prize: null, quip: '',
       map: { pts: S.filter(function (p, i) { return i % 3 === 0; }).map(function (p) { return [(p.x - mnx) * ms, (p.y - mny) * ms]; }), ms: ms, mnx: mnx, mny: mny, mw: (mxx - mnx) * ms, mh: (mxy - mny) * ms },
       bet: save.bet,
-      betStake: labTest ? 0 : (BET_TABLE[save.bet | 0].cost || 0),
+      betStake: labTest || replay ? 0 : (BET_TABLE[save.bet | 0].cost || 0),
       betPick: (raceBoard && raceBoard.pick) | 0,
       betOdds: (!labTest && raceBoard && raceBoard.odds) ? raceBoard.odds[raceBoard.pick] : null,
       betName: (!labTest && raceBoard && raceBoard.specs[raceBoard.pick]) ? (raceBoard.specs[raceBoard.pick].ch.short || raceBoard.specs[raceBoard.pick].ch.name) : '',
       weather: weather, weatherParts: [], puddles: puddles,
       shortcuts: cuts.map(function (s) { return Object.assign({}, s, { used: false, glow: 0 }); }),
       labObjects: T.labObjects || [],
-      countsForCareer: !labTest && raceTrackOverride == null && !raceTrackCustom
+      countsForCareer: !replay && !labTest && raceTrackOverride == null && !raceTrackCustom,
+      replay: !!replay, startSpec, career: replay ? replay.career : undefined
     };
     P = racePl; state = 'race'; paused = false; resetHudFx(); clearKeys();
     if (typeof voiceReset === 'function') voiceReset();
-    if (labTest) announce((def.lab ? 'ПОЛИГОН' : 'ТЕСТ · ' + (def.name || 'ТРАССА')) + ' · ESC — В ЛАБОРАТОРИЮ', true);
+    if (labTest) announce((def.lab ? 'ПОЛИГОН' : 'ТЕСТ · ' + (def.name || 'ТРАССА'))
+      + (preview.opponents ? ' · СОПЕРНИКОВ: ' + preview.opponents : '') + ' · ESC — В ЛАБОРАТОРИЮ', true);
   }
 
   /** Перезапуск текущего заезда. */
   function restartRaceEngine() {
     if (!R || R.over) return;
+    if (R.replay) { replayLastRace(); return; }
     persist();
     buildRace();
+  }
+
+  /** Повторяет исходную трассу и сетку после выдачи приза, без новых выплат и этапов. */
+  function replayLastRace() {
+    if (!R || !R.startSpec || labTest) return false;
+    replayRequest = { start: R.startSpec, career: R.career };
+    try { buildRace(); announce('ПОВТОР ЗАЕЗДА · БЕЗ ПРИЗОВ И СТАВОК', true); }
+    finally { replayRequest = null; }
+    return true;
   }
 
   /**
@@ -234,7 +289,7 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.race = { trackIndex: raceTrackIndex, division: raceDivision, gridIndex: gridIndex, gridLat: gridLat, placeRacersOnGrid: placeRacersOnGrid };
+  engine.race = { trackIndex: raceTrackIndex, division: raceDivision, gridIndex: gridIndex, gridLat: gridLat, placeRacersOnGrid: placeRacersOnGrid, replayLastRace };
   engine.replace('weatherOf', weatherOfEngine);
   engine.replace('makeRacer', makeRacerEngine);
   engine.replace('makeTrackPattern', makeTrackPatternEngine);

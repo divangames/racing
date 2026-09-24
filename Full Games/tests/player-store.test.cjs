@@ -46,7 +46,7 @@ test('Снимок сейвов вставляется в head заезда', ()
 });
 
 test('Игра читает карьеру через persistRead', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function persistRead('));
   assert(html.includes('function persistWrite('));
   assert(html.includes('DiVANEngine.storage'));

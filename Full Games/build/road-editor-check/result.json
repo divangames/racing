@@ -1,0 +1,19 @@
+{
+  "panel": true,
+  "toolbar": true,
+  "panelWidth": 380.59375,
+  "canvasHeight": 324.5,
+  "original": 39,
+  "afterEmptyClick": 39,
+  "afterRoadClick": 40,
+  "afterUndo": 39,
+  "afterRedo": 40,
+  "junctionMode": "junction",
+  "junctionPoints": 20,
+  "overpass": "overpass",
+  "centerline": true,
+  "pointReadout": "20 точек · выберите ручку на карте",
+  "bodyScrollWidth": 1425,
+  "viewportWidth": 1440,
+  "errors": []
+}

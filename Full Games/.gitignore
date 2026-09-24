@@ -1,6 +1,7 @@
 # Описание: сборка и зависимости десктоп-клиента не в git.
 
 node_modules/
+content/assets
 dist/
 out-msi/
 dist-content/
@@ -14,6 +15,15 @@ certs/*.pfx
 certs/password.txt
 Thumbs.db
 build/engine-check/
+build/car-lights-check/
+build/race-upgrade-check/
+build/menu-design-check/
+build/audio-balance-check/
+build/editor-usability-check/
+build/site-preview/
+build/visual-polish-check/
+build/garage-modern-check/
+build/native-content-smoke.zip
 build/engine-package/
 build/current-driving.js
 build/current-loop.js

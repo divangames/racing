@@ -58,10 +58,10 @@ test('Заезд подключает кузов, портреты и vfx до �
 });
 
 test('Вынос колёс, портрет ×2, гейт quarks', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function drawCar('));
   assert(html.includes('CAR_SPECULAR'));
-  assert.ok(fs.existsSync(path.resolve(__dirname, '../../assets/data/cars/01/01_Specular.png')));
+  assert.ok(fs.existsSync(path.resolve(__dirname, '../content/assets/data/cars/01/01_Specular.png')));
   assert(html.includes('function drawPortrait('));
   assert(html.includes('function vfxLive('));
   const g = bootPaint();
@@ -82,6 +82,7 @@ test('Вынос колёс, портрет ×2, гейт quarks', () => {
   const vfx = g.DiVANEngine.vfx.vfxAllowed;
   assert.equal(vfx({ ok: true }, { particles: 'medium' }, false), true);
   assert.equal(vfx({ ok: true }, { particles: 'low' }, false), false);
+  assert.equal(vfx({ ok: true }, { particles: 'off' }, false), false);
   assert.equal(vfx({ ok: true }, { particles: 'high' }, true), false);
   assert.equal(vfx({ ok: false }, { particles: 'high' }, false), false);
   assert.equal(g.DiVANEngine.carSpec.paint({ save: function () {}, restore: function () {} }, 0, 0, 0, 0, 10, 10), false);

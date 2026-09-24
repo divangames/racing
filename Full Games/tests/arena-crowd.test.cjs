@@ -12,7 +12,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const ROOT = path.resolve(__dirname, '../..');
+const ROOT = path.resolve(__dirname, '../content');
 const ENGINE = path.resolve(__dirname, '../src/engine');
 const ARENA = path.join(ROOT, 'assets', 'sounds', 'embirnt', 'arena');
 const FILE_RE = /^(.+)_(\d+)\.(mp3|ogg|wav|m4a)$/i;

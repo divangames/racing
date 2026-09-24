@@ -7,6 +7,9 @@
 
 window.MapAssetColl = (() => {
   let sel = 0, drag = null, pointOn = false, selectedVert = null;
+  const HANDLE_RADIUS = 7;
+  const SELECTED_HANDLE_RADIUS = 9;
+  const SCALE_HANDLE_SIZE = 7;
 
   ////////////////////////////////////////////////////////
   //
@@ -80,30 +83,54 @@ window.MapAssetColl = (() => {
   /** Контуры и ручки. */
   function paint(ctx, def, scale) {
     const list = bodies(def);
-    const over = def.layer === 'over' && def.collision.solid;
+    const editable = def.layer === 'over';
+    const solid = editable && def.collision.solid;
     list.forEach((b, i) => {
       const on = i === sel;
-      ctx.lineWidth = (on ? 2.4 : 1.6) / scale;
-      ctx.strokeStyle = over ? (on ? 'rgba(255,90,70,.95)' : 'rgba(255,90,70,.45)') : 'rgba(160,160,170,.4)';
-      ctx.setLineDash(on ? [] : [6 / scale, 5 / scale]);
+      const lineColor = solid ? '#ff604f' : '#61e7f0';
+      ctx.save();
+      ctx.fillStyle = solid ? 'rgba(255,72,54,.12)' : 'rgba(97,231,240,.10)';
       ctx.beginPath();
       b.poly.forEach((p, k) => { if (k) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
       ctx.closePath();
+      ctx.fill();
+      // Тёмная подложка сохраняет контур читаемым на белых и светящихся картинках.
+      ctx.lineWidth = (on ? 6 : 4) / scale;
+      ctx.strokeStyle = 'rgba(2,6,10,.88)';
+      ctx.setLineDash(on ? [] : [6 / scale, 5 / scale]);
+      ctx.stroke();
+      ctx.lineWidth = (on ? 2.8 : 2) / scale;
+      ctx.strokeStyle = editable ? lineColor : 'rgba(160,160,170,.65)';
+      ctx.setLineDash(on ? [] : [6 / scale, 5 / scale]);
       ctx.stroke();
       ctx.setLineDash([]);
-      if (!on || !over) return;
+      ctx.restore();
+      if (!on || !editable) return;
       b.poly.forEach((p, vertexIndex) => {
         const chosen = selectedVert && selectedVert.bi === i && selectedVert.i === vertexIndex;
-        ctx.fillStyle = chosen ? '#ff5a46' : '#ffd23f';
+        const radius = (chosen ? SELECTED_HANDLE_RADIUS : HANDLE_RADIUS) / scale;
+        ctx.fillStyle = 'rgba(2,6,10,.95)';
         ctx.beginPath();
-        ctx.arc(p[0], p[1], (chosen ? 7 : 5) / scale, 0, Math.PI * 2);
+        ctx.arc(p[0], p[1], radius + 2 / scale, 0, Math.PI * 2);
         ctx.fill();
+        ctx.fillStyle = chosen ? '#ff765f' : '#ffd23f';
+        ctx.beginPath();
+        ctx.arc(p[0], p[1], radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff7cf';
+        ctx.lineWidth = 1.5 / scale;
+        ctx.stroke();
       });
       const bb = aabb(b.poly);
-      const hs = 6 / scale;
+      const hs = SCALE_HANDLE_SIZE / scale;
       [[bb.minx, bb.miny], [bb.maxx, bb.miny], [bb.maxx, bb.maxy], [bb.minx, bb.maxy]].forEach((h) => {
+        ctx.fillStyle = 'rgba(2,6,10,.95)';
+        ctx.fillRect(h[0] - hs - 2 / scale, h[1] - hs - 2 / scale, hs * 2 + 4 / scale, hs * 2 + 4 / scale);
         ctx.fillStyle = '#79dce6';
         ctx.fillRect(h[0] - hs, h[1] - hs, hs * 2, hs * 2);
+        ctx.strokeStyle = '#e8fdff';
+        ctx.lineWidth = 1.5 / scale;
+        ctx.strokeRect(h[0] - hs, h[1] - hs, hs * 2, hs * 2);
       });
     });
   }
@@ -265,11 +292,22 @@ window.MapAssetColl = (() => {
   /** Режим вставки вершины. */
   function setPoint(on) { pointOn = !!on; }
 
+  /** Состояние выбора для подсказки редактора. */
+  function state(def) {
+    const list = bodies(def);
+    return {
+      bodyCount: list.length,
+      selectedBody: list.length ? Math.min(sel, list.length - 1) : -1,
+      selectedVertex: selectedVert ? selectedVert.i : -1,
+      pointOn
+    };
+  }
+
   /** Сброс при открытии окна. */
   function reset() { sel = 0; drag = null; pointOn = false; selectedVert = null; }
 
   return {
     bodies, paint, onDown, onDoubleClick, onMove, removeSelectedVertex, endDrag: () => { drag = null; },
-    addBox, copy, remove, clear, setPoint, pointOn: () => pointOn, reset, syncPoly
+    addBox, copy, remove, clear, setPoint, pointOn: () => pointOn, state, reset, syncPoly
   };
 })();

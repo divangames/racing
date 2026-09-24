@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////
 //
-// Копирует Three и quarks в vendor-local — без правки браузерной игры.
+// Копирует Three и quarks из десктопного контента в vendor-local.
 //
 ////////////////////////////////////////////////////////
 
@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 
 const root = path.resolve(__dirname, '..');
-const parent = path.resolve(root, '..');
+const parent = path.resolve(root, require('../config/game.json').contentDevRelative);
 const dest = path.join(root, 'vendor-local');
 
 const copies = [

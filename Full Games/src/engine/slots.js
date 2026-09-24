@@ -73,8 +73,7 @@
    * Экран справки: крупные подписи, не таблица Excel.
    */
   function drawHelpEngine() {
-    g.fillStyle = '#0b0a12';
-    g.fillRect(0, 0, W, H);
+    drawHubBackdrop();
     txt(g, 'УПРАВЛЕНИЕ', W / 2, 70, 44, '#ffd23f', 'center');
     HELP_ROWS.forEach(function (r, i) {
       const y = 130 + i * 44;
@@ -82,16 +81,17 @@
       txt(g, r[0], W / 2 - 220, y, 18, '#ffd23f', 'center');
       txt(g, r[1], W / 2 - 90, y, 18, '#e8e2d0', 'left', F_B);
     });
+    txt(g, 'ГЕЙМПАД · левый стик — руль · RT/LT — газ/тормоз · Y — ручник', W / 2, H - 124, 15, '#35e0ff', 'center', F_B);
+    txt(g, 'A/B/X — оружие/нитро/ульта · крестовина — меню · Start — пауза', W / 2, H - 99, 15, '#35e0ff', 'center', F_B);
     txt(g, 'Собирай деньги и ящики, взрывай соперников, финишируй первым.', W / 2, H - 60, 17, '#9a93a8', 'center', F_B);
-    txt(g, 'ЛЮБАЯ КЛАВИША — НАЗАД', W / 2, H - 30, 16, '#ff9d2e', 'center');
+    txt(g, 'ЛЮБАЯ КЛАВИША ИЛИ A/B НА ГЕЙМПАДЕ — НАЗАД', W / 2, H - 30, 16, '#ff9d2e', 'center');
   }
 
   /**
    * Выбор слота: сохранение или загрузка.
    */
   function drawSlotSelectEngine() {
-    g.fillStyle = '#0b0a12';
-    g.fillRect(0, 0, W, H);
+    drawHubBackdrop();
     txt(g, slotSelectMode === 'save' ? 'ВЫБЕРИТЕ СЛОТ ДЛЯ СОХРАНЕНИЯ' : 'ВЫБЕРИТЕ СЛОТ ДЛЯ ЗАГРУЗКИ', W / 2, 70, 32, '#ffd23f', 'center');
     for (let i = 0; i < 10; i++) {
       const r = slotRectAt(i, W);

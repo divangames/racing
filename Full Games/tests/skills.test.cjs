@@ -60,7 +60,7 @@ test('Заезд подключает скилы до трассы и качал
 });
 
 test('Лечение Медведя, статы, доход и потолок скила', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function skillVal('));
   assert(html.includes('function buyGym('));
   const g = bootSkills();
@@ -81,11 +81,12 @@ test('Лечение Медведя, статы, доход и потолок с
   g.save.cash = 200000;
   g.buyGym(0);
   assert.equal(g.save.cstats[0].spd, 1);
-  assert.equal(g.save.cash, 50000);
+  assert.equal(g.save.cash, 199100);
   assert.equal(g.garMsg, 'НАКАЧАНО: СКОРОСТЬ');
   g.save.cash = 200000;
   g.buyGym(3);
   assert.equal(g.save.cstats[0].inc, 1);
+  assert.equal(g.save.cash, 198800);
   assert.equal(g.incomePct(0), 10);
   assert.equal(g.incomePayout(125, 0), 138);
   assert.equal(g.garMsg, 'ДОХОД: +10%');
@@ -97,4 +98,45 @@ test('Лечение Медведя, статы, доход и потолок с
   g.buyGym(4);
   assert.equal(g.save.skills[0], 2);
   assert.equal(g._sfx, 'buy');
+});
+
+test('Прокачка доступна в ранней карьере, цены совпадают в общем каталоге', () => {
+  const g = bootSkills();
+  assert.deepEqual(Array.from(g.STAT_COSTS), [900, 1800, 3200, 5200]);
+  assert.deepEqual(Array.from(g.SKILL_COSTS), [1200, 2400, 4200, 7200, 12000]);
+  g.save.cash = 1000;
+  g.save.cstats[0].spd = 0;
+  g.buyGym(0);
+  assert.equal(g.save.cash, 100);
+  assert.equal(g.save.cstats[0].spd, 1);
+  g.buyGym(0);
+  assert.equal(g.save.cash, 100);
+  assert.equal(g.save.cstats[0].spd, 1);
+  assert.match(g.garMsg, /НЕ ХВАТАЕТ 1700/);
+  g.save.cash += 1700;
+  g.buyGym(0);
+  assert.equal(g.charEff(0).spd, 5);
+  assert.equal(g.save.cash, 0);
+  g.buyGym(0);
+  assert.equal(g.garMsg, 'МАКСИМУМ');
+});
+
+test('Неполный старый слот покупает стат корректно, неверная строка ничего не списывает', () => {
+  const g = bootSkills();
+  g.save.cstats[0] = { spd: 1 };
+  g.save.cash = 900;
+  g.upgradeCharStat(0, 'crn');
+  assert.equal(g.save.cash, 0);
+  assert.equal(g.save.cstats[0].crn, 1);
+  assert.equal(g.save.cstats[0].spd, 1);
+  assert.equal(g.save.cstats[0].inc, 0);
+  g.save.cash = 1200;
+  delete g.save.skills;
+  g.buyGym(-1);
+  g.buyGym(99);
+  g.upgradeCharStat(0, 'inc');
+  assert.equal(g.save.cash, 1200);
+  g.buyGym(4);
+  assert.equal(g.save.cash, 0);
+  assert.equal(g.save.skills[0], 2);
 });

@@ -35,6 +35,8 @@ test('Модули подключаются по пути и meta, не по т�
 test('История загружается раньше приложения карты',()=>{
  const out=enhanceHtml('<head></head><body><main id="workMap"></main><script src="editor/map-app.js?v=1"></script></body>',{pathname:'/Editor.html'});
  assert(out.indexOf('/__engine/editor/history.js')<out.indexOf('src="editor/map-app'));
+ assert(out.indexOf('/__engine/lab-session.js')<out.indexOf('/__engine/editor/test-session.js'));
+ assert(out.indexOf('/__engine/editor/test-session.js')<out.indexOf('src="editor/map-app'));
  assert(out.includes('workbench.css'));
  assert(out.includes('busy.css'));
  assert(out.includes('/__engine/editor/busy.js'));
@@ -55,13 +57,13 @@ test('Десктопная лаборатория подменяет модул�
  assert(out.includes('/__engine/editor/asset-library.css'));
 });
 test('Ассеты редактора рисуются на трассе и над трассой в правильном порядке',()=>{
- const view=fs.readFileSync(path.resolve(__dirname,'../../editor/map-view.js'),'utf8');
+ const view=fs.readFileSync(path.resolve(__dirname,'../content/editor/map-view.js'),'utf8');
  const road=view.indexOf('MapPreview.strokeRoad');
  const belowRoad=view.indexOf("RnRObjects.drawLayer(ctx, t.objects, 'underRoad'");
  const onTrack=view.indexOf("RnRObjects.drawLayer(ctx, t.objects, 'under'");
  const above=view.indexOf("RnRObjects.drawLayer(ctx, t.objects, 'over'");
  assert(belowRoad>=0&&belowRoad<road&&onTrack>road&&above>onTrack);
- const html=fs.readFileSync(path.resolve(__dirname,'../../Editor.html'),'utf8');
+ const html=fs.readFileSync(path.resolve(__dirname,'../content/Editor.html'),'utf8');
  assert(html.includes('data-asset-road="under"'));
  assert(html.includes('data-asset-road="over"'));
  assert(html.includes('data-asset-car="under"'));
@@ -70,17 +72,18 @@ test('Ассеты редактора рисуются на трассе и на
  assert(html.includes('id="assetEditUnder"'));
 });
 test('Расширение текущего редактора сохраняет библиотеку объектов и стартовую клетку',()=>{
- const source=fs.readFileSync(path.resolve(__dirname,'../../editor/map-app.js'),'utf8');
+ const source=fs.readFileSync(path.resolve(__dirname,'../content/editor/map-app.js'),'utf8');
  const enhanced=enhanceEditorScript(source);
  assert(enhanced.includes('MapAssets.init('));assert(enhanced.includes('MapAssets.setOpen('));
  assert(enhanced.includes('function addStart('));assert(enhanced.includes('getDocument:cur'));
+ assert.equal(enhanceEditorScript(enhanced),enhanced);
  assert(!enhanced.includes('window.MapData && MapData.isChapter'));
  assert(enhanced.includes("typeof MapData !== 'undefined' && MapData.isChapter"));
  assert.throws(()=>enhanceEditorScript('const MapApp={};'),/контракт/);
 });
 test('Возврат из теста карты несёт id трассы',()=>{
- const html=fs.readFileSync(path.resolve(__dirname,'../../rnr.html'),'utf8');
- const map=fs.readFileSync(path.resolve(__dirname,'../../editor/map-app.js'),'utf8');
+ const html=fs.readFileSync(path.resolve(__dirname,'../content/rnr.html'),'utf8');
+ const map=fs.readFileSync(path.resolve(__dirname,'../content/editor/map-app.js'),'utf8');
  assert.match(html,/function exitLabTest/);
  assert.match(html,/&track=/);
  assert.match(map,/applyStartDoc/);
@@ -91,8 +94,8 @@ test('Возврат из теста карты несёт id трассы',()=>
  assert.match(enhanced,/__mapFillLock/);
 });
 test('Живые rnr.html и Editor.html получают рантайм по meta',()=>{
- const gameHtml=fs.readFileSync(path.resolve(__dirname,'../../rnr.html'),'utf8');
- const labHtml=fs.readFileSync(path.resolve(__dirname,'../../Editor.html'),'utf8');
+ const gameHtml=fs.readFileSync(path.resolve(__dirname,'../content/rnr.html'),'utf8');
+ const labHtml=fs.readFileSync(path.resolve(__dirname,'../content/Editor.html'),'utf8');
  assert(gameHtml.includes('name="divan-engine" content="game"'));
  assert(labHtml.includes('name="divan-engine" content="lab"'));
  assert(enhanceHtml(gameHtml).includes('/__engine/driving.js'));
@@ -205,6 +208,35 @@ test('Ассет импортируется исходными байтами и
   assert.equal(object.w,640);assert.equal(object.h,320);assert.equal(object.layer,'under');
  } finally {fs.rmSync(root,{recursive:true,force:true});}
 });
+test('Замена картинки сохраняет размер, слои и коллизию ассета',async()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'rnr-obj-replace-'));
+ try {
+  const api=handler('save-object',root);
+  const original={pack:'world',id:'tower',name:'Башня',src:'tower.png',w:96,h:180,lockRatio:false,layer:'over',carLayer:'over',roadLayer:'under',collision:{solid:true,bodies:[{poly:[[-20,-40],[20,-40],[20,40],[-20,40]]}]}};
+  assert.equal((await api.handleSaveOblab(request(original))).status,200);
+  const url=new URL('http://localhost/__save-oblab-file?pack=world&id=tower&name='+encodeURIComponent('Новая башня')+'&ext=webp&w=2048&h=4096&replace=1');
+  assert.equal((await api.handleSaveOblabFile(new Request(url,{method:'POST',body:Buffer.from('new-image')}),url)).status,200);
+  const object=api.listPacks().packs[0].objects[0];
+  assert.equal(object.w,96);assert.equal(object.h,180);assert.equal(object.lockRatio,false);
+  assert.equal(object.carLayer,'over');assert.equal(object.roadLayer,'under');assert.equal(object.collision.solid,true);
+  assert.equal(object.collision.bodies[0].poly.length,4);
+  assert.equal(fs.readFileSync(path.join(root,'assets/object/world.labr/tower.webp'),'utf8'),'new-image');
+ } finally {fs.rmSync(root,{recursive:true,force:true});}
+});
+test('Карта даёт объектам квадратные превью, буфер обмена, отражение и параметры теста',()=>{
+ const assets=fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/map-assets.js'),'utf8');
+ const objects=fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/objects.js'),'utf8');
+ const edit=fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/map-asset-edit.js'),'utf8');
+ const session=fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/test-session.js'),'utf8');
+ const css=fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/asset-library.css'),'utf8');
+ assert.match(css,/aspect-ratio:\s*1\s*\/\s*1/);
+ assert.match(assets,/KeyC/);assert.match(assets,/KeyV/);assert.match(assets,/assetInstanceFlipX/);assert.match(assets,/Пропорционально/);
+ assert.match(objects,/inst\.flipX/);assert.match(objects,/inst\.flipY/);
+ assert.match(edit,/Заменить изображение/);assert.match(edit,/scaleCollision/);
+ assert.match(edit,/card\.appendChild\(footer\)/);assert.match(edit,/Изображение и размер/);assert.match(edit,/Расположение/);
+ assert.match(css,/\.asset-edit-footer\s*\{/);assert.match(css,/overflow-y:\s*auto/);assert.match(css,/scrollbar-gutter:\s*stable/);
+ assert.match(session,/Добавить соперников/);assert.match(session,/mapTestDifficulty/);assert.match(session,/mapTestLaps/);
+});
 test('Паки хранят цвет и дерево, а системный пак нельзя изменить',()=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'rnr-pack-'));
  try {
@@ -237,13 +269,35 @@ test('Редактор ассета поддерживает двойной кл
  assert(edit.includes("addEventListener('dblclick', onDoubleClick)"));
  assert(edit.includes("addEventListener('keydown', onKeyDown)"));
 });
+test('Вершины коллизии видны и доступны даже при выключенном столкновении',()=>{
+ const coll=fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/map-asset-coll.js'),'utf8');
+ const context={window:{}};vm.runInNewContext(coll,context);
+ let arcs=0,strokes=0;
+ const ctx={save(){},restore(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){},stroke(){strokes++;},setLineDash(){},arc(){arcs++;},fillRect(){},strokeRect(){}};
+ const def={layer:'over',collision:{solid:false,bodies:[{poly:[[-10,-10],[10,-10],[10,10],[-10,10]]}],poly:[]}};
+ context.window.MapAssetColl.paint(ctx,def,1);
+ assert.equal(arcs,8);assert(strokes>=3);
+});
+test('Отражение экземпляра применяется к изображению и коллизии на карте',()=>{
+ const source=fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/objects.js'),'utf8');
+ const scales=[];
+ const context={window:{},Image:function(){this.complete=true;this.naturalWidth=64;}};
+ vm.runInNewContext(source,context);
+ const def={pack:'world',id:'tower',src:'tower.png',w:64,h:80,layer:'over',carLayer:'over',roadLayer:'over',collision:{solid:true,bodies:[{poly:[[-10,-10],[10,-10],[10,10],[-10,10]]}],poly:[]}};
+ context.window.RnRObjects.packs=[{id:'world',objects:[def]}];
+ const ctx={save(){},restore(){},translate(){},rotate(){},scale(x,y){scales.push([x,y]);},drawImage(){},fillRect(){},beginPath(){},moveTo(){},lineTo(){},closePath(){},stroke(){},setLineDash(){},strokeRect(){}};
+ const object={pack:'world',id:'tower',x:0,y:0,w:64,h:80,flipX:true,flipY:true};
+ context.window.RnRObjects.drawOne(ctx,object);
+ context.window.RnRObjects.drawCollision(ctx,object);
+ assert.deepEqual(scales,[[-1,-1],[-1,-1]]);
+});
 test('История сохраняет redo при повторе снимка и обрезает ветку при новой правке',()=>{
  const context={};vm.runInNewContext(fs.readFileSync(path.resolve(__dirname,'../src/engine/editor/history.js'),'utf8')+'\nglobalThis.History=StudioHistory;',context);
  const h=new context.History(3);h.record('a');h.record('b');h.record('c');h.at--;h.record('b');assert.equal(h.list.length,3);
  h.record('d');assert.equal(h.list.join(','),'a,b,d');h.record('e');assert.equal(h.list.join(','),'b,d,e');assert.equal(h.at,2);
 });
 test('С выбора гонщика ESC возвращает в главное меню',()=>{
- const html=fs.readFileSync(path.resolve(__dirname,'../../rnr.html'),'utf8');
+ const html=fs.readFileSync(path.resolve(__dirname,'../content/rnr.html'),'utf8');
  assert(html.includes('function leaveCharSel()'));
  assert(/if\(state==='char'\)[\s\S]{0,400}if\(isBack\(c\)\)\{leaveCharSel\(\)/.test(html));
 });
@@ -282,4 +336,20 @@ test('WAV для мотора отдаётся буфером, не Node-пот�
     const got = Buffer.from(await res.arrayBuffer());
     assert.deepEqual(got, payload);
   } finally {fs.rmSync(dir,{recursive:true,force:true});}
+});
+
+test('MP4 для заставки отдаётся как видео с поддержкой Range', async () => {
+  const { serveLocalFile } = require('../src/main/serve-file');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rnr-video-'));
+  const file = path.join(dir, 'intro.mp4');
+  const payload = Buffer.from('0123456789');
+  try {
+    fs.writeFileSync(file, payload);
+    const request = new Request('http://rnr/intro.mp4', { headers: { range: 'bytes=2-5' } });
+    const res = serveLocalFile(file, request);
+    assert.equal(res.status, 206);
+    assert.equal(res.headers.get('content-type'), 'video/mp4');
+    assert.equal(res.headers.get('content-range'), 'bytes 2-5/10');
+    assert.deepEqual(Buffer.from(await res.arrayBuffer()), Buffer.from('2345'));
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });

@@ -93,6 +93,26 @@ function labSplashMarkup() {
 }
 
 /**
+ * Переносит старт игры за теги движка: иначе исходный bootGo успевает запуститься
+ * до замены хука, а заставка движка никогда не получает управление.
+ * @param {string} html
+ * @returns {{html:string,start:string}}
+ */
+function deferGameBoot(html) {
+  const call = 'try{bootGo();}catch(e){console.error(e);bootFinish();}';
+  const bootFx = html.lastIndexOf('bootFxStart();');
+  const at = html.lastIndexOf(call);
+  if (bootFx < 0 || at < bootFx) return { html, start: '' };
+  const before = html.slice(0, at);
+  const after = html.slice(at + call.length);
+  const deferred = (before + '/* bootGo запускается после модулей движка */' + after)
+    .replace('id="boot-screen" class="is-load"', 'id="boot-screen" class="is-load creator-intro-pending"');
+  const fallback = "if(!window.DiVANEngine||!window.DiVANEngine.original||window.DiVANEngine.original('bootGo')===bootGo){"
+    + "const s=document.getElementById('boot-screen');if(s)s.classList.remove('creator-intro-pending');}";
+  return { html: deferred, start: '<script>' + fallback + call + '</script>' };
+}
+
+/**
  * Вставляет рантайм перед </body> и служебные теги лаборатории.
  * @param {string} html
  * @param {{pathname?: string}} [options]
@@ -108,9 +128,11 @@ function injectRuntime(html, options) {
   if (spec.before) {
     for (const [target, insert] of Object.entries(spec.before)) {
       const needle = `<script src="${target}`;
-      const tag = `<script src="/__engine/${insert}"></script>\n`;
-      if (result.includes(needle) && !result.includes(`/__engine/${insert}`)) {
-        result = result.replace(needle, tag + needle);
+      for (const file of Array.isArray(insert) ? insert : [insert]) {
+        const tag = `<script src="/__engine/${file}"></script>\n`;
+        if (result.includes(needle) && !result.includes(`/__engine/${file}`)) {
+          result = result.replace(needle, tag + needle);
+        }
       }
     }
   }
@@ -135,11 +157,13 @@ function injectRuntime(html, options) {
       result = result.replace('</head>', `${boot}</head>`);
     }
   }
+  const boot = host === 'game' ? deferGameBoot(result) : { html: result, start: '' };
+  result = boot.html;
   if (!tags) return result;
   if (result.includes('</body>')) {
-    return result.replace('</body>', `${tags}\n</body>`);
+    return result.replace('</body>', `${tags}\n${boot.start}\n</body>`);
   }
-  return result + tags;
+  return result + tags + boot.start;
 }
 
 module.exports = {
@@ -147,6 +171,7 @@ module.exports = {
   metaHost,
   resolveHost,
   runtimeTags,
+  deferGameBoot,
   injectRuntime,
   engineConfig: engine
 };

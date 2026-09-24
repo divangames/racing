@@ -49,7 +49,7 @@ test('Заезд подключает extras и pointer до кадра', () => 
 });
 
 test('Сетка трофеев, чит-ячейки, плитка трассы и хитбокс', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function hubClick('));
   const g = bootExtras();
   const grid = g.DiVANEngine.extras.trophyGrid(1280, 720, 9, 3);

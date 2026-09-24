@@ -62,7 +62,7 @@
    * @returns {string[]}
    */
   function pauseRaceItemsEngine() {
-    const items = ['ПРОДОЛЖИТЬ', 'НАСТРОЙКИ', 'ДОСТИЖЕНИЯ', 'РЕСТАРТ ГОНКИ'];
+    const items = ['ПРОДОЛЖИТЬ', 'ВЕРНУТЬСЯ НА ТРАССУ', 'НАСТРОЙКИ', 'ДОСТИЖЕНИЯ', 'РЕСТАРТ ГОНКИ'];
     if (isDev()) items.push('ВЫБОР ТРАССЫ');
     items.push(labTest ? 'В ЛАБОРАТОРИЮ' : 'ВЫЙТИ ИЗ ГОНКИ');
     return items;
@@ -214,7 +214,7 @@
       state = 'title';
       return;
     }
-    g.fillStyle = '#0b0a12'; g.fillRect(0, 0, W, H);
+    drawHubBackdrop();
     txt(g, 'ЧИТЫ', W / 2, 70, 44, '#ffd23f', 'center');
     txt(g, 'введите код • только английская раскладка', W / 2, 112, 15, '#9a93a8', 'center', F_B);
     const n = 7, bw = 64, gap = 12;
@@ -235,7 +235,7 @@
    * Сетка трасс для быстрого старта.
    */
   function drawTrackPickEngine() {
-    g.fillStyle = '#0b0a12'; g.fillRect(0, 0, W, H);
+    drawHubBackdrop();
     txt(g, 'ВЫБОР ТРАССЫ', W / 2, 58, 40, '#ffd23f', 'center');
     txt(g, 'быстрый старт • режим разработчика', W / 2, 96, 15, '#9a93a8', 'center', F_B);
     g._trackTiles = [];

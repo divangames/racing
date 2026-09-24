@@ -55,6 +55,14 @@ input,select {background-color:#0c1620;border-color:#3c5060;}
 .map-inspector-nav button {flex:1 0 auto;min-height:30px;padding:0 8px;white-space:nowrap;background:transparent;border-color:transparent;color:#b7c5d0;font-size:11px;}
 .map-inspector-nav button:hover,.map-inspector-nav button:focus-visible {background:#213443;border-color:#496579;color:#fff;}
 .map-panel-card {flex:none;padding:12px;border:1px solid #293d4d;border-radius:8px;background:linear-gradient(180deg,rgba(31,48,62,.74),rgba(18,29,39,.86));box-shadow:0 8px 24px #0002;}
+
+/* Параметры теста показывают настройки соперников только после включения. */
+.map-test-options {display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:4px 7px;border:1px solid #3a4a58;border-radius:6px;background:rgba(10,16,22,.88);}
+.map-test-options label {display:none;align-items:center;gap:5px;color:var(--muted);font-size:10px;white-space:nowrap;}
+.map-test-options label:first-child,.map-test-options label:last-child,.map-test-options.has-opponents label {display:inline-flex;}
+.map-test-options select,.map-test-options input[type='number'] {min-height:34px;}
+.map-test-options input[type='number'] {width:52px;}
+@media(max-width:900px) {.map-test-options{flex-wrap:wrap;width:100%;}}
 .map-panel-card:first-of-type {padding-top:12px;border-top:1px solid #293d4d;}
 .map-source-tabs {display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;padding:4px;border:1px solid #314757;border-radius:7px;background:#0d1720;}
 .map-source-tabs button {min-height:38px;border-color:transparent;background:transparent;color:var(--muted);}
@@ -76,3 +84,37 @@ input,select {background-color:#0c1620;border-color:#3c5060;}
 .studio-help summary:focus-visible {outline:2px solid var(--yellow);outline-offset:2px;}
 .studio-diagnostics {padding-bottom:12px;}
 .studio-report {margin-top:6px;}
+
+/* Быстрые действия остаются рядом с настройками даже в длинном инспекторе. */
+#workCar .panel {padding:0 10px 12px;scroll-padding-top:174px;}
+#workCar .panel > .section {flex:none;}
+.car-inspector-head {position:sticky;top:0;z-index:8;flex:none;margin:0 -10px;padding:10px 12px;background:#0d161f;border-bottom:1px solid #324657;box-shadow:0 8px 18px #05090d88;}
+.car-inspector-actions {display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.car-inspector-actions strong {font-size:13px;}
+.car-inspector-actions button {flex:none;}
+.car-save-summary {margin:8px 0;font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere;}
+.car-save-summary[data-state="dirty"] {color:var(--yellow);}
+.car-save-summary[data-state="error"] {color:#ff9d89;}
+.car-save-summary[data-state="saved"] {color:#a0dec0;}
+.car-inspector-nav {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;}
+.car-inspector-nav button {min-height:30px;padding:0 4px;background:#172734;font-size:10px;}
+.car-inspector-head #status {margin:7px 0 0;max-height:54px;overflow:auto;overflow-wrap:anywhere;font-size:11px;line-height:1.5;color:#c0cfdb;}
+.car-inspector-head #status:empty {display:none;}
+.car-canvas-help {margin-top:4px;}
+.car-canvas-help summary {padding:3px 0;font-size:11px;}
+.car-canvas-help .stage-note {margin:5px 0;}
+#workCar .stage-foot {flex-wrap:wrap;gap:4px 12px;margin-top:8px;}
+@media(min-width:761px) {
+  #workCar {height:calc(100dvh - 168px);min-height:430px;}
+  #workCar .stage-card {display:flex;flex-direction:column;min-height:0;overflow:auto;}
+  #workCar .stage-head,#workCar .stage-tools,#workCar .stage-foot {flex:none;}
+  #workCar .stage-head {align-items:flex-start;}
+  #workCar .stage-head > div:first-child {min-width:0;flex:1;}
+  #workCar .legend {max-width:195px;gap:5px 10px;justify-content:flex-end;}
+  #workCar #stage {flex:1 1 250px;height:0;min-height:220px;}
+  #workCar .panel {max-height:100%;min-height:0;}
+}
+@media(max-width:760px) {
+  #workCar .panel {scroll-padding-top:12px;}
+  .car-inspector-head {position:static;}
+}

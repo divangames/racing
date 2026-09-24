@@ -16,6 +16,7 @@ const { fetchLatestLauncher } = require('./github');
 const { downloadFile } = require('./download');
 const { isNewer, normalizeTag } = require('./version');
 const { formatBytes } = require('./format');
+const { msiexecArguments, powershellFileArguments } = require('./installer-args');
 
 let busy = false;
 let lastProgress = null;
@@ -75,19 +76,29 @@ async function snapshot() {
  */
 function writeApplyHelper(msiPath, exePath, pid) {
   const file = path.join(os.tmpdir(), 'kolesnica-apply-' + pid + '.ps1');
+  const log = path.join(os.tmpdir(), 'kolesnica-install-' + pid + '.log');
   const body = [
     '$ErrorActionPreference = "Stop"',
     '$targetPid = ' + Number(pid),
     '$msi = ' + psSingle(msiPath),
     '$exe = ' + psSingle(exePath),
+    '$log = ' + psSingle(log),
     'for ($i = 0; $i -lt 120; $i++) {',
     '  if (-not (Get-Process -Id $targetPid -ErrorAction SilentlyContinue)) { break }',
     '  Start-Sleep -Seconds 1',
     '}',
     'Start-Sleep -Seconds 1',
-    '$args = @("/i", $msi, "/passive", "/norestart", "ALLUSERS=1", "REBOOT=ReallySuppress")',
-    '$proc = Start-Process -FilePath "msiexec.exe" -ArgumentList $args -Wait -PassThru',
+    '$msiArgs = ' + psSingle(msiexecArguments(msiPath, log)),
+    'try {',
+    '  $proc = Start-Process -FilePath "msiexec.exe" -ArgumentList $msiArgs -Wait -PassThru',
+    '} catch {',
+    '  Add-Type -AssemblyName PresentationFramework',
+    '  [System.Windows.MessageBox]::Show("Не удалось запустить установщик: $($_.Exception.Message)`nЖурнал: $log", "Обновление лаунчера") | Out-Null',
+    '  exit 1',
+    '}',
     'if ($proc.ExitCode -ne 0 -and $proc.ExitCode -ne 3010) {',
+    '  Add-Type -AssemblyName PresentationFramework',
+    '  [System.Windows.MessageBox]::Show("Установка не удалась (код $($proc.ExitCode)).`nЖурнал: $log", "Обновление лаунчера") | Out-Null',
     '  exit $proc.ExitCode',
     '}',
     'if (Test-Path -LiteralPath $exe) { Start-Process -FilePath $exe }',
@@ -107,17 +118,9 @@ function elevateHelper(helperPath) {
   return new Promise((resolve, reject) => {
     const ps =
       'try {' +
-      ' Start-Process -FilePath "powershell.exe" -ArgumentList @(' +
-      psSingle('-NoProfile') +
-      ',' +
-      psSingle('-ExecutionPolicy') +
-      ',' +
-      psSingle('Bypass') +
-      ',' +
-      psSingle('-File') +
-      ',' +
-      psSingle(helperPath) +
-      ') -Verb RunAs;' +
+      ' Start-Process -FilePath "powershell.exe" -ArgumentList ' +
+      psSingle(powershellFileArguments(helperPath)) +
+      ' -Verb RunAs;' +
       ' exit 0' +
       '} catch {' +
       ' exit 2' +

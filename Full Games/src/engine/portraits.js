@@ -93,13 +93,13 @@
    * @param {{title:string,sub?:string,subCol?:string}|null} plaque
    */
   function drawPilotStageEngine(x, y, w, h, ch, plaque) {
-    const rgb = hexToRgb(ch && ch.col);
+    const menu = global.DiVANEngine && global.DiVANEngine.menu;
+    const rgb = hexToRgb(menu ? menu.colors.accent : ch && ch.col);
     const img = fullbodyImage(ch);
     const reduce = introReduceMotion;
-    rr(g, x, y, w, h, 16); g.fillStyle = '#0c0a12'; g.fill();
-    g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 1; g.stroke();
+    panel(g, x, y, w, h, '#141c23', '#364550', 7);
     g.save();
-    rr(g, x, y, w, h, 16); g.clip();
+    panelPath(g, x, y, w, h, 7); g.clip();
     const wash = g.createLinearGradient(x, y, x, y + h);
     wash.addColorStop(0, 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',.22)');
     wash.addColorStop(.38, 'rgba(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ',.05)');

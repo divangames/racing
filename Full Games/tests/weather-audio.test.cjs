@@ -12,7 +12,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const ROOT = path.resolve(__dirname, '../..');
+const ROOT = path.resolve(__dirname, '../content');
 
 /** Песочница погоды и эмбиента. */
 function bootWx() {
@@ -94,6 +94,16 @@ test('После главного меню дождь останавливает
   g.state = 'garage';
   g.RnRWeatherAudio.sync(null, g.settings);
   assert.equal(rain.paused, true);
+});
+
+test('Демонстрации и пауза не включают погоду заезда', () => {
+  const g = bootWx(), race = {weather:{id:'rain'}};
+  for (const state of ['settings','cameraSetup','car','autopark','detail']) {
+    g.state=state;g.RnRWeatherAudio.sync(race,g.settings);
+    assert.equal(g.plays.length,0);
+  }
+  g.state='race';g.paused=true;g.RnRWeatherAudio.sync(race,g.settings);assert.equal(g.plays.length,0);
+  g.paused=false;g.RnRWeatherAudio.sync(race,g.settings);assert.equal(g.plays.length,1);
 });
 
 test('Молния бьёт grom.mp3', () => {

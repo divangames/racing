@@ -2,6 +2,8 @@
   "id": "custom_06",
   "name": "КОЛЬЦО ЖЕРТВ · ЧЕРНОВИК",
   "published": true,
+  "tactics": null,
+  "crossingMode": "overpass",
   "autoHazards": true,
   "theme": {
     "ground": "#5c6b4a",
@@ -13,8 +15,9 @@
     "weather": "",
     "groundSrc": "",
     "roadSrc": "",
-    "railSrc": "",
-    "groundScale": 1
+    "railSrc": "assets/data/tracks/Textures/rails/bort_01.png",
+    "groundScale": 1,
+    "crowdSound": true
   },
   "zones": [
     {
@@ -33,6 +36,8 @@
       "material": "asphalt"
     }
   ],
+  "gaps": [],
+  "decks": [],
   "cps": [
     [
       1896.6139347380142,
@@ -181,7 +186,38 @@
   ],
   "decals": [],
   "items": [],
-  "objects": [],
+  "objects": [
+    {
+      "pack": "arena_5mu4jh",
+      "id": "light_01",
+      "x": 1728,
+      "y": 1433.6707564432106,
+      "w": 91.51670951156812,
+      "h": 200,
+      "ang": 0,
+      "layer": "under",
+      "carLayer": "under",
+      "roadLayer": "over",
+      "lockRatio": true,
+      "flipX": true,
+      "flipY": false
+    },
+    {
+      "pack": "arena_5mu4jh",
+      "id": "light_01",
+      "x": 2611.028806590757,
+      "y": 1838.3420463355358,
+      "w": 91.51670951156812,
+      "h": 200,
+      "ang": 0,
+      "layer": "under",
+      "carLayer": "under",
+      "roadLayer": "over",
+      "lockRatio": true,
+      "flipX": false,
+      "flipY": false
+    }
+  ],
   "start": {
     "x": 1896.6139347380142,
     "y": 864.0150187665545,
@@ -199,11 +235,11 @@
       "bonus": 215,
       "radius": 84,
       "entry": [
-        1100,
+        1326.0893782245769,
         1000
       ],
       "exit": [
-        2550,
+        2776.0893782245766,
         1450
       ]
     }

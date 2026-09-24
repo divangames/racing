@@ -57,9 +57,10 @@
   function armUltBlurbEngine(idx, lvl) {
     const u = carAbil(idx).ult;
     const t = u.type;
-    if (!lvl) return 'сток · каждый уровень: −7% КД, +12% длительность / радиус';
+    if (!lvl) return 'сток · −7% КД, +12% время / +8% радиус за уровень';
     const cd = 'КД −' + Math.round(lvl * 7) + '%';
     const dur = ' · длительность +' + Math.round(lvl * 12) + '%';
+    const rad = ' · радиус +' + Math.round(lvl * 8) + '%';
     switch (t) {
       case 'dash': return cd + dur + ' · рывок дольше держит таран';
       case 'slowmo': return cd + dur + ' · прицел держит сетку дольше';
@@ -67,11 +68,11 @@
       case 'recharge': return cd + (lvl >= 4 ? ' · третий щит на IV+' : ' · щиты и перезарядка');
       case 'berserk': return cd + dur + ' · монолит стоит дольше';
       case 'cloak': return cd + dur + ' · дольше в тени';
-      case 'plow': return cd + ' · отвал шире';
+      case 'plow': return cd + rad;
       case 'ghost': return cd + dur + ' · дольше сквозь машины';
-      case 'haze': return cd + dur + ' · облако больше';
+      case 'haze': return cd + rad + ' · облако дольше';
       case 'bubble': return cd + dur + ' · купол дольше';
-      case 'shove': return cd + ' · табун шире';
+      case 'shove': return cd + rad;
       default: return cd + dur;
     }
   }

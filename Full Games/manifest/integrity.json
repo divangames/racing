@@ -1,13 +1,13 @@
 {
   "id": "kolesnica-voyny",
-  "version": "0.2.2.13",
-  "created": "2026-09-17T12:59:18.600Z",
+  "version": "0.2.2.18",
+  "created": "2026-09-24T18:41:07.658Z",
   "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
   "files": [
     {
       "path": "rnr.html",
-      "size": 390833,
-      "sha256": "fb8022f0f8d9a16d3a361c2035660a2af40bebf2019c1ed17c2b3e0b3fc8d5b7"
+      "size": 391498,
+      "sha256": "bf510185878a1dedd3cef90f0f65225b3dd41fceb2a2554495260246eeba2e36"
     },
     {
       "path": "career.js",
@@ -26,23 +26,23 @@
     },
     {
       "path": "sounds.js",
-      "size": 4462,
-      "sha256": "97d7ba4dafaf35e7345318a20eae8e4e59265c3c2d481b90dbb55ebc6e836e44"
+      "size": 4762,
+      "sha256": "839fb95699c602d59f45f88b4cb4100fcad66845327113b15327679d325e3fcd"
     },
     {
       "path": "car-audio.js",
-      "size": 11577,
-      "sha256": "3bcfa283ae8c4eb3baf76ffca30dcdde70c6a61b047a830ac2bbcbe550527216"
+      "size": 11261,
+      "sha256": "9b151fa8a6ba49d8ae2831034c9a101157510d1705cbd1cf857721b5cdbb75fb"
     },
     {
       "path": "car-audio-voice.js",
-      "size": 27125,
-      "sha256": "b47fa03a6d7621de196b5761fec7c4fc3a4ee4645e68508daddc273802180331"
+      "size": 27727,
+      "sha256": "4a2268584c34a77ca1e56fad0ebcf6056f1d64570492edeee3b9875a65d60156"
     },
     {
       "path": "car-tires.js",
-      "size": 5930,
-      "sha256": "249c7d62d5a068440ed56ac671c2bae7746b5a3a074a9335994a23a22d36f610"
+      "size": 6022,
+      "sha256": "2d4509310a8be2e61d1342d92abdda39d0bd7c42a7befdfb4640984d84eba6cb"
     },
     {
       "path": "car-nos.js",
@@ -51,8 +51,8 @@
     },
     {
       "path": "weapon-audio.js",
-      "size": 6442,
-      "sha256": "70d4d85563acbad66996110201204fac99392e1b6f3b94a0fd3da4de61b2bd7d"
+      "size": 6890,
+      "sha256": "a1e1685fcbf4add1521984784c391ea0e8d9b08cab005d7a2e6767365e2feef4"
     },
     {
       "path": "voice.js",
@@ -91,13 +91,13 @@
     },
     {
       "path": "tracks.js",
-      "size": 30713,
-      "sha256": "426a1cc60735e7a3be29ab2d64c50a924efd47b3997faa3f77733bcbb155dd0e"
+      "size": 30882,
+      "sha256": "90bde5383d1c3fd92ad247d64562211ab3494031396469d7da5bfbf38fdf5d72"
     },
     {
       "path": "objects.js",
-      "size": 7796,
-      "sha256": "81aef81878f44b94ab47a7b2b787b1d48dc13899601e8d26b46f7615e08d6c6c"
+      "size": 8425,
+      "sha256": "8b676c47fcfe7d0e7384fbeaee2a6cbfd9cb1be02323b91d0a7b2ba5023ce835"
     },
     {
       "path": "vfx/quarks-layer.js",
@@ -131,8 +131,8 @@
     },
     {
       "path": "vfx/weather-audio.js",
-      "size": 6988,
-      "sha256": "d0d8a441bdf9e9b73e612987a0ae31d27f84d3d18aaf64a3b699ab80b77b23ac"
+      "size": 7465,
+      "sha256": "f44c5de3e9685e54945742f8c0ad038f6992b5d24a6186ce268aa63e295e9878"
     },
     {
       "path": "vfx/arena-crowd.js",
@@ -171,8 +171,8 @@
     },
     {
       "path": "assets/data/cars/01/car.json",
-      "size": 2707,
-      "sha256": "f8a5810da94642f0d673099f994d6971de2e020fe67ba8d958df419950abb1a1"
+      "size": 2936,
+      "sha256": "59697953bb4ead182e7544688be2e8dff05e3f3d433a75e4f6708833ae2cdd4b"
     },
     {
       "path": "assets/data/cars/02/car.json",

@@ -13,5 +13,5 @@
 module.exports = async function afterPack(context) {
   if (context.electronPlatformName !== 'win32') return;
   console.log('Клиент собран в', context.appOutDir);
-  console.log('Полный Content копирует npm run portable (Собрать-билд.bat).');
+  console.log('Полный Content копирует npm run portable (Проект.bat → портативный билд).');
 };

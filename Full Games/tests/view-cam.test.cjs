@@ -56,7 +56,7 @@ test('Заезд подключает view-cam после холста', () => {
 });
 
 test('Зум в коридоре, snap к шагу, letterbox даёт поля', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function raceZoom('));
   const g = bootView();
   g.settings.graphics.cameraZoom = 9;

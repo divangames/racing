@@ -40,6 +40,10 @@
    * @returns {{pads:object[],ramps:object[],mines:object[],oils:object[],picks:object[]}}
    */
   function placeTrackHazardsEngine(T, seed) {
+    function clearRampPads(hz) {
+      hz.ramps = mergeGapRamps(hz.ramps || []);
+      return global.RnRArenaEffects ? RnRArenaEffects.separateRampPads(hz) : hz;
+    }
     function mergeGapRamps(ramps) {
       const extra = typeof gapRampsFromTrack === 'function' ? gapRampsFromTrack(T) : [];
       const NN = T && T.N ? T.N : 1;
@@ -63,12 +67,11 @@
       const NN = T && T.N ? T.N : 1;
       return typeof inTrackGap !== 'function' || !inTrackGap(T, i / NN);
     }
-    if (T && T.lab) return { pads: [], ramps: mergeGapRamps(placeLabRamps(T)), mines: [], oils: [], picks: [] };
+    if (T && T.lab) return clearRampPads({ pads: [], ramps: placeLabRamps(T), mines: [], oils: [], picks: [] });
     if (T && T.hazardPlan && global.RnRTracks && T.autoHazards === false) {
       const hz = RnRTracks.fromPlan(T, T.hazardPlan);
       hz.picks = hz.picks || [];
-      hz.ramps = mergeGapRamps(hz.ramps || []);
-      return hz;
+      return clearRampPads(hz);
     }
     const S = T.S, N = T.N, Rz = mulberry(seed);
     const valid = function (i) { return i > 80 && i < N - 80; };
@@ -119,10 +122,10 @@
     if (T && T.hazardPlan && (T.hazardPlan.picks || []).length && global.RnRTracks) {
       const planned = RnRTracks.fromPlan(T, T.hazardPlan);
       if (planned.picks && planned.picks.length) {
-        return { pads: pads, ramps: mergeGapRamps(ramps), mines: mines, oils: oils, picks: planned.picks };
+        return clearRampPads({ pads: pads, ramps: ramps, mines: mines, oils: oils, picks: planned.picks });
       }
     }
-    return { pads: pads, ramps: mergeGapRamps(ramps), mines: mines, oils: oils, picks: picks };
+    return clearRampPads({ pads: pads, ramps: ramps, mines: mines, oils: oils, picks: picks });
   }
 
   const engine = global.DiVANEngine;

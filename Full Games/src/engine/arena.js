@@ -10,6 +10,59 @@
   const FINISH_LABEL_ALONG_SCALE = 1.18;
   const FINISH_LABEL_SIZE = 18;
   const FINISH_LABEL_COLOR = '#b59a46';
+  const ARENA_SPRITES = {
+    pad: 0, ramp: 1, oil: 2, mine: 3, spikes: 4,
+    money: 5, wrench: 6, wep: 7, ult: 8, nit: 9,
+    shield: 10, bolt: 11, bullet: 12, rocket: 13, laser: 14,
+    plasma: 15, mortar: 16, nails: 17, fang: 18, special: 19
+  };
+  const arenaAtlas = typeof Image === 'undefined' ? null : new Image();
+  if (arenaAtlas) arenaAtlas.src = '/__engine/sprites/arena-atlas.svg';
+  const ARENA_TEXTURE_PATHS = {
+    pad: '/__engine/sprites/arena-pad.png',
+    ramp: '/__engine/sprites/arena-ramp.png',
+    oil: '/__engine/sprites/arena-oil.png',
+    mine: '/__engine/sprites/arena-mine.png',
+    money: '/__engine/sprites/arena-money.png',
+    wrench: '/__engine/sprites/arena-wrench.png',
+    wep: '/__engine/sprites/arena-wep.png',
+    ult: '/__engine/sprites/arena-ult.png',
+    nit: '/__engine/sprites/arena-nit.png',
+    shield: '/__engine/sprites/arena-shield.png',
+    bolt: '/__engine/sprites/arena-bolt.png'
+  };
+  const arenaTextures = {};
+  if (typeof Image !== 'undefined') for (const type of Object.keys(ARENA_TEXTURE_PATHS)) {
+    const sprite = new Image();
+    sprite.src = ARENA_TEXTURE_PATHS[type];
+    arenaTextures[type] = sprite;
+  }
+
+  /** Textured world objects use the same footprint and rotation as the old atlas. */
+  function drawArenaTexture(context, type, x, y, width, height, angle) {
+    const sprite = arenaTextures[type];
+    if (!sprite || !sprite.complete || !sprite.naturalWidth) return false;
+    context.save();
+    context.translate(x, y);
+    if (angle) context.rotate(angle);
+    context.drawImage(sprite, -width / 2, -height / 2, width, height);
+    context.restore();
+    return true;
+  }
+
+  /** Рисует спрайт из атласа; до загрузки остаётся прежний Canvas-рисунок. */
+  function drawArenaSprite(context, type, x, y, width, height, angle, alpha) {
+    const index = ARENA_SPRITES[type];
+    if (!arenaAtlas || !arenaAtlas.complete || !arenaAtlas.naturalWidth || index == null) return false;
+    context.save();
+    context.translate(x, y);
+    if (angle) context.rotate(angle);
+    if (alpha != null) context.globalAlpha *= alpha;
+    context.drawImage(arenaAtlas, (index % 5) * 96, Math.floor(index / 5) * 96, 96, 96,
+      -width / 2, -height / 2, width, height);
+    context.restore();
+    return true;
+  }
 
   /**
    * Центры подписей до и после линии без поперечного смещения.
@@ -35,10 +88,15 @@
     const size = FINISH_LABEL_SIZE;
     context.save();
     context.translate(label.x, label.y);
-    context.globalAlpha = .72;
+    context.globalAlpha = .6;
     context.font = size + 'px ' + F_D;
     context.textAlign = 'center';
     context.textBaseline = 'middle';
+    context.strokeStyle = '#292118';
+    context.lineWidth = 3;
+    context.lineJoin = 'round';
+    context.strokeText(label.text, 0, 0);
+    context.globalAlpha = .86;
     context.fillStyle = FINISH_LABEL_COLOR;
     context.fillText(label.text, 0, 0);
     context.globalAlpha = .24;
@@ -121,6 +179,7 @@
     g.imageSmoothingEnabled = true;
     if (g.imageSmoothingQuality) g.imageSmoothingQuality = 'medium';
     g.drawImage(T.img, 0, 0, T.w, T.h);
+    if (global.DiVANEngine.tactics) global.DiVANEngine.tactics.drawWorld();
     if (global.RnRObjects) RnRObjects.drawLayer(g, R.labObjects, 'under');
     if (R.puddles && R.weather && R.weather.id === 'rain') {
       for (const p of R.puddles) {
@@ -174,16 +233,25 @@
     }
     g.globalAlpha = 1;
     for (const p of R.pads) {
+      g.save();
+      g.globalAlpha = p.cool <= 0 ? 1 : .72;
+      const painted = drawArenaTexture(g, 'pad', p.x, p.y, 66, 48, p.ang)
+        || drawArenaSprite(g, 'pad', p.x, p.y, 58, 42, p.ang);
+      g.restore();
+      if (painted) {
+        if (global.RnRArenaEffects) RnRArenaEffects.drawPadLights(g, p.x, p.y, p.ang, gt, p.cool <= 0);
+        continue;
+      }
       g.save(); g.translate(p.x, p.y); g.rotate(p.ang);
       const ready = p.cool <= 0;
-      const a = ready ? (.6 + .4 * Math.sin(gt * 8 + p.i)) : 0.15;
+      const a = 0.15;
       g.fillStyle = 'rgba(53,224,255,' + a + ')';
       for (let k = 0; k < 3; k++) {
         g.beginPath(); g.moveTo(-18 + k * 14, -16); g.lineTo(-4 + k * 14, 0); g.lineTo(-18 + k * 14, 16);
         g.lineTo(-24 + k * 14, 16); g.lineTo(-10 + k * 14, 0); g.lineTo(-24 + k * 14, -16); g.closePath(); g.fill();
       }
-      if (ready) { g.shadowColor = '#35e0ff'; g.shadowBlur = 20; g.strokeStyle = '#35e0ff'; g.lineWidth = 2; g.stroke(); g.shadowBlur = 0; }
       g.restore();
+      if (global.RnRArenaEffects) RnRArenaEffects.drawPadLights(g, p.x, p.y, p.ang, gt, ready);
     }
     const S = T.S, N = T.N;
     for (const rp of R.ramps) {
@@ -191,12 +259,16 @@
         const di = (rp.i - k * 8 + N) % N; const p = S[di];
         const pulse = .5 + .5 * Math.sin(gt * 4 + k * 1.2);
         g.save(); g.translate(p.x, p.y); g.rotate(p.ang);
-        g.fillStyle = 'rgba(125,249,255,' + (0.25 + 0.25 * pulse) + ')';
+        g.fillStyle = 'rgba(204,174,112,' + (0.33 + 0.17 * pulse) + ')';
         g.beginPath(); g.moveTo(20, 0); g.lineTo(8, -8); g.lineTo(8, -3); g.lineTo(-12, -3);
         g.lineTo(-12, 3); g.lineTo(8, 3); g.lineTo(8, 8); g.closePath(); g.fill();
+        g.strokeStyle = 'rgba(48,34,25,.35)'; g.lineWidth = 1; g.stroke();
         g.restore();
       }
       g.save(); g.translate(rp.x, rp.y); g.rotate(rp.ang);
+      // Turn the ramp artwork 180 degrees, keeping its position and collision unchanged.
+      if (drawArenaTexture(g, 'ramp', 0, 0, 76, 84, -Math.PI / 2)
+        || drawArenaSprite(g, 'ramp', 0, 0, 76, 84, -Math.PI / 2)) { g.restore(); continue; }
       g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(2, 3, 30, 44, 0, 0, TAU); g.fill();
       g.fillStyle = '#8a6a3a'; rr(g, -16, -40, 32, 80, 6); g.fill();
       g.fillStyle = '#c9a05a'; rr(g, -12, -36, 24, 72, 4); g.fill();
@@ -209,6 +281,7 @@
       g.restore();
     }
     for (const o of R.oils) {
+      if (drawArenaTexture(g, 'oil', o.x, o.y, 66, 48, o.rot) || drawArenaSprite(g, 'oil', o.x, o.y, 66, 48, o.rot)) continue;
       g.save(); g.translate(o.x, o.y); g.rotate(o.rot);
       g.fillStyle = 'rgba(16,14,20,.85)'; g.beginPath(); g.ellipse(0, 0, 28, 18, 0, 0, TAU); g.fill();
       g.fillStyle = 'rgba(120,90,200,.15)'; g.beginPath(); g.ellipse(-4, -3, 16, 8, 0, 0, TAU); g.fill(); g.restore();
@@ -217,17 +290,21 @@
     if (typeof drawMidWorld === 'function') drawMidWorld(g);
     for (const m of R.mines) {
       if (m.dead) continue;
-      g.fillStyle = '#1c1a22'; g.beginPath(); g.arc(m.x, m.y, 8, 0, TAU); g.fill();
-      g.strokeStyle = '#3a3644'; g.lineWidth = 2;
-      for (let k = 0; k < 4; k++) {
-        const a = k * TAU / 4 + .4;
-        g.beginPath(); g.moveTo(m.x + Math.cos(a) * 7, m.y + Math.sin(a) * 7);
-        g.lineTo(m.x + Math.cos(a) * 11, m.y + Math.sin(a) * 11); g.stroke();
+      if (!(drawArenaTexture(g, 'mine', m.x, m.y, 26, 26)
+        || drawArenaSprite(g, 'mine', m.x, m.y, 26, 26))) {
+        g.fillStyle = '#1c1a22'; g.beginPath(); g.arc(m.x, m.y, 8, 0, TAU); g.fill();
+        g.strokeStyle = '#3a3644'; g.lineWidth = 2;
+        for (let k = 0; k < 4; k++) {
+          const a = k * TAU / 4 + .4;
+          g.beginPath(); g.moveTo(m.x + Math.cos(a) * 7, m.y + Math.sin(a) * 7);
+          g.lineTo(m.x + Math.cos(a) * 11, m.y + Math.sin(a) * 11); g.stroke();
+        }
       }
-      if ((gt * 2.5 + m.x) % 1 < .5) { g.fillStyle = '#ff3d2e'; g.beginPath(); g.arc(m.x, m.y, 2.5, 0, TAU); g.fill(); }
+      if (global.RnRArenaEffects) RnRArenaEffects.drawMineLight(g, m.x, m.y, gt, m.x * .01);
     }
     if (R.spikes) {
       for (const sp of R.spikes) {
+        if (drawArenaSprite(g, 'spikes', sp.x, sp.y, 36, 36, sp.rot)) continue;
         g.save(); g.translate(sp.x, sp.y); g.rotate(sp.rot);
         g.fillStyle = '#8b4513';
         for (let k = 0; k < 4; k++) {
@@ -245,7 +322,10 @@
     }
     for (const p of R.picks) {
       if (!p.alive) continue;
-      const bob = Math.sin(gt * 4 + p.i) * 3; g.save(); g.translate(p.x, p.y + bob);
+      const bob = Math.sin(gt * 4 + p.i) * .8;
+      if (global.RnRArenaEffects) RnRArenaEffects.drawPickupGlow(g, p.type, p.x, p.y + bob, gt, p.i);
+      g.save(); g.translate(p.x, p.y + bob);
+      if (drawArenaTexture(g, p.type, 0, 0, 31, 31) || drawArenaSprite(g, p.type, 0, 0, 31, 31)) { g.restore(); continue; }
       const cols = { money: '#ffd23f', wrench: '#58ff6b', wep: '#ff6b4a', ult: '#b478ff', nit: '#ff9d2e', shield: '#35e0ff', bolt: '#7df9ff' };
       g.shadowColor = cols[p.type]; g.shadowBlur = 14;
       g.fillStyle = 'rgba(10,10,16,.85)'; g.beginPath(); g.arc(0, 0, 14, 0, TAU); g.fill();
@@ -263,6 +343,12 @@
     for (const s of R.shots) {
       g.save(); g.translate(s.x, s.y); g.rotate(Math.atan2(s.vy, s.vx));
       const st = typeof kitShotStyle === 'function' ? kitShotStyle(s) : { fill: '#ffd23f', core: '#fff', w: 16, h: 4 };
+      const customShot = s.can || s.baton || s.bolts || s.meter || s.oilcan || s.dart;
+      const shotType = customShot ? null : s.rocket ? 'rocket' : s.laser ? 'laser'
+        : s.plasma ? 'plasma' : s.mortar ? 'mortar' : s.nails ? 'nails' : s.fang ? 'fang' : 'bullet';
+      const shotWidth = s.rocket ? 25 : s.laser ? 27 : s.mortar ? 22 : Math.max(12, st.w || 16);
+      const shotHeight = s.rocket || s.mortar ? 12 : Math.max(6, st.h || 4);
+      if (drawArenaSprite(g, shotType, 0, 0, shotWidth, shotHeight)) { g.restore(); continue; }
       if (s.rocket) {
         g.fillStyle = '#ff3d2e'; g.fillRect(-10, -3, 20, 6);
         g.fillStyle = '#ff9d2e'; g.fillRect(-6, -2, 12, 4);
@@ -293,7 +379,6 @@
         g.fillStyle = '#ff5db1'; g.beginPath(); g.arc(r.x, r.y, 110, 0, TAU); g.fill(); g.restore();
       }
       drawCarShield(g, r);
-      if (r.isP) drawPlayerRaceTag(g, r);
     }
     /**
      * Этаж отрисовки: эстакада сверху.
@@ -308,8 +393,11 @@
     // Occlusion depends on each racer's deck, never on the camera's target.
     const layers = order.map(function (r) { return { racer: r, deck: paintLayer(r) }; });
     for (const item of layers) if (item.deck === 0) paintRacer(item.racer);
+    if (engine.render.drawFinishGateOverhead) engine.render.drawFinishGateOverhead(g, R.S[0]);
+    for (const item of layers) if (item.deck === 0 && item.racer.isP && !item.racer.dead) drawPlayerRaceTag(g, item.racer);
     if (T.imgHigh) g.drawImage(T.imgHigh, 0, 0, T.w, T.h);
     for (const item of layers) if (item.deck > 0) paintRacer(item.racer);
+    for (const item of layers) if (item.deck > 0 && item.racer.isP && !item.racer.dead) drawPlayerRaceTag(g, item.racer);
     if (global.RnRObjects) RnRObjects.drawLayer(g, R.labObjects, 'over');
     for (const p of R.parts) {
       if (vfxLive() && !p.rim) continue;
@@ -357,8 +445,10 @@
   if (!engine) return;
   if (!engine.render) engine.render = {};
   engine.render.arenaPad = arenaPad;
+  engine.render.drawArenaTexture = drawArenaTexture;
   engine.render.racerDrawOrder = racerDrawOrder;
   engine.render.finishLabelPoints = finishLabelPoints;
+  engine.render.paintFinishLabel = paintFinishLabel;
   engine.wrap('drawFinishZone', horizontalFinishZone);
   engine.replace('drawRaceArena', drawRaceArenaEngine);
 })(typeof window !== 'undefined' ? window : globalThis);

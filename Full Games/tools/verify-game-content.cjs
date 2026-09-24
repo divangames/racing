@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const root = path.resolve(__dirname, '..', '..');
+const root = path.resolve(__dirname, '..', require('../config/game.json').contentDevRelative);
 const carsRoot = path.join(root, 'assets', 'data', 'cars');
 const soundsRoot = path.join(root, 'assets', 'sounds');
 const disclaimer = path.join(root, 'assets', 'ui', 'disclaimer', 'disclaimer-21plus.svg');

@@ -6,61 +6,124 @@
 
 (function (global) {
   'use strict';
+  let contactRace = null, contactTime = 0, contactPairs = new WeakMap();
+
+  function contactMass(r) {
+    const h = global.DiVANEngine.handling;
+    return Math.max(.35, Math.min(4, h && h.mass ? h.mass(r) : 1));
+  }
+  function velocity(r) {
+    const angle = Number.isFinite(r.ang) ? r.ang : 0, fx = Math.cos(angle), fy = Math.sin(angle);
+    return { x: fx * (r.spd || 0) - fy * (r.lat || 0), y: fy * (r.spd || 0) + fx * (r.lat || 0), fx, fy };
+  }
+  /** Импульс действует вдоль нормали контакта; масса не зависит от оставшегося HP. */
+  function resolvePair(a, b, hit) {
+    const length = Math.hypot(hit.nx, hit.ny);
+    if (!length || !Number.isFinite(length)) return null;
+    const nx = hit.nx / length, ny = hit.ny / length;
+    const ma = contactMass(a), mb = contactMass(b), ia = 1 / ma, ib = 1 / mb, sum = ia + ib;
+    const va = velocity(a), vb = velocity(b), closing = Math.max(0, (va.x - vb.x) * nx + (va.y - vb.y) * ny);
+    const penetration = Math.max(0, Number(hit.pen) || 0) + .05;
+    a.x -= nx * penetration * ia / sum; a.y -= ny * penetration * ia / sum;
+    b.x += nx * penetration * ib / sum; b.y += ny * penetration * ib / sum;
+    const result = { closing, ma, mb, x: (a.x + b.x) / 2, y: (a.y + b.y) / 2,
+      attacker: va.x * nx + va.y * ny >= -vb.x * nx - vb.y * ny ? a : b };
+    if (closing <= .5) return result;
+    const impulse = closing * 1.08 / sum;
+    for (const [r, v, inv, sign] of [[a, va, ia, -1], [b, vb, ib, 1]]) {
+      const vx = v.x + sign * nx * impulse * inv, vy = v.y + sign * ny * impulse * inv;
+      r.spd = vx * v.fx + vy * v.fy;
+      // Сильный боковой таран не раскручивает кузов и не отнимает руль.
+      const lateralLimit = Math.max(100, Math.abs(r.lat || 0));
+      r.lat = clamp(-vx * v.fy + vy * v.fx, -lateralLimit, lateralLimit);
+    }
+    return result;
+  }
+
+  function impactReady(a, b) {
+    let pair = contactPairs.get(a);
+    if (!pair) { pair = new WeakMap(); contactPairs.set(a, pair); }
+    const previous = pair.get(b);
+    if (previous != null && contactTime - previous < .22) return false;
+    pair.set(b, contactTime);
+    let reverse = contactPairs.get(b);
+    if (!reverse) { reverse = new WeakMap(); contactPairs.set(b, reverse); }
+    reverse.set(a, contactTime);
+    return true;
+  }
+
+  /** Одна вспышка/звук на удар, без повторного наказания уже расходящихся машин. */
+  function contactFeedback(a, b, impact, atLine) {
+    if (impact.closing < 28 || !impactReady(a, b)) return;
+    const force = clamp(impact.closing / 320, .15, 1);
+    for (const r of [a, b]) r._contactGrace = Math.max(r._contactGrace || 0, .28);
+    let lost = 0;
+    if (!atLine && impact.closing > 60) {
+      const base = Math.min(12, 1 + (impact.closing - 50) * .018);
+      const hp = (a.hp || 0) + (b.hp || 0);
+      dmgRacer(a, base * clamp(2 * impact.mb / (impact.ma + impact.mb), .6, 1.4) * kitRamOut(b) * kitRamIn(a) * (b.dmgMul || 1), b, 'ram');
+      dmgRacer(b, base * clamp(2 * impact.ma / (impact.ma + impact.mb), .6, 1.4) * kitRamOut(a) * kitRamIn(b) * (a.dmgMul || 1), a, 'ram');
+      lost = hp - ((a.hp || 0) + (b.hp || 0));
+      for (const r of [a, b]) {
+        r.bobVel = Math.max(-28, (r.bobVel || 0) - 10 * force);
+      }
+      if (typeof voiceSay === 'function') voiceSay(impact.attacker, 'ram', { chance: .42, gap: 6 });
+    }
+    const reduced = typeof introReduceMotion !== 'undefined' && introReduceMotion;
+    if (!reduced && typeof spark === 'function') spark(impact.x, impact.y, atLine ? '#9badb7' : '#ffd23f', 4 + Math.round(force * 6), 80 + force * 100);
+    const near = a.isP || b.isP || typeof nearP === 'function' && nearP(impact.x, impact.y, 500);
+    if (!R.demo && near) {
+      // Урон уже звучит через dmgRacer; касание и щит получают один короткий удар.
+      if (lost <= 0 && typeof sHit === 'function') sHit();
+      if (!reduced && (a.isP || b.isP) && typeof doShake === 'function') doShake(1.5 + force * 4);
+    }
+  }
 
   /**
    * Шаг мира после движения: разведение корпусов и попадания.
    * @param {number} dt
    */
   function resolveRaceContactEngine(dt) {
+    if (!Number.isFinite(dt) || dt <= 0) return;
+    if (contactRace !== R) { contactRace = R; contactTime = 0; contactPairs = new WeakMap(); }
+    contactTime += dt;
     const Rc = R.racers;
+    for (const r of Rc) {
+      if (r._contactGrace > 0 && !r.handbrake && !r.air && !r.dead) r.lat = (r.lat || 0) * Math.exp(-3.8 * dt);
+    }
     for (let i = 0; i < Rc.length; i++) for (let j = i + 1; j < Rc.length; j++) {
       const a = Rc[i], b = Rc[j]; if (a.dead || b.dead || a.air || b.air) continue;
       if (typeof racerDeck === 'function' && racerDeck(a) !== racerDeck(b)) continue;
       if (kitGhost(a) || kitGhost(b)) continue;
       const hit = obbOverlap(carObb(a), carObb(b));
       if (!hit) continue;
-      const push = Math.max(hit.pen / 2, 1.15);
-      a.x -= hit.nx * push; a.y -= hit.ny * push; b.x += hit.nx * push; b.y += hit.ny * push;
-      const rel = Math.abs(a.spd - b.spd);
-      const atLine = !!(a.finished || b.finished);
-      if (!atLine && rel > 60) {
-        let dA = (rel * .015 + 1) * kitRamOut(b) * kitRamIn(a);
-        let dB = (rel * .015 + 1) * kitRamOut(a) * kitRamIn(b);
-        dA *= (b.dmgMul || 1); dB *= (a.dmgMul || 1);
-        if (a.car.idx === 4 || b.car.idx === 4 || a.berserk > 0 || b.berserk > 0) {
-          a.x -= hit.nx * 18; a.y -= hit.ny * 18; b.x += hit.nx * 18; b.y += hit.ny * 18;
-        }
-        dmgRacer(a, dA, b, 'ram'); dmgRacer(b, dB, a, 'ram');
-        spark((a.x + b.x) / 2, (a.y + b.y) / 2, '#ffd23f', 6, 160);
-        if (typeof voiceSay === 'function') voiceSay(a.spd >= b.spd ? a : b, 'ram', { chance: .42, gap: 6 });
-      } else if (atLine) {
-        const ra = -Math.sin(a.ang), rb = Math.cos(a.ang);
-        const sa = -Math.sin(b.ang), sb = Math.cos(b.ang);
-        a.lat = clamp((a.lat || 0) + (hit.nx * ra + hit.ny * rb) * 28, -140, 140);
-        b.lat = clamp((b.lat || 0) - (hit.nx * sa + hit.ny * sb) * 28, -140, 140);
-        a.spd *= .985; b.spd *= .985;
-        if (rel > 50) spark((a.x + b.x) / 2, (a.y + b.y) / 2, 'rgba(200,190,170,.45)', 4, 80);
-      }
-      if (!atLine) { a.spd *= .97; b.spd *= .97; }
+      const impact = resolvePair(a, b, hit);
+      if (impact) contactFeedback(a, b, impact, !!(a.finished || b.finished));
     }
     for (let i = R.shots.length - 1; i >= 0; i--) {
       const s = R.shots[i];
       if (s.rocket) {
-        let bestTarget = null, bestDist = 1e9;
-        for (const r of R.racers) {
-          if (r.dead || r === s.r || r.finished) continue;
-          const dx = r.x - s.x, dy = r.y - s.y, dist = Math.hypot(dx, dy);
-          if (dist < bestDist && dist < 500) { bestDist = dist; bestTarget = r; }
+        const curAng = Math.atan2(s.vy, s.vx);
+        // Один захват в узком конусе при запуске. Промах не выбирает новую жертву за спиной.
+        if (!s.targetLocked) {
+          s.targetLocked = true; s.target = null;
+          let bestDist = 500;
+          for (const r of R.racers) {
+            if (r.dead || r === s.r || r.finished || r.cloak > 0 || (typeof kitGhost === 'function' && kitGhost(r))) continue;
+            const dx = r.x - s.x, dy = r.y - s.y, dist = Math.hypot(dx, dy);
+            if (dist < bestDist && Math.abs(angDiff(Math.atan2(dy, dx), curAng)) < .65) { bestDist = dist; s.target = r; }
+          }
         }
-        if (bestTarget) {
-          const dx = bestTarget.x - s.x, dy = bestTarget.y - s.y;
+        if (s.target) {
+          const target = s.target, dx = target.x - s.x, dy = target.y - s.y;
           const targetAng = Math.atan2(dy, dx);
-          const curAng = Math.atan2(s.vy, s.vx);
           const diff = angDiff(targetAng, curAng);
-          const turn = clamp(diff, -4 * dt, 4 * dt);
-          const spd = Math.hypot(s.vx, s.vy);
-          const newAng = curAng + turn;
-          s.vx = Math.cos(newAng) * spd; s.vy = Math.sin(newAng) * spd;
+          if (target.dead || target.finished || target.cloak > 0 || (typeof kitGhost === 'function' && kitGhost(target)) || Math.hypot(dx, dy) > 700 || Math.abs(diff) > 1.2) s.target = null;
+          else {
+            // Доворот ограничен: резкая смена полосы, разъезд и маскировка срывают наведение.
+            const turn = clamp(diff, -.4 * dt, .4 * dt), spd = Math.hypot(s.vx, s.vy), newAng = curAng + turn;
+            s.vx = Math.cos(newAng) * spd; s.vy = Math.sin(newAng) * spd;
+          }
         }
         if (Math.random() < dt * 60) {
           if (vfxLive()) RnRVfx.trail(s.x, s.y);
@@ -150,7 +213,7 @@
             const base = p.val;
             const v = r.isP && typeof incomePayout === 'function' ? incomePayout(base) : base;
             r.moneyGot += v;
-            if (r.isP) { save.cash += v; fl(p.x, p.y, '+$' + v, '#ffd23f'); SFX.play('money'); }
+            if (r.isP && !R.replay) { save.cash += v; fl(p.x, p.y, '+$' + v, '#ffd23f'); SFX.play('money'); }
           }
           else if (p.type === 'wrench') {
             if (typeof kitStarterWrench === 'function' && kitStarterWrench(r)) { if (r.isP) sPick(); }
@@ -184,6 +247,6 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.world = { resolveContact: resolveRaceContactEngine };
+  engine.world = { resolveContact: resolveRaceContactEngine, resolvePair, contactMass };
   engine.replace('resolveRaceContact', resolveRaceContactEngine);
 })(typeof window !== 'undefined' ? window : globalThis);

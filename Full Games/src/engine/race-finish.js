@@ -78,7 +78,7 @@
       if (!has(id)) { save.achievements[id] = true; newAch.push(ACHIEVEMENTS.find(function (a) { return a.id === id; })); }
     };
     if (R.place === 0) grant('first_win');
-    if (R.place <= 2 && P.hp >= P.maxhp * .95) grant('perfect');
+    if (P.finished && R.place <= 2 && P.hp >= P.maxhp * .95) grant('perfect');
     if ((P.kills || 0) >= 10) grant('killer');
     if (save.cash >= 50000) grant('millionaire');
     if (Object.keys(save.carOwned || {}).length >= 5) grant('collector');
@@ -101,34 +101,40 @@
    * Доска результатов: приз, ставка, рекорды, карьера.
    */
   function showResultsEngine() {
+    if (R._resultsPaid) { state = 'results'; return; }
     const ord = sortRaceOrder(R.racers);
     R.place = ord.indexOf(P);
     R.order = ord;
-    if (labTest) {
+    if (labTest || R.replay) {
       R.prize = ord.map(function () { return 0; });
-      R.quip = 'ПОЛИГОН. КАРЬЕРА И ДЕНЬГИ НЕ ТРОНУТЫ. ENTER — В ЛАБОРАТОРИЮ.';
+      R.quip = R.replay ? 'ПОВТОР ЗАЕЗДА · БЕЗ ПРИЗОВ, СТАВОК И ПРОДВИЖЕНИЯ КАРЬЕРЫ' :
+        'ПОЛИГОН. КАРЬЕРА И ДЕНЬГИ НЕ ТРОНУТЫ. ENTER — В ЛАБОРАТОРИЮ.';
       fillAnnouncerQueue();
       state = 'results';
       return;
     }
     const divMult = prizeDivMult(R.div);
+    R._resultsPaid = true;
     R.place = ord.indexOf(P);
     R.prize = ord.map(function (r, i) {
       const base = Math.round(PRIZE[i] * divMult);
+      if (r.isP && R.dnf) return 0;
       return r.isP && typeof incomePayout === 'function' ? incomePayout(base) : base;
     });
     save.cash += R.prize[R.place];
     let betPay = 0, betPlace = -1;
     if ((R.betStake || 0) > 0 && R.betOdds) {
       const tgt = R.racers.find(function (r) { return (r.fieldId | 0) === (R.betPick | 0); }) || (R.betPick === 0 ? P : null);
-      betPlace = tgt ? ord.indexOf(tgt) : -1;
+      betPlace = tgt && tgt.finished ? ord.indexOf(tgt) : -1;
       betPay = betPayoutFor(R.betStake, R.betOdds, betPlace);
       if (betPay > 0 && typeof incomePayout === 'function') betPay = incomePayout(betPay);
       if (betPay > 0) save.cash += betPay;
     }
     R.betPay = betPay;
     persist();
-    if ((R.betStake || 0) > 0) {
+    if (R.dnf) {
+      R.quip = 'СХОД · ЛИМИТ ВРЕМЕНИ ИСТЁК. ПРИЗОВЫХ ЗА МЕСТО НЕТ.';
+    } else if ((R.betStake || 0) > 0) {
       R.quip = betPay > 0
         ? ('СТАВКА СЫГРАЛА: ' + fmtOdds(betPlace === 0 ? R.betOdds.k1 : betPlace === 1 ? R.betOdds.k2 : R.betOdds.k3) + ' на ' + (R.betName || 'пилота') + ' · +' + fm(betPay))
         : ('СТАВКА СГОРЕЛА. ' + (R.betName || 'ПИЛОТ') + ' ВНЕ ПОДИУМА.');
@@ -145,7 +151,7 @@
       const rec = save.records[R.tIdx] || (save.records[R.tIdx] = { bestLap: 0, bestPlace: 99 });
       R.newRecLap = false;
       if (P.bestLap && (!rec.bestLap || P.bestLap < rec.bestLap)) { rec.bestLap = P.bestLap; R.newRecLap = true; }
-      if (R.place < rec.bestPlace) rec.bestPlace = R.place;
+      if (P.finished && R.place < rec.bestPlace) rec.bestPlace = R.place;
     }
     const newAch = checkAchievements();
     if (newAch.length > 0) {

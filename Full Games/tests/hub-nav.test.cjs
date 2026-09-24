@@ -64,7 +64,7 @@ test('Заезд подключает навигацию хаба после с�
 });
 
 test('Лента, автопарк, ставка и списание кассы', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function enterPreRace('));
   assert(html.includes('function enterAutopark('));
   const g = bootNav();

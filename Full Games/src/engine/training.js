@@ -16,7 +16,7 @@
    * @returns {number}
    */
   function gymMaxAdd(base) {
-    return 5 - base;
+    return Math.max(0, 5 - base);
   }
 
   /**
@@ -45,14 +45,14 @@
     g._gymBtns = [];
     const rx = RIGHT_X + 20, rw = RIGHT_W - 40, rowH = 62, rowGap = 8;
     const rows = [
-      { key: 'spd', label: 'СКОРОСТЬ', val: eff.spd, base: ch.spd, col: '#ff6b4a', d: 'макс. скорость гонщика' },
-      { key: 'crn', label: 'ПОВОРОТ', val: eff.crn, base: ch.crn, col: '#35e0ff', d: 'острее руль, меньше запаздывания' },
-      { key: 'grt', label: 'БРОНЯ', val: eff.grt, base: ch.grt, col: '#58ff6b', d: 'запас корпуса пилота' }
+      { key: 'spd', label: 'СКОРОСТЬ', val: eff.spd, base: ch.spd, col: '#ff6b4a', d: '+3% базовой скорости · на всех машинах' },
+      { key: 'crn', label: 'ПОВОРОТ', val: eff.crn, base: ch.crn, col: '#35e0ff', d: '+5% базового руля и сцепление' },
+      { key: 'grt', label: 'БРОНЯ', val: eff.grt, base: ch.grt, col: '#58ff6b', d: '+4% базового корпуса и проходимость' }
     ];
     let y = HUB_TOP + 52;
     rows.forEach(function (rwRow, i) {
       const sel = gymSel === i;
-      const cur = cs[rwRow.key], maxAdd = gymMaxAdd(rwRow.base), maxed = cur >= maxAdd;
+      const cur = Math.max(0, Math.floor(Number(cs[rwRow.key]) || 0)), maxAdd = gymMaxAdd(rwRow.base), maxed = cur >= maxAdd;
       const cost = maxed ? null : STAT_COSTS[Math.min(cur, STAT_COSTS.length - 1)];
       const can = !maxed && save.cash >= cost;
       drawGarageRow(rx, y, rw, rowH, sel, rwRow.col, 'rgba(255,157,46,.14)',
@@ -73,7 +73,7 @@
     const incMaxed = incLvl >= incMax;
     const incCost = incMaxed ? null : SKILL_COSTS[Math.min(incLvl, SKILL_COSTS.length - 1)];
     drawGarageRow(rx, y, rw, rowH, incSel, '#ffd23f', 'rgba(255,210,63,.14)',
-      'ДОХОД', 'бонус к призам и деньгам на трассе', incMaxed ? 'МАКС' : '', incMaxed ? '#58ff6b' : '#ffd23f');
+      'ДОХОД', incMaxed ? 'призы, бонусы и деньги на трассе' : ('следующий уровень: +' + DiVANEngine.skills.INCOME_PCTS[incLvl + 1] + '% к гоночным доходам'), incMaxed ? 'МАКС' : '', incMaxed ? '#58ff6b' : '#ffd23f');
     statPipsN(g, rx + 168, y + 20, incLvl, incMax, '#ffd23f');
     txt(g, '+' + incomePct(chI) + '%', rx + 168 + incMax * 16 + 10, y + 25, 11, '#ffd23f', 'left', F_B, false);
     if (!incMaxed) {

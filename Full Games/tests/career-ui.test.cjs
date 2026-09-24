@@ -46,8 +46,8 @@ test('Заезд подключает клик настроек и UI карье
 });
 
 test('Край настроек входит, кнопки карьеры и герой кадра', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
-  const career = fs.readFileSync(path.resolve(__dirname, '../../career.js'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
+  const career = fs.readFileSync(path.resolve(__dirname, '../content/career.js'), 'utf8');
   assert(html.includes('function clickSettings('));
   assert(html.includes('function hitSettings('));
   assert(career.includes('function drawCareer('));

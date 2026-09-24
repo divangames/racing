@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld('rnrLauncher', {
   status() {
     return ipcRenderer.invoke('launcher:status');
   },
+  changelog() {
+    return ipcRenderer.invoke('launcher:changelog');
+  },
   verify(full) {
     return ipcRenderer.invoke('launcher:verify', { full: Boolean(full) });
   },
@@ -20,9 +23,6 @@ contextBridge.exposeInMainWorld('rnrLauncher', {
   },
   lab() {
     return ipcRenderer.invoke('launcher:lab');
-  },
-  setFullscreen(value) {
-    return ipcRenderer.invoke('launcher:set-fullscreen', value);
   },
   sync() {
     return ipcRenderer.invoke('launcher:sync');

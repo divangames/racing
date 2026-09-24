@@ -8,9 +8,9 @@
 
 const fs = require('fs');
 const path = require('path');
-const { BrowserWindow, Menu, shell } = require('electron');
+const { BrowserWindow, Menu, shell, screen } = require('electron');
 const { gameStartUrl, labStartUrl } = require('./protocol');
-const { loadSettings } = require('./settings');
+const { loadSettings, saveSettings } = require('./settings');
 const { game, clientRoot } = require('./paths');
 
 /** Заголовок отдельного приложения редактора. */
@@ -28,6 +28,43 @@ function windowIcon() {
 let launcherWindow = null;
 let gameWindow = null;
 let labWindow = null;
+
+/** Мониторы в стабильном порядке для меню графики. */
+function gameDisplays() {
+  const primary = screen.getPrimaryDisplay();
+  return screen.getAllDisplays().map((display, index) => ({
+    id: display.id,
+    name: 'Экран ' + (index + 1) + (display.id === primary.id ? ' · основной' : ''),
+    primary: display.id === primary.id
+  }));
+}
+
+/** Положение и режим окна меняются вместе, без потери окна при отключении монитора. */
+function applyGameScreen(patch) {
+  const current = loadSettings();
+  const displays = screen.getAllDisplays();
+  const primary = screen.getPrimaryDisplay();
+  const requestedId = patch && Number.isInteger(patch.displayId) ? patch.displayId : current.displayId;
+  const target = displays.find((display) => display.id === requestedId) || primary;
+  const fullscreen = patch && typeof patch.fullscreen === 'boolean' ? patch.fullscreen : current.fullscreen;
+  const next = saveSettings({ fullscreen, displayId: target.id });
+  if (gameWindow && !gameWindow.isDestroyed()) {
+    const moving = screen.getDisplayMatching(gameWindow.getBounds()).id !== target.id;
+    const wasFullscreen = gameWindow.isFullScreen();
+    if (moving) {
+      if (wasFullscreen) gameWindow.setFullScreen(false);
+      const bounds = gameWindow.getBounds();
+      gameWindow.setBounds({
+        x: target.workArea.x + Math.max(0, Math.floor((target.workArea.width - bounds.width) / 2)),
+        y: target.workArea.y + Math.max(0, Math.floor((target.workArea.height - bounds.height) / 2)),
+        width: Math.min(bounds.width, target.workArea.width),
+        height: Math.min(bounds.height, target.workArea.height)
+      });
+    }
+    if (gameWindow.isFullScreen() !== fullscreen) gameWindow.setFullScreen(fullscreen);
+  }
+  return next;
+}
 
 /**
  * Общие флаги окна: без Node в странице.
@@ -101,7 +138,6 @@ function createLauncherWindow() {
  * @returns {Electron.BrowserWindow}
  */
 function createGameWindow() {
-  const settings = loadSettings();
   if (gameWindow && !gameWindow.isDestroyed()) {
     gameWindow.show();
     return gameWindow;
@@ -130,9 +166,7 @@ function createGameWindow() {
       muteLauncherAudio(true);
       launcherWindow.hide();
     }
-    if (settings.fullscreen && gameWindow && !gameWindow.isDestroyed()) {
-      gameWindow.setFullScreen(true);
-    }
+    applyGameScreen({});
   });
   gameWindow.loadURL(gameStartUrl());
   gameWindow.on('closed', () => {
@@ -231,6 +265,8 @@ module.exports = {
   createGameWindow,
   createLabWindow,
   playGame,
+  gameDisplays,
+  applyGameScreen,
   hasGameWindow,
   focusExisting
 };

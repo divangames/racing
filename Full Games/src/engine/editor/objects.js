@@ -132,7 +132,10 @@ window.RnRObjects = (() => {
     const c = Math.cos(-(inst.ang || 0)), s = Math.sin(-(inst.ang || 0));
     const lx = dx * c - dy * s, ly = dx * s + dy * c;
     const sx = (inst.w || def.w) / (def.w || 1), sy = (inst.h || def.h) / (def.h || 1);
-    return {x: lx / (sx || 1), y: ly / (sy || 1)};
+    return {
+      x: lx / (sx || 1) * (inst.flipX ? -1 : 1),
+      y: ly / (sy || 1) * (inst.flipY ? -1 : 1)
+    };
   }
 
   /** Рисует экземпляр. */
@@ -144,6 +147,7 @@ window.RnRObjects = (() => {
     ctx.save();
     ctx.translate(inst.x, inst.y);
     ctx.rotate(inst.ang || 0);
+    ctx.scale(inst.flipX ? -1 : 1, inst.flipY ? -1 : 1);
     if (im && im.complete && im.naturalWidth) ctx.drawImage(im, -w / 2, -h / 2, w, h);
     else {
       ctx.fillStyle = 'rgba(80,80,90,.5)';
@@ -174,6 +178,7 @@ window.RnRObjects = (() => {
     ctx.save();
     ctx.translate(inst.x, inst.y);
     ctx.rotate(inst.ang || 0);
+    ctx.scale(inst.flipX ? -1 : 1, inst.flipY ? -1 : 1);
     ctx.strokeStyle = def.collision.solid ? 'rgba(255,61,46,.9)' : 'rgba(88,255,107,.9)';
     ctx.lineWidth = 2;
     ctx.setLineDash([6, 4]);

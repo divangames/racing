@@ -54,6 +54,7 @@ test('Заезд подключает boot и трассу до коллизий
   assert(out.includes('/__engine/boot.js'));
   assert(out.includes('/__engine/boot-net.js'));
   assert(out.includes('/__engine/boot-gate.js'));
+  assert(out.includes('/__engine/boot-intro.css'));
   assert(out.includes('/__engine/track.js'));
   assert(out.indexOf('theatre.js') < out.indexOf('boot.js'));
   assert(out.indexOf('boot.js') < out.indexOf('boot-net.js'));
@@ -61,10 +62,29 @@ test('Заезд подключает boot и трассу до коллизий
   assert(out.indexOf('boot-gate.js') < out.indexOf('track.js'));
   assert(out.indexOf('track.js') < out.indexOf('collision.js'));
   assert(engineFile('__engine/boot.js').endsWith('boot.js'));
+  assert(engineFile('__engine/boot-intro.css').endsWith('boot-intro.css'));
+});
+
+test('Старт игры перенесён за модули движка', () => {
+  const source = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
+  const out = enhanceHtml(source, { pathname: '/rnr.html' });
+  const hook = out.indexOf('/__engine/boot-gate.js');
+  const start = out.lastIndexOf('try{bootGo();}catch(e){console.error(e);bootFinish();}');
+  assert(hook > 0);
+  assert(start > hook);
+  assert(!out.slice(out.lastIndexOf('bootFxStart();'), hook).includes('try{bootGo();}'));
+  assert(out.includes('id="boot-screen" class="is-load creator-intro-pending"'));
+});
+
+test('Ролик входит в обязательные файлы релиза', () => {
+  const { ASSET_DIRS, CORE_UI_FILES, assertCoreUi } = require('../tools/ensure-content.cjs');
+  assert(ASSET_DIRS.includes('assets/video'));
+  assert(CORE_UI_FILES.includes('assets/video/divan_intro.mp4'));
+  assert.doesNotThrow(() => assertCoreUi(path.resolve(__dirname, '../content')));
 });
 
 test('Подпись этапа, MIME, доля очереди и дедуп fetch', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function bootJobLabel('));
   assert(html.includes('function bootGo('));
   assert(html.includes('disclaimer-21plus.svg'));
@@ -87,6 +107,10 @@ test('Подпись этапа, MIME, доля очереди и дедуп fet
 test('Тема меню переключается на cast, когда трек уже в кэше', () => {
   const g = bootSandbox();
   g.BOOT.media['assets/music/cast/03 A thug approaches.mp3'] = 'blob:cast';
+  g.BOOT.creatorIntroPlaying = true;
+  g.bootPlayMenuIfReady();
+  assert.equal(g.playedCat, undefined);
+  g.BOOT.creatorIntroPlaying = false;
   g.bootPlayMenuIfReady();
   assert.equal(g.playedCat, 'cast');
   assert.equal(g.lastMusicCat, 'cast');
@@ -113,4 +137,76 @@ test('После заставки игра открывает меню без п
   g.bootFinish();
   assert.equal(g._title, true);
   assert.equal(g._intro, undefined);
+});
+
+test('Ролик нельзя пропустить; загрузка идёт во время него, затем дисклеймер держится 5 секунд', async () => {
+  const g = bootSandbox();
+  let now = 100;
+  let releaseLoading;
+  let hold = -1;
+  let finished = false;
+  function element() {
+    const listeners = {};
+    return {
+      children: [], listeners, hidden: false,
+      appendChild(child) { this.children.push(child); },
+      addEventListener(name, fn) { listeners[name] = fn; },
+      removeEventListener(name) { delete listeners[name]; },
+      remove() { this.removed = true; },
+      removeAttribute(name) { if (name === 'src') this.src = ''; },
+      load() {}, pause() {}, play() { return Promise.resolve(); },
+      classList: {
+        values: new Set(),
+        add(name) { this.values.add(name); },
+        remove(name) { this.values.delete(name); },
+        contains(name) { return this.values.has(name); }
+      }
+    };
+  }
+  const root = element();
+  g.document = {
+    getElementById(id) { return id === 'boot-screen' ? root : null; },
+    createElement() { return element(); }
+  };
+  g.performance.now = () => now;
+  g.addEventListener = function () {};
+  g.removeEventListener = function () {};
+  g.setInterval = function () { return 1; };
+  g.clearInterval = function () {};
+  g.labTest = false;
+  g.bootDiscoverAllMapTiles = () => Promise.resolve();
+  g.bootFontsJob = () => Promise.resolve();
+  g.bootWaitAll = () => new Promise(resolve => { releaseLoading = resolve; });
+  g.bootSleep = ms => { hold = ms; return Promise.resolve(); };
+  g.bootGo = function () {};
+  g.bootFinish = function () {};
+  g.bootAcceptGate = function () {};
+  g.bootPollGate = function () {};
+  g.bootFxStart = function () {};
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../src/engine/boot-gate.js'), 'utf8'), g);
+  g.bootFinish = () => { finished = true; };
+
+  const boot = g.bootGo();
+  const stage = root.children[0];
+  const video = stage.children[0];
+  assert.equal(video.src, 'assets/video/divan_intro.mp4');
+  assert.equal(video.controls, false);
+  assert.equal(g.BOOT.creatorIntroPlaying, true);
+  assert.equal(typeof releaseLoading, 'function');
+  g.bootAcceptGate();
+  await Promise.resolve();
+  assert.equal(finished, false);
+  assert.equal(root.classList.contains('creator-intro-done'), false);
+
+  now = 2000;
+  video.listeners.ended();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(g.BOOT.disclaimerT0, 2000);
+  assert.equal(root.classList.contains('creator-intro-done'), true);
+  assert.equal(hold, 5000);
+  assert.equal(root.classList.contains('is-load'), false);
+  assert.equal(finished, false);
+  releaseLoading();
+  await boot;
+  assert.equal(finished, true);
 });

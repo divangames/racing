@@ -8,6 +8,67 @@
   'use strict';
 
   let sweepBuf = null;
+  let drivingLight = null;
+
+  /** Световые карты создаются один раз; в заезде остаются только дешёвые blit-операции. */
+  function drivingLightAtlas() {
+    if (drivingLight) return drivingLight;
+    const glow = function (rgb) {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 64;
+      const c = canvas.getContext('2d');
+      const falloff = c.createRadialGradient(32, 32, 0, 32, 32, 32);
+      falloff.addColorStop(0, 'rgba(' + rgb + ',.78)');
+      falloff.addColorStop(.2, 'rgba(' + rgb + ',.3)');
+      falloff.addColorStop(1, 'rgba(' + rgb + ',0)');
+      c.fillStyle = falloff; c.fillRect(0, 0, 64, 64);
+      return canvas;
+    };
+    const beam = document.createElement('canvas');
+    beam.width = 128; beam.height = 80;
+    const c = beam.getContext('2d');
+    const light = c.createLinearGradient(0, 0, 128, 0);
+    light.addColorStop(0, 'rgba(231,246,255,.2)');
+    light.addColorStop(.36, 'rgba(188,223,246,.08)');
+    light.addColorStop(1, 'rgba(173,214,238,0)');
+    c.fillStyle = light; c.filter = 'blur(3px)';
+    c.beginPath(); c.moveTo(0, 37); c.lineTo(128, 0); c.lineTo(128, 80); c.lineTo(0, 43); c.closePath(); c.fill();
+    drivingLight = { beam, head: glow('231,247,255'), brake: glow('255,69,49'), nitro: glow('73,210,255') };
+    return drivingLight;
+  }
+
+  /** Фары и стоп-сигналы рисуются перед кузовом в его слое, поэтому мосты закрывают свет. */
+  function drawDrivingLights(c, r, options) {
+    if (!r || r.dead || r.cloak > 0 || !options.quality) return;
+    const atlas = drivingLightAtlas();
+    const half = typeof carHitHalf === 'function' ? carHitHalf(r) : { hw: 27, hh: 16 };
+    const front = Math.max(16, half.hw * .84), rear = -front, side = Math.max(6, half.hh * .62);
+    const cfg = typeof editorCarConfig === 'function' && r.car ? editorCarConfig(r.car.idx) : null;
+    const lights = global.RnRCarLights ? global.RnRCarLights.resolve(cfg, half) : {
+      head: [[front, -side], [front, side]], brake: [[rear, -side], [rear, side]]
+    };
+    c.save(); c.translate(r.x, r.y - (r.z || 0) + (r.bob || 0)); c.rotate(r.ang);
+    c.globalCompositeOperation = 'screen';
+    const opacity = c.globalAlpha;
+    for (const point of lights.head) {
+      if (options.quality > 1 && !r.air) {
+        c.globalAlpha = opacity * (r.isP ? .9 : .48);
+        c.drawImage(atlas.beam, point[0], point[1] - 31, 98, 62);
+      }
+      c.globalAlpha = opacity * .7;
+      c.drawImage(atlas.head, point[0] - 10, point[1] - 10, 20, 20);
+    }
+    for (const point of lights.brake) {
+      c.globalAlpha = opacity * (options.brake ? .95 : .24);
+      const size = options.brake ? 32 : 16;
+      c.drawImage(atlas.brake, point[0] - size / 2, point[1] - size / 2, size, size);
+    }
+    if (r.nitro > 0 || r.bolt > 0) {
+      c.globalAlpha = opacity * .75;
+      c.drawImage(atlas.nitro, rear - 58, -29, 76, 58);
+    }
+    c.restore();
+  }
 
   /**
    * Временный холст для бегущей вспышки по маске.
@@ -116,7 +177,7 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.carFx = { shieldSweepBuf };
+  engine.carFx = { shieldSweepBuf, drawDrivingLights };
   engine.replace('drawCarGroundShadow', drawCarGroundShadowEngine);
   engine.replace('drawCarShield', drawCarShieldEngine);
 })(typeof window !== 'undefined' ? window : globalThis);

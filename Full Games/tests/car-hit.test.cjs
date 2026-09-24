@@ -43,7 +43,7 @@ test('Заезд подключает car-hit до SAT рамок', () => {
 });
 
 test('Урал крупнее, раненый слой, запас полуосей', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function carHitHalf('));
   const g = bootHit();
   assert.equal(g.carBodyScale(6), 1.65);

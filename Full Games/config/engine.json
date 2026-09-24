@@ -7,8 +7,12 @@
   "hosts": {
     "game": {
       "meta": "game",
+      "before": { "tracks.js": "track-tactics.js", "editor/data.js": "car-lights.js" },
       "scripts": [
         "runtime.js",
+        "lab-session.js",
+        "lab-preview.js",
+        "editor/objects.js",
         "cheats-gate.js",
         "math.js",
         "storage.js",
@@ -30,9 +34,11 @@
         "track-span.js",
         "track-rail.js",
         "track-strip.js",
+        "preview-road.js",
         "track-ribbon.js",
         "track-ribbon-deck.js",
         "track-paint.js",
+        "arena-effects.js",
         "race-hazards.js",
         "race-build.js",
         "race-ai.js",
@@ -44,6 +50,7 @@
         "weapons.js",
         "weapons-fire.js",
         "weapons-tick.js",
+        "ai-personality.js",
         "ai-think.js",
         "race-progress.js",
         "car-hit.js",
@@ -52,6 +59,7 @@
         "input.js",
         "scene.js",
         "arena-crowd.js",
+        "handling.js",
         "driving.js",
         "audio.js",
         "soundtrack.js",
@@ -71,6 +79,7 @@
         "vfx.js",
         "faces.js",
         "arena.js",
+        "finish-gate.js",
         "hud.js",
         "carousel.js",
         "roster.js",
@@ -102,7 +111,24 @@
         "story-bear-chapter.js",
         "loop.js",
         "presentation.js",
-        "telemetry.js"
+        "telemetry.js",
+          "hud-cyber-kit.js",
+          "menu-theme.js",
+        "hud-cyber-panels.js",
+        "hud-curvature.js",
+        "hud-cyber.js",
+        "combat-hud.js",
+        "arena-tactics.js",
+        "weapon-charge.js",
+        "race-insights.js",
+        "training-ghost.js",
+        "race-recovery.js",
+        "menu-audio.js",
+        "audio-mix.js"
+      ],
+      "styles": [
+        "boot-intro.css",
+        "stripe-motion.css"
       ]
     },
     "lab": {
@@ -115,15 +141,27 @@
         "track-ribbon-deck.js",
         "editor/splash.js",
         "editor/busy.js",
-        "editor/workbench.js"
+        "editor/workbench.js",
+        "editor/car-light-editor.js",
+        "finish-gate.js",
+        "arena-effects.js",
+        "editor/game-preview.js",
+        "editor/tactics.js",
+        "editor/road-geometry.js",
+        "editor/road-editor.js"
       ],
       "before": {
-        "editor/map-app.js": "editor/history.js"
+        "editor/data.js": "car-lights.js",
+        "tracks.js": "track-tactics.js",
+        "editor/map-app.js": ["editor/history.js", "lab-session.js", "editor/test-session.js"]
       },
       "styles": [
         "editor/splash.css",
         "editor/busy.css",
-        "editor/workbench.css"
+        "editor/workbench.css",
+        "editor/car-light-editor.css",
+        "editor/game-preview.css",
+        "editor/road-editor.css"
       ]
     }
   }

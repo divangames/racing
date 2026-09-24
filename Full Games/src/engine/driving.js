@@ -6,6 +6,8 @@
 (function () {
 function stepVehicleEngine(r,th,steer,dt,hb){
  if(!Number.isFinite(dt)||dt<=0)return;
+ th=Number.isFinite(th)?clamp(th,-1,1):0;
+ steer=Number.isFinite(steer)?clamp(steer,-1,1):0;
  const S=R.S,p=S[r.trackIdx];
  const inGap=typeof inTrackGap==='function'&&R.T&&inTrackGap(R.T,(r.trackIdx||0)/R.N);
  const off=!r.air&&(inGap||Math.hypot(r.x-p.x,r.y-p.y)>ROADW);
@@ -23,11 +25,22 @@ function stepVehicleEngine(r,th,steer,dt,hb){
  if(!r.isP){
   top*=1+.03*Math.min(2,(R.div||1)-1);
   const deficit=(P&&R.N)?(P.prog-r.prog)/R.N:0;top*=1+clamp(deficit*.28,-.05,.06);}
- const acc=r.st.acc;
+ const handling=DiVANEngine.handling,profile=handling&&handling.profile(r.car);
+ if(profile&&th>=0)r._reverseHold=0;
  const hov=!!r.car.hov;
  if((r.flipSteer||0)>0)steer=-steer;
  const grip=clamp((r.st.grip||.7)*(off?.72:1),.42,1.2);
  const hand=!!hb&&!hov&&!r.air;
+ const ice=!hov&&R.T&&R.T.theme&&R.T.theme.deco==='ice'?.62:1;
+ let oil=false;for(const o of R.oils||[])if(Math.hypot(r.x-o.x,r.y-o.y)<34){oil=true;break;}
+ if(!oil&&typeof kitOnSlick==='function'&&kitOnSlick(r))oil=true;
+ // Видимость дождя не меняет физику покрытия.
+ const wet=R.weather&&R.weather.id==='rain';
+ const surf=hov?1:ice*(oil?.45:1)*(wet?(.75+R.weather.mod*.25):1);
+ const hold=grip*surf*(profile?profile.hold:1)*(r._tacticGrip||1);
+ const boostGrip=hov?1:clamp(hold/.8,0,1)*clamp(1-Math.abs(r.lat||0)/150,.15,1)*(hand?.2:1);
+ r._boostTraction=boostGrip;
+ const acc=r.st.acc*(r.nitro>0&&!r.air?1+.65*boostGrip:1);
  r.handbrake=hand;
  if(r.lat==null)r.lat=0;
  if(r.susp==null)r.susp=0;
@@ -57,11 +70,14 @@ function stepVehicleEngine(r,th,steer,dt,hb){
  const gas=r.landStun>0?0.14:1;
  if(!r.air){
   if(th>0){
-   const want=top*th;
-   if(long<want)long=Math.min(want,long+acc*dt*gas);
-   else long+=clamp(want-long,-acc*.35*dt,acc*.35*dt);
+   // Курок дозирует ускорение, а не включает скрытый тормоз при отпускании.
+   // Газ на заднем ходу сначала останавливает машину, без броска через ноль.
+   if(long<0)long=Math.min(0,long+(profile?profile.brake:520)*th*dt);
+   else if(long<top)long=Math.min(top,long+acc*th*dt*gas);
+   else long+=clamp(top-long,-acc*.35*dt,acc*.35*dt);
   }else if(th<0){
-   if(long>18)long+=th*(520+grip*50)*dt;
+   if(profile)long=handling.brake(r,long,th,dt,top,acc,profile.brake);
+   else if(long>18)long+=th*(520+grip*50)*dt;
    else long=Math.max(-top*.35,long+acc*.42*th*dt);
   }
  }
@@ -73,41 +89,39 @@ function stepVehicleEngine(r,th,steer,dt,hb){
  ////////////////////////////////////////////////////////
  const sharp=clamp(r.st.sharp!=null?r.st.sharp:(r.st.crn-2.15)/3.05,0,1);
  if(r.steerFlt==null)r.steerFlt=0;
- const catchUp=(hov?16:6.5)+sharp*(hov?6:10);
- r.steerFlt+=(steer-r.steerFlt)*(1-Math.exp(-catchUp*dt));
+ const catchUp=((hov?16:6.5)+sharp*(hov?6:10))*(profile?profile.response:1);
+ r.steerFlt=handling&&handling.steering?handling.steering(r.steerFlt,steer,catchUp,dt):
+  r.steerFlt+(steer-r.steerFlt)*(1-Math.exp(-catchUp*dt));
  const sf=clamp(Math.abs(long)/140,0,1)*(long<0?-1:1);
  const oldAng=r.ang;
  // На прямой руль спокойнее; ручник сохраняет возможность резко довернуть кузов.
  const speedRatio=clamp(Math.abs(long)/Math.max(1,r.st.top),0,1);
- const stability=1-speedRatio*speedRatio*.25;
+ const stability=1-speedRatio*speedRatio*(profile?profile.stability:.25);
  const yawMul=r.air?0.35:(hand?1.12:stability);
- r.ang+=r.steerFlt*r.st.crn*.95*sf*yawMul*dt;
+ r.ang+=r.steerFlt*r.st.crn*.95*sf*yawMul*(profile?profile.turn:1)*dt;
  const ad=r.ang-oldAng;
  if(!hov){
-  const ice=R.T&&R.T.theme&&R.T.theme.deco==='ice'?0.62:1;
-  let oil=false;for(const o of R.oils||[])if(Math.hypot(r.x-o.x,r.y-o.y)<34){oil=true;break;}
-  if(!oil&&typeof kitOnSlick==='function'&&kitOnSlick(r))oil=true;
-  const wet=settings.graphics.weather&&R.weather&&R.weather.id==='rain';
-  const surf=ice*(oil?0.45:1)*(wet?(0.75+R.weather.mod*.25):1);
-  const hold=grip*surf;
-  if(!r.air)lat+=-r.steerFlt*Math.abs(long)*(hand?5.2:0.4/hold)*dt;
-  const damp=r.air?1.1:(hand?1.7:8.2*hold);
+  const traction=handling&&handling.traction?handling.traction(profile,speedRatio,r.steerFlt,th,lat,hand,hold):{slip:0,recovery:1};
+  r._gripLoad=traction.load||0;
+  if(!r.air)lat+=-r.steerFlt*Math.abs(long)*(hand?(profile?profile.drift:5.2):0.4/hold*(1+traction.slip*1.25))*dt;
+  const damp=r.air?1.1:(hand?1.7:8.2*hold*(profile?profile.recovery:1)*traction.recovery);
   lat*=Math.exp(-damp*dt);
-  long-=Math.abs(lat)*0.06*dt;
+  long=Math.sign(long)*Math.max(0,Math.abs(long)-Math.abs(lat)*0.06*dt);
   lat=clamp(lat,-140,140);
   if(oil&&!r.air)r.ang+=Math.sin(gt*14+r.slot*3)*2.4*dt;
   if((r.blind||0)>0&&!r.air)r.ang+=Math.sin(gt*22+r.slot*5)*3.2*dt;
-  if(ice<1&&!r.air)r.ang+=Math.sin(gt*8+r.slot*2)*1.8*dt*(Math.abs(long)/r.st.top);
-  if(wet){
+  // Лёд и дождь снижают сцепление, но не поворачивают руль за игрока.
+  if(!profile&&ice<1&&!r.air)r.ang+=Math.sin(gt*8+r.slot*2)*1.8*dt*(Math.abs(long)/r.st.top);
+  if(wet&&!profile){
    r.ang+=Math.sin(gt*12+r.slot*3)*(1-R.weather.mod)*2*dt*(Math.abs(long)/r.st.top);
   }
  }else{
   lat=0;
-  let oil=false;for(const o of R.oils||[])if(Math.hypot(r.x-o.x,r.y-o.y)<34){oil=true;break;}
-  if(!oil&&typeof kitOnSlick==='function'&&kitOnSlick(r))oil=true;
   if(oil&&!r.air)r.ang+=Math.sin(gt*14+r.slot*3)*.4*dt;
  }
  r.spd=long;r.lat=lat;
+ if(r._contactGrace>0)r._contactGrace=Math.max(0,r._contactGrace-dt);
+ if(handling&&handling.driftState)handling.driftState(r,dt);
  r.wheelAngle=lerp(r.wheelAngle,r.steerFlt*.42+ad/Math.max(dt,.001)*.2,1-Math.exp(-10*dt));
  r.wheelRot+=r.spd*dt*0.18;
  const drift=Math.abs(ad)/Math.max(dt,.001)/60*Math.abs(r.spd);
@@ -147,9 +161,7 @@ function stepVehicleEngine(r,th,steer,dt,hb){
  // ТРАМПЛИН: прыжок. На разломе порог ниже и толчок сильнее.
  if(!r.air&&!r.finished){
   for(const rp of R.ramps){
-   const need=rp.gap?95:140;
-   const rad=rp.gap?54:46;
-   if(Math.hypot(r.x-rp.x,r.y-rp.y)<rad&&Math.abs(r.spd)>need){
+   if(window.RnRArenaEffects&&RnRArenaEffects.canLaunchRamp(r,rp)){
     r.air=true;
     r.vz=Math.abs(r.spd)*(rp.boost||0.9);
     if(rp.gap)r.z=Math.max(r.z||0,10);
@@ -205,7 +217,7 @@ function stepVehicleEngine(r,th,steer,dt,hb){
   if(vfxLive())RnRVfx.smoke(r.x,r.y);
   else R.parts.push({x:r.x,y:r.y,vx:rnd(-20,20),vy:rnd(-40,-10),t:.8,col:'rgba(40,40,40,.6)',sz:rnd(5,10)});}}
  // Проверка секретных срезов
- if(r.isP&&R.shortcuts){
+ if(r.isP&&R.shortcuts&&!R.T.tactics){
   for(const sc of R.shortcuts){
    if(sc.used)continue;
    const dx=r.x-sc.entry[0],dy=r.y-sc.entry[1];

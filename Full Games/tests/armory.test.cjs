@@ -66,7 +66,7 @@ test('Заезд подключает оружейку после тренажё
 });
 
 test('Миниган, рывок, покупка ствола и вход', () => {
-  const src = fs.readFileSync(path.resolve(__dirname, '../../armory.js'), 'utf8');
+  const src = fs.readFileSync(path.resolve(__dirname, '../content/armory.js'), 'utf8');
   assert(src.includes('function buyArmory('));
   assert(src.includes('const ARM_COSTS'));
   const g = bootArmory();
@@ -87,4 +87,12 @@ test('Миниган, рывок, покупка ствола и вход', () =
   g.save.tuning[0].wep = 6;
   g.buyArmory('wep');
   assert.equal(g.garMsg, 'МАКСИМАЛЬНЫЙ УРОВЕНЬ');
+});
+
+test('Описание радиуса ульты соответствует реальным восьми процентам за уровень', () => {
+  const g = bootArmory();
+  assert.match(g.armUltBlurb(0, 0), /\+8% радиус/);
+  g.carAbil = function () { return { ult: { type: 'plow' } }; };
+  assert.match(g.armUltBlurb(0, 3), /радиус \+24%/);
+  assert.match(g.armUltBlurb(0, 3), /КД −21%/);
 });

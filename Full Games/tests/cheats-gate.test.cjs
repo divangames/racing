@@ -48,7 +48,7 @@ test('Заезд подключает cheats-gate сразу после runtime'
 });
 
 test('Dev-окно пускает читы, упакованный клиент — нет', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function cheatsAllowed('));
   assert(html.includes('function submitCheat('));
   const dev = bootGate({ __RNR_DESKTOP__: true, __RNR_PUBLIC_BUILD__: false });

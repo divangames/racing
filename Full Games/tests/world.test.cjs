@@ -74,7 +74,7 @@ test('Заезд подключает world после collision', () => {
 });
 
 test('Призрак не таранит, живые разводятся, деньги игроку', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function resolveRaceContact('));
   const g = bootWorld();
   const a = { x: 0, y: 0, spd: 100, dead: false, air: false, ghost: true, car: { idx: 0 }, hp: 100 };

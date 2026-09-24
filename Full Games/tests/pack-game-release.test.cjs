@@ -51,6 +51,8 @@ function makeFixture() {
   fs.writeFileSync(path.join(root, 'assets', 'data', 'players', '06', 'comics', 'reference', 'photo.jpg'), 'skip');
   fs.mkdirSync(path.join(root, 'assets', 'ui', 'disclaimer'), { recursive: true });
   fs.writeFileSync(path.join(root, 'assets', 'ui', 'disclaimer', 'disclaimer-21plus.svg'), '<svg></svg>');
+  fs.mkdirSync(path.join(root, 'assets', 'video'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'assets', 'video', 'divan_intro.mp4'), 'intro-video');
   fs.mkdirSync(path.join(root, 'assets', 'data', 'cats', 'Titles'), { recursive: true });
   fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'titles.json'), '{}');
   fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-medved_1920x1080.webp'), 'hd');
@@ -71,6 +73,7 @@ test('Пакует store-zip без reference и markdown', () => {
   assert.ok(names.includes('rnr.html'));
   assert.ok(names.includes('install.json'));
   assert.ok(names.includes('desktop-manifest.json'));
+  assert.ok(names.some((name) => name.replace(/\\/g, '/') === 'assets/video/divan_intro.mp4'));
   assert.ok(names.includes('assets/data/ok/car.json') || names.includes('assets\\data\\ok\\car.json'));
   assert.ok(
     names.includes('assets/ui/disclaimer/disclaimer-21plus.svg')

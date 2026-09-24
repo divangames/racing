@@ -1,0 +1,17 @@
+/* Точки автомобильного света: компактные поля, различимые состояния и доступный фокус. */
+.car-lights { border-color: #346779; }
+.car-lights summary { cursor: pointer; color: #bcecf8; font-weight: 700; padding: 5px 0; }
+.car-lights summary span { font-weight: 400; font-size: 11px; color: #a3aebc; }
+.car-lights[open] summary { margin-bottom: 12px; }
+.light-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.light-list button { flex: 1 0 65px; min-height: 36px; border-color: #536b75; }
+.light-list button[aria-pressed="true"], #carLightsToggle[aria-expanded="true"] { background: #163b49; color: #d6f7ff; border-color: #67dafa; }
+.light-check { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 12px; line-height: 1.4; color: #c5ccd5; cursor: pointer; }
+.light-check input { width: 17px; height: 17px; accent-color: #54c7e7; }
+.light-preview-controls { border-top: 1px solid #343e4a; margin-top: 12px; padding-top: 2px; }
+.car-lights .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.car-lights .actions button { flex: 1 1 auto; min-height: 36px; }
+.car-lights input:focus-visible, .car-lights button:focus-visible, .car-lights select:focus-visible, .car-lights summary:focus-visible { outline: 2px solid #88dff4; outline-offset: 3px; }
+.car-lights input:invalid { border-color: #ef896f; }
+.car-lights .hint { color: #aab5c2; line-height: 1.5; }
+#lightMode { min-height: 18px; color: #86d7ec; }

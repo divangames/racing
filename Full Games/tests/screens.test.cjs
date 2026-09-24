@@ -111,7 +111,9 @@ test('Пункты меню и камера мира считаются без c
   const retail = Object.assign(g, { __RNR_DESKTOP__: true, __RNR_PUBLIC_BUILD__: true });
   assert.ok(!ids(retail.DiVANEngine.screens.titleItems({ race: 0 }, false)).includes('cheats'));
   const lay = g.DiVANEngine.screens.titleLayout({ H: 720, n: 8, logoH: 200, resetArm: false });
-  assert.ok(lay.titleStep >= 22 && lay.titleStep <= 34);
+  assert.ok(lay.titleStep >= 28 && lay.titleStep <= 48);
+  assert.ok(lay.panelH < lay.titleStep, 'Между пунктами остаётся промежуток');
+  assert.ok(lay.titleY0 + 7 * lay.titleStep + lay.panelH / 2 < 650, 'Пункты не закрывают нижние подписи');
   assert.equal(lay.colX, 52);
   const wide = g.DiVANEngine.screens.titleLayout({ H: 720, n: 8, logoH: 200, resetArm: false, stageX: -220 });
   assert.equal(wide.colX, -168);
@@ -129,4 +131,14 @@ test('Пункты меню и камера мира считаются без c
   assert.equal(g.arenaHits, 1);
   assert.equal(g.hudHits, 1);
   assert.equal(g.lastTranslate[0], -38);
+});
+
+test('Логотип оставляет зазор над первым пунктом с любым числом строк', () => {
+  const api = bootUi().DiVANEngine.screens;
+  for (const n of [6,7,8,9]) for (const logoH of [132,205,270,360]) {
+    const lay = api.titleLayout({H:720,n,logoH,resetArm:false});
+    assert(lay.titleY0 - lay.panelH/2 - 2 >= lay.logoY + lay.logoH + 20);
+    assert(lay.titleY0 + (n-1)*lay.titleStep + lay.panelH/2 < 630);
+    assert(lay.logoW < 380);
+  }
 });

@@ -21,7 +21,7 @@ test('Заезд подключает долю частиц после холс�
 });
 
 test('Low режет искры, shake копит до 14', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function partN('));
   assert(html.includes('function doShake('));
   const g = {

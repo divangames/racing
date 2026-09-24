@@ -7,6 +7,19 @@
 (function (global) {
   'use strict';
 
+  /** За финиш вне подиума тоже остаётся небольшой бюджет на следующую гонку. */
+  function finishSupportPay() {
+    if (labTest || !R || R.dnf || R.countsForCareer === false || R.place < 3) return 0;
+    if (typeof P === 'undefined' || !P || !P.finished) return 0;
+    const winnerPrize = Number(R.prize && R.prize[0]) || 0;
+    if (winnerPrize <= 0) return 0;
+    // 4/5/6+ места: минимум 25/20/15% приза победителя, всегда ниже подиума.
+    const share = R.place === 3 ? .25 : R.place === 4 ? .20 : .15;
+    let minimum = Math.round(winnerPrize * share);
+    if (typeof incomePayout === 'function') minimum = incomePayout(minimum);
+    return Math.max(0, minimum - (Number(R.prize[R.place]) || 0));
+  }
+
   /**
    * Индекс трассы для гаража и ставки.
    * @returns {number}
@@ -67,15 +80,21 @@
   function careerMakeBriefEngine(prevRace, counts, streakPay, packPay, newAch) {
     const prize = (R.prize && R.prize[R.place]) || 0;
     const news = [];
-    const ink = R.place === 0 ? '#ffd23f' : R.place <= 2 ? '#58ff6b' : '#9a93a8';
+    const ink = R.dnf ? '#ff6b4a' : R.place === 0 ? '#ffd23f' : R.place <= 2 ? '#58ff6b' : '#9a93a8';
     news.push({
       kind: 'prize',
-      title: careerPlaceWord(R.place),
-      text: prize > 0
+      title: R.dnf ? 'СХОД' : careerPlaceWord(R.place),
+      text: R.dnf ? 'лимит времени истёк · этап можно повторить' : prize > 0
         ? ('призовые ' + fm(prize) + (R.place <= 2 ? ' · подиум' : ''))
-        : 'вне призовой тройки — касса не выросла от места',
+        : (R.finishSupportPay > 0 ? 'вне подиума · награда за финиш ниже' : 'вне призовой тройки — касса не выросла от места'),
       col: ink
     });
+    if (R.finishSupportPay > 0) {
+      news.push({
+        kind: 'finish', title: 'ДОЕХАЛ — ЗАРАБОТАЛ',
+        text: '+' + fm(R.finishSupportPay) + ' за финиш · на следующий апгрейд', col: '#35e0ff'
+      });
+    }
     if ((R.betStake || 0) > 0) {
       news.push({
         kind: 'bet',
@@ -172,9 +191,11 @@
    * @param {object[]} newAch
    */
   function careerAfterResultsEngine(prevRace, newAch) {
+    if (labTest || !R) return;
     careerPatchSave(save);
-    const counts = !labTest && R.countsForCareer !== false;
-    if (R.place === 0) {
+    const counts = !labTest && !R.dnf && R.countsForCareer !== false;
+    const won = !R.dnf && R.place === 0;
+    if (won) {
       save.winStreak = (save.winStreak | 0) + 1;
       save.careerWins = (save.careerWins | 0) + 1;
       if (save.winStreak > (save.bestStreak | 0)) save.bestStreak = save.winStreak;
@@ -183,7 +204,7 @@
     }
     let streakPay = 0;
     const streakKey = save.winStreak | 0;
-    if (R.place === 0 && CAREER_STREAK_PAY[streakKey]) {
+    if (won && CAREER_STREAK_PAY[streakKey]) {
       streakPay = Math.round(CAREER_STREAK_PAY[streakKey] * prizeDivMult(R.div));
       if (typeof incomePayout === 'function') streakPay = incomePayout(streakPay);
       save.cash += streakPay;
@@ -194,6 +215,10 @@
       packPay = Math.round(CAREER_PACK_PAY * prizeDivMult(R.div));
       if (typeof incomePayout === 'function') packPay = incomePayout(packPay);
       save.cash += packPay;
+    }
+    if (R.finishSupportPay == null) {
+      R.finishSupportPay = finishSupportPay();
+      save.cash += R.finishSupportPay;
     }
     if (typeof storyAfterCareerRace === 'function') storyAfterCareerRace(prevRace, counts);
     persist();
@@ -239,6 +264,7 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
+  engine.careerEcon = { finishSupportPay };
   engine.replace('careerTrackIdx', careerTrackIdxEngine);
   engine.replace('careerPatchSave', careerPatchSaveEngine);
   engine.replace('careerVisitedIdx', careerVisitedIdxEngine);

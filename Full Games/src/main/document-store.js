@@ -23,6 +23,8 @@ function validPoint(p) {
 /** Проверяет минимальный контракт трассы до записи и нормализации. */
 function validateTrack(track) {
   if (!track || typeof track !== 'object' || Array.isArray(track)) return 'Нужен объект трассы';
+  const tacticError = require('../engine/track-tactics').validate(track.tactics);
+  if (tacticError) return tacticError;
   if (!Array.isArray(track.cps) || track.cps.length < 4 || track.cps.length > 2048) return 'Трасса должна содержать от 4 до 2048 точек';
   if (!track.cps.every(validPoint)) return 'Некорректные координаты трассы';
   if (new Set(track.cps.map(p => p[0]+','+p[1])).size < 4) return 'Нужны хотя бы четыре различные точки';
@@ -41,6 +43,8 @@ function validateTrack(track) {
 /** Проверяет структуру машины, сохраняя дополнительные поля редактора. */
 function validateCar(car) {
   if (!car || typeof car !== 'object' || Array.isArray(car) || !car.body || typeof car.body !== 'object') return 'Нет кузова машины';
+  const lightError = require('../engine/car-lights').validate(car.lights);
+  if (lightError) return lightError;
   if (!Array.isArray(car.w) || car.w.length > 64 || !car.w.every(validPoint)) return 'Некорректные колёса';
   for (const key of ['x','y','sx','sy','scale']) {
     if (car.body[key] != null && !Number.isFinite(car.body[key])) return 'Некорректный параметр кузова: '+key;

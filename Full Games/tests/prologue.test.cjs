@@ -12,7 +12,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-const ROOT = path.resolve(__dirname, '../..');
+const ROOT = path.resolve(__dirname, '../content');
 const DIR = path.join(ROOT, 'assets', 'data', 'cats', '00');
 
 test('Пролог: 01.webp–07.webp и lines.json на месте', () => {

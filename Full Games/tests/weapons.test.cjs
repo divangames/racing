@@ -81,7 +81,7 @@ test('Заезд подключает оружие после боя и до р�
 });
 
 test('Миниган, клык, рывок и купол', () => {
-  const kits = fs.readFileSync(path.resolve(__dirname, '../../combat-kits.js'), 'utf8');
+  const kits = fs.readFileSync(path.resolve(__dirname, '../content/combat-kits.js'), 'utf8');
   assert(kits.includes('function fireWeapon('));
   assert(kits.includes('function useUlt('));
   assert(kits.includes('const CAR_ABIL'));

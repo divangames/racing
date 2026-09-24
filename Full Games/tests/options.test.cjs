@@ -27,6 +27,7 @@ function bootOptions() {
     controlOpts: function () { return []; },
     sndOpts: function () { return []; },
     nudgeSound: function () { return false; },
+    nudgeGraphics: function () { return false; },
     drawIntro: function () {},
     drawPreRace: function () {}
   };
@@ -66,4 +67,12 @@ test('Зум камеры, панель интро и колонки ставк�
   assert.equal(col.stage, 300);
   assert.equal(col.rightX, 370);
   assert.equal(col.chipW, 399);
+  const bottom = g.DiVANEngine.prerace.preraceBottomLayout(1280, 720, 48);
+  assert.deepEqual(
+    {dockY: bottom.dockY, contentFoot: bottom.contentFoot, controlY: bottom.controlY, footerY: bottom.footerY},
+    {dockY: 588, contentFoot: 574, controlY: 622, footerY: 690}
+  );
+  assert(bottom.stakeX + (bottom.stakeW + bottom.stakeGap) * 2 + bottom.stakeW < bottom.payoutX);
+  assert(bottom.payoutX + bottom.payoutW < bottom.ctaX);
+  assert(bottom.ctaX + bottom.ctaW <= 1280 - 48);
 });

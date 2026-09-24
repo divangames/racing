@@ -36,13 +36,15 @@
         r.shield--; spark(r.x, r.y, '#35e0ff', 10, 180); sHit(); return;
       }
     }
-    if (killer && killer.isP) killer.dmgDealt += d;
+    const hpBefore = Math.max(0, r.hp);
     d *= (r.buffArmor != null ? r.buffArmor : 1);
     if (r.paper > 0 && src === 'proj') d *= 1.35;
     if ((r.bodyDump || 0) > 0) d *= 1.3;
     if (typeof kitTinAbsorb === 'function') d *= kitTinAbsorb(r, src);
     if (typeof kitMidAbsorb === 'function') d *= kitMidAbsorb(r, src);
     d *= (1 - r.ch.grt * .05); r.hp -= d;
+    // В статистику попадает снятый корпус после брони, без урона сверх оставшегося HP.
+    if (killer && killer !== r) killer.dmgDealt = (killer.dmgDealt || 0) + Math.max(0, hpBefore - Math.max(0, r.hp));
     if (r.isP && !R.demo) doShake(4);
     if (r.hp <= 0) killRacer(r, killer);
     else {

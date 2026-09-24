@@ -260,6 +260,7 @@ async function handleSaveOblabFile(request, url) {
   const name = String(url.searchParams.get('name') || id).trim().slice(0, 42) || id;
   const width = Math.max(8, Math.min(16384, +url.searchParams.get('w') || 128));
   const height = Math.max(8, Math.min(16384, +url.searchParams.get('h') || 128));
+  const replace = url.searchParams.get('replace') === '1';
   const declared = Number(request.headers.get('content-length')) || 0;
   if (!PACK_RE.test(pack) || !OBJ_RE.test(id) || !EXT_OK.has(ext) || declared > MAX_ASSET_BYTES) {
     return new Response('Bad request', {status: 400});
@@ -281,7 +282,20 @@ async function handleSaveOblabFile(request, url) {
   });
   const srcName = id + '.' + ext;
   fs.writeFileSync(path.join(folder, srcName), bytes);
-  const body = {
+  const current = replace ? readJson(path.join(folder, id + '.oblab')) : null;
+  const carLayer = current && (current.carLayer === 'over' || current.layer === 'over') ? 'over' : 'under';
+  const body = current ? {
+    id,
+    name: String(current.name || name).slice(0, 42),
+    src: srcName,
+    w: Math.max(8, +current.w || width),
+    h: Math.max(8, +current.h || height),
+    lockRatio: current.lockRatio !== false,
+    layer: carLayer,
+    carLayer,
+    roadLayer: current.roadLayer === 'under' ? 'under' : 'over',
+    collision: collisionOf(current.collision, carLayer)
+  } : {
     id, name, src: srcName, w: width, h: height, lockRatio: true,
     layer: 'under', carLayer: 'under', roadLayer: 'over',
     collision: collisionOf({solid: false, poly: [], bodies: []}, 'under')

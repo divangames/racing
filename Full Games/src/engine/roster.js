@@ -25,9 +25,7 @@
    * Карточки PLAYABLE_IDS, кнопка «назад», пепел.
    */
   function drawCharSelEngine() {
-    g.fillStyle = '#12101a';
-    g.fillRect(stageX0(), stageY0(), viewW, viewH);
-    drawHazardStripes(g);
+    drawHubBackdrop();
     txt(g, 'ВЫБЕРИ ГОНЩИКА', W / 2, 64, 40, '#ffd23f', 'center');
     g._charCards = [];
     g._bioBtns = [];
@@ -35,7 +33,7 @@
     const lay = charCardLayout(W, n, gap);
     const cw = lay.cw, x0 = lay.x0;
     PLAYABLE_IDS.forEach(function (idx, slot) {
-      const ch = CHARS[idx], x = x0 + slot * (cw + gap), sel = idx === selChar, y = sel ? 96 : 108, h = sel ? 518 : 504;
+      const ch = CHARS[idx], x = x0 + slot * (cw + gap), sel = idx === selChar, y = 104, h = 508;
       panel(g, x, y, cw, h, sel ? 'rgba(255,157,46,.12)' : 'rgba(20,17,28,.9)', sel ? '#ffd23f' : '#3a3548');
       drawPortrait(g, ch, x + cw / 2, y + 118, cw > 220 ? 1.05 : 0.88);
       const nick = ch.name !== ch.short ? ch.short : '';
@@ -50,7 +48,8 @@
       });
       const slvlC = (save && save.skills && save.skills[idx]) || 1;
       drawSkillBlock(g, x + 8, y + 358, cw - 16, idx, slvlC);
-      wrapText(g, ch.bio, x + cw / 2, y + 448, cw - 28, 15, 11, '#e8e2d0', F_B);
+      const bioLines = layoutLines(g, ch.bio, cw - 28, 11, F_B);
+      bioLines.slice(0, 2).forEach((line, li) => txt(g, line + (li === 1 && bioLines.length > 2 ? '…' : ''), x + cw / 2, y + 438 + li * 14, 11, '#e8e2d0', 'center', F_B));
       const bbx = x + cw / 2 - 64, bby = y + h - 42, bbw = 128, bbh = 28;
       const hot = mx > bbx && mx < bbx + bbw && my > bby && my < bby + bbh;
       panel(g, bbx, bby, bbw, bbh, (sel || hot) ? 'rgba(53,224,255,.15)' : 'rgba(20,17,28,.9)', (sel || hot) ? '#35e0ff' : '#3a3548', 8);

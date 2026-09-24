@@ -157,7 +157,7 @@
    * Тема титула из cast; main — только пока каст ещё не в кэше.
    */
   function bootPlayMenuIfReadyEngine() {
-    if (BOOT.ready) return;
+    if (BOOT.ready || BOOT.creatorIntroPlaying) return;
     const tracks = global.MUSIC_TRACKS || {};
     const castUrl = tracks.cast && tracks.cast[0];
     if (castUrl && BOOT.media[castUrl]) {

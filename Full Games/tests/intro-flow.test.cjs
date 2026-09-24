@@ -79,7 +79,7 @@ test('Заезд подключает поток интро после отри�
 });
 
 test('Комикс Медведя, выбор машины и титул', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function startIntro('));
   assert(html.includes('function enterTitle('));
   const g = bootIntro();

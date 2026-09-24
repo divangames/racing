@@ -38,12 +38,39 @@
    */
   function followCam(race, player, dt, view) {
     const cam = race.cam, vw = view.w, vh = view.h;
-    const tgtX = player.x + Math.cos(player.ang) * player.spd * .22 - vw / 2;
-    const tgtY = player.y + Math.sin(player.ang) * player.spd * .22 - vh / 2;
+    // Взгляд следует фактическому движению, включая снос; при развороте камера не дёргается за носом.
+    const fx = Math.cos(player.ang), fy = Math.sin(player.ang), lat = player.lat || 0;
+    const lookX = clampNum((fx * player.spd - fy * lat) * .28, -vw * .20, vw * .20);
+    const lookY = clampNum((fy * player.spd + fx * lat) * .28, -vh * .20, vh * .20);
+    const blend = 1 - Math.exp(-4 * Math.max(0, dt));
+    cam.lookX = mix(cam.lookX || 0, lookX, blend);
+    cam.lookY = mix(cam.lookY || 0, lookY, blend);
+    const tgtX = player.x + cam.lookX - vw / 2;
+    const tgtY = player.y + cam.lookY - vh / 2;
     if (race.T.w <= vw) cam.x = (race.T.w - vw) / 2;
     else cam.x = clampNum(mix(cam.x, tgtX, 1 - Math.pow(.001, dt)), 0, race.T.w - vw);
     if (race.T.h <= vh) cam.y = (race.T.h - vh) / 2;
     else cam.y = clampNum(mix(cam.y, tgtY, 1 - Math.pow(.001, dt)), 0, race.T.h - vh);
+  }
+
+  /** Завершает заезд после финиша всех соперников или истечения окна игрока. */
+  function advanceFinishWindow(race, unfinished, dt, isLab, say) {
+    if (unfinished.length === 0) {
+      race.phase = 'done'; race.doneT = 1.2;
+      return;
+    }
+    if (unfinished.length !== 1 || isLab || race.racers.length <= 1) return;
+    const playerRemaining = unfinished[0].isP;
+    if (race.endTimer == null) {
+      race.endTimer = playerRemaining ? 60 : 30;
+      race.endTimerType = playerRemaining ? 'player' : 'ai';
+      say(playerRemaining ? 'ВСЕ СОПЕРНИКИ ФИНИШИРОВАЛИ · 60 СЕКУНД ДО СХОДА!' : unfinished[0].ch.short + ': 30 СЕКУНД ДО ФИНИША!');
+    }
+    race.endTimer -= dt;
+    if (race.endTimer <= 0) {
+      if (playerRemaining) race.dnf = true;
+      race.phase = 'done'; race.doneT = 1.2;
+    }
   }
 
   /**
@@ -55,7 +82,10 @@
     if (typeof tickStarterWorld === 'function') tickStarterWorld(dt);
     if (typeof tickMidWorld === 'function') tickMidWorld(dt);
     R.shake *= Math.pow(.02, dt);
-    if (settings.graphics.shake) { R.sx = rnd(-R.shake, R.shake); R.sy = rnd(-R.shake, R.shake); }
+    const shakeStrength = settings.graphics.shakeStrength == null ? .6 : clamp(settings.graphics.shakeStrength / 100, 0, 1);
+    if (settings.graphics.shake && !(typeof introReduceMotion !== 'undefined' && introReduceMotion)) {
+      R.sx = rnd(-R.shake, R.shake) * shakeStrength; R.sy = rnd(-R.shake, R.shake) * shakeStrength;
+    }
     else { R.sx = 0; R.sy = 0; }
     followCam(R, P, dt, { w: visW(), h: visH() });
     for (let i = R.parts.length - 1; i >= 0; i--) {
@@ -125,12 +155,7 @@
       advanceIdx(r);
     }
     const unf = R.racers.filter(function (x) { return !x.finished; });
-    if (unf.length === 0) { R.phase = 'done'; R.doneT = 1.2; }
-    else if (unf.length === 1 && !unf[0].isP) {
-      if (R.endTimer == null) { R.endTimer = 30; announce(unf[0].ch.short + ': 30 СЕКУНД ДО ФИНИША!'); }
-      R.endTimer -= dt;
-      if (R.endTimer <= 0) { R.phase = 'done'; R.doneT = 1.2; }
-    }
+    advanceFinishWindow(R, unf, dt, labTest, announce);
     resolveRaceContact(dt);
     if (typeof keepAllOnTrack === 'function') keepAllOnTrack();
     R.order = R.racers.slice().sort(function (a, b) {
@@ -149,6 +174,6 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.scene = { followCam, step: updRaceEngine };
+  engine.scene = { followCam, advanceFinishWindow, step: updRaceEngine };
   engine.replace('updRace', updRaceEngine);
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -55,7 +55,7 @@ function publishLauncherPageLinks(explicit) {
   }
   const msg =
     'Пейдж: ссылки скачивания MSI лаунчера ' + result.version + '.';
-  const commit = git(['commit', '-m', msg]);
+  const commit = git(['commit', '--only', '-m', msg, '--'].concat(files));
   if (commit.status !== 0) {
     throw new Error((commit.stderr || commit.stdout || 'git commit не удался').trim());
   }

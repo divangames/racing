@@ -77,7 +77,7 @@ test('Заезд подключает persist-save после persist-io', () =>
 });
 
 test('Новая карьера, запись и допись ракет из старого JSON', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function newSave('));
   assert(html.includes('function loadSave('));
   const g = bootSave();

@@ -76,7 +76,11 @@
       return;
     }
     if (state === 'career' || state === 'careerTracks') { if (typeof careerClick === 'function') careerClick(x, y); return; }
-    if (state === 'results') { press('Enter'); return; }
+    if (state === 'results') {
+      const hit = (g._resultHits || []).find(b => hitRect(x, y, b));
+      if (hit) { R.resultAction = hit.action; press('Enter'); }
+      return;
+    }
     if (state === 'garage' && !garagePaused && g._gar) {
       for (const b of g._gar) {
         if (hitRect(x, y, b)) { tuningSel = b.row; garageAction(0, b.row); break; }

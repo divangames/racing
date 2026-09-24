@@ -85,7 +85,7 @@ test('Заезд подключает финиш после сетки', () => {
 });
 
 test('Время, полигон без кассы, карьера с призом и first_win', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function showResults('));
   assert(html.includes('function prizeDivMult('));
   const g = bootFinish();
@@ -131,4 +131,31 @@ test('Доход пилота увеличивает приз и выигрыш 
   assert.equal(g.R.prize[0], 528);
   assert.equal(g.R.betPay, 770);
   assert.equal(g.save.cash, 1000 + 528 + 770);
+});
+
+test('Сход без финиша не выдаёт приз, рекорд места и выигрыш ставки на себя', () => {
+  const g = bootFinish();
+  g.labTest = false;
+  g.P.finished = false;
+  g.R.dnf = true;
+  g.R.betStake = 100;
+  g.R.betOdds = { k1: 2, k2: 1.1, k3: 0.6 };
+  g.R.betPick = 0;
+  g.showResults();
+  assert.equal(g.R.place, 1);
+  assert.equal(g.R.prize[1], 0);
+  assert.equal(g.R.betPay, 0);
+  assert.equal(g.save.cash, 1000);
+  assert.equal(g.save.records[0].bestPlace, 99);
+  assert.match(g.R.quip, /СХОД/);
+  assert.equal(g.save.achievements.perfect, undefined);
+});
+
+test('Повтор не платит и не двигает карьеру, повторный показ обычных результатов не платит дважды', () => {
+  const g = bootFinish(); g.labTest = false; g.R.replay = true;
+  const saved = JSON.stringify(g.save);
+  g.showResults(); assert.equal(JSON.stringify(g.save), saved); assert.equal(g._careerPrev, undefined);
+  assert.equal(g.R.prize[0], 0); assert.match(g.R.quip, /ПОВТОР/);
+  g.R.replay = false; g.showResults(); const paid = JSON.stringify(g.save);
+  g.showResults(); assert.equal(JSON.stringify(g.save), paid);
 });

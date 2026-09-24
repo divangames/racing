@@ -8,7 +8,7 @@
   'use strict';
 
   /** Коды, которые нельзя назначить на действие в захвате. */
-  const CAPTURE_BLOCK = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'NumpadEnter', 'Escape', 'Tab', 'CapsLock', 'Backspace'];
+  const CAPTURE_BLOCK = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'NumpadEnter', 'Escape', 'Tab', 'CapsLock', 'Backspace', 'KeyM', 'KeyR', 'F3'];
 
   /**
    * Старт, пролог, музыка, модалки лаборатории и выхода.
@@ -30,7 +30,7 @@
       }
       return true;
     }
-    if (c === 'KeyM' && state !== 'cheats') {
+    if (c === 'KeyM' && state !== 'cheats' && state !== 'settings') {
       if (AU.ctx) {
         settings.sound.musicOn = !settings.sound.musicOn;
         saveSettings();
@@ -92,6 +92,11 @@
       if (isConfirm(c)) {
         const it = items[pauseMenuIndex];
         if (it === 'ПРОДОЛЖИТЬ') { paused = false; clearKeys(); }
+        else if (it === 'ВЕРНУТЬСЯ НА ТРАССУ') {
+          const answer = global.DiVANEngine.recovery && global.DiVANEngine.recovery.recover(P);
+          if (answer && answer.ok) { paused = false; clearKeys(); }
+          else if (answer) announce(answer.reason, true);
+        }
         else if (it === 'НАСТРОЙКИ') { openSettings('race'); }
         else if (it === 'ДОСТИЖЕНИЯ') { openAchievements('race'); }
         else if (it === 'РЕСТАРТ ГОНКИ') restartRace();
@@ -107,6 +112,16 @@
         sClick();
       }
       return true;
+    }
+    if (settings.controls && (settings.controls.recover || ['KeyT']).includes(c)) {
+      const answer = global.DiVANEngine.recovery && global.DiVANEngine.recovery.recover(P);
+      if (answer) announce(answer.ok ? 'МАШИНА ВОЗВРАЩЕНА · КРУГ БЕЗ РЕКОРДА' : answer.reason, true);
+      return true;
+    }
+    if (c === 'KeyG' && (labTest || R && R.replay) && global.DiVANEngine.trainingGhost &&
+        !Object.values(settings.controls || {}).some(binds => Array.isArray(binds) && binds.includes(c))) {
+      const ghost = global.DiVANEngine.trainingGhost;
+      ghost.setEnabled(!ghost.status().enabled); sClick(); return true;
     }
     if (c === 'KeyR') { restartRace(); return true; }
     if (c === 'F3') { settings.graphics.showFps = !settings.graphics.showFps; saveSettings(); return true; }

@@ -2,6 +2,8 @@
   "id": "custom_05",
   "name": "КЛЕВЕР МОГИЛЬНИКА · ЧЕРНОВИК",
   "published": true,
+  "tactics": null,
+  "crossingMode": "overpass",
   "autoHazards": true,
   "theme": {
     "ground": "#5c6b4a",
@@ -14,7 +16,8 @@
     "groundSrc": "",
     "roadSrc": "",
     "railSrc": "",
-    "groundScale": 1
+    "groundScale": 1,
+    "crowdSound": true
   },
   "zones": [
     {
@@ -33,6 +36,8 @@
       "material": "dirt"
     }
   ],
+  "gaps": [],
+  "decks": [],
   "cps": [
     [
       1800,
@@ -151,8 +156,8 @@
   "items": [],
   "objects": [],
   "start": {
-    "x": 1800,
-    "y": 1200,
+    "x": 1696.1396322626058,
+    "y": 998.4303168212737,
     "ang": 1.0791711139920015
   },
   "hazards": {
@@ -167,12 +172,12 @@
       "bonus": 205,
       "radius": 86,
       "entry": [
-        1000,
-        800
+        1614.0056334501753,
+        883.9245165763036
       ],
       "exit": [
-        2500,
-        1600
+        3114.0056334501755,
+        1683.9245165763036
       ]
     }
   ]

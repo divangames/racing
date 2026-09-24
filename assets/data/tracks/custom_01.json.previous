@@ -2,7 +2,7 @@
   "id": "custom_01",
   "name": "СВОЯ ПЕТЛЯ",
   "published": true,
-  "autoHazards": true,
+  "autoHazards": false,
   "theme": {
     "ground": "#16110e",
     "dark": "#0a0807",
@@ -12,7 +12,7 @@
     "map": "arena",
     "weather": "",
     "groundSrc": "assets/data/tracks/Textures/biomes/arena/01.png",
-    "roadSrc": "",
+    "roadSrc": "assets/data/tracks/Textures/road/arena_dirt_01.png",
     "railSrc": "assets/data/tracks/Textures/rails/bort_01.png",
     "groundScale": 2.5,
     "crowdSound": true
@@ -185,7 +185,13 @@
     ]
   ],
   "decals": [],
-  "items": [],
+  "items": [
+    {
+      "type": "bolt",
+      "x": 1664,
+      "y": 1344
+    }
+  ],
   "objects": [],
   "start": {
     "x": 1014.2857142857142,
@@ -193,10 +199,46 @@
     "ang": 0
   },
   "hazards": {
-    "ramps": [],
-    "mines": [],
+    "ramps": [
+      {
+        "x": 1335.1983199792571,
+        "y": 1458.0138215316395,
+        "lat": 0,
+        "ang": 0.0025749954008423837,
+        "rot": 0.0025749954008423837,
+        "tx": 1474.5725547619936,
+        "ty": 1458.3727103384174
+      }
+    ],
+    "mines": [
+      {
+        "x": 1408,
+        "y": 1408,
+        "lat": 40,
+        "ang": 0
+      },
+      {
+        "x": 1536,
+        "y": 1408,
+        "lat": 40,
+        "ang": 0
+      },
+      {
+        "x": 1664,
+        "y": 1472,
+        "lat": 40,
+        "ang": 0
+      }
+    ],
     "oils": [],
-    "pads": []
+    "pads": [
+      {
+        "x": 1218,
+        "y": 1457.316708306917,
+        "lat": 0,
+        "ang": 0
+      }
+    ]
   },
   "shortcuts": []
 }

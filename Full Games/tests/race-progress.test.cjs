@@ -57,11 +57,12 @@ test('Заезд подключает круг после ИИ и до рамо�
 });
 
 test('Полигон, финиш, откат круга и двери жести', () => {
-  const html = fs.readFileSync(path.resolve(__dirname, '../../rnr.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
   assert(html.includes('function advanceIdx('));
   const g = bootProgress();
   const r = g.racer;
   g.labTest = true;
+  r._lapCheckpoint = 3;
   g.advanceIdx(r);
   assert.equal(r.lap, 1);
   assert.equal(r.trackIdx, 2);
@@ -76,7 +77,7 @@ test('Полигон, финиш, откат круга и двери жести
   assert.equal(r.trackIdx, 38);
 
   g.labTest = false;
-  r.trackIdx = 35; r.x = 20; r.y = 0; r.lap = 0; r.hp = 40; r.cdN = 6; r.cdW = 3; r.cdU = 8;
+  r.trackIdx = 35; r.x = 20; r.y = 0; r.lap = 0; r.hp = 40; r.cdN = 6; r.cdW = 3; r.cdU = 8; r._lapCheckpoint = 3; r._lapRestore = false;
   g.advanceIdx(r);
   assert.equal(r.lap, 1);
   assert.equal(r.hp, 80);
@@ -84,7 +85,7 @@ test('Полигон, финиш, откат круга и двери жести
   assert(g._fl);
   assert.equal(g._ann, 'КРУГ 2 ИЗ 3');
 
-  r.trackIdx = 35; r.x = 20; r.lap = 2; r.finished = false; r.hp = 50; r.maxhp = 100;
+  r.trackIdx = 35; r.x = 20; r.lap = 2; r.finished = false; r.hp = 50; r.maxhp = 100; r._lapCheckpoint = 3;
   g.advanceIdx(r);
   assert.equal(g._fin, r);
   assert.equal(r.finished, true);
@@ -96,10 +97,38 @@ test('Полигон, финиш, откат круга и двери жести
   assert.equal(g._fin, null);
   assert.equal(r.trackIdx, 2);
 
-  r.finished = false; r.lap = 2; r.trackIdx = 35; r.x = 20; r.car = { idx: 11 };
+  r.finished = false; r.lap = 2; r.trackIdx = 35; r.x = 20; r.car = { idx: 11 }; r._lapCheckpoint = 3;
   g.R.demo = true; g._fin = null;
   g.advanceIdx(r);
   assert.equal(r.lap, 0);
   assert.equal(r.tinDoor, 1);
   assert.equal(g._fin, null);
+});
+
+test('Стартовая линия, чекпоинты и задний ход не дают лишний круг или ресурсы', () => {
+  const g = bootProgress();
+  const r = g.racer;
+  r.lap = -1;
+  r.hp = 40;
+  g.advanceIdx(r);
+  assert.equal(r.lap, 0, 'первый проезд линии только начинает круг');
+  assert.equal(r.hp, 40);
+  r.trackIdx = 35; r.x = 20;
+  g.advanceIdx(r);
+  assert.equal(r.lap, 0, 'возврат к финишу без чекпоинтов не засчитывается');
+  for (const i of [10, 20, 30, 35, 2]) {
+    r.x = i * 10;
+    if (i === 2) r.x = 20;
+    g.advanceIdx(r);
+  }
+  assert.equal(r.lap, 1);
+  assert.equal(r._lapCheckpoint, 0);
+  const hp = r.hp;
+  r.x = 380;
+  g.advanceIdx(r);
+  assert.equal(r.lap, 0);
+  r.x = 20;
+  g.advanceIdx(r);
+  assert.equal(r.lap, 1);
+  assert.equal(r.hp, hp, 'повторное пересечение после заднего хода не лечит');
 });

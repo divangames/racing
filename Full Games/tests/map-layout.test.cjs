@@ -16,7 +16,7 @@ const vm = require('node:vm');
 function boot() {
   const g = { Math, console };
   g.window = g;
-  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../../editor/map-layout.js'), 'utf8'), g);
+  vm.runInNewContext(fs.readFileSync(path.resolve(__dirname, '../content/editor/map-layout.js'), 'utf8'), g);
   return g;
 }
 
@@ -43,7 +43,7 @@ test('Сплайн овала даёт нормали, авто ставит т�
 });
 
 test('Холст карты вызывает paintDeck, не старый paintRails(сплайн)', () => {
-  const src = fs.readFileSync(path.resolve(__dirname, '../../editor/map-preview.js'), 'utf8');
+  const src = fs.readFileSync(path.resolve(__dirname, '../content/editor/map-preview.js'), 'utf8');
   assert.match(src, /paintDeck/);
   assert.equal(src.includes('paintRails(q, S,'), false);
 });

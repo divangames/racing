@@ -21,11 +21,11 @@
    */
   function musicCatEngine() {
     if (state === 'intro' || state === 'worldIntro') return 'main';
-    if (state === 'title' || state === 'press') return 'cast';
+    if (state === 'title' || state === 'press' || state === 'settings' || state === 'cameraSetup') return 'cast';
     if (state === 'car') return 'change';
     if (state === 'race' || state === 'results') return 'racing';
     if (state === 'garage' || state === 'autopark' || state === 'detail' || state === 'prerace' || state === 'gym' || state === 'armory' || state === 'career' || state === 'careerTracks' || state === 'junkTune') return 'garage';
-    return 'main';
+    return 'cast';
   }
 
   /**
