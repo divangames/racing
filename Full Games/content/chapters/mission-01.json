@@ -121,7 +121,7 @@
         {"id": "BRIDGE_APPROACH", "speaker": "МЕДВЕДЬ", "text": "Есть! Догнали!", "sub": "Победа в погоне. Первые трещины.", "image": ""},
         {"id": "BRIDGE_COLLAPSE", "speaker": "ЯНОТ", "text": "Мост! Держись!", "sub": "Обрушение, экстренное торможение и занос.", "image": ""},
         {"id": "PLAYER_CLOSEUP", "speaker": "ЯНОТ", "text": "Тихо… Стоим.", "sub": "Крупный план после остановки.", "image": ""},
-        {"id": "TRUCK_ESCAPE", "speaker": "МЕДВЕДЬ", "text": "Он даже не сбросил скорость…", "sub": "PitterMAX уезжает с машиной Ивана.", "image": ""},
+        {"id": "TRUCK_ESCAPE", "speaker": "МЕДВЕДЬ", "text": "Он даже не сбросил скорость…", "sub": "PitterMAX уезжает с машиной Медведя.", "image": ""},
         {"id": "AFTERMATH_RETURN", "speaker": "ЯНОТ", "text": "Живы. Машину вернём.", "sub": "Камера возвращается к Бричке.", "image": ""}
       ]
     },
@@ -131,13 +131,13 @@
       "label": "Вступительный комикс",
       "runtimeKey": "chapterIntroScenes",
       "scenes": [
-        {"id": "chapter-intro-1", "speaker": "ИВАН", "text": "Нам сказали: «Обычная операция, Медведь. Зайди, зачисти и возвращайся».", "sub": "Когда военные говорят «обычная», это обычно значит: горит всё.", "image": "assets/data/players/01/comics/1.png"},
-        {"id": "chapter-intro-2", "speaker": "ИВАН", "text": "Потом приказ изменили. Маршрут — мясорубка. Машина вытащила его сама.", "sub": "Умная железка. Жаль, что рапорт за него написать не могла.", "image": "assets/data/players/01/comics/2.png"},
-        {"id": "chapter-intro-3", "speaker": "ИВАН", "text": "После войны он собрал её заново: броня, пушки, характер похуже его.", "sub": "Чтобы переговоры были короткими.", "image": "assets/data/players/01/comics/3.png"},
-        {"id": "chapter-intro-4", "speaker": "ИВАН", "text": "Фотографии погибших рядом с подписями тех, кто отправил отряд.", "sub": "Медали им. Дырки в броне — нам.", "image": "assets/data/players/01/comics/4.png"},
-        {"id": "chapter-intro-5", "speaker": "ИВАН", "text": "Приглашение без имени: большой приз и доступ к закрытому серверу.", "sub": "Участие добровольное. Как смерть от пули.", "image": "assets/data/players/01/comics/5.png"},
-        {"id": "chapter-intro-6", "speaker": "ИВАН", "text": "У арены тот же знак, что на военных документах.", "sub": "Ведущий обещает честную гонку. Честной здесь только цена патронов.", "image": "assets/data/players/01/comics/6.png"},
-        {"id": "chapter-intro-7", "speaker": "ИВАН", "text": "Нужен сервер: приказы, маршруты, имена.", "sub": "Сначала заезды А. Допуск в Б — пять тысяч.", "image": "assets/data/players/01/comics/7.png"}
+        {"id": "chapter-intro-1", "speaker": "МЕДВЕДЬ", "text": "Нам сказали: «Обычная операция, Медведь. Зайди, зачисти и возвращайся».", "sub": "Когда военные говорят «обычная», это обычно значит: горит всё.", "image": "assets/data/players/01/comics/1.png"},
+        {"id": "chapter-intro-2", "speaker": "МЕДВЕДЬ", "text": "Потом приказ изменили. Маршрут — мясорубка. Машина вытащила его сама.", "sub": "Умная железка. Жаль, что рапорт за него написать не могла.", "image": "assets/data/players/01/comics/2.png"},
+        {"id": "chapter-intro-3", "speaker": "МЕДВЕДЬ", "text": "После войны он собрал её заново: броня, пушки, характер похуже его.", "sub": "Чтобы переговоры были короткими.", "image": "assets/data/players/01/comics/3.png"},
+        {"id": "chapter-intro-4", "speaker": "МЕДВЕДЬ", "text": "Фотографии погибших рядом с подписями тех, кто отправил отряд.", "sub": "Медали им. Дырки в броне — нам.", "image": "assets/data/players/01/comics/4.png"},
+        {"id": "chapter-intro-5", "speaker": "МЕДВЕДЬ", "text": "Приглашение без имени: большой приз и доступ к закрытому серверу.", "sub": "Участие добровольное. Как смерть от пули.", "image": "assets/data/players/01/comics/5.png"},
+        {"id": "chapter-intro-6", "speaker": "МЕДВЕДЬ", "text": "У арены тот же знак, что на военных документах.", "sub": "Ведущий обещает честную гонку. Честной здесь только цена патронов.", "image": "assets/data/players/01/comics/6.png"},
+        {"id": "chapter-intro-7", "speaker": "МЕДВЕДЬ", "text": "Нужен сервер: приказы, маршруты, имена.", "sub": "Сначала заезды А. Допуск в Б — пять тысяч.", "image": "assets/data/players/01/comics/7.png"}
       ]
     },
     {
@@ -146,7 +146,7 @@
       "label": "Погоня — вступление",
       "runtimeKey": "introScenes",
       "scenes": [
-        {"id": "chase-intro-1", "speaker": "ИВАН", "text": "Гараж встретил тишиной. Замок вырван, ворота распахнуты. Вдали PitterMAX увозит машину Ивана.", "sub": "", "image": "assets/data/players/01/comics/1.png"},
+        {"id": "chase-intro-1", "speaker": "МЕДВЕДЬ", "text": "Гараж встретил тишиной. Замок вырван, ворота распахнуты. Вдали PitterMAX увозит машину Медведя.", "sub": "", "image": "assets/data/players/01/comics/1.png"},
         {"id": "chase-intro-2", "speaker": "МЕДВЕДЬ / ЯНОТ", "text": "— ЯНОТ! ЭТО МОЯ МАШИНА!  — Вижу.  — ТАК ДОГОНИ ЕГО!  — Я вообще-то этим и занимаюсь.", "sub": "", "image": "assets/data/players/01/comics/6.png"},
         {"id": "chase-intro-3", "speaker": "ЯНОТ", "text": "Водитель PitterMAX замечает погоню. Задняя платформа открывается, на трассу падает горящая бочка.", "sub": "Ну вот. Началось.", "image": "assets/data/players/06/comics/7.png"}
       ]
