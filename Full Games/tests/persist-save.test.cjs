@@ -24,6 +24,7 @@ function bootSave() {
     CHARS,
     labTest: false,
     SKEY: 'rnr_ru_v1',
+    STORY_SKEY: 'rnr_ru_story_v1',
     SLOTS_KEY: 'rnr_ru_slots',
     slots: new Array(10).fill(null),
     save: null,
@@ -98,4 +99,10 @@ test('Новая карьера, запись и допись ракет из с
   g.persistWrite(g.SKEY, JSON.stringify(g.save));
   g.loadSave();
   assert.equal(g.save.char, 0);
+});
+
+test('Свободный заезд и кампания используют разные активные сохранения', () => {
+  const g=bootSave();
+  g.save={playMode:'free',race:2};assert.equal(g.persistActiveKey(),g.SKEY);
+  g.save={playMode:'campaign',race:2};assert.equal(g.persistActiveKey(),g.STORY_SKEY);
 });

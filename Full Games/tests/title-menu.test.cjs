@@ -33,7 +33,7 @@ function bootMenu() {
     newSave: function () { return { race: 0 }; },
     persist: function () { g.persisted = true; },
     enterCameraSetup: function () { g.camera = true; },
-    loadSave: function () { g.loaded = true; },
+    loadSave: function () { g.loaded = true; if (!g.save) g.save = { race: 1 }; },
     openSettings: function (from) { g.settingsFrom = from; },
     openExitWarn: function () { g.exit = true; },
     enterTrackPick: function (from) { g.trackFrom = from; },
@@ -91,7 +91,8 @@ test('Свободный заезд открывает отдельное мен
   api.applyTitleAction('free-menu',{free:null});
   assert.equal(api.isFreeMenu(),true);assert.equal(api.titleCaption(),'СВОБОДНЫЙ ЗАЕЗД');
   assert.deepEqual(Array.from(api.titleItems(null,false,null),item=>item.label),['НОВЫЙ ЗАЕЗД','ВЫБРАТЬ ЛОКАЦИЮ','ВЫЙТИ В ГЛАВНОЕ МЕНЮ']);
-  assert.deepEqual(Array.from(api.titleItems({race:2},false,null),item=>item.label),['ПРОДОЛЖИТЬ ЗАЕЗД','ВЫБРАТЬ ЛОКАЦИЮ','ВЫЙТИ В ГЛАВНОЕ МЕНЮ']);
+  assert.deepEqual(Array.from(api.titleItems({race:2},false,null),item=>item.label),['НОВЫЙ ЗАЕЗД','ПРОДОЛЖИТЬ ЗАЕЗД','ВЫБРАТЬ ЛОКАЦИЮ','ВЫЙТИ В ГЛАВНОЕ МЕНЮ']);
   api.applyTitleAction('free-location',{free:{race:2}});assert.equal(g.loaded,true);assert.equal(g.trackFrom,'free');
+  assert.equal(g.save.playMode,'free');
   api.applyTitleAction('free-back',{});assert.equal(api.isFreeMenu(),false);
 });

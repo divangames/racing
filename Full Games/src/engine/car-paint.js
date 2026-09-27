@@ -45,6 +45,7 @@
     c.scale(lift, lift);
     const suspVis = r.susp || 0;
     const rockVis = introReduceMotion ? 0 : (r.rockAmp || 0) * Math.sin(r.rockT || 0);
+    const wheelSprite = global.RnRWheelSprites ? global.RnRWheelSprites.image(editorCfg && editorCfg.wheelStyle) : WHEEL_SPRITE;
     const wheel = function (wx, wy, steer, ww, wh, mult) {
       const scw = mult != null && isFinite(+mult) && +mult > 0 ? +mult : 1;
       const poke = wy * (1 + suspVis * 0.05);
@@ -53,7 +54,9 @@
       if (c.imageSmoothingQuality) c.imageSmoothingQuality = 'medium';
       const frame = ((Math.floor(r.wheelRot * .5) % WHEEL_FRAME_COUNT) + WHEEL_FRAME_COUNT) % WHEEL_FRAME_COUNT;
       const dw = Math.max(0.4, (isFinite(+ww) ? +ww : 12) * scw), dh = Math.max(0.4, (isFinite(+wh) ? +wh : 8) * scw);
-      if (WHEEL_SPRITE.complete && WHEEL_SPRITE.naturalWidth > 0) {
+      if (global.RnRWheelSprites && global.RnRWheelSprites.draw(c, wheelSprite, frame, dw, dh, WHEEL_FRAME_COUNT, editorCfg && editorCfg.wheelCenter)) {
+        // Каталог сам адаптирует горизонтальные, вертикальные и повёрнутые кадры.
+      } else if (WHEEL_SPRITE.complete && WHEEL_SPRITE.naturalWidth > 0) {
         const srcW = WHEEL_SPRITE.naturalWidth / WHEEL_FRAME_COUNT;
         const srcH = WHEEL_SPRITE.naturalHeight;
         c.drawImage(WHEEL_SPRITE, frame * srcW, 0, srcW, srcH, -dw / 2, -dh / 2, dw, dh);

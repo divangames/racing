@@ -43,6 +43,9 @@ test('Проверка световых точек до сохранения н�
   }
   assert.equal(validateCar({ body: {}, w: [], lights: { head: maximum } }), null);
   assert.equal(validateCar({ body: {}, w: [] }), null);
+  assert.equal(validateCar({ body: {}, w: [], wheelCenter: {x: 12.5, y: -8}, bodySrc: 'assets/data/cars/23/mods/body-a.webp' }), null);
+  assert.equal(typeof validateCar({ body: {}, w: [], wheelCenter: {x: 101, y: 0} }), 'string');
+  assert.equal(typeof validateCar({ body: {}, w: [], bodySrc: '../outside.png' }), 'string');
 });
 
 test('Повреждённая группа безопасно заменяется авто, корректная и отключённая не теряются', () => {

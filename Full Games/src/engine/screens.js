@@ -289,11 +289,12 @@
     });
     const colX = lay.colX;
     const caption = menu && typeof menu.titleCaption === 'function' ? menu.titleCaption() : '';
-    if (caption) txt(g, caption, colX + 2, lay.titleY0 - 28, 15, '#21ddff', 'left', F_B);
+    const captionGap = caption ? 20 : 0;
+    if (caption) txt(g, caption, colX + 2, lay.titleY0 - 24, 15, '#21ddff', 'left', F_B);
     const labOf = menu && menu.titleItemLabel;
     const hintOf = menu && menu.titleItemHint;
     items.forEach(function (t, i) {
-      const y = lay.titleY0 + i * lay.titleStep, sel = i === selTitle;
+      const y = lay.titleY0 + captionGap + i * lay.titleStep, sel = i === selTitle;
       const label = labOf ? labOf(t) : (t && t.label) || '';
       const hint = hintOf ? hintOf(t) : (t && t.hint) || '';
       const M = global.DiVANEngine.menu;
@@ -312,7 +313,7 @@
       }
       if (hint) txt(g, hint, colX + 10, y + 12, 11, sel ? '#78a5b8' : '#567d8f', 'left', F_B);
     });
-    g._titleY0 = lay.titleY0;
+    g._titleY0 = lay.titleY0 + captionGap;
     g._titleStep = lay.titleStep;
     g._titleHit = lay.panelH / 2 + 4;
     g._titleColX = colX - 8;

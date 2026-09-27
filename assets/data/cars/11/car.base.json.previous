@@ -1,5 +1,5 @@
 {
-  "rev": 1788698097297,
+  "rev": 1788702881544,
   "body": {
     "x": 0,
     "y": 0,
@@ -153,5 +153,18 @@
     "body",
     "armor",
     "guides"
-  ]
+  ],
+  "audio": {
+    "engine": "04 Nissan 180SX",
+    "wep": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  }
 }

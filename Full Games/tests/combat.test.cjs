@@ -142,3 +142,15 @@ test('Щит, лазер, смерть, респаун Дьявола, мина 
   assert.equal(v.air, true);
   assert.equal(v.jumps, 1);
 });
+
+test('Форестер в ульте игнорирует пули и мины, но не таран', () => {
+  const g = bootCombat();
+  const v = g.victim;
+  v.car = { idx: 22 };
+  v.foresterCharge = 2;
+  g.dmgRacer(v, 10, g.killer, 'proj');
+  g.dmgRacer(v, 10, g.killer, 'mine');
+  assert.equal(v.hp, 50);
+  g.dmgRacer(v, 10, g.killer, 'ram');
+  assert.equal(v.hp, 40);
+});

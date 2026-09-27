@@ -7,7 +7,7 @@
   "hosts": {
     "game": {
       "meta": "game",
-      "before": { "tracks.js": "track-tactics.js", "editor/data.js": "car-lights.js" },
+      "before": { "tracks.js": "track-tactics.js", "editor/data.js": ["wheel-sprites.js", "car-lights.js"] },
       "scripts": [
         "runtime.js",
         "lab-session.js",
@@ -161,7 +161,7 @@
         "editor/road-editor.js"
       ],
       "before": {
-        "editor/data.js": "car-lights.js",
+        "editor/data.js": ["wheel-sprites.js", "car-lights.js"],
         "tracks.js": "track-tactics.js",
         "editor/map-app.js": ["editor/history.js", "lab-session.js", "editor/test-session.js"]
       },

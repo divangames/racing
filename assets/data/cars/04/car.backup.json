@@ -1,5 +1,5 @@
 {
-  "rev": 1788703615808,
+  "rev": 1788703643302,
   "body": {
     "x": 0,
     "y": 0,
@@ -96,9 +96,9 @@
   "audio": {
     "engine": "05 Porsche 911 992 GT3RS 2022",
     "wep": {
-      "pack": "",
-      "near": "",
-      "far": ""
+      "pack": "Rocket Launcher",
+      "near": "shoot.wav",
+      "far": "shoot.wav"
     },
     "ult": {
       "pack": "Rocket Launcher",

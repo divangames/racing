@@ -123,6 +123,31 @@ app.whenReady().then(async () => {
   })()`);
   assert.equal(results.initial.slot, 0);
   assert(results.initial.active, 'Кнопка Свет не включила редактирование');
+  await until(editor, "RnRWheelSprites.image('offroad').complete && RnRWheelSprites.image('offroad').naturalWidth > 0");
+  results.offroadAtlas = await evaluate(`(() => {
+    const image=RnRWheelSprites.image('offroad');
+    const regions=RnRWheelSprites.detectRegions(image,8);
+    const centers=[];
+    for(let frame=0;frame<8;frame+=1){
+      const canvas=document.createElement('canvas');canvas.width=canvas.height=256;
+      const context=canvas.getContext('2d');context.save();context.translate(128,128);
+      RnRWheelSprites.draw(context,image,frame,160,80,8);context.restore();
+      const pixels=context.getImageData(0,0,256,256).data;
+      let minX=256,maxX=-1,minY=256,maxY=-1;
+      for(let y=0;y<256;y+=1)for(let x=0;x<256;x+=1){
+        if(pixels[(y*256+x)*4+3]<=16)continue;
+        minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);
+      }
+      centers.push({x:(minX+maxX)/2,y:(minY+maxY)/2,width:maxX-minX+1,height:maxY-minY+1});
+    }
+    return {style:EditorData.fileCar(EditorData.load().cars[22]).wheelStyle,regions,centers};
+  })()`);
+  assert.equal(results.offroadAtlas.style, 'offroad', '23-я машина не использует внедорожные колёса');
+  assert.equal(results.offroadAtlas.regions.length, 8, 'Альфа-анализ не нашёл восемь внедорожных кадров');
+  assert(results.offroadAtlas.regions.every(region => region.height > region.width), 'В ленте есть нераспознанный вертикальный кадр');
+  const centerSpread = axis => Math.max(...results.offroadAtlas.centers.map(center => center[axis])) -
+    Math.min(...results.offroadAtlas.centers.map(center => center[axis]));
+  assert(centerSpread('x') <= 1 && centerSpread('y') <= 1, 'Центр внедорожного колеса дёргается между кадрами');
   const gesture = await evaluate(`(() => {
     CarLightEditor.select('head', 0);
     const point = CarLightEditor.positions().head[0];
@@ -190,6 +215,10 @@ app.whenReady().then(async () => {
 
   // Команда без изменений не должна отменять ожидающую запись предыдущей правки.
   results.noopAutosave = await evaluate(`(() => {
+    // Сценарий не должен зависеть от того, сохранены ли в исходном car.json ручные стопы.
+    const car=EditorApp.car();
+    if(car.lights){delete car.lights.brake;if(!Object.keys(car.lights).length)delete car.lights;}
+    CarLightEditor.sync(true);
     CarLightEditor.select('head',0);
     const field=document.getElementById('lightX');field.value='31.5';
     field.dispatchEvent(new Event('input',{bubbles:true}));field.dispatchEvent(new Event('change',{bubbles:true}));
@@ -241,12 +270,13 @@ app.whenReady().then(async () => {
     const restored=CarLightEditor.positions();
     document.getElementById('lightReset').click();const reset=CarLightEditor.positions();
     document.getElementById('undoBtn').click();
-    return {before,duplicated,removed,restored,reset,undoReset:CarLightEditor.positions()};
+    const automatic=RnRCarLights.resolve({},EditorView.lightBounds(EditorApp.car())).head;
+    return {before,duplicated,removed,restored,reset,automatic,undoReset:CarLightEditor.positions()};
   })()`);
   assert.equal(results.pointTools.duplicated.head.length, results.pointTools.before.head.length + 1, 'Зеркальная копия не добавила точку');
   assert.equal(results.pointTools.removed.head.length, results.pointTools.before.head.length, 'Удаление не убрало точку');
   assert.deepEqual(results.pointTools.restored, results.pointTools.before, 'Отмена операций с точками потеряла данные');
-  assert.deepEqual(results.pointTools.reset.head, results.initial.positions.head, 'Возврат к автоматическим фарам не сработал');
+  assert.deepEqual(results.pointTools.reset.head, results.pointTools.automatic, 'Возврат к автоматическим фарам не сработал');
   assert.deepEqual(results.pointTools.reset.brake, results.pointTools.before.brake, 'Сброс фар затронул стопы');
   assert.deepEqual(results.pointTools.undoReset, results.pointTools.before, 'Отмена сброса потеряла ручные точки');
   results.mapShortcutGuard = await evaluate(`(() => {

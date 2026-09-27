@@ -13,6 +13,15 @@
   const ARENA_CLASS_TRACKS = 10;
   let feeAsk = false;
   let feeAskYes = true;
+  let bestiaGuideRace = null;
+  let bestiaGuideStep = 0;
+  const BESTIA_GUIDE = [
+    { at: .4, cue: 'guide_start', text: 'Не борись с машиной. Почувствуй момент, когда она перестаёт тебе верить, и верни ей дорогу.' },
+    { at: 5, cue: 'guide_weapon', text: 'Ствол нужен не ради попадания. Заставь соперника выбрать плохую траекторию — и нажми огонь.' },
+    { at: 10, cue: 'guide_nitro', text: 'Нитро — не скорость. Это право один раз исправить ошибку, пока трасса ещё не вынесла приговор.' },
+    { at: 15, cue: 'guide_ult', text: 'Ульту держи до момента, когда ситуация перестанет принадлежать тебе. Раньше — это шум, позже — эпитафия.' },
+    { at: 20, cue: 'guide_lords', text: 'Корона Лордов не обещает власть. Она напоминает, за кого ты отвечаешь, когда возвращаются не все.' }
+  ];
 
   /**
    * Каталог заезда: в главе 1 — десять петель арены, иначе сток карьеры.
@@ -70,6 +79,38 @@
    */
   function flags() {
     return save.storyFlags || (save.storyFlags = {});
+  }
+
+  /** Текстовая радиоподсказка Бестии; MP3 подключится поверх того же cue после озвучки. */
+  function bestiaGuideSay(cue, fallback) {
+    let take = null;
+    if (typeof VOICE !== 'undefined' && VOICE.banks) {
+      take = typeof voicePickTake === 'function' ? voicePickTake(VOICE.banks[13], cue) : null;
+    }
+    const line = String((take && take.text) || fallback || '');
+    if (typeof announce === 'function' && line) announce('БЕСТИЯ · ' + line, true);
+    if (take && take.file && typeof voicePlayFile === 'function' && typeof voiceDirOf === 'function') {
+      voicePlayFile(voiceDirOf(13) + take.file);
+    }
+  }
+
+  /** Первый заезд А: Бестия учит механике и одновременно вводит смысл знака Лордов. */
+  function tickBestiaGuide() {
+    if (!active() || save.storyMission !== 'race_a' || flags().bestiaGuideComplete ||
+      typeof R === 'undefined' || !R || R.demo || R.phase !== 'go') return;
+    if (bestiaGuideRace !== R) {
+      bestiaGuideRace = R;
+      bestiaGuideStep = 0;
+      if (typeof voicePreload === 'function') voicePreload();
+    }
+    while (bestiaGuideStep < BESTIA_GUIDE.length && R.time >= BESTIA_GUIDE[bestiaGuideStep].at) {
+      const beat = BESTIA_GUIDE[bestiaGuideStep++];
+      bestiaGuideSay(beat.cue, beat.text);
+    }
+    if (bestiaGuideStep >= BESTIA_GUIDE.length) {
+      flags().bestiaGuideComplete = true;
+      if (typeof persist === 'function') persist();
+    }
   }
 
   /**
@@ -194,13 +235,13 @@
     if (pack && pack.imgs && pack.imgs.length) WORLD_INTRO.imgs = pack.imgs;
     else if (typeof worldIntroEnqueueImgs === 'function') worldIntroEnqueueImgs();
     const fallback = robbery ? [
-        { img: 0, text: 'Гараж встретил тишиной. Замок вырван, ворота распахнуты. Вдали огромный боевой грузовик увозит машину Ивана.' },
-        { img: 5, text: 'МЕДВЕДЬ: «ЯНОТ! ЭТО МОЯ МАШИНА!»  ЯНОТ: «Вижу».  МЕДВЕДЬ: «Так догони его!»  ЯНОТ: «Я вообще-то этим и занимаюсь».' },
-        { img: 6, text: 'Водитель PitterMAX замечает погоню. Задняя платформа открывается, на трассу падает горящая бочка. ЯНОТ: «Ну вот. Началось».' }
+        { img: 0, text: 'Крепления были срезаны изнутри. Тот, кто забрал Camaro, знал гараж лучше, чем должен. PitterMAX уже выходил на мост.' },
+        { img: 5, text: 'МЕДВЕДЬ: «Если они вскроют память машины, исчезнет оригинал приказа». ЯНОТ: «Тогда не кричи на меня. Смотри, как они будут нас убивать».' },
+        { img: 6, text: 'ЯНОТ: «Он не уходит. Он ведёт нас». МЕДВЕДЬ: «Знаю». Платформа открывается, и первая бочка падает на трассу.' }
       ] : (pack && pack.scenes ? pack.scenes.slice() : (
         typeof campaignIntroFallbackScenes === 'function' ? campaignIntroFallbackScenes() : []
       )).concat([
-        { img: 6, text: 'Сначала заезды А. Гараж открыт: ремонтируй, тюнингуй, зарабатывай. Допуск в Б — пять тысяч. Сначала прокатись, потом внеси.' }
+        { img: 6, text: 'БЕСТИЯ: «Пять тысяч покупают допуск. Доверие придётся оплачивать иначе». МЕДВЕДЬ: «Чьё?» БЕСТИЯ: «Сначала своё. Остальные посмотрят, доедешь ли ты».' }
       ]);
     const runtimeKey = robbery ? 'introScenes' : 'chapterIntroScenes';
     const editable = global.RnRChapterContent && RnRChapterContent.scenes(runtimeKey, []);
@@ -501,6 +542,11 @@
     const r = prev.apply(this, arguments);
     syncCatalog();
     return r;
+  });
+  wrap('updRace', prev => function (dt) {
+    const out = prev(dt);
+    tickBestiaGuide();
+    return out;
   });
   wrap('careerOpenFromResults', prev => function () {
     if (pending()) { openComic(true); return; }

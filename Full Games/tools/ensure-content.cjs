@@ -77,7 +77,11 @@ const CORE_SOUND_FILES = [
   'assets/sounds/cars/hit/A_Car_HitBody_02.WAV',
   'assets/sounds/cars/hit/A_Car_HitBody_03.WAV',
   'assets/sounds/cars/hit/A_Car_Land_01.WAV',
-  'assets/sounds/cars/hit/A_Car_Land_02.WAV'
+  'assets/sounds/cars/hit/A_Car_Land_02.WAV',
+  'assets/sounds/cars/GearSwitch/GearSwitch_1.WAV',
+  'assets/sounds/cars/GearSwitch/GearSwitch_2.WAV',
+  'assets/sounds/cars/GearSwitch/GearSwitch_3.WAV',
+  'assets/sounds/cars/GearSwitch/GearSwitch_4.WAV'
 ];
 
 /** Дисклеймер 21+ на заставке — без файла чёрный экран вместо арта. */
@@ -86,11 +90,13 @@ const CORE_UI_FILES = [
   'assets/video/divan_intro.mp4'
 ];
 
-/** Фон титула: манифест и оба кадра Медведя. */
+/** Фоны титула: главное меню и меню свободного заезда. */
 const CORE_TITLE_FILES = [
   'assets/data/cats/Titles/titles.json',
   'assets/data/cats/Titles/title-medved_1920x1080.webp',
-  'assets/data/cats/Titles/title-medved_3440x1440.webp'
+  'assets/data/cats/Titles/title-medved_3440x1440.webp',
+  'assets/data/cats/Titles/title-bestya_1920x1080.png',
+  'assets/data/cats/Titles/title-bestya_3440x1440.png'
 ];
 
 /**

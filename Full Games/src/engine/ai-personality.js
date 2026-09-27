@@ -19,11 +19,21 @@
   }
   function validTarget(r, o) {
     return !!o && o !== r && !o.dead && !o.finished && !(o.cloak > 0) && sameDeck(r, o) &&
+      !(!r.isP && (o.aggroIgnored || 0) > 0) &&
       !(typeof storyAllyHoldsFire === 'function' && storyAllyHoldsFire(r, o));
   }
   /** Неподходящий сосед не заслоняет подходящую цель; сюжетные запреты сохраняются. */
   function chooseTarget(r, race, weaponOnly) {
     let target = null, distance = Infinity;
+    if (!r.isP) {
+      const forced = (race.racers || []).filter(o => (o.aggroMark || 0) > 0 && validTarget(r, o))
+        .sort((a, b) => Math.hypot(a.x - r.x, a.y - r.y) - Math.hypot(b.x - r.x, b.y - r.y))[0];
+      if (forced) {
+        const d = Math.hypot(forced.x - r.x, forced.y - r.y);
+        if (!weaponOnly || kitAiWantsFire(r, forced, d)) return { target: forced, distance: d };
+        return { target: null, distance: d };
+      }
+    }
     for (const o of race.racers || []) {
       if (!validTarget(r, o)) continue;
       const d = Math.hypot(o.x - r.x, o.y - r.y);
@@ -52,6 +62,7 @@
     let lane = style.id === 'technical' ? Math.sign(bend) * Math.min(28, curvature * 1400) :
       style.id === 'aggressive' ? (((r.slot | 0) % 3) - 1) * 15 : 0;
     const p = S[index], fx = Math.cos(r.ang), fy = Math.sin(r.ang);
+    const aggro = !r.isP && (race.racers || []).find(o => (o.aggroMark || 0) > 0 && validTarget(r, o));
     let front = null, frontDistance = Infinity;
     for (const o of race.racers || []) {
       if (o === r || o.dead || o.finished || o.air || !sameDeck(r, o)) continue;
@@ -72,6 +83,11 @@
       }));
       if (free != null) lane = free;
       else blocked = true;
+    }
+    if (aggro) {
+      const aggroLane = (aggro.x - p.x) * p.nx + (aggro.y - p.y) * p.ny;
+      lane = limit(aggroLane, -edge, edge);
+      blocked = false;
     }
     const skill = limit(Number(r.skill) || .75, .5, 1.2);
     const top = r.st && r.st.top || 360, grip = r.st && r.st.grip || .7;

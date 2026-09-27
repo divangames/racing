@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////
 //
-// Подписанные клипы контакта, урона и приземления.
+// Подписанные клипы контакта, урона, приземления и коробки.
 //
 ////////////////////////////////////////////////////////
 
@@ -33,8 +33,11 @@ test('Автомобильные события выбирают свои гру
   assert.deepEqual(Array.from(g.CAR_IMPACT_TRACKS.collision), ['carHit1', 'carHit2', 'carHit3']);
   assert.deepEqual(Array.from(g.CAR_IMPACT_TRACKS.damage), ['carBody1', 'carBody2', 'carBody3']);
   assert.deepEqual(Array.from(g.CAR_IMPACT_TRACKS.land), ['carLand1', 'carLand2']);
+  assert.deepEqual(Array.from(g.CAR_GEAR_TRACKS), ['carGear1', 'carGear2', 'carGear3', 'carGear4']);
 
   assert.equal(g.carImpactPlay('collision', { isP: true }, 1, { local: true }), true);
   assert.match(played[0], /assets\/sounds\/cars\/hit\/A_CarHit_03\.WAV$/);
+  assert.equal(g.carGearPlay({ isP: true }, .7, 0), true);
+  assert.match(played[1], /assets\/sounds\/cars\/GearSwitch\/GearSwitch_[1-4]\.WAV$/);
+  assert.equal(g.carGearPlay({ isP: true }, .7, 0), false, 'дребезг ввода не дублирует щелчок');
 });
-

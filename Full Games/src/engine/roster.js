@@ -8,34 +8,72 @@
   'use strict';
 
   /**
-   * Ширина и старт ряда карточек играбельных пилотов.
+   * Геометрия кольцевой ленты: в окне помещается ровно 4,5 карточки.
+   * Две крайние карточки симметрично обрезаются границами сцены.
    * @param {number} width
    * @param {number} n
    * @param {number} [gap]
-   * @returns {{cw:number,x0:number}}
+   * @returns {{cw:number,x0:number,pitch:number,clipX:number,clipW:number,cardsInView:number}}
    */
   function charCardLayout(width, n, gap) {
-    const g = gap == null ? 12 : gap;
-    const count = Math.max(n, 1);
-    const cw = Math.min(248, (width - 72 - (count - 1) * g) / count);
-    return { cw, x0: (width - count * cw - (count - 1) * g) / 2 };
+    const g = gap == null ? 18 : gap;
+    const cardsInView = 4.5;
+    const clipX = Math.max(24, Math.min(42, width * .025));
+    const clipW = Math.max(320, width - clipX * 2);
+    const cw = Math.max(150, (clipW - g * 4) / cardsInView);
+    return { cw, x0: (width - cw) / 2, pitch: cw + g, clipX, clipW, cardsInView };
   }
+
+  /** Кратчайшее расстояние между двумя позициями на кольце. */
+  function charWrapDelta(from, to, n) {
+    if (!n) return 0;
+    let d = to - from;
+    d = ((d % n) + n) % n;
+    if (d > n / 2) d -= n;
+    return d;
+  }
+
+  let charScroll = null;
 
   /**
    * Карточки PLAYABLE_IDS, кнопка «назад», пепел.
    */
   function drawCharSelEngine() {
     drawHubBackdrop();
+    drawCharSelAsh(g);
     txt(g, 'ВЫБЕРИ ГОНЩИКА', W / 2, 64, 40, '#ffd23f', 'center');
     g._charCards = [];
     g._bioBtns = [];
-    const n = PLAYABLE_N, gap = 12;
-    const lay = charCardLayout(W, n, gap);
-    const cw = lay.cw, x0 = lay.x0;
-    PLAYABLE_IDS.forEach(function (idx, slot) {
-      const ch = CHARS[idx], x = x0 + slot * (cw + gap), sel = idx === selChar, y = 104, h = 508;
+    g._charNav = [];
+    g._charDots = [];
+    const ids = PLAYABLE_IDS, n = PLAYABLE_N, gap = 18;
+    const vx = typeof stageX0 === 'function' ? stageX0() : 0;
+    const vw = typeof viewW === 'number' && viewW > 0 ? viewW : W;
+    const lay = charCardLayout(vw, n, gap);
+    const cw = lay.cw, pitch = lay.pitch;
+    const clipX = vx + lay.clipX, clipRight = clipX + lay.clipW;
+    const centerX = vx + vw / 2;
+    let selPos = ids.indexOf(selChar);
+    if (selPos < 0) selPos = 0;
+    if (charScroll == null || !Number.isFinite(charScroll)) charScroll = selPos;
+    const scrollDelta = charWrapDelta(charScroll, selPos, n);
+    charScroll += Math.abs(scrollDelta) < .002 ? scrollDelta : scrollDelta * .2;
+    charScroll = ((charScroll % n) + n) % n;
+    const cards = ids.map(function (idx, slot) {
+      const d = charWrapDelta(charScroll, slot, n);
+      return { idx: idx, slot: slot, d: d, x: centerX + d * pitch - cw / 2 };
+    }).filter(function (item) {
+      return item.x < clipRight && item.x + cw > clipX;
+    }).sort(function (a, b) {
+      return Math.abs(b.d) - Math.abs(a.d);
+    });
+    g._charCarousel = { cardWidth: cw, pitch: pitch, clipX: clipX, clipW: lay.clipW, cardsInView: lay.cardsInView, visible: cards.length };
+    g.save();
+    g.beginPath(); g.rect(clipX, 96, lay.clipW, 524); g.clip();
+    cards.forEach(function (item) {
+      const idx = item.idx, ch = CHARS[idx], x = item.x, sel = idx === selChar, y = 104, h = 500;
       panel(g, x, y, cw, h, sel ? 'rgba(255,157,46,.12)' : 'rgba(20,17,28,.9)', sel ? '#ffd23f' : '#3a3548');
-      drawPortrait(g, ch, x + cw / 2, y + 118, cw > 220 ? 1.05 : 0.88);
+      drawPortrait(g, ch, x + cw / 2, y + 118, cw > 280 ? 1.14 : (cw > 220 ? 1.05 : .88));
       const nick = ch.name !== ch.short ? ch.short : '';
       txt(g, ch.name, x + cw / 2, y + (nick ? 232 : 242), cw > 220 ? 20 : 16, ch.col, 'center');
       if (nick) txt(g, nick, x + cw / 2, y + 256, 16, '#fff', 'center');
@@ -54,16 +92,44 @@
       const hot = mx > bbx && mx < bbx + bbw && my > bby && my < bby + bbh;
       panel(g, bbx, bby, bbw, bbh, (sel || hot) ? 'rgba(53,224,255,.15)' : 'rgba(20,17,28,.9)', (sel || hot) ? '#35e0ff' : '#3a3548', 8);
       txt(g, 'ВЫБРАТЬ', x + cw / 2, bby + bbh / 2, 12, (sel || hot) ? '#35e0ff' : '#c8c2d4', 'center', F_B);
-      g._bioBtns.push({ x: bbx, y: bby, w: bbw, h: bbh, idx: idx });
-      g._charCards.push({ x: x, y: y, w: cw, h: h, idx: idx });
+      const hitX = Math.max(x, clipX), hitR = Math.min(x + cw, clipRight);
+      const btnX = Math.max(bbx, clipX), btnR = Math.min(bbx + bbw, clipRight);
+      if (btnR > btnX) g._bioBtns.push({ x: btnX, y: bby, w: btnR - btnX, h: bbh, idx: idx });
+      if (hitR > hitX) g._charCards.push({ x: hitX, y: y, w: hitR - hitX, h: h, idx: idx });
     });
-    const backW = 220, backH = 36, backX = W / 2 - backW / 2, backY = H - 58;
+    g.restore();
+    if (n > 1) {
+      const ay = 358, aw = 46, ah = 86;
+      const leftX = clipX + 4, rightX = clipRight - aw - 4;
+      const pulse = .72 + Math.sin(gt * 3.2) * .18;
+      g.save(); g.globalAlpha = pulse; g.fillStyle = '#35e0ff';
+      g.beginPath(); g.moveTo(leftX + 28, ay + 22); g.lineTo(leftX + 12, ay + ah / 2); g.lineTo(leftX + 28, ay + ah - 22); g.closePath(); g.fill();
+      g.beginPath(); g.moveTo(rightX + aw - 28, ay + 22); g.lineTo(rightX + aw - 12, ay + ah / 2); g.lineTo(rightX + aw - 28, ay + ah - 22); g.closePath(); g.fill();
+      g.restore();
+      g._charNav.push({ x: leftX, y: ay, w: aw, h: ah, dir: -1 });
+      g._charNav.push({ x: rightX, y: ay, w: aw, h: ah, dir: 1 });
+    }
+    const dotsGap = 20, dotsW = n * dotsGap, dotsY = H - 96;
+    const railW = dotsW + 18, railH = 20, railX = centerX - railW / 2, railY = dotsY - railH / 2;
+    rr(g, railX, railY, railW, railH, 10); g.fillStyle = 'rgba(11,16,21,.88)'; g.fill();
+    g.strokeStyle = 'rgba(147,186,199,.32)'; g.lineWidth = 1; g.stroke();
+    const dotsX = centerX - dotsW / 2;
+    for (let p = 0; p < n; p++) {
+      const on = p === selPos;
+      g.fillStyle = on ? '#35e0ff' : '#3a3548';
+      const dotX = dotsX + p * dotsGap + dotsGap / 2;
+      if (on) { rr(g, dotX - 7, dotsY - 3, 14, 6, 3); g.fill(); }
+      else { g.beginPath(); g.arc(dotX, dotsY, 2.8, 0, TAU); g.fill(); }
+      g._charDots.push({ x: dotX - dotsGap / 2, y: railY, w: dotsGap, h: railH, idx: ids[p] });
+    }
+    const backW = 220, backH = 32, backX = W / 2 - backW / 2, backY = H - 80;
     const backHot = mx > backX && mx < backX + backW && my > backY && my < backY + backH;
     panel(g, backX, backY, backW, backH, backHot ? 'rgba(255,157,46,.15)' : 'rgba(20,17,28,.9)', backHot ? '#ff9d2e' : '#3a3548', 8);
     txt(g, 'НАЗАД В МЕНЮ [ESC]', W / 2, backY + backH / 2, 13, backHot ? '#ff9d2e' : '#9a93a8', 'center', F_B);
     g._charBack = { x: backX, y: backY, w: backW, h: backH };
-    txt(g, '← → — выбор • ENTER / «ВЫБРАТЬ» — досье • ESC — главное меню', W / 2, H - 14, 13, '#6f6880', 'center', F_B);
-    drawCharSelAsh(g);
+    const hintY = H - 32;
+    txt(g, '← → — выбор • ENTER / «ВЫБРАТЬ» — досье • ESC — главное меню', W / 2, hintY, 13, '#6f6880', 'center', F_B);
+    g._charFooter = { dotsY: dotsY, railY: railY, railH: railH, backY: backY, backH: backH, hintY: hintY, bottomLineY: H - 18 };
     if (typeof drawCharNameBark === 'function' && g._charCards) {
       const card = g._charCards.find(function (b) { return b.idx === selChar; });
       if (card) drawCharNameBark(g, card);
@@ -147,7 +213,22 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.roster = { charCardLayout };
+  engine.roster = { charCardLayout, charWrapDelta };
   engine.replace('drawCharSel', drawCharSelEngine);
   engine.replace('drawBio', drawBioEngine);
+  let charWheelAt = -Infinity;
+  if (typeof cv !== 'undefined' && cv && cv.addEventListener) {
+    cv.addEventListener('wheel', function (event) {
+      if (typeof state === 'undefined' || state !== 'char' || bioOpen >= 0) return;
+      const axis = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      const dir = axis > 6 ? 1 : (axis < -6 ? -1 : 0);
+      if (!dir) return;
+      event.preventDefault();
+      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+      if (now - charWheelAt < 140) return;
+      charWheelAt = now;
+      wrapPlayable(dir);
+      sClick();
+    }, { passive: false });
+  }
 })(typeof window !== 'undefined' ? window : globalThis);

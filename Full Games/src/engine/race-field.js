@@ -85,8 +85,23 @@
     return shuffleCopy(out);
   }
 
+  /** Личный кузов пилота; при его отсутствии — кузов из обычного пула. */
+  function fieldCarForCharEngine(chIdx, fallbackIdx) {
+    for (let i = 0; i < CARS.length; i++) {
+      if (CARS[i] && CARS[i].owner === chIdx) return CARS[i];
+    }
+    return CARS[fallbackIdx] || CARS[save.car];
+  }
+
+  /** Именные играбельные соперники свободного заезда. */
+  function freeRideRivalsEngine() {
+    return CHARS.map(function (ch, i) { return { ch: ch, idx: i }; }).filter(function (item) {
+      return item.idx !== save.char && item.idx !== BULL_IDX && !item.ch.npc && !item.ch.filler;
+    });
+  }
+
   /**
-   * Сетка: игрок, Бык-босс, три случайных ИИ. Сюжетных пилотов в заезде нет.
+   * Сетка: игрок, Бык-босс и пелотон. В свободном заезде все именные пилоты едут вместе.
    * @param {number} div
    * @returns {object[]}
    */
@@ -98,10 +113,14 @@
     const bci = cars[0] | 0;
     specs.push({ id: 1, isP: false, ch: bull, car: CARS[bci], lvl: aiBossTune(div), slot: 0, skill: aiDriveSkill(div, true), isBoss: true });
     const rest = cars.filter(function (i) { return i !== bci; });
-    const aiPool = shuffleCopy(AIDRV);
+    const isFreeRide = !(save && save.storyCampaign) && !(typeof labTest !== 'undefined' && labTest);
+    const named = isFreeRide ? shuffleCopy(freeRideRivalsEngine()) : [];
+    const aiPool = named.length ? named : shuffleCopy(AIDRV).map(function (ch) { return { ch: ch, idx: CHARS.indexOf(ch) }; });
+    const gridSlots = [1, 2, 3, 5, 6, 7];
     for (let i = 0; i < FIELD_AI && i < aiPool.length; i++) {
       const ci = rest.length ? rest[i % rest.length] : bci;
-      specs.push({ id: specs.length, isP: false, ch: aiPool[i], car: CARS[ci], lvl: aiFillerTune(div), slot: 1 + i, skill: aiDriveSkill(div, false), isBoss: false });
+      const ai = aiPool[i];
+      specs.push({ id: specs.length, isP: false, ch: ai.ch, chIdx: ai.idx, car: named.length ? fieldCarForCharEngine(ai.idx, ci) : CARS[ci], lvl: aiFillerTune(div), slot: gridSlots[i] == null ? 5 + i : gridSlots[i], skill: aiDriveSkill(div, false), isBoss: false });
     }
     return specs;
   }
@@ -167,7 +186,7 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.raceField = { shuffleCopy: shuffleCopyEngine, specPower: specPowerEngine, betPayoutFor: betPayoutForEngine };
+  engine.raceField = { shuffleCopy: shuffleCopyEngine, specPower: specPowerEngine, betPayoutFor: betPayoutForEngine, freeRideRivals: freeRideRivalsEngine };
   engine.replace('shuffleCopy', shuffleCopyEngine);
   engine.replace('specPower', specPowerEngine);
   engine.replace('computeFieldOdds', computeFieldOddsEngine);

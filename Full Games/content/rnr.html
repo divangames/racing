@@ -900,7 +900,7 @@ function fmtOdds(k){return '×'+Number(k).toFixed(2);}
 const PLAYABLE_IDS=CHARS.map((c,i)=>c.npc?null:i).filter(i=>i!=null);
 const PLAYABLE_N=PLAYABLE_IDS.length;
 const BULL_IDX=4;
-const FIELD_AI=3;
+const FIELD_AI=6;
 ////////////////////////////////////////////////////////
 //
 // Личные скилы гонщиков: ур.1…6
@@ -916,6 +916,8 @@ const SKILL_META=[
  {n:'—',d:''},
  {n:'НАВИГАТОР',d:'стрелки линии'},
 ];
+SKILL_META[12]={n:'ПРОТОКОЛ',d:'снижение урона'};
+SKILL_META[13]={n:'ДИВЕРСИЯ',d:'боевой урон'};
 /** Норма уровня скила. DiVANEngine подменяет skillT. */
 function skillT(lvl){return clamp((lvl-1)/(SKILL_MAX-1),0,1);}
 /** Число скила. DiVANEngine подменяет skillVal. */
@@ -928,6 +930,8 @@ function skillVal(chIdx,lvl){
   case 3:return lerp(0.10,1.0,t);
   case 4:return 0;
   case 5:return lerp(5,12,t);
+  case 12:return lerp(0.05,0.15,t);
+  case 13:return lerp(0.03,0.12,t);
   default:return 0;
  }
 }
@@ -941,6 +945,8 @@ function SKILL_DESC(chIdx,lvl){
   case 3:return 'пропуск мин '+Math.round(v*100)+'%';
   case 4:return '';
   case 5:return 'стрелки линии, '+Math.round(v)+' впереди';
+  case 12:return 'входящий урон −'+Math.round(v*100)+'%';
+  case 13:return 'урон +'+Math.round(v*100)+'%';
   default:return '';
  }
 }
@@ -1075,13 +1081,13 @@ const CHAR_INTROS=[
   name:'МЕДВЕДЬ',col:'#ffd23f',
   imgs:loadIntroImgs(0,7),
   scenes:[
-   {img:0,text:'Нам сказали: «Обычная операция, Медведь. Зайди, зачисти и возвращайся». Когда военные говорят «обычная», это обычно значит: горит всё, кроме твоей задницы.'},
-   {img:1,text:'Потом приказ изменили. Наш маршрут заменили на координаты настоящей мясорубки. Но моя машина решила, что командование — идиоты, и вытащила меня оттуда. Умная железка. Жаль, что не могла ещё и рапорт за меня написать.'},
-   {img:2,text:'После войны я собрал её заново. Снял с неё всё лишнее, поставил броню, пушки и характер похуже моего. Механики спрашивали, зачем машине столько оружия. Я отвечал: «Чтобы переговоры были короткими».'},
-   {img:3,text:'Я нашёл фотографии всех, кто погиб в той операции. И рядом — подписи тех, кто нас туда отправил. Они получили медали, повышение и чистые кабинеты. Мы получили дырки в броне и место на стене. Очень честная система, мать её.'},
-   {img:4,text:'Потом пришло приглашение. Без имени, без адреса, зато с обещанием большого приза и доступа к закрытому серверу. Вежливые люди даже написали: «Участие добровольное». Конечно добровольное. Как смерть от пули — тоже, если очень быстро бежать.'},
-   {img:5,text:'Я приехал к арене и увидел тот же знак, что был на наших военных документах. Ворота открылись, вокруг ревели боевые машины, а ведущий обещал зрителям «честную гонку». Я чуть не рассмеялся. Честной здесь была только цена патронов.'},
-   {img:6,text:'Мне не нужен их приз. Я заберу его, если понадобится, но это будет приятным бонусом. Мне нужен доступ к серверу — к приказам, маршрутам и именам тех ублюдков, которые подписали наш приговор. А потом мы с моей машиной заедем к ним в гости. Без тормозов и предварительной записи.'}
+   {img:0,text:'Нам приказали войти в сектор и вывести тех, кого ещё можно было вывести. Позже слово «обычная» исчезло из всех рапортов. Приказ уцелел лучше людей.'},
+   {img:1,text:'Маршрут изменили, когда отступать было уже некуда. Это была не ошибка навигации — нас вели туда, где свидетели не возвращаются. Camaro вывез меня без приказа. Остальные машины — нет.'},
+   {img:2,text:'После войны я собрал Camaro заново. Не из любви к железу — машина осталась единственным свидетелем, которому не приказали забыть. Каждая новая бронеплита закрывала старое имя.'},
+   {img:3,text:'Фотографии погибших я положил рядом с подписями тех, кто утвердил маршрут. Одни стали строками потерь. Другие — владельцами чистой версии событий.'},
+   {img:4,text:'Приглашение обещало деньги и доступ к закрытому серверу. Отправитель знал, что мне нужен не приз, а оригинал приказа. Ловушка становится дверью, если за ней осталось единственное доказательство.'},
+   {img:5,text:'Корона принадлежала нашему отряду ещё до арены. После «Ночи зубов» я сохранил её не как знак власти, а как список тех, кого не сумел вернуть. Так появилось имя «Лорды»: не титул, а долг перед мёртвыми.'},
+   {img:6,text:'БЕСТИЯ: «Пять тысяч покупают допуск. Доверие придётся оплачивать иначе». МЕДВЕДЬ: «Чьё?» БЕСТИЯ: «Сначала своё. Остальные посмотрят, доедешь ли ты». Бестия опирается на чёрный «Мьёльнир» и смотрит не на ворота, а на Медведя.'}
   ]
  },
  {
@@ -1266,6 +1272,10 @@ const CARS=[
   traits:['ДВЕРЬ: удар с борта','ШТОРКА: дым сбивает прицел','БУФЕР: первый удар круга −35%']},
  {name:'«СКОРАЯ»',owner:null,price:3000,top:0.96,acc:0.97,crn:1.0,hp:108,col:'#f0e8e0',col2:'#c42838',hov:false,
   traits:['ШПРИЦ: дротик и яд хода','СИРЕНА: замедляет и слепит рядом','АПТЕЧКА: ключ даёт +14 корпуса']},
+ {name:'«МЬЁЛЬНИР»',owner:13,price:0,top:1.12,acc:1.15,crn:1.20,hp:96,col:'#121318',col2:'#d6a91f',hov:false,
+  traits:['ПУЛЕМЁТ: непрерывный огонь с перегревом','АГР: автоприцел метит ближайшую машину на 10 секунд','ЧУТЬЁ: автоуклон от угроз и отскок таранящих']},
+ {name:'«ФОРЕСТЕР»',owner:12,price:0,top:0.95,acc:0.94,crn:0.96,hp:150,col:'#8b765e',col2:'#342f29',hov:false,
+  traits:['ПУЛЕМЁТ: непрерывный огонь с перегревом','НАПРОЛОМ: +15% скорости по прямой, иммунитет к пулям и минам','ОТБОЙ: таранящие машины отскакивают']},
 ];
 CARS.forEach((c,i)=>c.idx=i);
 ////////////////////////////////////////////////////////
@@ -1274,7 +1284,7 @@ CARS.forEach((c,i)=>c.idx=i);
 // Медведь → Дьявол, Ерш → V8, Бегемотик → Шредер, Башкир → Молот
 //
 ////////////////////////////////////////////////////////
-const CHARS_CARS={0:0,1:1,2:2,3:4,5:10};
+const CHARS_CARS={0:0,1:1,2:2,3:4,5:10,12:22,13:21};
 // Настройки из визуального редактора. Они общие для Editor.html и игры.
 const EDITOR_STORAGE_KEY='rnr.carEditor.v1';
 let EDITOR_CARS={};
@@ -1359,7 +1369,7 @@ function applyEditorCars(){
  applySignatureOwners();
 }
 /** Личные кузова канона: лаборатория не должна сбрасывать их в магазин. */
-const SIGNATURE_OWNERS={0:0,6:3,7:1,8:2,10:5};
+const SIGNATURE_OWNERS={0:0,6:3,7:1,8:2,10:5,21:13,22:12};
 function applySignatureOwners(){
  Object.keys(SIGNATURE_OWNERS).forEach((k)=>{
   const i=+k,o=SIGNATURE_OWNERS[k];
@@ -1434,7 +1444,7 @@ function carBarPips(val,lo,hi){
 // Чужие личные в магазине только смотреть
 //
 ////////////////////////////////////////////////////////
-const CHAR_DATIVE=['Медведю','Ершу','Бегемотику','Башкиру','Борису Быку','Янот'];
+const CHAR_DATIVE=['Медведю','Ершу','Бегемотику','Башкиру','Борису Быку','Янот',,,,,,,,'Утюгу','Бестии'];
 /** Имя в дательном падеже. DiVANEngine подменяет charDative. */
 function charDative(i){return CHAR_DATIVE[i]||((CHARS[i]&&CHARS[i].name)||'гонщику');}
 /** Индекс личной машины гонщика. DiVANEngine подменяет charCarIdx. */
@@ -1661,10 +1671,12 @@ const CAR_SPECULAR=CARS.map((_,i)=>{
 });
 /** Загружает пользовательский корпус из настроек редактора. */
 function editorBodySprite(idx){
- const data=editorCarConfig(idx)&&editorCarConfig(idx).bodyData;
+ const cfg=editorCarConfig(idx);
+ const data=cfg&&(cfg.bodySrc||cfg.bodyData);
  if(!data)return null;
- if(!EDITOR_BODY_IMAGES.has(idx)){const im=new Image();im.src=data;EDITOR_BODY_IMAGES.set(idx,im);}
- return EDITOR_BODY_IMAGES.get(idx);
+ const cached=EDITOR_BODY_IMAGES.get(idx);
+ if(!cached||cached._rnrSource!==data){const im=new Image();im._rnrSource=data;im.src=data;EDITOR_BODY_IMAGES.set(idx,im);return im;}
+ return cached;
 }
 /** Спрайт кузова: слой брони armLvl (1–6) или базовая машина. */
 function carSprite(idx,armLvl){
@@ -3163,7 +3175,7 @@ function makeRacer(ch,car,isP,lvl,slot,opts){
  const st=stats(ch,car,lvl,isP?undefined:{spd:0,crn:0,grt:0},damp);
  const chIdx=CHARS.indexOf(ch);
  const skillLvl=isP?((save.skills&&save.skills[chIdx])||1):aiSkillLvl(raceDiv);
- const dmgMul=1+(chIdx===2?skillVal(2,skillLvl):0);
+ const dmgMul=1+(chIdx===2||chIdx===13?skillVal(chIdx,skillLvl):0);
  const racer={ch,car,isP,st,chIdx,skillLvl,dmgMul,x:0,y:0,ang:0,spd:0,hp:st.maxhp,maxhp:st.maxhp,shield:0,wheelAngle:0,wheelRot:0,
   bolt:0,nitro:0,invuln:0,bubble:0,cloak:0,cdN:0,cdW:0,cdU:0,buffDmg:1,buffArmor:1,buffDmgT:0,berserk:0,slow:0,drone:0,dead:false,respawnT:0,
   dash:0,ghost:0,paper:0,haze:0,blind:0,wepHeat:0,
@@ -3319,7 +3331,16 @@ function fieldFreeCars(){
  if(!out.length)out=collect(true);
  return shuffleCopy(out);
 }
-/** Сетка: игрок, Бык-босс, три случайных ИИ. Сюжетных пилотов в заезде нет. */
+/** Личный кузов пилота; при его отсутствии — кузов из обычного пула. */
+function fieldCarForChar(chIdx,fallbackIdx){
+ for(let i=0;i<CARS.length;i++)if(CARS[i]&&CARS[i].owner===chIdx)return CARS[i];
+ return CARS[fallbackIdx]||CARS[save.car];
+}
+/** Именные играбельные соперники свободного заезда. */
+function freeRideRivals(){
+ return CHARS.map((ch,idx)=>({ch,idx})).filter(x=>x.idx!==save.char&&x.idx!==BULL_IDX&&!x.ch.npc&&!x.ch.filler);
+}
+/** В свободном заезде все именные пилоты едут вместе. */
 /** Сетка заезда. DiVANEngine подменяет planRaceField. */
 function planRaceField(div){
  const tun=save.tuning[save.car]||blankTune();
@@ -3329,10 +3350,14 @@ function planRaceField(div){
  const bci=cars[0]|0;
  specs.push({id:1,isP:false,ch:bull,car:CARS[bci],lvl:aiBossTune(div),slot:0,skill:aiDriveSkill(div,true),isBoss:true});
  const rest=cars.filter(i=>i!==bci);
- const aiPool=shuffleCopy(AIDRV);
+ const isFreeRide=!(save&&save.storyCampaign)&&!(typeof labTest!=='undefined'&&labTest);
+ const named=isFreeRide?shuffleCopy(freeRideRivals()):[];
+ const aiPool=named.length?named:shuffleCopy(AIDRV).map(ch=>({ch,idx:CHARS.indexOf(ch)}));
+ const gridSlots=[1,2,3,5,6,7];
  for(let i=0;i<FIELD_AI&&i<aiPool.length;i++){
   const ci=rest.length?rest[i%rest.length]:bci;
-  specs.push({id:specs.length,isP:false,ch:aiPool[i],car:CARS[ci],lvl:aiFillerTune(div),slot:1+i,skill:aiDriveSkill(div,false),isBoss:false});
+  const ai=aiPool[i];
+  specs.push({id:specs.length,isP:false,ch:ai.ch,chIdx:ai.idx,car:named.length?fieldCarForChar(ai.idx,ci):CARS[ci],lvl:aiFillerTune(div),slot:gridSlots[i]==null?5+i:gridSlots[i],skill:aiDriveSkill(div,false),isBoss:false});
  }
  return specs;
 }
@@ -3564,6 +3589,7 @@ function boom(x,y,kind){
 function dmgRacer(r,d,killer,src){
  if(r.dead||r.invuln>0||r.finished)return;
  src=src||'proj';
+ if(r.car&&r.car.idx===22&&r.foresterCharge>0&&(src==='proj'||src==='mine')){spark(r.x,r.y,'#d28a42',5,120);return;}
  if(r.bubble>0&&kitBubbleBlocks(src)){spark(r.x,r.y,'#35e0ff',6,140);return;}
  if(r.shield>0){
   if(killer&&R.shots&&R.shots.some(s=>s.laser&&s.r===killer)){
@@ -3578,6 +3604,7 @@ function dmgRacer(r,d,killer,src){
  if((r.bodyDump||0)>0)d*=1.3;
  if(typeof kitTinAbsorb==='function')d*=kitTinAbsorb(r,src);
  if(typeof kitMidAbsorb==='function')d*=kitMidAbsorb(r,src);
+ if(r.chIdx===12)d*=1-skillVal(12,r.skillLvl);
  d*=(1-r.ch.grt*.05);r.hp-=d;
  if(r.isP&&!R.demo)doShake(4);
  if(r.hp<=0)killRacer(r,killer);
@@ -3600,7 +3627,8 @@ function respawn(r){const S=R.S,N=R.N,i=(r.trackIdx-10+N)%N,p=S[i];
  r.x=p.x+p.nx*r.aiLane*.5;r.y=p.y+p.ny*r.aiLane*.5;r.ang=p.ang;r.spd=0;r.lat=0;r.susp=0;r.steerFlt=0;
  r.bob=0;r.bobVel=0;r.rockAmp=0;r.rockT=0;r.landStun=0;
  r.hp=r.maxhp;r.dead=false;r.invuln=2.2;r.bolt=0;r.nitro=0;r.bubble=0;r.z=0;r.vz=0;r.air=false;r.jumpCd=0;r.jumpSpd=0;
- r.dash=0;r.ghost=0;r.paper=0;r.haze=0;r.blind=0;r.cloak=0;r.berserk=0;r.slow=0;
+ r.dash=0;r.ghost=0;r.paper=0;r.haze=0;r.blind=0;r.cloak=0;r.berserk=0;r.slow=0;r.intelMark=0;
+ r.aggroMark=0;r.aggroIgnored=0;r.aggroSource=null;r.foresterCharge=0;r.threatDodge=0;
  r.tinDoor=r.car.idx===11?1:0;r.vanDoor=r.car.idx===19?1:0;r.bodyDump=0;r.soot=0;r.flipSteer=0;r.overtake=0;
  resetWepMag(r);
  if(r.car.idx===3)r.shield=1;}
@@ -3728,10 +3756,13 @@ function checkAchievements(){
  return newAch;
 }
 function stepVehicle(r,th,steer,dt,hb){
+ const foresterCharge=r.car&&r.car.idx===22&&(r.foresterCharge||0)>0;
+ if(foresterCharge){th=1;steer=0;hb=false;r.steerFlt=0;}
  const S=R.S,p=S[r.trackIdx];
  const off=!r.air&&Math.hypot(r.x-p.x,r.y-p.y)>ROADW;
  let mult=1;if(r.bolt>0)mult*=1.3;
  if(r.nitro>0)mult*=(r.car.idx===1?1.6:1.45);
+ if(foresterCharge)mult*=1.15;
  mult=Math.min(mult,1.6);
  let top=r.st.top*(off?r.st.off:1)*mult;
  if(typeof kitAsphaltMul==='function')top*=kitAsphaltMul(r,off);
@@ -4011,7 +4042,8 @@ function aiThink(r,dt){
  if(r.revT>0){r.revT-=dt;th=-1;steer=-steer;}
  r.ith=th;r.ist=clamp(steer,-1,1);
  let bestT=null,bd=1e9;
- for(const o of R.racers){if(o===r||o.dead||o.finished)continue;const dd=Math.hypot(o.x-r.x,o.y-r.y);if(dd<bd){bd=dd;bestT=o;}}
+ const forced=R.racers.find(o=>o!==r&&!o.dead&&!o.finished&&(o.aggroMark||0)>0);
+ for(const o of R.racers){if(o===r||o.dead||o.finished||(o.aggroIgnored||0)>0)continue;if(forced&&o!==forced)continue;const dd=Math.hypot(o.x-r.x,o.y-r.y);if(dd<bd){bd=dd;bestT=o;}}
  if(bestT&&kitAiWantsFire(r,bestT,bd)&&r.cdW<=0){
   const mag=wepMagMax(r);
   const gat=carAbil(r.car.idx).weapon.type==='gatling';
@@ -4057,6 +4089,7 @@ function resolveRaceContact(dt){
   if(!hit)continue;
   const push=Math.max(hit.pen/2,1.15);
   a.x-=hit.nx*push;a.y-=hit.ny*push;b.x+=hit.nx*push;b.y+=hit.ny*push;
+  if(typeof kitMidCollisionRebound==='function')kitMidCollisionRebound(a,b,{attacker:Math.abs(a.spd)>=Math.abs(b.spd)?a:b});
   const rel=Math.abs(a.spd-b.spd);
   const atLine=!!(a.finished||b.finished);
   if(!atLine&&rel>60){
@@ -4115,7 +4148,7 @@ function resolveRaceContact(dt){
  for(const m of R.mines){if(m.dead)continue;
   if(m.arm>0)continue;
   for(const r of R.racers){
-   if(r.dead||r.air||r.finished||(r.car.idx===5&&r.cloak>0))continue;
+   if(r.dead||r.air||r.finished||(r.car.idx===5&&r.cloak>0)||(r.car.idx===22&&r.foresterCharge>0))continue;
    if(m.owner===r&&m.life!=null&&m.life>9)continue;
    if(!pointInObb(m.x,m.y,carObb(r)))continue;
    if(r.chIdx===3){
@@ -4585,6 +4618,7 @@ function drawCar(c,r,sc){
  c.scale(lift,lift);
  const suspVis=r.susp||0;
  const rockVis=introReduceMotion?0:(r.rockAmp||0)*Math.sin(r.rockT||0);
+ const wheelSprite=window.RnRWheelSprites?RnRWheelSprites.image(editorCfg&&editorCfg.wheelStyle):WHEEL_SPRITE;
  // Колесо — один общий спрайт-лист, растянутый под конкретную машину.
  const wheel=(wx,wy,steer,ww,wh,mult)=>{
   const sc=mult!=null&&isFinite(+mult)&&+mult>0?+mult:1;
@@ -4593,7 +4627,9 @@ function drawCar(c,r,sc){
   c.imageSmoothingEnabled=true;
   const frame=((Math.floor(r.wheelRot*.5)%WHEEL_FRAME_COUNT)+WHEEL_FRAME_COUNT)%WHEEL_FRAME_COUNT;
   const dw=Math.max(0.4,(isFinite(+ww)?+ww:12)*sc),dh=Math.max(0.4,(isFinite(+wh)?+wh:8)*sc);
-  if(WHEEL_SPRITE.complete&&WHEEL_SPRITE.naturalWidth>0){
+  if(window.RnRWheelSprites&&RnRWheelSprites.draw(c,wheelSprite,frame,dw,dh,WHEEL_FRAME_COUNT,editorCfg&&editorCfg.wheelCenter)){
+   // Ориентация ленты и кадра определяется по реальным размерам спрайта.
+  }else if(WHEEL_SPRITE.complete&&WHEEL_SPRITE.naturalWidth>0){
    const srcW=WHEEL_SPRITE.naturalWidth/WHEEL_FRAME_COUNT;
    const srcH=WHEEL_SPRITE.naturalHeight;
    c.drawImage(WHEEL_SPRITE,frame*srcW,0,srcW,srcH,-dw/2,-dh/2,dw,dh);

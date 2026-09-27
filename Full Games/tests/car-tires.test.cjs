@@ -223,3 +223,23 @@ test('Неактивный заезд глушит шины до тика мот
   g.updEngine({}, false, 'cameraSetup');
   assert.equal(g.halted, true);
 });
+
+test('Передняя и задняя тяга по одному разу включают щелчок коробки', () => {
+  const { g } = loadTires({ state: 'race' });
+  const shifts = [];
+  g.R = { phase: 'go', demo: false };
+  g.carGearPlay = function (_r, force, pan) { shifts.push({ force, pan }); };
+  const racer = { x: 0, y: 0, spd: 0, lat: 0, dead: false, air: false, finished: false,
+    isP: true, _engineThrottle: 0, handbrake: false, car: { idx: 0, hov: false }, st: { top: 220 } };
+  const slot = g.carEngineMakeSlot();
+  g.carEngineTickSlot(slot, racer, .5, 0);
+  racer._engineThrottle = 1;
+  g.carEngineTickSlot(slot, racer, .5, 0);
+  g.carEngineTickSlot(slot, racer, .5, 0);
+  racer._engineThrottle = 0;
+  g.carEngineTickSlot(slot, racer, .5, 0);
+  racer._engineThrottle = -1;
+  g.carEngineTickSlot(slot, racer, .5, 0);
+  assert.equal(shifts.length, 2);
+  assert.equal(slot.want, 'dump');
+});

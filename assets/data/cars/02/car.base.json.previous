@@ -1,5 +1,5 @@
 {
-  "rev": 1788702422973,
+  "rev": 1788703527449,
   "body": {
     "x": 0,
     "y": 0,
@@ -157,9 +157,9 @@
   "audio": {
     "engine": "03 Dodge Viper SRT10",
     "wep": {
-      "pack": "",
-      "near": "",
-      "far": ""
+      "pack": "Colt45",
+      "near": "shoot.wav",
+      "far": "distant0.wav"
     },
     "ult": {
       "pack": "",

@@ -60,13 +60,13 @@
     const story = hasCampaignSave(storyObj);
     const free = !!saveObj;
     if (page === 'free') {
-      return [
-        free
-          ? { id: 'free-continue', label: 'ПРОДОЛЖИТЬ ЗАЕЗД', hint: 'этап ' + ((saveObj.race | 0) + 1) }
-          : { id: 'free-new', label: 'НОВЫЙ ЗАЕЗД' },
+      const items = [{ id: 'free-new', label: 'НОВЫЙ ЗАЕЗД' }];
+      if (free) items.push({ id: 'free-continue', label: 'ПРОДОЛЖИТЬ ЗАЕЗД', hint: 'этап ' + ((saveObj.race | 0) + 1) });
+      items.push(
         { id: 'free-location', label: 'ВЫБРАТЬ ЛОКАЦИЮ' },
         { id: 'free-back', label: 'ВЫЙТИ В ГЛАВНОЕ МЕНЮ' }
-      ];
+      );
+      return items;
     }
     return [
       { id: story ? 'campaign-continue' : 'campaign-new', label: story ? 'ПРОДОЛЖИТЬ ИГРУ' : 'НАЧАТЬ НОВУЮ ИГРУ' },
@@ -107,6 +107,7 @@
   /** Новый свободный заезд: камера, затем пилот. */
   function startFreeNew() {
     if (typeof newSave === 'function') save = newSave();
+    if (save) save.playMode = 'free';
     if (typeof persist === 'function') persist();
     selChar = 0;
     selCar = 0;
@@ -152,6 +153,7 @@
         break;
       case 'free-continue':
         if (typeof loadSave === 'function') loadSave();
+        if (save) save.playMode = 'free';
         state = 'garage';
         break;
       case 'free-new':
@@ -163,6 +165,8 @@
         break;
       case 'free-location':
         if (free && typeof loadSave === 'function') loadSave();
+        if (!free && typeof newSave === 'function') save = newSave();
+        if (save) save.playMode = 'free';
         if (typeof enterTrackPick === 'function') enterTrackPick('free');
         break;
       case 'free-back':
@@ -192,7 +196,8 @@
   if (!engine) return;
   if (typeof global.startDevTrack === 'function') engine.wrap('startDevTrack', original => function (idx) {
     if (typeof trackPickReturn === 'undefined' || trackPickReturn !== 'free') return original(idx);
-    if (!save) save = newSave();
+    if (!save || save.playMode === 'campaign') save = newSave();
+    save.playMode = 'free';
     const list = pickableTracks();
     const def = list[((idx % list.length) + list.length) % list.length];
     if (def && def.custom) { raceTrackCustom = def; raceTrackOverride = null; }

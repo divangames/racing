@@ -36,6 +36,11 @@ app.whenReady().then(async()=>{
     const opened=state==='tracks'&&trackPickReturn==='free';press('Escape');
     return {opened,back:state==='title'&&DiVANEngine.titleMenu.isFreeMenu()};})()`);
   assert(freeReturn.opened&&freeReturn.back);report.freeMenu={labels:freeLabels,...freeReturn,regions:freeMenu.regions.length};
+  await win.webContents.executeJavaScript("save=newSave();save.playMode='free';persist();enterTitle();DiVANEngine.titleMenu.openFreeMenu();selTitle=0");
+  const freeSaved=await capture('title-free-saved',"void 0");
+  const savedLabels=await win.webContents.executeJavaScript("g._titleItems.map(item=>item.label)");
+  assert.deepEqual(savedLabels,['НОВЫЙ ЗАЕЗД','ПРОДОЛЖИТЬ ЗАЕЗД','ВЫБРАТЬ ЛОКАЦИЮ','ВЫЙТИ В ГЛАВНОЕ МЕНЮ']);
+  report.freeMenu.savedLabels=savedLabels;report.freeMenu.savedRegions=freeSaved.regions.length;
   await win.webContents.executeJavaScript("DiVANEngine.titleMenu.closeFreeMenu();menuPaint()");
   const pointer=await win.webContents.executeJavaScript(`(()=>{
     const b=DiVANEngine.menu.regions().find(b=>b.id==='title-'+g._titleItems.findIndex(i=>i.id==='settings'));
@@ -62,7 +67,21 @@ app.whenReady().then(async()=>{
     ['autopark',"state='autopark';autoparkSel=save.car"],['detail',"state='detail';autoparkSel=save.car"],
     ['gym',"state='gym';gymSel=0"],['armory',"enterArmory()"],['prerace',"state='prerace';save.cash=2500;save.bet=2;raceBoard=makeRaceBoard()"]];
   for(const [name,setup] of screens)await capture(name,setup);
+  report.roster=await win.webContents.executeJavaScript(`(()=>{
+    state='char';bioOpen=-1;selChar=PLAYABLE_IDS[0];menuPaint();
+    const layout={...g._charCarousel},footer={...g._charFooter};press('ArrowLeft');for(let i=0;i<40;i++)menuPaint();
+    return {layout,footer,wrapped:selChar===PLAYABLE_IDS[PLAYABLE_IDS.length-1],centered:Math.abs(g._charCards.find(b=>b.idx===selChar).x+g._charCards.find(b=>b.idx===selChar).w/2-W/2)<1};
+  })()`);
+  assert.equal(report.roster.layout.cardsInView,4.5);assert.equal(report.roster.layout.visible,5);assert(report.roster.wrapped);assert(report.roster.centered);
+  assert(report.roster.footer.railY+report.roster.footer.railH<report.roster.footer.backY);assert(report.roster.footer.backY+report.roster.footer.backH+6<report.roster.footer.hintY-6.5);assert(report.roster.footer.hintY+6.5<report.roster.footer.bottomLineY);
+  await capture('characters-wrap',"state='char';bioOpen=-1;for(let i=0;i<20;i++)menuPaint()");
   await capture('pause',"buildRace();R.phase='go';R.time=10;paused=true;pauseMenuIndex=1;R.msg=null;R.hintT=0");
+  report.cursor=await win.webContents.executeJavaScript(`(()=>{
+    state='race';paused=false;menuPaint();const driving={hidden:cv.classList.contains('rnr-driving-cursor-hidden'),cursor:getComputedStyle(cv).cursor};
+    paused=true;menuPaint();const pause={hidden:cv.classList.contains('rnr-driving-cursor-hidden'),cursor:getComputedStyle(cv).cursor};
+    return {driving,pause};
+  })()`);
+  assert(report.cursor.driving.hidden);assert.equal(report.cursor.driving.cursor,'none');assert(!report.cursor.pause.hidden);assert.notEqual(report.cursor.pause.cursor,'none');
   report.pause=await win.webContents.executeJavaScript(`(()=>{
     const b=DiVANEngine.menu.regions().find(b=>b.id==='pause-0'),r=cv.getBoundingClientRect();
     cv.dispatchEvent(new MouseEvent('mousedown',{clientX:r.left+(b.x+b.w/2)*r.width/cv.width,clientY:r.top+(b.y+b.h/2)*r.height/cv.height,button:0,bubbles:true}));

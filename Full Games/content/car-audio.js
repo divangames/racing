@@ -264,8 +264,27 @@ function carEngineTickSlot(slot, racer, mixVol, pan) {
   // Состояние прошлой гонки не должно обрывать мотор и шины в погоне.
   const counting = typeof state === 'string' && state === 'race' &&
     typeof R !== 'undefined' && R && R.phase === 'count';
+  const driveInput = typeof carEngineDriveInput === 'function' ? carEngineDriveInput(racer) : 0;
+  const driveSign = counting ? 0 : (driveInput > .2 ? 1 : (driveInput < -.2 ? -1 : 0));
+  const driveChanged = !!driveSign && driveSign !== slot.driveSign;
+  const liveRace = typeof state === 'string' && (state === 'race' || state === 'bearChase');
+  const demoRace = typeof R !== 'undefined' && R && R.demo;
+  if (driveChanged && racer.isP && !racer.finished && !inAir && liveRace && !demoRace &&
+      typeof carGearPlay === 'function') {
+    carGearPlay(racer, Math.max(.35, n), slot.pan);
+  }
+  slot.driveSign = driveSign;
   const gasGo = gas > 0 && !hb && !counting;
   slot.gas = gasGo ? gas : 0;
+
+  // Включение тормоза/задней тяги сразу переводит мотор на сброс оборотов.
+  if (driveChanged && driveSign < 0 && !inAir && liveRace && !demoRace) {
+    slot.lastGas = false;
+    slot.pulls = 0;
+    slot.want = 'dump';
+    carEngineShotSlot(slot, 3, vol, carEngineRate('dump', n, 0), true);
+    return !!slot.voice;
+  }
 
   if (inAir) {
     slot.lastGas = false;

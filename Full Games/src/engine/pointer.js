@@ -99,6 +99,8 @@
         }
         bioOpen = -1; sClick(); return;
       }
+      if (g._charDots) for (const b of g._charDots) { if (hitRect(x, y, b)) { pickChar(b.idx); sClick(); return; } }
+      if (g._charNav) for (const b of g._charNav) { if (hitRect(x, y, b)) { wrapPlayable(b.dir); sClick(); return; } }
       if (hitRect(x, y, g._charBack)) { leaveCharSel(); sClick(); return; }
       if (g._bioBtns) for (const b of g._bioBtns) { if (hitRect(x, y, b)) { pickChar(b.idx); bioOpen = b.idx; sClick(); return; } }
       if (g._charCards) for (const b of g._charCards) { if (hitRect(x, y, b)) { if (b.idx !== selChar) { pickChar(b.idx); sClick(); } return; } }

@@ -181,6 +181,21 @@ test('Обработчики возвращают 400 для null и неизв�
   assert.equal(fs.readdirSync(root).length,0);
  }finally{fs.rmSync(root,{recursive:true,force:true});}
 });
+test('Кузов машины сохраняется исходными байтами только в папку mods своего слота',async()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'rnr-car-body-'));
+ try {
+  const car=handler('save-car',root);
+  const png=Buffer.from([137,80,78,71,13,10,26,10,0,1,2,3]);
+  const url=new URL('http://localhost/__save-car-body?slot=22&ext=png');
+  const response=await car.handleSaveCarBody(new Request(url,{method:'POST',body:png}),url);
+  assert.equal(response.status,200);
+  const result=await response.json();
+  assert.match(result.src,/^assets\/data\/cars\/23\/mods\/body-\d+-[a-f0-9]{8}\.png$/);
+  assert.deepEqual(fs.readFileSync(path.join(root,result.src)),png);
+  const badUrl=new URL('http://localhost/__save-car-body?slot=22&ext=png');
+  assert.equal((await car.handleSaveCarBody(new Request(badUrl,{method:'POST',body:Buffer.from('not png')}),badUrl)).status,400);
+ } finally {fs.rmSync(root,{recursive:true,force:true});}
+});
 test('Запись .oblab в клиенте сохраняет несколько тел коллизии',async()=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'rnr-obj-'));
  try {

@@ -314,17 +314,26 @@ function carEngineSpanFromWav(raw) {
   }
 }
 
-/** Газ: клавиша у игрока, ith у ИИ. */
-function carEngineGas(racer) {
+/** Реальный ввод тяги после клавиатуры, геймпада или ИИ. */
+function carEngineDriveInput(racer) {
   if (!racer) return 0;
-  if ((racer.nitro || 0) > 0) return 1;
+  if (Number.isFinite(racer._engineThrottle)) return Math.max(-1, Math.min(1, racer._engineThrottle));
   if (racer.isP) {
     if (typeof ctrlHeld === 'function' && ctrlHeld('up')) return 1;
+    if (typeof ctrlHeld === 'function' && ctrlHeld('down')) return -1;
     return 0;
   }
   const th = racer.ith;
-  if (typeof th === 'number' && th > 0.2) return th;
+  if (typeof th === 'number') return Math.max(-1, Math.min(1, th));
   return 0;
+}
+
+/** Положительная тяга для набора оборотов; нитро держит мотор под газом. */
+function carEngineGas(racer) {
+  if (!racer) return 0;
+  if ((racer.nitro || 0) > 0) return 1;
+  const th = carEngineDriveInput(racer);
+  return th > .2 ? th : 0;
 }
 
 /** Стоит: низкая скорость или отсчёт на решётке. Финиш не режет сброс газа. */
@@ -369,6 +378,7 @@ function carEngineMakeSlot() {
     shot: false,
     live: false,
     pan: 0,
+    driveSign: 0,
     airHeld: false,
     htmlPool: null,
     htmlRaf: 0,
@@ -782,6 +792,7 @@ function carEngineHaltSlot(slot) {
   slot.gas = 0;
   slot.lastGas = false;
   slot.pulls = 0;
+  slot.driveSign = 0;
   slot.afterLand = false;
   slot.wasAir = false;
   slot.airHeld = false;

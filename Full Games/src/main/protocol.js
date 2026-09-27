@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 const { protocol, app } = require('electron');
 const { game, contentRoot, vendorLocalRoot, clientRoot } = require('./paths');
-const { handleSaveCar } = require('./save-car');
+const { handleSaveCar, handleSaveCarBody } = require('./save-car');
 const { handleSaveTrack, handleListTracks } = require('./save-track');
 const { handleListTextures, handleSaveTexture, handleSaveTextureFile } = require('./save-texture');
 const { handleListPacks, handleSavePack, handleSaveOblab, handleSaveOblabFile } = require('./save-object');
@@ -191,6 +191,9 @@ async function handleRnrRequest(request) {
     const url = new URL(request.url);
     if (url.pathname === '/__save-car' && request.method === 'POST') {
       return handleSaveCar(request);
+    }
+    if (url.pathname === '/__save-car-body' && request.method === 'POST') {
+      return handleSaveCarBody(request, url);
     }
     if (url.pathname === '/__save-track' && request.method === 'POST') {
       return handleSaveTrack(request);

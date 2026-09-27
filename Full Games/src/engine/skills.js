@@ -65,6 +65,8 @@
       case 3: return lerp(0.10, 1.0, t);
       case 4: return 0;
       case 5: return lerp(5, 12, t);
+      case 12: return lerp(0.05, 0.15, t);
+      case 13: return lerp(0.03, 0.12, t);
       default: return 0;
     }
   }
@@ -84,6 +86,8 @@
       case 3: return 'пропуск мин ' + Math.round(v * 100) + '%';
       case 4: return '';
       case 5: return 'стрелки линии, ' + Math.round(v) + ' впереди';
+      case 12: return 'входящий урон −' + Math.round(v * 100) + '%';
+      case 13: return 'урон +' + Math.round(v * 100) + '%';
       default: return '';
     }
   }

@@ -1,5 +1,5 @@
 {
-  "rev": 1788702869526,
+  "rev": 1788704109496,
   "body": {
     "x": 0,
     "y": 0,
@@ -157,9 +157,9 @@
   "audio": {
     "engine": "02 Lamborgini Murselago",
     "wep": {
-      "pack": "",
-      "near": "",
-      "far": ""
+      "pack": "M60",
+      "near": "shoot.wav",
+      "far": "distant0.wav"
     },
     "ult": {
       "pack": "",

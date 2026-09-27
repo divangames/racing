@@ -120,9 +120,10 @@
         <p class="hint">Уровень брони смотрите в слое «Броня»: там список I–VI для просмотра на холсте.</p>
         <label class="hint" style="display:flex;gap:8px;align-items:center;margin:8px 0"><input class="check" id="armorLink" type="checkbox" checked> Двигать броню вместе с кузовом. Снимите, чтобы сдвинуть только корпус.</label>
         <div class="actions" style="margin-top:8px">
-          <label class="file-label">Заменить корпус<input id="bodyFile" type="file" accept="image/*"></label>
+          <label class="file-label">Заменить корпус<input id="bodyFile" type="file" accept="image/png,image/webp,image/jpeg"></label>
           <button type="button" id="clearBody">Вернуть игровой</button>
         </div>
+        <p class="hint" id="bodyModHint">Свой кузов будет записан в папку <code>mods</code> текущего авто.</p>
       </section>
       <section class="section" id="inspArmor" hidden>
         <div class="section-title">БРОНЯ <button type="button" id="resetArmorBtn" class="text-btn" title="Сбросить броню к базе">Сбросить слой</button></div>
@@ -135,6 +136,17 @@
       </section>
       <section class="section" id="inspWheels" hidden>
         <div class="section-title">КОЛЁСА <button type="button" id="resetWheelsBtn" class="text-btn" title="Сбросить выбранные колёса к базе">Сбросить слой</button></div>
+        <div class="field">
+          <label for="wheelStyle">Комплект колёс</label>
+          <select id="wheelStyle"><option value="standard">Стандартные</option><option value="offroad">Внедорожные</option></select>
+          <span class="hint" id="wheelStyleHint">Ориентация кадров определяется автоматически.</span>
+        </div>
+        <div class="field-grid wheel-center-fields">
+          <div class="field"><label for="wheelCenterX">Центр кадра X, %</label><input id="wheelCenterX" type="number" min="-100" max="100" step="0.5"></div>
+          <div class="field"><label for="wheelCenterY">Центр кадра Y, %</label><input id="wheelCenterY" type="number" min="-100" max="100" step="0.5"></div>
+        </div>
+        <div class="actions" style="margin:8px 0"><button type="button" id="wheelCenterReset">Автоцентр</button></div>
+        <p class="hint">Сдвиг общий для всех колёс машины. 0 / 0 — центр, найденный по прозрачности.</p>
         <label class="hint" style="display:flex;gap:8px;align-items:center;margin:0 0 8px"><input class="check" id="wheelMirror" type="checkbox" checked> Зеркалить ось (лево ↔ право). Снимите, чтобы двигать одно колесо.</label>
         <div class="wheel-list" id="wheelList"></div>
         <div class="actions" style="margin-top:8px">
@@ -407,7 +419,7 @@
           <small>Выберите изображение справа</small>
         </div>
         <div class="chapter-preview-copy">
-          <strong id="chapterPreviewSpeaker">ИВАН</strong>
+          <strong id="chapterPreviewSpeaker">МЕДВЕДЬ</strong>
           <p id="chapterPreviewText">Выберите сцену для редактирования.</p>
           <small id="chapterPreviewSub"></small>
         </div>

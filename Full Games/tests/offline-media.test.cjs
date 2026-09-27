@@ -41,9 +41,14 @@ test('Папки музыки и FX лежат на диске', () => {
     'A_Car_Land_01.WAV', 'A_Car_Land_02.WAV'].forEach(function (name) {
     assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'cars', 'hit', name)), 'нет звука авто: ' + name);
   });
+  ['GearSwitch_1.WAV', 'GearSwitch_2.WAV', 'GearSwitch_3.WAV', 'GearSwitch_4.WAV'].forEach(function (name) {
+    assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'cars', 'GearSwitch', name)), 'нет звука коробки: ' + name);
+  });
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'titles.json')), 'нет манифеста фонов титула');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'title-medved_1920x1080.webp')), 'нет HD-фона титула');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'title-medved_3440x1440.webp')), 'нет ультраширокого фона титула');
+  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'title-bestya_1920x1080.png')), 'нет HD-фона свободного заезда');
+  assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'title-bestya_3440x1440.png')), 'нет ультраширокого фона свободного заезда');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'divan_games', 'DIVAN_none.png')), 'нет марки студии');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'embirnt', 'rain.mp3')), 'нет эмбиента дождя');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'embirnt', 'grom.mp3')), 'нет грома');

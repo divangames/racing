@@ -44,7 +44,11 @@ test('Выбор кадра и якорь cover', () => {
   const g = bootBg();
   const api = g.DiVANEngine.titleBg;
   assert.ok(api.pickTitleBgSrc(16 / 9).indexOf('1920x1080') >= 0);
+  assert.ok(api.pickTitleBgSrc(16 / 9).indexOf('title-medved_') >= 0);
   assert.ok(api.pickTitleBgSrc(3440 / 1440, 3440, 1440).indexOf('3440x1440') >= 0);
+  g.DiVANEngine.titleMenu = { isFreeMenu: function () { return true; } };
+  assert.ok(api.pickTitleBgSrc(16 / 9).indexOf('title-bestya_1920x1080.png') >= 0);
+  assert.ok(api.pickTitleBgSrc(3440 / 1440, 3440, 1440).indexOf('title-bestya_3440x1440.png') >= 0);
   const d = api.coverDest(1920, 1080, 0, 0, 1280, 720, 0.64, 0.46, 1);
   assert.equal(d.dw, 1280);
   assert.equal(d.dh, 720);

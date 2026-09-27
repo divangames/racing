@@ -114,6 +114,35 @@ test('Тюнинг ИИ, фаворит дешевле, Бык-босс и ка�
   assert.equal(board.pick, 0);
 });
 
+test('Свободный заезд собирает всех именных пилотов на личных машинах', () => {
+  const g = bootField();
+  const names = ['МЕДВЕДЬ', 'ЕРШ', 'БЕГЕМОТИК', 'БАШКИР', 'БЫК', 'ЯНОТ'];
+  g.CHARS = names.map(function (name) { return { name: name }; });
+  while (g.CHARS.length < 12) g.CHARS.push({ name: 'ЗАПОЛНИТЕЛЬ', npc: true, filler: true });
+  g.CHARS.push({ name: 'УТЮГ' }, { name: 'БЕСТИЯ' });
+  g.CARS = g.CHARS.map(function (_, owner) { return { idx: owner, owner: owner }; });
+  g.CARS.push({ idx: 14, owner: null });
+  g.save.char = 0;
+  g.save.car = 0;
+  g.FIELD_AI = 6;
+  const specs = g.planRaceField(1);
+  const rivals = specs.filter(function (sp) { return !sp.isP && !sp.isBoss; });
+  assert.equal(specs.length, 8);
+  assert.equal(rivals.map(function (sp) { return sp.chIdx; }).sort(function (a, b) { return a - b; }).join(','), '1,2,3,5,12,13');
+  assert.ok(rivals.every(function (sp) { return sp.car.owner === sp.chIdx; }));
+  assert.equal(new Set(specs.map(function (sp) { return sp.slot; })).size, specs.length);
+});
+
+test('Утюг и Бестия открыты для выбора, а в игре включена полная сетка', () => {
+  const chars = fs.readFileSync(path.resolve(__dirname, '../content/chars.js'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
+  assert.match(chars, /name:'УТЮГ'[^\n]*team:/);
+  assert.match(chars, /name:'БЕСТИЯ'[^\n]*team:/);
+  assert.doesNotMatch(chars, /name:'(?:УТЮГ|БЕСТИЯ)'[^\n]*npc:true/);
+  assert.match(html, /const FIELD_AI=6;/);
+  assert.match(html, /'Утюгу','Бестии'/);
+});
+
 test('1 дивизион — только хлам 12–16, 3 — ещё средний 17–21', () => {
   const g = bootField();
   g.CARS = Array.from({ length: 21 }, function (_, i) {

@@ -12,11 +12,11 @@
   const TUTORIAL_CARD_WIDTH = 520;
   const TUTORIAL_CARD_HEIGHT = 62;
   const CINEMATIC_LINES = [
-    {id: 'BRIDGE_APPROACH', speaker: 'МЕДВЕДЬ', text: 'Есть! Догнали!'},
-    {id: 'BRIDGE_COLLAPSE', speaker: 'ЯНОТ', text: 'Мост! Держись!'},
-    {id: 'PLAYER_CLOSEUP', speaker: 'ЯНОТ', text: 'Тихо… Стоим.'},
-    {id: 'TRUCK_ESCAPE', speaker: 'МЕДВЕДЬ', text: 'Он даже не сбросил скорость…'},
-    {id: 'AFTERMATH_RETURN', speaker: 'ЯНОТ', text: 'Живы. Машину вернём.'}
+    {id: 'BRIDGE_APPROACH', speaker: 'МЕДВЕДЬ / ЯНОТ', text: 'МЕДВЕДЬ: «Он подпустил нас». ЯНОТ: «Значит, уже выбрал место».'},
+    {id: 'BRIDGE_COLLAPSE', speaker: 'ЯНОТ', text: 'Мост! Руль ровно!'},
+    {id: 'PLAYER_CLOSEUP', speaker: 'ЯНОТ', text: 'Стоим. Не выходи — край ещё сыплется.'},
+    {id: 'TRUCK_ESCAPE', speaker: 'МЕДВЕДЬ', text: 'Он не спасается. Он везёт нас туда, куда ему приказали.'},
+    {id: 'AFTERMATH_RETURN', speaker: 'ЯНОТ', text: 'Живы. Значит, поражение ещё можно превратить в улику.'}
   ];
   const audioPlayer = {st: {top: 360}, spd: 0, lat: 0, steerFlt: 0, ith: 0,
     x: 0, y: 0, nitro: 0, air: false, handbrake: false, finished: false, dead: false, isP: true};
@@ -48,6 +48,7 @@
     if (bridgeSkid) audioPlayer._tireContact = true;
     else delete audioPlayer._tireContact;
     audioPlayer.ith = Bridge.active(chase) ? 0 : Math.max(0, input.throttle);
+    audioPlayer._engineThrottle = Bridge.active(chase) ? 0 : input.throttle;
     audioPlayer.x = Model.playerScreenX(chase); audioPlayer.y = Model.playerScreenY(chase);
     audioPlayer.nitro = chase.nitroTime > 0 ? 1 : 0;
     audioPlayer.hp = chase.hp; audioPlayer.maxhp = chase.maxHp;

@@ -60,7 +60,12 @@ var SFX_TRACKS = {
  carBody3: 'assets/sounds/cars/hit/A_Car_HitBody_03.WAV',
  // Приземление после прыжка
  carLand1: 'assets/sounds/cars/hit/A_Car_Land_01.WAV',
- carLand2: 'assets/sounds/cars/hit/A_Car_Land_02.WAV'
+ carLand2: 'assets/sounds/cars/hit/A_Car_Land_02.WAV',
+ // Механическое переключение направления/тяги
+ carGear1: 'assets/sounds/cars/GearSwitch/GearSwitch_1.WAV',
+ carGear2: 'assets/sounds/cars/GearSwitch/GearSwitch_2.WAV',
+ carGear3: 'assets/sounds/cars/GearSwitch/GearSwitch_3.WAV',
+ carGear4: 'assets/sounds/cars/GearSwitch/GearSwitch_4.WAV'
 };
 
 var CAR_IMPACT_TRACKS = {
@@ -69,6 +74,9 @@ var CAR_IMPACT_TRACKS = {
  land: ['carLand1', 'carLand2']
 };
 var carImpactTimes = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
+var CAR_GEAR_TRACKS = ['carGear1', 'carGear2', 'carGear3', 'carGear4'];
+var carGearLast = -1;
+var carGearAt = -Infinity;
 
 ////////////////////////////////////////////////////////
 //
@@ -185,4 +193,16 @@ function carImpactPlay(kind,racer,strength,position){
  }
  if(volume<.035)return false;
  return SFX.play(ids[idx],{volume:volume,pan:pan,rate:.96+Math.random()*.08});
+}
+
+/** Случайный щелчок коробки при включении передней или задней тяги. */
+function carGearPlay(racer,strength,pan){
+ const now=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
+ if(now-carGearAt<90)return false;
+ let idx=(Math.random()*CAR_GEAR_TRACKS.length)|0;
+ if(CAR_GEAR_TRACKS.length>1&&idx===carGearLast)idx=(idx+1+((Math.random()*(CAR_GEAR_TRACKS.length-1))|0))%CAR_GEAR_TRACKS.length;
+ carGearLast=idx;carGearAt=now;
+ const force=Math.max(0,Math.min(1,Number.isFinite(strength)?strength:.6));
+ const side=Math.max(-.8,Math.min(.8,Number.isFinite(pan)?pan:0));
+ return SFX.play(CAR_GEAR_TRACKS[idx],{volume:.5+force*.35,pan:side,rate:.97+Math.random()*.06});
 }

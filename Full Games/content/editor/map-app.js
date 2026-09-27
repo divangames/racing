@@ -537,7 +537,7 @@ const MapApp = (() => {
     applyStartDoc();
     try {
       const q = new URLSearchParams(location.search);
-      if (q.get('tab') === 'map') setTab('map');
+      setTab(q.get('tab') === 'map' ? 'map' : (q.get('tab') === 'chapter' ? 'chapter' : 'car'));
     } catch (err) {}
     try { if (window.LabSplash) LabSplash.done('map'); } catch (err) {}
   }

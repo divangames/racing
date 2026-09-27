@@ -194,6 +194,7 @@
     if (r.car.idx === 0) m = 2;
     if (r.car.idx === 4) m = 3;
     if (r.car.idx === 17) m = 1.22;
+    if (r.car.idx === 22 && r.foresterCharge > 0) m = 2.4;
     if (r.dash > 0) m *= 1.15;
     if (r.berserk > 0) m *= 1.45;
     return m;
@@ -206,6 +207,7 @@
    */
   function kitRamInEngine(r) {
     if (r.car.idx === 0 || r.car.idx === 4) return .5;
+    if (r.car.idx === 22 && r.foresterCharge > 0) return .65;
     return 1;
   }
 

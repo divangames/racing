@@ -8,7 +8,9 @@
 
   /** Инструмент действует только на видимой вкладке машины. */
   function active() {
-    return !!($('carLightsPanel')?.open && !$('workCar')?.hidden && global.__labTab === 'car');
+    const carVisible = !$('workCar')?.hidden;
+    const carTab = global.__labTab === 'car' || (global.__labTab == null && carVisible);
+    return !!($('carLightsPanel')?.open && carVisible && carTab);
   }
   /** Автоматические позиции вычисляются в той же системе, что кузов и колёса. */
   function positions(car) {

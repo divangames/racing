@@ -143,6 +143,21 @@ test('Задний ход можно отпустить и снова нажат
   assert.ok(r.spd < coasting, 'повторный курок продолжает разгон назад без повторной задержки');
 });
 
+test('После финиша тормоз останавливает машину, но не включает задний ход', () => {
+  const c = boot(), r = racer(0);
+  r.finished = true;
+  r.spd = 80;
+  run(c, r, 2, -1, 0);
+  assert.equal(r.spd, 0);
+  const stoppedAt = r.x;
+  run(c, r, 1, -1, 0);
+  assert.equal(r.spd, 0);
+  assert.equal(r.x, stoppedAt);
+  r.spd = -30;
+  c.stepVehicle(r, 0, 0, 1 / 60, false);
+  assert.equal(r.spd, 0, 'обратный импуль после удара тоже гасится');
+});
+
 test('Газ при движении назад сначала тормозит до нуля; боковой снос не включает реверс', () => {
   const c = boot(), r = racer(0);
   r.spd = -80;

@@ -58,7 +58,8 @@ function requiredAnchors() {
     'assets/sounds/cars/NOSZ/A_Nitro_End.WAV',
     'assets/sounds/cars/hit/A_CarHit_01.WAV',
     'assets/sounds/cars/hit/A_Car_HitBody_01.WAV',
-    'assets/sounds/cars/hit/A_Car_Land_01.WAV'
+    'assets/sounds/cars/hit/A_Car_Land_01.WAV',
+    'assets/sounds/cars/GearSwitch/GearSwitch_1.WAV'
   ];
 }
 

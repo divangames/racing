@@ -105,7 +105,7 @@
     const st = stats(ch, car, lvl, isP ? undefined : { spd: 0, crn: 0, grt: 0 }, damp);
     const chIdx = CHARS.indexOf(ch);
     const skillLvl = isP ? ((save.skills && save.skills[chIdx]) || 1) : aiSkillLvl(raceDiv);
-    const dmgMul = 1 + (chIdx === 2 ? skillVal(2, skillLvl) : 0);
+    const dmgMul = 1 + (chIdx === 2 || chIdx === 13 ? skillVal(chIdx, skillLvl) : 0);
     const racer = {
       ch: ch, car: car, isP: isP, st: st, chIdx: chIdx, skillLvl: skillLvl, dmgMul: dmgMul, x: 0, y: 0, ang: 0, spd: 0, hp: st.maxhp, maxhp: st.maxhp, shield: 0, wheelAngle: 0, wheelRot: 0,
       bolt: 0, nitro: 0, invuln: 0, bubble: 0, cloak: 0, cdN: 0, cdW: 0, cdU: 0, buffDmg: 1, buffArmor: 1, buffDmgT: 0, berserk: 0, slow: 0, drone: 0, dead: false, respawnT: 0,

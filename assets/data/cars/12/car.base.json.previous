@@ -1,5 +1,5 @@
 {
-  "rev": 1788702900382,
+  "rev": 1788704285430,
   "body": {
     "x": 0,
     "y": 0,
@@ -157,9 +157,9 @@
   "audio": {
     "engine": "01 Nissan GTR",
     "wep": {
-      "pack": "",
-      "near": "",
-      "far": ""
+      "pack": "Tank Cannon",
+      "near": "cannon_fire.wav",
+      "far": "cannon_fire.wav"
     },
     "ult": {
       "pack": "",

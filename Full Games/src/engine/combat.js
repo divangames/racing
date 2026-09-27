@@ -28,6 +28,9 @@
   function dmgRacerEngine(r, d, killer, src) {
     if (r.dead || r.invuln > 0 || r.finished) return;
     src = src || 'proj';
+    if (r.car && r.car.idx === 22 && r.foresterCharge > 0 && (src === 'proj' || src === 'mine')) {
+      spark(r.x, r.y, '#d28a42', 5, 120); return;
+    }
     if (r.bubble > 0 && kitBubbleBlocks(src)) { spark(r.x, r.y, '#35e0ff', 6, 140); return; }
     if (r.shield > 0) {
       if (killer && R.shots && R.shots.some(function (s) { return s.laser && s.r === killer; })) {
@@ -47,6 +50,7 @@
     if ((r.bodyDump || 0) > 0) d *= 1.3;
     if (typeof kitTinAbsorb === 'function') d *= kitTinAbsorb(r, src);
     if (typeof kitMidAbsorb === 'function') d *= kitMidAbsorb(r, src);
+    if (r.chIdx === 12) d *= 1 - skillVal(12, r.skillLvl);
     d *= (1 - r.ch.grt * .05); r.hp -= d;
     // В статистику попадает снятый корпус после брони, без урона сверх оставшегося HP.
     if (killer && killer !== r) killer.dmgDealt = (killer.dmgDealt || 0) + Math.max(0, hpBefore - Math.max(0, r.hp));
@@ -87,7 +91,8 @@
     r.prog = (r.lap || 0) * N + i;
     r.bob = 0; r.bobVel = 0; r.rockAmp = 0; r.rockT = 0; r.landStun = 0;
     r.hp = r.maxhp; r.dead = false; r.invuln = 2.2; r.bolt = 0; r.nitro = 0; r.bubble = 0; r.z = 0; r.vz = 0; r.air = false; r.jumpCd = 0; r.jumpSpd = 0;
-    r.dash = 0; r.ghost = 0; r.paper = 0; r.haze = 0; r.blind = 0; r.cloak = 0; r.berserk = 0; r.slow = 0;
+    r.dash = 0; r.ghost = 0; r.paper = 0; r.haze = 0; r.blind = 0; r.cloak = 0; r.berserk = 0; r.slow = 0; r.intelMark = 0;
+    r.aggroMark = 0; r.aggroIgnored = 0; r.aggroSource = null; r.foresterCharge = 0; r.threatDodge = 0;
     r.tinDoor = r.car.idx === 11 ? 1 : 0; r.vanDoor = r.car.idx === 19 ? 1 : 0; r.bodyDump = 0; r.soot = 0; r.flipSteer = 0; r.overtake = 0;
     resetWepMag(r);
     if (r.car.idx === 3) r.shield = 1;

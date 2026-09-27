@@ -974,7 +974,26 @@ const EditorApp = (() => {
     $('wheelAngle').value = w[4].toFixed(2);
     $('wheelScale').value = w[5].toFixed(2);
     $('wheelSteer').checked = !!w[6];
+    if ($('wheelStyle')) $('wheelStyle').value = RnRWheelSprites.normalize(car().wheelStyle);
+    const center = EditorData.normWheelCenter(car().wheelCenter);
+    if ($('wheelCenterX')) $('wheelCenterX').value = center.x.toFixed(1);
+    if ($('wheelCenterY')) $('wheelCenterY').value = center.y.toFixed(1);
+    paintWheelStyleHint();
     fillLock = lock;
+  }
+
+  /** Показывает, как редактор распознал ленту и ориентацию колеса. */
+  function paintWheelStyleHint() {
+    const hint = $('wheelStyleHint');
+    if (!hint || !window.RnRWheelSprites) return;
+    const id = RnRWheelSprites.normalize(car().wheelStyle);
+    const sprite = RnRWheelSprites.image(id);
+    const update = () => {
+      hint.textContent = 'Распознано: ' + RnRWheelSprites.orientation(id) + '.';
+      EditorView.draw();
+    };
+    if (sprite && !sprite.complete) sprite.addEventListener('load', update, { once: true });
+    update();
   }
 
   /** Пишет в поля текущую трубу нитро. */
@@ -1144,6 +1163,7 @@ const EditorApp = (() => {
       c.body.scale = b.scale || 1;
       c.body.sx = b.sx || 1;
       c.body.sy = b.sy || 1;
+      delete c.bodySrc;
       delete c.bodyData;
       EditorView.clearCache();
     } else if (L.type === 'armor') {
@@ -1270,6 +1290,34 @@ const EditorApp = (() => {
 
   /** Навешивает поля кузова, статов и колёс. */
   function bindFields() {
+    if ($('wheelStyle')) $('wheelStyle').addEventListener('change', () => {
+      if (fillLock) return;
+      car().wheelStyle = RnRWheelSprites.normalize($('wheelStyle').value);
+      paintWheelStyleHint();
+      mark();
+      commit();
+      persist(true);
+      EditorView.draw();
+    });
+    [['wheelCenterX', 'x'], ['wheelCenterY', 'y']].forEach(([id, key]) => {
+      const field = $(id);
+      if (!field) return;
+      field.addEventListener('input', () => {
+        if (fillLock) return;
+        const center = EditorData.normWheelCenter(car().wheelCenter);
+        center[key] = Math.max(-100, Math.min(100, num(id)));
+        car().wheelCenter = center;
+        commitSoon();
+        EditorView.draw();
+      });
+    });
+    if ($('wheelCenterReset')) $('wheelCenterReset').addEventListener('click', () => {
+      car().wheelCenter = {x: 0, y: 0};
+      paintWheelFields();
+      commitNow();
+      setText('status', 'Центр колёс снова определяется автоматически.');
+      EditorView.draw();
+    });
     [['bodyX', (v) => { car().body.x = v; }], ['bodyY', (v) => { car().body.y = v; }],
      ['bodyScale', (v) => { car().body.scale = v || 1; }]].forEach(([id, fn]) => {
       $(id).addEventListener('input', () => {
@@ -1493,13 +1541,51 @@ const EditorApp = (() => {
       r.readAsText(f);
       e.target.value = '';
     };
-    $('bodyFile').onchange = (e) => {
-      const f = e.target.files[0]; if (!f) return;
-      const r = new FileReader();
-      r.onload = () => { car().bodyData = r.result; EditorView.clearCache(); commitNow(); };
-      r.readAsDataURL(f);
+    $('bodyFile').onchange = async (e) => {
+      const input = e.target;
+      const f = input.files[0];
+      if (!f) return;
+      const slot = carIndex;
+      const extByType = {'image/png': 'png', 'image/webp': 'webp', 'image/jpeg': 'jpg'};
+      const nameExt = (f.name.match(/\.([a-z0-9]+)$/i) || [])[1];
+      const ext = extByType[f.type] || String(nameExt || '').toLowerCase().replace('jpeg', 'jpg');
+      if (!['png', 'webp', 'jpg'].includes(ext) || f.size > 32 * 1024 * 1024) {
+        input.value = '';
+        showFileNote(false, 'Кузов', 'Файл не подходит', 'Нужен PNG, WebP или JPEG размером до 32 МБ.');
+        return;
+      }
+      input.disabled = true;
+      setText('status', 'Кузов загружается в папку mods…');
+      try {
+        const response = await fetch('/__save-car-body?slot=' + slot + '&ext=' + ext, {
+          method: 'POST', headers: {'content-type': f.type || 'application/octet-stream'}, body: f
+        });
+        const result = response.ok ? await response.json() : null;
+        if (!result || !result.src) throw new Error('upload failed');
+        const target = pack.cars[slot] || (pack.cars[slot] = EditorData.factory(slot));
+        target.bodySrc = result.src;
+        delete target.bodyData;
+        if (slot === carIndex) {
+          EditorView.clearCache();
+          commitNow();
+          showFileNote(true, 'Кузов', 'Кузов установлен', 'Файл сохранён в папку mods машины.');
+        } else {
+          persist(true);
+        }
+      } catch (err) {
+        showFileNote(false, 'Кузов', 'Не удалось загрузить', 'Проверьте формат файла и запуск через editor.bat.');
+      } finally {
+        input.disabled = false;
+        input.value = '';
+      }
     };
-    $('clearBody').onclick = () => { delete car().bodyData; EditorView.clearCache(); commitNow(); };
+    $('clearBody').onclick = () => {
+      delete car().bodySrc;
+      delete car().bodyData;
+      EditorView.clearCache();
+      commitNow();
+      setText('status', 'Вернули игровой кузов. Файл мода оставлен в папке mods.');
+    };
     if ($('resetBodyBtn')) $('resetBodyBtn').onclick = () => resetInspector();
     if ($('resetWheelsBtn')) $('resetWheelsBtn').onclick = () => resetInspector();
     if ($('resetNitroBtn')) $('resetNitroBtn').onclick = () => resetInspector();

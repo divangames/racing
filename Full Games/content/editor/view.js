@@ -7,7 +7,7 @@
 
 const EditorView = (() => {
   const ZMIN = 0.8, ZMAX = 80;
-  let canvas, ctx, sprite, getCar, getIndex, getWheel, setWheel, getNitro, setNitro;
+  let canvas, ctx, fallbackSprite, getCar, getIndex, getWheel, setWheel, getNitro, setNitro;
   let onChange, onSelect, onHover, onDragEnd, onZoom;
   const cam = {x: 0, y: 0, z: 10};
   let pendingFit = false;
@@ -39,7 +39,7 @@ const EditorView = (() => {
     onHover = opts.onHover;
     onDragEnd = opts.onDragEnd;
     onZoom = opts.onZoom;
-    sprite = imgChain([
+    fallbackSprite = imgChain([
       'assets/machines/wheels/wheel-strip.webp',
       'assets/machines/wheels/wheel-strip.png',
       'assets/machines/wheels/wheel-strip.svg'
@@ -247,6 +247,7 @@ const EditorView = (() => {
 
   /** Путь кузова или слоя брони: webp, затем png. */
   function bodySrcList(car, idx, armorLayer) {
+    if (!armorLayer && car.bodySrc) return [car.bodySrc];
     if (!armorLayer && car.bodyData) return [car.bodyData];
     const n = String((idx >= 0 ? idx : 0) + 1).padStart(2, '0');
     if (armorLayer) {
@@ -528,10 +529,13 @@ const EditorView = (() => {
     ctx.rotate(w[4] + (w[6] ? testSteer : 0));
     const frame = ((Math.floor(spin) % 8) + 8) % 8;
     ctx.imageSmoothingEnabled = true;
-    if (sprite && sprite.complete && sprite.naturalWidth) {
-      const srcW = sprite.naturalWidth / 8;
-      const srcH = sprite.naturalHeight;
-      ctx.drawImage(sprite, frame * srcW, 0, srcW, srcH, -dw / 2, -dh / 2, dw, dh);
+    const wheelSprite = window.RnRWheelSprites ? RnRWheelSprites.image(car.wheelStyle) : fallbackSprite;
+    if (window.RnRWheelSprites && RnRWheelSprites.draw(ctx, wheelSprite, frame, dw, dh, 8, car.wheelCenter)) {
+      // Общий рендер сам учитывает ось спрайт-листа и поворот кадра.
+    } else if (fallbackSprite && fallbackSprite.complete && fallbackSprite.naturalWidth) {
+      const srcW = fallbackSprite.naturalWidth / 8;
+      const srcH = fallbackSprite.naturalHeight;
+      ctx.drawImage(fallbackSprite, frame * srcW, 0, srcW, srcH, -dw / 2, -dh / 2, dw, dh);
     } else {
       ctx.fillStyle = '#111';
       ctx.fillRect(-dw / 2, -dh / 2, dw, dh);

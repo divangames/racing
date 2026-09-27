@@ -50,7 +50,9 @@ const FILES = [
   'assets/image/game-logo.webp',
   'assets/data/cats/Titles/titles.json',
   'assets/data/cats/Titles/title-medved_1920x1080.webp',
-  'assets/data/cats/Titles/title-medved_3440x1440.webp'
+  'assets/data/cats/Titles/title-medved_3440x1440.webp',
+  'assets/data/cats/Titles/title-bestya_1920x1080.png',
+  'assets/data/cats/Titles/title-bestya_3440x1440.png'
 ];
 
 /**

@@ -10,7 +10,28 @@ const EditorData = (() => {
   const KEY_BASE = KEY + '.base';
   const KEY_BACKUP = KEY + '.backup';
   const LEGACY_KEYS = ['rnr.carEditor.v1', 'rnr.carEditor.v1'];
-  const STOCK = 21;
+  const STOCK = 23;
+  const DEFAULT_WHEEL_STYLE = 'standard';
+
+  /** Нормализует тип колёс и остаётся совместимой с отдельными тестами данных. */
+  function normWheelStyle(value) {
+    if (typeof RnRWheelSprites !== 'undefined') return RnRWheelSprites.normalize(value);
+    return value === 'offroad' ? 'offroad' : DEFAULT_WHEEL_STYLE;
+  }
+
+  /** Ручная поправка центра кадра колеса в процентах от его размера. */
+  function normWheelCenter(value) {
+    const raw = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+    const clamp = (v) => Math.max(-100, Math.min(100, Number.isFinite(+v) ? +v : 0));
+    return {x: clamp(raw.x), y: clamp(raw.y)};
+  }
+
+  /** Принимает только сохранённый редактором кузов из папки mods машины. */
+  function normBodySrc(value) {
+    if (typeof value !== 'string') return '';
+    const src = value.trim().replace(/\\/g, '/');
+    return /^assets\/data\/cars\/\d{2}\/mods\/[a-z0-9._-]+\.(?:png|webp|jpe?g)$/i.test(src) ? src : '';
+  }
   const NAMES = [
     ['01', 'ГРЯЗЕВОЙ ДЬЯВОЛ'],
     ['02', 'V8 ПЕРЕХВАТЧИК'],
@@ -32,7 +53,9 @@ const EditorData = (() => {
     ['18', 'ПИКАП'],
     ['19', 'КУПЕ'],
     ['20', 'ФУРГОН'],
-    ['21', 'СКОРАЯ']
+    ['21', 'СКОРАЯ'],
+    ['22', 'МЬЁЛЬНИР'],
+    ['23', 'ФОРЕСТЕР']
   ];
   const STATS = [
     {name:'«ГРЯЗЕВОЙ ДЬЯВОЛ»',owner:0,price:0,top:0.98,acc:1.04,crn:1.08,hp:100,col:'#d24a22',col2:'#7e2a12',hov:false,traits:['КЛЫК: дробь в лоб, сильнее в упор','ПЕРЕГОВОРЫ: рывок с двойным тараном','РАМА: +20 корпуса, вседоход']},
@@ -55,7 +78,9 @@ const EditorData = (() => {
     {name:'«ПИКАП»',owner:null,price:1800,top:0.9,acc:0.88,crn:0.94,hp:122,col:'#4a6a38',col2:'#2a2018',hov:false,traits:['МАСЛО: лужа сзади','ОТКИД: конус сбрасывает с носа','ГРУЗ: тяжелее таран']},
     {name:'«КУПЕ»',owner:null,price:2200,top:1.04,acc:1.02,crn:0.98,hp:84,col:'#c42838',col2:'#1a1a22',hov:false,traits:['ФАРА: конус слепит','ОБГОН: короткий рывок хода','СЛИК: +6% топ на асфальте']},
     {name:'«ФУРГОН»',owner:null,price:2600,top:0.86,acc:0.84,crn:0.88,hp:136,col:'#5a6a88',col2:'#2a3040',hov:false,traits:['ДВЕРЬ: удар с борта','ШТОРКА: дым сбивает прицел','БУФЕР: первый удар круга −35%']},
-    {name:'«СКОРАЯ»',owner:null,price:3000,top:0.96,acc:0.97,crn:1.0,hp:108,col:'#f0e8e0',col2:'#c42838',hov:false,traits:['ШПРИЦ: дротик и яд хода','СИРЕНА: замедляет и слепит рядом','АПТЕЧКА: ключ даёт +14 корпуса']}
+    {name:'«СКОРАЯ»',owner:null,price:3000,top:0.96,acc:0.97,crn:1.0,hp:108,col:'#f0e8e0',col2:'#c42838',hov:false,traits:['ШПРИЦ: дротик и яд хода','СИРЕНА: замедляет и слепит рядом','АПТЕЧКА: ключ даёт +14 корпуса']},
+    {name:'«МЬЁЛЬНИР»',owner:13,price:0,top:1.12,acc:1.15,crn:1.20,hp:96,col:'#121318',col2:'#d6a91f',hov:false,traits:['ПУЛЕМЁТ: непрерывный огонь с перегревом','АГР: ближайшая цель принимает всех ботов на 10 секунд','ЧУТЬЁ: автоуклон и отскок таранящих']},
+    {name:'«ФОРЕСТЕР»',owner:12,price:0,top:0.95,acc:0.94,crn:0.96,hp:150,col:'#8b765e',col2:'#342f29',hov:false,traits:['ПУЛЕМЁТ: непрерывный огонь с перегревом','НАПРОЛОМ: +15% скорости, иммунитет к пулям и минам','ОТБОЙ: таранящие машины отскакивают']}
   ];
   const LAYOUTS = [
     [[-15.5,-11.4,12,4,0,1,0],[-15.5,11.4,12,4,0,1,0],[14.2,-11.4,12,4,0,1,1],[14.2,11.4,12,4,0,1,1]],
@@ -78,7 +103,9 @@ const EditorData = (() => {
     [[-18,-12.2,11,5.2,0,1,0],[-18,12.2,11,5.2,0,1,0],[16,-12.2,11,5.2,0,1,1],[16,12.2,11,5.2,0,1,1]],
     [[-15.5,-10.8,11,5,0,1,0],[-15.5,10.8,11,5,0,1,0],[16,-10.8,11,5,0,1,1],[16,10.8,11,5,0,1,1]],
     [[-17.5,-12.4,11,5.2,0,1,0],[-17.5,12.4,11,5.2,0,1,0],[15.5,-12.4,11,5.2,0,1,1],[15.5,12.4,11,5.2,0,1,1]],
-    [[-17,-11.6,11,5,0,1,0],[-17,11.6,11,5,0,1,0],[16.5,-11.6,11,5,0,1,1],[16.5,11.6,11,5,0,1,1]]
+    [[-17,-11.6,11,5,0,1,0],[-17,11.6,11,5,0,1,0],[16.5,-11.6,11,5,0,1,1],[16.5,11.6,11,5,0,1,1]],
+    [[-18,-10.8,11,5,0,1,0],[-18,10.8,11,5,0,1,0],[18,-10.8,11,5,0,1,1],[18,10.8,11,5,0,1,1]],
+    [[-25,-13.4,13,7,0,1,0],[-25,13.4,13,7,0,1,0],[24,-13.4,13,7,0,1,1],[24,13.4,13,7,0,1,1]]
   ];
   // Урал 07: колёса в арках спрайта (нос +X), не на кузове.
   const URAL_WHEELS = [
@@ -436,6 +463,8 @@ const EditorData = (() => {
     ensureStack(car);
     const out = {
       rev: car.rev || DISK_REV,
+      wheelStyle: normWheelStyle(car.wheelStyle),
+      wheelCenter: normWheelCenter(car.wheelCenter),
       body: clone(car.body),
       w: clone(car.w || []),
       nitro: clone(car.nitro || []),
@@ -448,6 +477,8 @@ const EditorData = (() => {
     };
     const lights = RnRCarLights.normalize(car.lights);
     if (lights) out.lights = lights;
+    const bodySrc = normBodySrc(car.bodySrc);
+    if (bodySrc) out.bodySrc = bodySrc;
     return out;
   }
 
@@ -494,6 +525,8 @@ const EditorData = (() => {
     ];
     const car = {
       custom: !stock,
+      wheelStyle: DEFAULT_WHEEL_STYLE,
+      wheelCenter: {x: 0, y: 0},
       body: {x: 0, y: 0, ax: 0, ay: 0, sx: 1, sy: 1, scale: stock && i === 6 ? 1.65 : (stock && i === 12 ? 0.86 : 1), armor: 0},
       w: wheels,
       nitro: defaultNitro(stock ? i : 3),
@@ -543,6 +576,9 @@ const EditorData = (() => {
     LAYERS.forEach((n) => { if (!layers.includes(n)) layers.push(n); if (vis[n] == null) vis[n] = true; });
     const out = Object.assign(base, saved, {
       body, visible: vis, stats, w: wheels, nitro, layers,
+      wheelStyle: normWheelStyle(saved.wheelStyle),
+      wheelCenter: normWheelCenter(saved.wheelCenter),
+      bodySrc: normBodySrc(saved.bodySrc) || undefined,
       audio: fileAudio(saved),
       rev: saved.rev != null ? saved.rev : (base.rev || DISK_REV)
     });
@@ -769,5 +805,5 @@ const EditorData = (() => {
     return b ? mergeCar(slot, b) : factory(slot);
   }
 
-  return {KEY, STOCK, NAMES, STATS, LAYERS, URAL_LAYERS, LAYER_RU, PILOTS, DISK_REV, clone, factory, mergeCar, load, save, indices, label, normWheel, restoreSteer, normJet, defaultNitro, defaultOwner, ownerOf, ensureStack, stackItemOn, cloneWheelLayer, cloneNitroLayer, reindexStack, appendWheel, appendNitro, syncVisibleFromStack, layerTitle, fileCar, fileAudio, diskAudio, hydrateFromDisk, pushDisk, saveAsBase, saveBackup, loadBaseCar, loadBackupCar, peekBase, folderId, revTime, refreshPilots};
+  return {KEY, STOCK, NAMES, STATS, LAYERS, URAL_LAYERS, LAYER_RU, PILOTS, DISK_REV, clone, factory, mergeCar, load, save, indices, label, normWheel, normWheelCenter, normBodySrc, restoreSteer, normJet, defaultNitro, defaultOwner, ownerOf, ensureStack, stackItemOn, cloneWheelLayer, cloneNitroLayer, reindexStack, appendWheel, appendNitro, syncVisibleFromStack, layerTitle, fileCar, fileAudio, diskAudio, hydrateFromDisk, pushDisk, saveAsBase, saveBackup, loadBaseCar, loadBackupCar, peekBase, folderId, revTime, refreshPilots};
 })();

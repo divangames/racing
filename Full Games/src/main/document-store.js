@@ -43,6 +43,12 @@ function validateTrack(track) {
 /** Проверяет структуру машины, сохраняя дополнительные поля редактора. */
 function validateCar(car) {
   if (!car || typeof car !== 'object' || Array.isArray(car) || !car.body || typeof car.body !== 'object') return 'Нет кузова машины';
+  if (car.wheelStyle != null && !['standard', 'offroad'].includes(car.wheelStyle)) return 'Неизвестный комплект колёс';
+  if (car.wheelCenter != null) {
+    if (!car.wheelCenter || typeof car.wheelCenter !== 'object' || Array.isArray(car.wheelCenter)) return 'Некорректный центр колёс';
+    if (!['x','y'].every(k => car.wheelCenter[k] == null || (Number.isFinite(car.wheelCenter[k]) && Math.abs(car.wheelCenter[k]) <= 100))) return 'Некорректный центр колёс';
+  }
+  if (car.bodySrc != null && (typeof car.bodySrc !== 'string' || !/^assets\/data\/cars\/\d{2}\/mods\/[a-z0-9._-]+\.(?:png|webp|jpe?g)$/i.test(car.bodySrc))) return 'Некорректный путь кузова';
   const lightError = require('../engine/car-lights').validate(car.lights);
   if (lightError) return lightError;
   if (!Array.isArray(car.w) || car.w.length > 64 || !car.w.every(validPoint)) return 'Некорректные колёса';

@@ -48,7 +48,11 @@ function makeFixture() {
     ['assets', 'sounds', 'cars', 'hit', 'A_Car_HitBody_02.WAV'],
     ['assets', 'sounds', 'cars', 'hit', 'A_Car_HitBody_03.WAV'],
     ['assets', 'sounds', 'cars', 'hit', 'A_Car_Land_01.WAV'],
-    ['assets', 'sounds', 'cars', 'hit', 'A_Car_Land_02.WAV']
+    ['assets', 'sounds', 'cars', 'hit', 'A_Car_Land_02.WAV'],
+    ['assets', 'sounds', 'cars', 'GearSwitch', 'GearSwitch_1.WAV'],
+    ['assets', 'sounds', 'cars', 'GearSwitch', 'GearSwitch_2.WAV'],
+    ['assets', 'sounds', 'cars', 'GearSwitch', 'GearSwitch_3.WAV'],
+    ['assets', 'sounds', 'cars', 'GearSwitch', 'GearSwitch_4.WAV']
   ];
   for (const parts of wavs) {
     const file = path.join(root, ...parts);
@@ -66,6 +70,8 @@ function makeFixture() {
   fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'titles.json'), '{}');
   fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-medved_1920x1080.webp'), 'hd');
   fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-medved_3440x1440.webp'), 'uw');
+  fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-bestya_1920x1080.png'), 'free-hd');
+  fs.writeFileSync(path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-bestya_3440x1440.png'), 'free-uw');
   return { root, client };
 }
 
@@ -95,6 +101,14 @@ test('Пакует store-zip без reference и markdown', () => {
   assert.ok(
     names.includes('assets/data/cats/Titles/title-medved_3440x1440.webp')
     || names.includes('assets\\data\\cats\\Titles\\title-medved_3440x1440.webp')
+  );
+  assert.ok(
+    names.includes('assets/data/cats/Titles/title-bestya_1920x1080.png')
+    || names.includes('assets\\data\\cats\\Titles\\title-bestya_1920x1080.png')
+  );
+  assert.ok(
+    names.includes('assets/data/cats/Titles/title-bestya_3440x1440.png')
+    || names.includes('assets\\data\\cats\\Titles\\title-bestya_3440x1440.png')
   );
   assert.equal(names.some((name) => name.endsWith('.md')), false);
   assert.equal(names.some((name) => /reference/i.test(name) && name.includes('photo')), false);

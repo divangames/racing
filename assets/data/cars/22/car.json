@@ -1,0 +1,245 @@
+{
+  "rev": 1790521550867,
+  "wheelStyle": "standard",
+  "wheelCenter": {
+    "x": 0,
+    "y": 0
+  },
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -17,
+      -10,
+      9.176690644693931,
+      5.3838657983983875,
+      0,
+      1,
+      0
+    ],
+    [
+      -17,
+      10,
+      9.773175536599036,
+      5.3838657983983875,
+      0,
+      1,
+      0
+    ],
+    [
+      14.5,
+      -10,
+      9.176690644693931,
+      5.3838657983983875,
+      0,
+      1,
+      1
+    ],
+    [
+      14.5,
+      10,
+      9.176690644693931,
+      5.3838657983983875,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -29,
+      -5,
+      9,
+      1.5
+    ],
+    [
+      -29,
+      -4,
+      9,
+      1.5
+    ],
+    [
+      -29.5,
+      -3,
+      9,
+      1.5
+    ],
+    [
+      -29,
+      5,
+      9,
+      1.5
+    ],
+    [
+      -29,
+      4,
+      9,
+      1.5
+    ],
+    [
+      -29,
+      3,
+      9,
+      1.5
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "nmujny3rn9f",
+      "type": "nitro",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "nmujnxqe815y",
+      "type": "nitro",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "nmujny9kd2y0",
+      "type": "nitro",
+      "on": true,
+      "ref": 4
+    },
+    {
+      "id": "nmujnyawz1ft",
+      "type": "nitro",
+      "on": true,
+      "ref": 5
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«BMW M3 БЕСТИИ»",
+    "owner": 13,
+    "price": 0,
+    "top": 1.12,
+    "acc": 1.15,
+    "crn": 1.2,
+    "hp": 96,
+    "col": "#121318",
+    "col2": "#d6a91f",
+    "hov": false,
+    "traits": [
+      "МЕТКА: цель получает больше урона",
+      "ИСЧЕЗНОВЕНИЕ: невидимость и проход сквозь контакт",
+      "ТЕНЬ: противники теряют захват цели"
+    ]
+  },
+  "owner": 13,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "",
+    "wep": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  },
+  "lights": {
+    "head": [
+      [
+        23.5,
+        -7
+      ],
+      [
+        24.5,
+        7.5
+      ]
+    ],
+    "brake": [
+      [
+        -24.5,
+        -6.5
+      ],
+      [
+        -24.5,
+        6.5
+      ]
+    ]
+  }
+}

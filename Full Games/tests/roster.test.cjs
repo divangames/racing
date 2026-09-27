@@ -44,9 +44,12 @@ test('Заезд подключает roster и training до кадра', () =>
 
 test('Карточки пилотов и потолок стата до пяти', () => {
   const g = bootRoster();
-  const lay = g.DiVANEngine.roster.charCardLayout(1280, 4, 12);
-  assert.equal(lay.cw, 248);
-  assert.equal(lay.x0, 126);
+  const lay = g.DiVANEngine.roster.charCardLayout(1280, 7, 18);
+  assert.equal(lay.cardsInView, 4.5);
+  assert(Math.abs(lay.cw * 4.5 + 18 * 4 - lay.clipW) < 1e-9);
+  assert.equal(lay.pitch, lay.cw + 18);
+  assert.equal(g.DiVANEngine.roster.charWrapDelta(0, 6, 7), -1);
+  assert.equal(g.DiVANEngine.roster.charWrapDelta(6, 0, 7), 1);
   assert.equal(g.DiVANEngine.training.GYM_KEYS.join(','), 'spd,crn,grt');
   assert.equal(g.DiVANEngine.training.gymMaxAdd(2), 3);
   assert.equal(g.DiVANEngine.training.gymMaxAdd(5), 0);

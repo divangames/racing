@@ -8,11 +8,15 @@ function stepVehicleEngine(r,th,steer,dt,hb){
  if(!Number.isFinite(dt)||dt<=0)return;
  th=Number.isFinite(th)?clamp(th,-1,1):0;
  steer=Number.isFinite(steer)?clamp(steer,-1,1):0;
+ const foresterCharge=r.car&&r.car.idx===22&&(r.foresterCharge||0)>0;
+ if(foresterCharge){th=1;steer=0;hb=false;r.steerFlt=0;}
+ r._engineThrottle=th;
  const S=R.S,p=S[r.trackIdx];
  const inGap=typeof inTrackGap==='function'&&R.T&&inTrackGap(R.T,(r.trackIdx||0)/R.N);
  const off=!r.air&&(inGap||Math.hypot(r.x-p.x,r.y-p.y)>ROADW);
  let mult=1;if(r.bolt>0)mult*=1.3;
  if(r.nitro>0)mult*=(r.car.idx===1?1.6:1.45);
+ if(foresterCharge)mult*=1.15;
  mult=Math.min(mult,1.6);
  let top=r.st.top*(off?r.st.off:1)*mult;
  if(typeof kitAsphaltMul==='function')top*=kitAsphaltMul(r,off);
@@ -81,7 +85,12 @@ function stepVehicleEngine(r,th,steer,dt,hb){
    else long=Math.max(-top*.35,long+acc*.42*th*dt);
   }
  }
- if(r.finished)long*=Math.exp(-0.48*dt);
+ if(r.finished){
+  long*=Math.exp(-0.48*dt);
+  // После фиксации результата тормоз может остановить машину, но уже не
+  // включает заднюю передачу — ни от ввода, ни от finishDrive, ни от удара.
+  if(long<=0){long=0;r._reverseHold=0;}
+ }
  ////////////////////////////////////////////////////////
  //
  // Вираж: руль догоняет вход, кузов кренится; «Поворот» острит

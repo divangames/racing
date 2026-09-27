@@ -1,0 +1,221 @@
+{
+  "rev": 1790516848200,
+  "wheelStyle": "offroad",
+  "wheelCenter": {
+    "x": 0,
+    "y": 0
+  },
+  "body": {
+    "x": 0,
+    "y": 0,
+    "ax": 0,
+    "ay": 0,
+    "sx": 1,
+    "sy": 1,
+    "scale": 1,
+    "armor": 0
+  },
+  "w": [
+    [
+      -18.5,
+      -10,
+      12.28735802473767,
+      7.054078196453937,
+      0,
+      1,
+      0
+    ],
+    [
+      -18.5,
+      10,
+      12.28735802473767,
+      7.054078196453937,
+      0,
+      1,
+      0
+    ],
+    [
+      17.5,
+      -10.5,
+      12.28735802473767,
+      5.8590044847234966,
+      0,
+      1,
+      1
+    ],
+    [
+      17.5,
+      10.5,
+      11.55011654325341,
+      5.8590044847234966,
+      0,
+      1,
+      1
+    ]
+  ],
+  "nitro": [
+    [
+      -27,
+      -7.5,
+      9,
+      1.5
+    ],
+    [
+      -28,
+      5,
+      9,
+      1.5
+    ],
+    [
+      -28,
+      -4.5,
+      9,
+      1.5
+    ],
+    [
+      -27,
+      8,
+      9,
+      1.5
+    ]
+  ],
+  "stack": [
+    {
+      "id": "shadow",
+      "type": "shadow",
+      "on": true
+    },
+    {
+      "id": "w0",
+      "type": "wheel",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "w1",
+      "type": "wheel",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "w2",
+      "type": "wheel",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "w3",
+      "type": "wheel",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "n0",
+      "type": "nitro",
+      "on": true,
+      "ref": 0
+    },
+    {
+      "id": "nmujsxxc3u1",
+      "type": "nitro",
+      "on": true,
+      "ref": 2
+    },
+    {
+      "id": "n1",
+      "type": "nitro",
+      "on": true,
+      "ref": 1
+    },
+    {
+      "id": "nmujsy92f2f6",
+      "type": "nitro",
+      "on": true,
+      "ref": 3
+    },
+    {
+      "id": "body",
+      "type": "body",
+      "on": true
+    },
+    {
+      "id": "armor",
+      "type": "armor",
+      "on": true
+    },
+    {
+      "id": "guides",
+      "type": "guides",
+      "on": true
+    }
+  ],
+  "stats": {
+    "name": "«ФОРЕСТЕР»",
+    "owner": 12,
+    "price": 0,
+    "top": 0.95,
+    "acc": 0.94,
+    "crn": 0.96,
+    "hp": 150,
+    "col": "#8b765e",
+    "col2": "#342f29",
+    "hov": false,
+    "traits": [
+      "ШОКЕР: срывает нитро и добивает броню",
+      "ОБЛАВА: глушит и помечает машины рядом",
+      "БИГФУТ: усиленный таран и защита от тарана"
+    ]
+  },
+  "owner": 12,
+  "visible": {
+    "shadow": true,
+    "wheels": true,
+    "nitro": true,
+    "body": true,
+    "armor": true,
+    "guides": true
+  },
+  "layers": [
+    "shadow",
+    "wheels",
+    "nitro",
+    "body",
+    "armor",
+    "guides"
+  ],
+  "audio": {
+    "engine": "",
+    "wep": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    },
+    "ult": {
+      "pack": "",
+      "near": "",
+      "far": ""
+    }
+  },
+  "lights": {
+    "head": [
+      [
+        23.5,
+        -7.5
+      ],
+      [
+        24,
+        7.5
+      ]
+    ],
+    "brake": [
+      [
+        -25,
+        -7
+      ],
+      [
+        -24.5,
+        7.5
+      ]
+    ]
+  }
+}

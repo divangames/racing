@@ -10,6 +10,8 @@ const disclaimer = path.join(root, 'assets', 'ui', 'disclaimer', 'disclaimer-21p
 const titleJson = path.join(root, 'assets', 'data', 'cats', 'Titles', 'titles.json');
 const titleHd = path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-medved_1920x1080.webp');
 const titleUw = path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-medved_3440x1440.webp');
+const freeTitleHd = path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-bestya_1920x1080.png');
+const freeTitleUw = path.join(root, 'assets', 'data', 'cats', 'Titles', 'title-bestya_3440x1440.png');
 
 if (!fs.existsSync(carsRoot) || !fs.existsSync(soundsRoot)) {
   throw new Error('Нет папок настроек машин или звуков: ' + root);
@@ -17,7 +19,8 @@ if (!fs.existsSync(carsRoot) || !fs.existsSync(soundsRoot)) {
 if (!fs.existsSync(disclaimer)) {
   throw new Error('Нет дисклеймера 21+: ' + disclaimer);
 }
-if (!fs.existsSync(titleJson) || !fs.existsSync(titleHd) || !fs.existsSync(titleUw)) {
+if (!fs.existsSync(titleJson) || !fs.existsSync(titleHd) || !fs.existsSync(titleUw)
+    || !fs.existsSync(freeTitleHd) || !fs.existsSync(freeTitleUw)) {
   throw new Error('Нет фонов титула: ' + path.join(root, 'assets', 'data', 'cats', 'Titles'));
 }
 

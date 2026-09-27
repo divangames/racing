@@ -97,6 +97,7 @@
       const hit = obbOverlap(carObb(a), carObb(b));
       if (!hit) continue;
       const impact = resolvePair(a, b, hit);
+      if (impact && typeof kitMidCollisionRebound === 'function') kitMidCollisionRebound(a, b, impact);
       if (impact) contactFeedback(a, b, impact, !!(a.finished || b.finished));
     }
     for (let i = R.shots.length - 1; i >= 0; i--) {
@@ -151,7 +152,7 @@
       if (m.dead) continue;
       if (m.arm > 0) continue;
       for (const r of R.racers) {
-        if (r.dead || r.air || r.finished || (r.car.idx === 5 && r.cloak > 0)) continue;
+        if (r.dead || r.air || r.finished || (r.car.idx === 5 && r.cloak > 0) || (r.car.idx === 22 && r.foresterCharge > 0)) continue;
         if (m.owner === r && m.life != null && m.life > 9) continue;
         if (!pointInObb(m.x, m.y, carObb(r))) continue;
         if (r.chIdx === 3) {

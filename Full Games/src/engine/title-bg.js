@@ -15,8 +15,10 @@
   const BURN_ZOOM = 0.018;
   const ASPECT_W = 10;
   const DEFAULT_PLATES = [
-    { file: 'title-medved_1920x1080.webp', w: 1920, h: 1080, focusX: 0.64, focusY: 0.46 },
-    { file: 'title-medved_3440x1440.webp', w: 3440, h: 1440, focusX: 0.56, focusY: 0.47 }
+    { file: 'title-medved_1920x1080.webp', w: 1920, h: 1080, focusX: 0.64, focusY: 0.46, menu: 'main' },
+    { file: 'title-medved_3440x1440.webp', w: 3440, h: 1440, focusX: 0.56, focusY: 0.47, menu: 'main' },
+    { file: 'title-bestya_1920x1080.png', w: 1920, h: 1080, focusX: 0.5, focusY: 0.5, menu: 'free' },
+    { file: 'title-bestya_3440x1440.png', w: 3440, h: 1440, focusX: 0.5, focusY: 0.5, menu: 'free' }
   ];
 
   let plates = DEFAULT_PLATES.slice();
@@ -56,6 +58,7 @@
     if (!(w > 0 && h > 0)) return null;
     const fx = +raw.focusX;
     const fy = +raw.focusY;
+    const inferredMenu = /bestya/i.test(file) ? 'free' : 'main';
     return {
       file: file,
       src: TITLE_BG_DIR + file,
@@ -63,16 +66,24 @@
       h: h,
       aspect: w / h,
       focusX: fx >= 0 && fx <= 1 ? fx : 0.5,
-      focusY: fy >= 0 && fy <= 1 ? fy : 0.5
+      focusY: fy >= 0 && fy <= 1 ? fy : 0.5,
+      menu: raw.menu === 'free' ? 'free' : (raw.menu === 'main' ? 'main' : inferredMenu)
     };
   }
 
-  /** Каталог с путями. @returns {object[]} */
-  function plateList() {
+  /** Какое меню сейчас на титуле. @returns {'main'|'free'} */
+  function titleMenuKind() {
+    const menu = global.DiVANEngine && global.DiVANEngine.titleMenu;
+    return menu && typeof menu.isFreeMenu === 'function' && menu.isFreeMenu() ? 'free' : 'main';
+  }
+
+  /** Каталог с путями для нужного меню. @param {'main'|'free'} [kind] @returns {object[]} */
+  function plateList(kind) {
+    const want = kind || titleMenuKind();
     const out = [];
     for (let i = 0; i < plates.length; i++) {
       const p = normalizePlate(plates[i]);
-      if (p) out.push(p);
+      if (p && p.menu === want) out.push(p);
     }
     return out;
   }
@@ -169,7 +180,7 @@
     const want = aspect == null ? screen.aspect : aspect;
     const cw = canvasW == null ? screen.w : canvasW;
     const ch = canvasH == null ? screen.h : canvasH;
-    const list = plateList();
+    const list = plateList(titleMenuKind());
     let best = TITLE_BG_FALLBACK;
     let bestS = Infinity;
     for (let i = 0; i < list.length; i++) {
@@ -185,7 +196,7 @@
 
   /** Карточка кадра по пути. @param {string} src @returns {object|null} */
   function plateBySrc(src) {
-    const list = plateList();
+    const list = plateList(/bestya/i.test(src) ? 'free' : 'main');
     for (let i = 0; i < list.length; i++) {
       if (list[i].src === src) return list[i];
     }
@@ -266,7 +277,7 @@
     if (restQueued) return;
     restQueued = true;
     const run = function () {
-      const list = plateList();
+      const list = plateList('main').concat(plateList('free'));
       for (let i = 0; i < list.length; i++) queueTitleImage(list[i].src);
       queueTitleImage(TITLE_BG_FALLBACK);
     };
@@ -281,10 +292,16 @@
    */
   function applyManifest(data) {
     if (!data || !Array.isArray(data.plates) || !data.plates.length) return;
-    const next = [];
+    const next = DEFAULT_PLATES.slice();
     for (let i = 0; i < data.plates.length; i++) {
       const p = normalizePlate(data.plates[i]);
-      if (p) next.push(p);
+      if (!p) continue;
+      let replaced = false;
+      for (let j = 0; j < next.length; j++) {
+        const known = normalizePlate(next[j]);
+        if (known && known.file === p.file) { next[j] = p; replaced = true; break; }
+      }
+      if (!replaced) next.push(p);
     }
     if (next.length) plates = next;
   }

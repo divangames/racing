@@ -335,6 +335,7 @@ function kitRamOut(r){
  if(r.car.idx===0)m=2;
  if(r.car.idx===4)m=3;
  if(r.car.idx===17)m=1.22;
+ if(r.car.idx===22&&r.foresterCharge>0)m=2.4;
  if(r.dash>0)m*=1.15;
  if(r.berserk>0)m*=1.45;
  return m;
@@ -343,6 +344,7 @@ function kitRamOut(r){
 /** Множитель входящего тарана. */
 function kitRamIn(r){
  if(r.car.idx===0||r.car.idx===4)return .5;
+ if(r.car.idx===22&&r.foresterCharge>0)return .65;
  return 1;
 }
 
@@ -354,6 +356,7 @@ function kitGhost(r){return (r.ghost||0)>0;}
 
 /** Попадание снаряда: плазма замедляет, гаубица рвётся. */
 function kitOnShotHit(s,victim){
+ if(victim.car&&victim.car.idx===22&&victim.foresterCharge>0)return;
  if(s.plasma)victim.slow=Math.max(victim.slow||0,1.35);
  if(s.mortar)kitMortarBoom(s.x,s.y,s.dmg,s.r,s.mrad);
  if(typeof kitStarterShotHit==='function')kitStarterShotHit(s,victim);
@@ -395,5 +398,7 @@ function kitShotStyle(s){
  if(s.meter)return{fill:'#e8c428',core:'#fff',w:12,h:4};
  if(s.oilcan)return{fill:'#3a3020',core:'#6a5a38',w:12,h:8};
  if(s.dart)return{fill:'#c42838',core:'#fff',w:10,h:3};
+ if(s.intel)return{fill:'#e0b229',core:'#fff4a8',w:11,h:3};
+ if(s.breaker)return{fill:'#d28a42',core:'#dff4ff',w:16,h:4};
  return{fill:'#ffd23f',core:'#fff',w:16,h:4};
 }

@@ -1,13 +1,13 @@
 {
   "id": "kolesnica-voyny",
-  "version": "0.2.2.19",
-  "created": "2026-09-27T05:04:02.684Z",
+  "version": "0.2.2.20",
+  "created": "2026-09-27T13:38:38.884Z",
   "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
   "files": [
     {
       "path": "rnr.html",
-      "size": 391662,
-      "sha256": "ce2d06849787c79c64ddb12fa61e4b0cf40862ab8a13f8e567898fe60e103749"
+      "size": 393652,
+      "sha256": "79cc3a3e8e043a564d6bd44878508e85429bf8375c2cd9e1e602df3114aaabad"
     },
     {
       "path": "career.js",
@@ -16,8 +16,8 @@
     },
     {
       "path": "chars.js",
-      "size": 8712,
-      "sha256": "2e89d5156df9df568923bba3aff6de3be2c3787fa092b7c909d23ca1d742fe1b"
+      "size": 10699,
+      "sha256": "f4e116aeb6d8ec0be0a87a2cba4eb267d28bee02db5f365ab09c48fa868de2d7"
     },
     {
       "path": "music.js",
@@ -66,8 +66,8 @@
     },
     {
       "path": "combat-kits.js",
-      "size": 16060,
-      "sha256": "a001eda18d200540bd8f57a0fbb56b50e300091b868bcfd85adbb8196291e9ee"
+      "size": 16298,
+      "sha256": "e8620ec9d9a9e38d4b07e01c9bedd1cdc6a2eaeea99bd56b1f8321b07444b9c5"
     },
     {
       "path": "starter-kits.js",
@@ -76,8 +76,8 @@
     },
     {
       "path": "mid-kits.js",
-      "size": 7854,
-      "sha256": "e3665d38e5167cddeaf5d10cbe25806b53b95439daf8e5c84211910f78d58426"
+      "size": 9655,
+      "sha256": "b123fea58683334d0fa29963ff666aee86b66745eae1c751b07be711c2e0d0d9"
     },
     {
       "path": "world-intro.js",
@@ -170,109 +170,129 @@
       "sha256": "44c3d81e79824b609241b931e8fe248c81bdf95e268a654ef2073b25ece61d7f"
     },
     {
+      "path": "assets/data/cats/Titles/title-bestya_1920x1080.png",
+      "size": 2903706,
+      "sha256": "e12e8db0ccdaa49c10ae312f81b6c8919b501f2706517436a4cc273334499fb3"
+    },
+    {
+      "path": "assets/data/cats/Titles/title-bestya_3440x1440.png",
+      "size": 2841000,
+      "sha256": "c085a1a29dcd2ff4c0ec3b459712f054ade83fb6067749892131fb3e863e1243"
+    },
+    {
       "path": "assets/data/cars/01/car.json",
-      "size": 2936,
-      "sha256": "1880a1984d694bead1f02a22dd8849534fea72080455ae271229807a18a5e28a"
+      "size": 3022,
+      "sha256": "9467f907639ac42dc31c904dd67365332e81b8062f4f4e71db372fd7293ed5a9"
     },
     {
       "path": "assets/data/cars/02/car.json",
-      "size": 2341,
-      "sha256": "f12499027bc83f41b6f4dfc404be8192adeb1fc0a0892fa807520e4e677e9abd"
+      "size": 2493,
+      "sha256": "df655e7c6ce3696fbf8d666bd7f057bff969f74626825b458d5e12e32603c9d5"
     },
     {
       "path": "assets/data/cars/03/car.json",
-      "size": 2476,
-      "sha256": "ae2bda248d0b674e55fcd41dd6a1ce6bb65fcc8baf8e6a2bf935584b32c7d179"
+      "size": 2730,
+      "sha256": "f7d73131a6686121106214716dad767e5b67b796095fcfc93c4a265898aee595"
     },
     {
       "path": "assets/data/cars/04/car.json",
-      "size": 1772,
-      "sha256": "78c255c53273937d9a7624e7e4520de4f914beeae3e8fb4f0c7ecd701016d806"
+      "size": 2029,
+      "sha256": "3028f033746fdffe3d6f8100af57e0820cb1f3b66789c1a009604cc176be7c19"
     },
     {
       "path": "assets/data/cars/05/car.json",
-      "size": 2361,
-      "sha256": "8046f0b0bbbe1cb41ec8cd9a4ce7c0c9c1b868d1188f37c64f277657c2bc91af"
+      "size": 2744,
+      "sha256": "25dcf2c2050dfb4a5d59e371a2079de470a83c36a5454182f392f93858d0bd75"
     },
     {
       "path": "assets/data/cars/06/car.json",
-      "size": 2359,
-      "sha256": "b6cbe5473648562d63af7ac3a7dc2531b7a4a2a1d9fa9501026bd430e7a6f381"
+      "size": 2533,
+      "sha256": "3c1f9e42907741dcda16dd100ee50ff0c667d0cce645c6c6573f9514eaa6c183"
     },
     {
       "path": "assets/data/cars/07/car.json",
-      "size": 2886,
-      "sha256": "361b607ead3e38e460a415f0d9565edadfc497992e1a0ea77c3c002e0c76932a"
+      "size": 3158,
+      "sha256": "7b1b1c5af445802b2bc421ace9b0f109545da4b6c132ac24bf7792ecd5bc41cc"
     },
     {
       "path": "assets/data/cars/08/car.json",
-      "size": 2473,
-      "sha256": "594024f1fc069bf564da1da425f81a195b830acb22be9e6768bd35a88e728e42"
+      "size": 2722,
+      "sha256": "af05757fb9fafbf89d0f76ecaad554448b1850ce82133c36dd278f22a3ab1e53"
     },
     {
       "path": "assets/data/cars/09/car.json",
-      "size": 2713,
-      "sha256": "045c7b01357c6d488773f32d45bcae9c3d4565363ec923e14ba572b53bca1c13"
+      "size": 2988,
+      "sha256": "52dc5514f5846d6d38fee2e402bad34f554dc3c4e285fa7dab20e8341c0b96bc"
     },
     {
       "path": "assets/data/cars/10/car.json",
-      "size": 2561,
-      "sha256": "2ffe0c4bc115f5dd20db4ff1cc43b08f23142efbe4e37f7f5e45528f8a2826a4"
+      "size": 2832,
+      "sha256": "3706a0c075d45946e917a60c5ad399bc0b351b64780e2abea267e68f7e0b6b7a"
     },
     {
       "path": "assets/data/cars/11/car.json",
-      "size": 2423,
-      "sha256": "ab164c1d2e39127f55bab922f1e322878ea68f660844e0da81a58daeffd7766f"
+      "size": 2507,
+      "sha256": "c1405a2a4c9aa413706a79c3566ba0a40bf75eddaf519f7c01304e2b8a68004b"
     },
     {
       "path": "assets/data/cars/12/car.json",
-      "size": 2349,
-      "sha256": "93b3ce6bcea94d2875e93e061ca05ca107c1d321679c2d064e60209f276f47c3"
+      "size": 2473,
+      "sha256": "f33ebfb4feebeff347056ed2fc6bf780c7744219e6353a39cf36fa358686c14a"
     },
     {
       "path": "assets/data/cars/13/car.json",
-      "size": 2719,
-      "sha256": "c15e9ac87e9f8f61857828685f67885dad7c096f7249317368be0132c65a0e44"
+      "size": 3156,
+      "sha256": "9fd94f752cda45fa5b30a155665748679ba147d6a99f0a31fd52b2cf4addd7f6"
     },
     {
       "path": "assets/data/cars/14/car.json",
-      "size": 2378,
-      "sha256": "af87a8b9cb59c4fab2f1a3996579f29a8161678ed9dddafdc2b79fc108023706"
+      "size": 2696,
+      "sha256": "ba08721c71eb0b996dcc8f14cf2ba0b714ccf2d515e0081eada5ee55d96b51f0"
     },
     {
       "path": "assets/data/cars/15/car.json",
-      "size": 2375,
-      "sha256": "47f77bf61145585fab74350b1ccf04be2a8910969869d2bccec9a9e685b62773"
+      "size": 2743,
+      "sha256": "280499af8ef5f0803a4c3693ead1933e29aea3dbe8a50d3f1ef5d3294ee04ef6"
     },
     {
       "path": "assets/data/cars/16/car.json",
-      "size": 2650,
-      "sha256": "df9d07a1d8500bd3cfebb48162ebe38a75b82328287803af23dc524b3f742021"
+      "size": 3091,
+      "sha256": "5a9c11255cb3d22451aa203a2ef93c0eace773ffa38e344c0312c6dfdc9654f5"
     },
     {
       "path": "assets/data/cars/17/car.json",
-      "size": 2565,
-      "sha256": "1e578dbe9943515b050a940397285d0a4fe60d6a21c6d7d0f6aab825f2336a68"
+      "size": 2886,
+      "sha256": "95a2374d38b74a07b26f0a9e59f9c3e2f038bec4dce658318ca47a0583e2dc92"
     },
     {
       "path": "assets/data/cars/18/car.json",
-      "size": 2564,
-      "sha256": "7e8de68ecbee20844be25640410af41776a72b2fcab93e38b3e90b2eb8189fde"
+      "size": 2840,
+      "sha256": "4cb718c9b739bec03b337009791f56efe97c894dda7147d78770a98d541b6d59"
     },
     {
       "path": "assets/data/cars/19/car.json",
-      "size": 2534,
-      "sha256": "c5fec84218f153bb6ad27dc30d1363fd734deaea05611dac477d72fbb793dfdf"
+      "size": 2819,
+      "sha256": "525375bba7c09b651e5222d4cdfc0222954bbc7be8c960f1bdc238d19360c1c0"
     },
     {
       "path": "assets/data/cars/20/car.json",
-      "size": 2535,
-      "sha256": "956eb29d5ba1f36429fddaafe198512a7f8a5648142a2fb6ef75e2d595a797ec"
+      "size": 2871,
+      "sha256": "013b5248adc87edf1e8476750fcd730a37b3194843d66c4e260745ef18cc8a0a"
     },
     {
       "path": "assets/data/cars/21/car.json",
-      "size": 2615,
-      "sha256": "78a9879d82f8de1a5229d827ad470c6c1659104461a22c1905583db02d2d5cfe"
+      "size": 2917,
+      "sha256": "235563ddf89a0369c869bf54b1d16beffc9afa87d2654dc187236407cd5af894"
+    },
+    {
+      "path": "assets/data/cars/22/car.json",
+      "size": 3344,
+      "sha256": "1be3a78e633749ef1bfffe985e9da281ad67fcb9acdac2e639a517f14745de42"
+    },
+    {
+      "path": "assets/data/cars/23/car.json",
+      "size": 3094,
+      "sha256": "0a2f481fabea1b9cdfbc4b52c48470119393343fca4b0c91879d100469ea3221"
     }
   ]
 }
