@@ -1260,7 +1260,7 @@ const EditorView = (() => {
     }, {passive: false});
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('keydown', (e) => {
-      if (!canvasLive() || window.__labTab === 'map') return;
+      if (!canvasLive() || window.__labTab !== 'car') return;
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
       if (e.ctrlKey || e.metaKey) return;
       const car = getCar();

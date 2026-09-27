@@ -186,7 +186,7 @@ window.RnRTracks = (() => {
 
   ////////////////////////////////////////////////////////
   //
-  // Глава 1: тёмная арена, широкие петли без развязок.
+  // Глава 1: тёмная арена, перекрёстки и эстакады.
   //
   ////////////////////////////////////////////////////////
 
@@ -265,11 +265,24 @@ window.RnRTracks = (() => {
   }
 
   const ARENA_THEME = Object.assign({}, THEMES.find(function (t) { return t.id === 'arena'; }), {weather: 'clear'});
+  const ARENA_LAYOUTS = [
+    {name: 'КЛЕВЕР ПОЛУНОЧИ', layout: 0, warp: [0.88, 0.86, 0]},
+    {name: 'ВОСЬМЁРКА ГРОМА', layout: 1, warp: [0.82, 0.82, 0.08]},
+    {name: 'ТУРБИНА ЖЕЛЕЗА', layout: 2, warp: [0.86, 0.88, -0.06]},
+    {name: 'РАЗВЯЗКА ПАЛАЧА', layout: 0, warp: [0.94, 0.76, 0.32]},
+    {name: 'МОСТЫ ЯРОСТИ', layout: 1, warp: [0.9, 0.72, -0.36]},
+    {name: 'ТРИ ПЕТЛИ', layout: 2, warp: [0.78, 0.96, 0.24]},
+    {name: 'КЛЕТКА КРЕСТА', layout: 0, warp: [0.8, 0.94, -0.28]},
+    {name: 'ЭСТАКАДА БОЙНИ', layout: 1, warp: [0.76, 0.9, 0.48]},
+    {name: 'РОТОР АРЕНЫ', layout: 2, warp: [0.98, 0.74, -0.42]},
+    {name: 'ДЕСЯТЫЙ ЯРУС', layout: 1, warp: [0.96, 0.84, 0.62]}
+  ];
   const CHAPTER_PACKS = [
     {
       chapter: 1,
       id: 'ch1_arena',
-      title: 'Глава 1 · Арена',
+      title: 'Глава 1 · Арена А',
+      raceClass: 'A',
       tracks: [
         {name: 'НОЧНОЙ ОВАЛ', cps: easyLoop(1120, 640, 24), zones: [{from: 0, to: 1, material: 'asphalt'}]},
         {name: 'ЧАША ПЫЛИ', cps: easyLoop(880, 760, 24, 0.12), zones: [{from: 0, to: .55, material: 'asphalt'}, {from: .55, to: 1, material: 'dirt'}]},
@@ -282,6 +295,22 @@ window.RnRTracks = (() => {
         {name: 'ТРИОВАЛ КЛЕТОК', cps: easyTriOval(), zones: [{from: 0, to: 1, material: 'asphalt'}]},
         {name: 'КОНТУР БОЙНИ', cps: easyLoop(1000, 680, 28, -0.22, 0.08, 0, 0.07), zones: [{from: 0, to: .62, material: 'asphalt'}, {from: .62, to: 1, material: 'sand'}]}
       ]
+    },
+    {
+      chapter: 1,
+      id: 'ch1_arena_b',
+      title: 'Глава 1 · Арена Б',
+      raceClass: 'B',
+      tracks: ARENA_LAYOUTS.map(function (tr, i) {
+        const w = tr.warp;
+        return {
+          name: tr.name,
+          cps: warpCps(LAYOUTS[tr.layout](), w[0], w[1], w[2]),
+          zones: i % 3 === 0
+            ? [{from: 0, to: .58, material: 'asphalt'}, {from: .58, to: 1, material: 'dirt'}]
+            : [{from: 0, to: 1, material: 'asphalt'}]
+        };
+      })
     }
   ];
 
@@ -294,6 +323,7 @@ window.RnRTracks = (() => {
         chapter: pack.chapter,
         chapterId: pack.id,
         chapterTitle: pack.title,
+        raceClass: pack.raceClass || '',
         id: pack.id + '_' + String(i + 1).padStart(2, '0'),
         theme: Object.assign({}, ARENA_THEME),
         zones: tr.zones,
@@ -324,7 +354,7 @@ window.RnRTracks = (() => {
    * @param {number} [chapter]
    * @returns {object[]}
    */
-  function chapterTracks(chapter) {
+  function chapterTracks(chapter, raceClass) {
     const byId = Object.create(null);
     CHAPTER_TRACKS.forEach(function (t) { byId[t.id] = t; });
     Object.keys(chapterOverride).forEach(function (id) {
@@ -332,8 +362,10 @@ window.RnRTracks = (() => {
       if (t && t.cps && t.cps.length >= 4) byId[id] = t;
     });
     const list = Object.keys(byId).sort().map(function (id) { return byId[id]; });
-    if (chapter == null) return list.slice();
-    return list.filter(function (t) { return t.chapter === chapter; });
+    return list.filter(function (t) {
+      if (chapter != null && t.chapter !== chapter) return false;
+      return !raceClass || t.raceClass === raceClass;
+    });
   }
 
   /**
@@ -342,7 +374,7 @@ window.RnRTracks = (() => {
    */
   function chapterPacks() {
     return CHAPTER_PACKS.map(function (p) {
-      return {chapter: p.chapter, id: p.id, title: p.title, count: p.tracks.length};
+      return {chapter: p.chapter, id: p.id, title: p.title, raceClass: p.raceClass || '', count: p.tracks.length};
     });
   }
 
@@ -476,7 +508,9 @@ window.RnRTracks = (() => {
         ? {x: +src.start.x, y: +src.start.y, ang: +src.start.ang || 0}
         : null;
     } else {
-      start = startFromCps(cps);
+      // Старые арены Б начинались с первой контрольной точки, которая у
+      // восьмёрок и турбин лежит прямо в узле пересечения.
+      start = /^ch1_arena_b_/i.test(String(src.id || '')) ? null : startFromCps(cps);
     }
     const hz = src.hazards && typeof src.hazards === 'object' ? src.hazards : {};
     const pt = (a) => Array.isArray(a)
@@ -502,6 +536,8 @@ window.RnRTracks = (() => {
       chapter,
       chapterId: src.chapterId ? String(src.chapterId) : (isChapter ? id.replace(/_\d+$/, '') : ''),
       chapterTitle: src.chapterTitle ? String(src.chapterTitle) : '',
+      raceClass: src.raceClass === 'B' || /^ch1_arena_b_/.test(id) ? 'B'
+        : (src.raceClass === 'A' || /^ch1_arena_/.test(id) ? 'A' : ''),
       theme,
       zones,
       gaps,

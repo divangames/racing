@@ -1,7 +1,7 @@
 {
   "id": "kolesnica-voyny",
   "title": "Колесница войны",
-  "version": "0.2.2.18",
+  "version": "0.2.2.19",
   "scheme": "rnr",
   "host": "game",
   "entry": "rnr.html",

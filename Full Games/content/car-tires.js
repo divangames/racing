@@ -7,9 +7,19 @@
 
 const CAR_TIRE_SLIDE = 'assets/sounds/cars/wheels/sound_025.wav';
 const CAR_TIRE_DRIFT = 'assets/sounds/cars/wheels/sound_026.wav';
-const CAR_TIRE_VOL = 1;
+const CAR_TIRE_VOL = 0.94;
+const CAR_TIRE_START = 0.24;
+const CAR_TIRE_KEEP = 0.1;
 
-const carTirePlayer = carEngineMakeSlot();
+/** Шины играют один короткий WAV на срыв, а не бесконечный луп. */
+function carTireMakeSlot() {
+  const slot = carEngineMakeSlot();
+  // Общий голос после one-shot возвращает моторный луп. Для шин это запрещено.
+  slot.onResume = function (tireSlot) { tireSlot.live = false; };
+  return slot;
+}
+
+const carTirePlayer = carTireMakeSlot();
 const carTireNpcs = [];
 
 /** Грузит только нужный клип покрышек. */
@@ -32,21 +42,31 @@ function carTireUrl(kind) {
  */
 function carTireSlip(racer) {
   const z = {slide: 0, drift: 0};
-  if (!racer || racer.dead || racer.air || (racer.car && racer.car.hov)) return z;
-  if (typeof state === 'string' && state !== 'race') return z;
-  if (typeof paused === 'boolean' && paused) return z;
+  if (!racer || racer.dead || racer.finished || racer.air || (racer.car && racer.car.hov)) return z;
+  const chase = typeof state === 'string' && state === 'bearChase';
+  if (typeof state === 'string' && state !== 'race' && !chase) return z;
+  if ((typeof paused === 'boolean' && paused) || (chase && window.storyBearChase && window.storyBearChase.pause)) return z;
+  if (!chase && typeof R !== 'undefined' && R && R.phase !== 'go') return z;
   const spd = Math.abs(racer.spd || 0);
   const lat = Math.abs(racer.lat || 0);
   const steer = Math.abs(racer.steerFlt || 0);
   const hand = !!racer.handbrake;
   if (spd < 55) return z;
-  const sliding = lat > 52;
+  // Те же границы, при которых driving.js оставляет на дороге следы шин.
+  const sliding = lat > 22 || (hand && spd > 50);
   const drifting = racer._drift ? racer._drift.active : spd > 100 && steer > 0.62 && lat > 36;
-  const handSpin = hand && spd > 70 && lat > 28;
-  if (!sliding && !drifting && !handSpin) return z;
+  // Физика обновляет этот флаг каждый шаг: старое _drift.active не имеет
+  // права оставлять WAV-луп играть после того, как скольжение закончилось.
+  const fallbackMarking = (sliding && spd > 55) || (drifting && spd > 100);
+  const marking = typeof racer._tireContact === 'boolean' ? racer._tireContact : fallbackMarking;
+  if (!marking) return z;
   const speedMul = Math.max(0, Math.min(1, (spd - 50) / 90));
-  z.slide = sliding || handSpin ? Math.max(0, Math.min(1, (lat - 40) / 70)) * speedMul : 0;
-  z.drift = drifting ? Math.min(1, (racer._drift ? Math.max(.15, racer._drift.intensity) : steer * 1.15) * Math.min(1, spd / 210)) * speedMul : 0;
+  const roadSlide = Math.max(0, Math.min(1, (lat - 18) / 70)) * speedMul;
+  const handSlide = hand && spd > 50 ? 0.34 + speedMul * 0.28 : 0;
+  const slide = Math.max(roadSlide, handSlide);
+  const drift = Math.min(1, (racer._drift ? Math.max(.15, racer._drift.intensity) : steer * 1.15) * Math.min(1, spd / 210)) * speedMul;
+  z.slide = sliding && spd > 55 ? slide : 0;
+  z.drift = drifting && spd > 100 ? drift : 0;
   return z;
 }
 
@@ -61,28 +81,40 @@ function carTireKind(slot, slip) {
 /** Глушит слот покрышек. */
 function carTireHaltSlot(slot) {
   carEngineHaltSlot(slot);
-  if (slot) slot.kind = '';
+  if (slot) {
+    slot.kind = '';
+    slot.tireActive = false;
+    slot.tireLatched = false;
+  }
 }
 
 /** Тик одного визга. */
 function carTireTickSlot(slot, racer, mixVol, pan) {
   const slip = carTireSlip(racer);
   const amt = Math.max(slip.slide, slip.drift);
-  if (amt < 0.05 || mixVol < 0.01) {
+  if (amt < CAR_TIRE_KEEP || mixVol < 0.01) {
     carTireHaltSlot(slot);
     return false;
   }
+  // Пока текущий срыв не закончился, второй WAV не запускаем.
+  // Это гарантирует, что даже зависшая lat не превратит звук в бесконечный.
+  if (slot.tireLatched) return !!slot.voice;
+  if (amt < CAR_TIRE_START) return false;
   const kind = carTireKind(slot, slip);
   slot.kind = kind;
   carTiresWarmKind(kind);
   const url = carTireUrl(kind);
   if (!url) return false;
   const n = Math.min(1, Math.abs(racer.spd || 0) / Math.max(1, racer.st && racer.st.top ? racer.st.top : 1));
-  const vol = mixVol * CAR_TIRE_VOL * (0.42 + amt * 0.58);
+  // Слабая боковая скорость на обычном вираже не должна звучать как полный срыв шин.
+  const audible = Math.max(0, Math.min(1, (amt - CAR_TIRE_KEEP) / (1 - CAR_TIRE_KEEP)));
+  const vol = mixVol * CAR_TIRE_VOL * (0.18 + audible * 0.68);
   const rate = 0.9 + n * 0.22 + amt * 0.08;
   slot.live = true;
+  slot.tireActive = true;
+  slot.tireLatched = true;
   slot.pan = pan || 0;
-  return carEnginePlaySlot(slot, url, true, vol, rate, slot.pan);
+  return carEnginePlaySlot(slot, url, false, vol, rate, slot.pan);
 }
 
 /** Слот чужой покрышки. */
@@ -90,7 +122,7 @@ function carTireNpcSlot(racer) {
   for (let i = 0; i < carTireNpcs.length; i++) {
     if (carTireNpcs[i].racer === racer) return carTireNpcs[i];
   }
-  const slot = carEngineMakeSlot();
+  const slot = carTireMakeSlot();
   slot.racer = racer;
   carTireNpcs.push(slot);
   return slot;
@@ -125,11 +157,16 @@ function tickCarTires(player, pack, base) {
     carTiresHalt();
     return;
   }
-  if (typeof state === 'string' && state !== 'race') {
+  const chase = typeof state === 'string' && state === 'bearChase';
+  if (typeof state === 'string' && state !== 'race' && !chase) {
     carTiresHalt();
     return;
   }
-  if (typeof paused === 'boolean' && paused) {
+  if ((typeof paused === 'boolean' && paused) || (chase && window.storyBearChase && window.storyBearChase.pause)) {
+    carTiresHalt();
+    return;
+  }
+  if ((!chase && typeof R !== 'undefined' && R && R.phase !== 'go') || !player || player.dead || player.finished) {
     carTiresHalt();
     return;
   }

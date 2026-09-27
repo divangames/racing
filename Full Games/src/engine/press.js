@@ -45,7 +45,11 @@
       if (isBack(c)) {
         if (trackPickReturn === 'race') { state = 'race'; paused = true; }
         else if (trackPickReturn === 'garage') { state = 'garage'; garagePaused = true; }
-        else enterTitle();
+        else if (trackPickReturn === 'free') {
+          state = 'title';
+          const menu = global.DiVANEngine && global.DiVANEngine.titleMenu;
+          if (menu && typeof menu.openFreeMenu === 'function') menu.openFreeMenu();
+        } else enterTitle();
         sClick(); return true;
       }
       if (c === 'ArrowLeft') { trackPickSel = (trackPickSel + n - 1) % n; sClick(); return true; }
@@ -185,7 +189,9 @@
   function hub(c) {
     if (state === 'title') {
       if (typeof isBack === 'function' ? isBack(c) : c === 'Escape') {
-        if (typeof openExitWarn === 'function') openExitWarn();
+        const menu = global.DiVANEngine && global.DiVANEngine.titleMenu;
+        if (menu && typeof menu.isFreeMenu === 'function' && menu.isFreeMenu()) menu.closeFreeMenu();
+        else if (typeof openExitWarn === 'function') openExitWarn();
         sClick();
         return true;
       }

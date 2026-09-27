@@ -24,6 +24,8 @@ test('Магазин, кулдаун и перегрев не сообщают �
   assert.equal(state({ wepAmmo: 0, cdW: 0 }, { type: 'gun' }, 8, 2).ready, false);
   assert.equal(state({ wepAmmo: 4, cdW: 0 }, { type: 'gun' }, 8, 2).text, '4 / 8');
   assert.match(state({ wepOver: 1 }, { type: 'gatling' }, 0, 2).text, /ОХЛАЖДЕНИЕ/);
+  assert.equal(state({ chaseWeaponHeat: true, wepHeat: .63, cdW: 0 }, { type: 'gun' }, 8, 2).text, 'НАГРЕВ 63%');
+  assert.match(state({ chaseWeaponHeat: true, wepOver: 1 }, { type: 'gun' }, 8, 2).text, /ОХЛАЖДЕНИЕ/);
 });
 
 test('Шпилька сообщает о необходимости заноса, уничтоженная машина не показывает готовность', () => {
@@ -99,6 +101,8 @@ test('Полный HUD остаётся на паузе; F6 переключае
       assert(a.x>=0 && a.y>=0 && a.x+a.w<=w && a.y+a.h<=h);
       for(const other of boxes.slice(i+1)) assert(a.x+a.w<=other.x || other.x+other.w<=a.x || a.y+a.h<=other.y || other.y+other.h<=a.y);
     }
+    assert(layout.deadline.y>=layout.clock.y+layout.clock.h,'Финишный отсчёт не должен попадать под рамку часов');
+    assert(layout.deadline.x>=0&&layout.deadline.x+layout.deadline.w<=w);
   }
 });
 

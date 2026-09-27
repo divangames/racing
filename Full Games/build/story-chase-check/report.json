@@ -1,0 +1,50 @@
+{
+  "editorBoot": {
+    "testMode": true,
+    "creatorVideo": false,
+    "elapsedMs": 4905
+  },
+  "started": {
+    "state": "bearChase",
+    "category": "UNIQUE",
+    "cargo": "assets/data/cars/PitterMAX/1.png",
+    "zone": "YELLOW",
+    "musicCategory": "missions/01",
+    "missionTracks": 1
+  },
+  "skippedIntro": {
+    "phase": "CHASE_START"
+  },
+  "barrelDrop": {
+    "dx": 0.011373936878953828,
+    "dy": 0.06116521919716433
+  },
+  "brakeCamera": {
+    "zoom": 1.2784,
+    "base": 2,
+    "distance": 101
+  },
+  "damage": {
+    "before": 88,
+    "hp": 68
+  },
+  "bridge": {
+    "phase": "BRIDGE_COLLAPSE",
+    "collapse": 0,
+    "zoom": 0.94,
+    "blasts": 2
+  },
+  "retry": {
+    "phase": "CHASE_START",
+    "hp": 108,
+    "maxHp": 108
+  },
+  "finished": {
+    "state": "car",
+    "mission": "buy_junk",
+    "pending": false,
+    "robbed": true,
+    "personalCarState": "stolen"
+  },
+  "errors": []
+}

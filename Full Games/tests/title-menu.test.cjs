@@ -23,6 +23,9 @@ function bootMenu() {
     selCar: 0,
     carConfirmed: false,
     cheatMsgT: 0,
+    slotReturn: '',
+    slotSelectMode: '',
+    slotSelectIndex: -1,
     cheatsAllowed: function () { return true; },
     openTitleConfirm: function (kind) { g.confirmKind = kind; },
     storyStartNewCampaign: function () { g.startedCamp = true; },
@@ -32,7 +35,9 @@ function bootMenu() {
     enterCameraSetup: function () { g.camera = true; },
     loadSave: function () { g.loaded = true; },
     openSettings: function (from) { g.settingsFrom = from; },
-    openExitWarn: function () { g.exit = true; }
+    openExitWarn: function () { g.exit = true; },
+    enterTrackPick: function (from) { g.trackFrom = from; },
+    startDevTrack: function () { g.devTrack = true; }
   };
   g.window = g;
   g.globalThis = g;
@@ -66,4 +71,27 @@ test('Новая кампания с сейвом спрашивает, без �
   api.applyTitleAction('free-continue', { free: { race: 1 } });
   assert.equal(g.loaded, true);
   assert.equal(g.state, 'garage');
+  api.applyTitleAction('load-game', { story: null, free: null });
+  assert.equal(g.state, 'slotSelect');
+  assert.equal(g.slotReturn, 'title');
+  assert.equal(g.slotSelectMode, 'load');
+  assert.equal(g.slotSelectIndex, 0);
+});
+
+test('Главное меню фиксировано и меняет только действие кампании', () => {
+  const api = bootMenu().DiVANEngine.titleMenu;
+  const fresh=api.titleItems(null,false,null);
+  assert.deepEqual(Array.from(fresh,item=>item.label),['НАЧАТЬ НОВУЮ ИГРУ','ЗАГРУЗИТЬ ИГРУ','СВОБОДНЫЙ ЗАЕЗД','НАСТРОЙКА','ВЫХОД']);
+  const active=api.titleItems({race:3},true,{storyCampaign:'medved_v1'});
+  assert.equal(active.length,5);assert.equal(active[0].label,'ПРОДОЛЖИТЬ ИГРУ');
+});
+
+test('Свободный заезд открывает отдельное меню и показывает доступное действие', () => {
+  const g=bootMenu(),api=g.DiVANEngine.titleMenu;
+  api.applyTitleAction('free-menu',{free:null});
+  assert.equal(api.isFreeMenu(),true);assert.equal(api.titleCaption(),'СВОБОДНЫЙ ЗАЕЗД');
+  assert.deepEqual(Array.from(api.titleItems(null,false,null),item=>item.label),['НОВЫЙ ЗАЕЗД','ВЫБРАТЬ ЛОКАЦИЮ','ВЫЙТИ В ГЛАВНОЕ МЕНЮ']);
+  assert.deepEqual(Array.from(api.titleItems({race:2},false,null),item=>item.label),['ПРОДОЛЖИТЬ ЗАЕЗД','ВЫБРАТЬ ЛОКАЦИЮ','ВЫЙТИ В ГЛАВНОЕ МЕНЮ']);
+  api.applyTitleAction('free-location',{free:{race:2}});assert.equal(g.loaded,true);assert.equal(g.trackFrom,'free');
+  api.applyTitleAction('free-back',{});assert.equal(api.isFreeMenu(),false);
 });

@@ -85,8 +85,9 @@
     if (typeof document !== 'undefined' && document.hidden) return '';
     if (biomeLevel() <= 0) return '';
     if (quietState()) return '';
-    if (screen === 'race') {
+    if (screen === 'race' || screen === 'bearChase') {
       if (typeof paused !== 'undefined' && paused) return '';
+      if (screen === 'bearChase' && root.storyBearChase && root.storyBearChase.pause) return '';
       if (!settings || !settings.graphics || !settings.graphics.weather) return '';
       if (!R || R.demo || !R.weather || !LOOPS[R.weather.id]) return '';
       return R.weather.id;
@@ -167,8 +168,8 @@
   /** Одиночный удар грома. */
   function strike() {
     const screen = typeof state !== 'undefined' ? state : root.state;
-    if (screen !== 'race' && !menuRainScreen(screen)) return;
-    if (screen === 'race' && typeof paused !== 'undefined' && paused) return;
+    if (screen !== 'race' && screen !== 'bearChase' && !menuRainScreen(screen)) return;
+    if ((screen === 'race' || screen === 'bearChase') && typeof paused !== 'undefined' && paused) return;
     if (typeof R !== 'undefined' && R && R.demo) return;
     if (typeof document !== 'undefined' && document.hidden) return;
     const vol = biomeLevel() * THUNDER_MIX * (menuRainScreen(screen) ? .32 : .65);

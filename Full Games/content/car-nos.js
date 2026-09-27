@@ -1,12 +1,13 @@
 ////////////////////////////////////////////////////////
 //
-// Нитро: запуск 084, луп 011 пока ускорение живо
+// Нитро: отдельные запуск, луп и хвост после ускорения
 //
 ////////////////////////////////////////////////////////
 'use strict';
 
-const CAR_NOS_START = 'assets/sounds/cars/NOSZ/sound_084.wav';
-const CAR_NOS_LOOP = 'assets/sounds/cars/NOSZ/sound_011.wav';
+const CAR_NOS_START = 'assets/sounds/cars/NOSZ/A_Nitro_Start.WAV';
+const CAR_NOS_LOOP = 'assets/sounds/cars/NOSZ/A_Nitro_Loop.WAV';
+const CAR_NOS_END = 'assets/sounds/cars/NOSZ/A_Nitro_End.WAV';
 const CAR_NOS_VOL = 1;
 
 const carNosPlayer = carEngineMakeSlot();
@@ -15,12 +16,12 @@ const carNosNpcs = [];
 /** Грузит клип NOS только когда ускорение уже нужно. */
 function carNosWarmKind(kind) {
   if (typeof carEngineLoad !== 'function') return;
-  carEngineLoad(kind === 'loop' ? CAR_NOS_LOOP : CAR_NOS_START);
+  carEngineLoad(kind === 'loop' ? CAR_NOS_LOOP : (kind === 'end' ? CAR_NOS_END : CAR_NOS_START));
 }
 
 /** Готовый URL. */
 function carNosUrl(kind) {
-  const url = kind === 'loop' ? CAR_NOS_LOOP : CAR_NOS_START;
+  const url = kind === 'loop' ? CAR_NOS_LOOP : (kind === 'end' ? CAR_NOS_END : CAR_NOS_START);
   const buf = carEngineShare.buf[url];
   if (buf && buf !== 'bad') return url;
   if (typeof carEngineDesktop === 'function' && carEngineDesktop() && !carEngineShare.miss[url]) return url;
@@ -35,6 +36,7 @@ function carNosReady() {
 /** После запуска: луп, если ускорение ещё идёт. */
 function carNosAfterStart(slot) {
   if (!slot || !slot.live || !slot.nosOn) {
+    if (slot) slot.ending = false;
     carEngineHaltSlot(slot);
     return;
   }
@@ -56,17 +58,38 @@ function carNosTickSlot(slot, racer, mixVol, pan) {
   slot.nosOn = on;
   slot.onResume = carNosAfterStart;
   if (!on) {
-    if (slot.shot && slot.want === 'nos-start') {
+    if (slot.wasOn) {
+      slot.wasOn = false;
+      slot.ending = true;
+      carEngineKillSlot(slot);
+      carNosWarmKind('end');
+    }
+    if (slot.shot && slot.want === 'nos-end') {
       slot.live = true;
+      carEngineTouchSlot(slot, mixVol * CAR_NOS_VOL, 1);
       return true;
     }
+    if (slot.ending) {
+      const end = carNosUrl('end');
+      if (end) {
+        slot.live = true;
+        slot.want = 'nos-end';
+        return carEnginePlaySlot(slot, end, false, mixVol * CAR_NOS_VOL, 1, slot.pan, true);
+      }
+      const endGone = !!(carEngineShare && (carEngineShare.buf[CAR_NOS_END] === 'bad' || carEngineShare.miss[CAR_NOS_END]));
+      if (!endGone) {
+        slot.live = true;
+        return false;
+      }
+      slot.ending = false;
+    }
     carEngineHaltSlot(slot);
-    slot.wasOn = false;
     slot.want = '';
     return false;
   }
   slot.live = true;
   if (!slot.wasOn) {
+    slot.ending = false;
     carNosWarmKind('start');
     const start = carNosUrl('start');
     if (start) {
@@ -117,9 +140,11 @@ function carNosNpcSlot(racer) {
 function carNosHalt() {
   carEngineHaltSlot(carNosPlayer);
   carNosPlayer.wasOn = false;
+  carNosPlayer.ending = false;
   for (let i = 0; i < carNosNpcs.length; i++) {
     carEngineHaltSlot(carNosNpcs[i]);
     carNosNpcs[i].wasOn = false;
+    carNosNpcs[i].ending = false;
   }
   carNosNpcs.length = 0;
 }

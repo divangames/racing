@@ -38,8 +38,17 @@ function makeFixture() {
     ['assets', 'sounds', 'engine', 'sound_005.wav'],
     ['assets', 'sounds', 'cars', 'wheels', 'sound_025.wav'],
     ['assets', 'sounds', 'cars', 'wheels', 'sound_026.wav'],
-    ['assets', 'sounds', 'cars', 'NOSZ', 'sound_084.wav'],
-    ['assets', 'sounds', 'cars', 'NOSZ', 'sound_011.wav']
+    ['assets', 'sounds', 'cars', 'NOSZ', 'A_Nitro_Start.WAV'],
+    ['assets', 'sounds', 'cars', 'NOSZ', 'A_Nitro_Loop.WAV'],
+    ['assets', 'sounds', 'cars', 'NOSZ', 'A_Nitro_End.WAV'],
+    ['assets', 'sounds', 'cars', 'hit', 'A_CarHit_01.WAV'],
+    ['assets', 'sounds', 'cars', 'hit', 'A_CarHit_02.WAV'],
+    ['assets', 'sounds', 'cars', 'hit', 'A_CarHit_03.WAV'],
+    ['assets', 'sounds', 'cars', 'hit', 'A_Car_HitBody_01.WAV'],
+    ['assets', 'sounds', 'cars', 'hit', 'A_Car_HitBody_02.WAV'],
+    ['assets', 'sounds', 'cars', 'hit', 'A_Car_HitBody_03.WAV'],
+    ['assets', 'sounds', 'cars', 'hit', 'A_Car_Land_01.WAV'],
+    ['assets', 'sounds', 'cars', 'hit', 'A_Car_Land_02.WAV']
   ];
   for (const parts of wavs) {
     const file = path.join(root, ...parts);

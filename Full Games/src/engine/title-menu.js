@@ -6,6 +6,7 @@
 
 (function (global) {
   'use strict';
+  let page = 'main';
 
   /**
    * Id пункта: объект или старая строка.
@@ -49,36 +50,45 @@
   }
 
   /**
-   * Пункты титула. Служебное — только dev / читы.
+   * Главное меню всегда состоит из пяти пунктов в фиксированном порядке.
    * @param {object|null} saveObj
    * @param {boolean} dev
    * @param {object|null} storyObj
    * @returns {Array<{id:string,label:string,hint?:string}>}
    */
   function titleItems(saveObj, dev, storyObj) {
-    const items = [];
     const story = hasCampaignSave(storyObj);
     const free = !!saveObj;
-    if (story) items.push({ id: 'campaign-continue', label: 'ПРОДОЛЖИТЬ КАМПАНИЮ' });
-    items.push({ id: 'campaign-new', label: story ? 'НОВАЯ КАМПАНИЯ' : 'КАМПАНИЯ' });
-    if (free) {
-      items.push({
-        id: 'free-continue',
-        label: 'ПРОДОЛЖИТЬ СВОБОДНЫЙ ЗАЕЗД',
-        hint: 'этап ' + ((saveObj.race | 0) + 1)
-      });
+    if (page === 'free') {
+      return [
+        free
+          ? { id: 'free-continue', label: 'ПРОДОЛЖИТЬ ЗАЕЗД', hint: 'этап ' + ((saveObj.race | 0) + 1) }
+          : { id: 'free-new', label: 'НОВЫЙ ЗАЕЗД' },
+        { id: 'free-location', label: 'ВЫБРАТЬ ЛОКАЦИЮ' },
+        { id: 'free-back', label: 'ВЫЙТИ В ГЛАВНОЕ МЕНЮ' }
+      ];
     }
-    items.push({ id: 'free-new', label: free ? 'НОВЫЙ СВОБОДНЫЙ ЗАЕЗД' : 'СВОБОДНЫЙ ЗАЕЗД' });
-    items.push({ id: 'settings', label: 'НАСТРОЙКИ' });
-    items.push({ id: 'achievements', label: 'ДОСТИЖЕНИЯ' });
-    if (typeof cheatsAllowed !== 'function' || cheatsAllowed()) items.push({ id: 'cheats', label: 'ЧИТЫ' });
-    if (dev) {
-      items.push({ id: 'tracks', label: 'ВЫБОР ТРАССЫ' });
-      items.push({ id: 'lab', label: 'DIVANENGINE' });
-    }
-    items.push({ id: 'exit', label: 'ВЫХОД' });
-    return items;
+    return [
+      { id: story ? 'campaign-continue' : 'campaign-new', label: story ? 'ПРОДОЛЖИТЬ ИГРУ' : 'НАЧАТЬ НОВУЮ ИГРУ' },
+      { id: 'load-game', label: 'ЗАГРУЗИТЬ ИГРУ' },
+      { id: 'free-menu', label: 'СВОБОДНЫЙ ЗАЕЗД' },
+      { id: 'settings', label: 'НАСТРОЙКА' },
+      { id: 'exit', label: 'ВЫХОД' }
+    ];
   }
+
+  /** Открывает меню свободного заезда и ставит курсор на первый доступный пункт. */
+  function openFreeMenu() { page = 'free'; if (typeof selTitle !== 'undefined') selTitle = 0; }
+
+  /** Возвращает из свободного заезда в фиксированное главное меню. */
+  function closeFreeMenu() { page = 'main'; if (typeof selTitle !== 'undefined') selTitle = 0; }
+
+  /** Любой полноценный вход на титул начинается с главного меню. */
+  function reset() { page = 'main'; }
+
+  function isFreeMenu() { return page === 'free'; }
+
+  function titleCaption() { return page === 'free' ? 'СВОБОДНЫЙ ЗАЕЗД' : ''; }
 
   /**
    * Курсор: сначала «продолжить», иначе первый пункт.
@@ -148,21 +158,24 @@
         if (free && typeof openTitleConfirm === 'function') openTitleConfirm('free-new');
         else startFreeNew();
         break;
+      case 'free-menu':
+        openFreeMenu();
+        break;
+      case 'free-location':
+        if (free && typeof loadSave === 'function') loadSave();
+        if (typeof enterTrackPick === 'function') enterTrackPick('free');
+        break;
+      case 'free-back':
+        closeFreeMenu();
+        break;
+      case 'load-game':
+        slotReturn = 'title';
+        slotSelectMode = 'load';
+        slotSelectIndex = 0;
+        state = 'slotSelect';
+        break;
       case 'settings':
         if (typeof openSettings === 'function') openSettings('title');
-        break;
-      case 'achievements':
-        if (typeof openAchievements === 'function') openAchievements('title');
-        break;
-      case 'cheats':
-        state = 'cheats';
-        cheatMsgT = 0;
-        break;
-      case 'tracks':
-        if (typeof enterTrackPick === 'function') enterTrackPick('title');
-        break;
-      case 'lab':
-        if (typeof openLabWarn === 'function') openLabWarn();
         break;
       case 'exit':
         if (typeof openExitWarn === 'function') openExitWarn();
@@ -177,6 +190,20 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
+  if (typeof global.startDevTrack === 'function') engine.wrap('startDevTrack', original => function (idx) {
+    if (typeof trackPickReturn === 'undefined' || trackPickReturn !== 'free') return original(idx);
+    if (!save) save = newSave();
+    const list = pickableTracks();
+    const def = list[((idx % list.length) + list.length) % list.length];
+    if (def && def.custom) { raceTrackCustom = def; raceTrackOverride = null; }
+    else {
+      raceTrackCustom = null;
+      const stock = TRACKDEFS.indexOf(def);
+      raceTrackOverride = stock >= 0 ? stock : (((idx % TRACKDEFS.length) + TRACKDEFS.length) % TRACKDEFS.length);
+    }
+    paused = false; garagePaused = false; labTest = false;
+    persist(); sClick(); buildRace();
+  });
   engine.titleMenu = {
     titleItems,
     titleItemId,
@@ -185,6 +212,11 @@
     titleDefaultIndex,
     applyTitleAction,
     confirmTitleWipe,
-    startFreeNew
+    startFreeNew,
+    openFreeMenu,
+    closeFreeMenu,
+    isFreeMenu,
+    titleCaption,
+    reset
   };
 })(typeof window !== 'undefined' ? window : globalThis);

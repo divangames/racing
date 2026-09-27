@@ -65,8 +65,11 @@
     }
     if (slam && R && R.shocks) R.shocks.push({ x: hx, y: hy, r: 5, maxR: 14 + k * 22, t: 0.28 });
     if (slam && r.isP && typeof doShake === 'function') doShake(3 + k * 6);
-    if (slam && R && !R.demo && typeof sHit === 'function' && (r.isP || (typeof nearP === 'function' && nearP(hx, hy, 520)))) sHit();
-    else if (slam && R && !R.demo && typeof swp === 'function' && r.isP) swp('triangle', 140, 40, 0.12, 0.22);
+    if (slam && R && !R.demo && (r.isP || (typeof nearP === 'function' && nearP(hx, hy, 520)))) {
+      if (typeof carImpactPlay === 'function') carImpactPlay('collision', r, k, { x: hx, y: hy, local: r.isP });
+      else if (typeof sHit === 'function') sHit();
+      else if (typeof swp === 'function' && r.isP) swp('triangle', 140, 40, 0.12, 0.22);
+    }
     if (slam) {
       r.rockAmp = Math.max(r.rockAmp || 0, 0.12 + k * 0.16);
       r.bobVel = (r.bobVel || 0) - (10 + k * 18);

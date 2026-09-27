@@ -92,11 +92,10 @@ test('У каждого биома три стоковые развязки с �
   assert.ok(stock.some(function (t) { return String(t.name).indexOf('ОВАЛ') >= 0; }));
 });
 
-test('Глава 1: десять простых трасс биома Арена', () => {
+test('Глава 1: десять простых арен класса А', () => {
   const g = boot();
-  assert.equal(g.RnRTracks.chapterPacks().length, 1);
-  assert.equal(g.RnRTracks.chapterPacks()[0].title.indexOf('Арена') >= 0, true);
-  const ch = g.RnRTracks.chapterTracks(1);
+  assert.equal(g.RnRTracks.chapterPacks().length, 2);
+  const ch = g.RnRTracks.chapterTracks(1, 'A');
   assert.equal(ch.length, 10);
   const names = {};
   ch.forEach(function (t) {
@@ -113,22 +112,45 @@ test('Глава 1: десять простых трасс биома Арена
     for (let i = 0; i < T.N; i++) {
       if (g.trackDeck(T, i / T.N) > 0) { high = true; break; }
     }
+    assert.equal(intersections(T).length, 0, t.name);
     assert.equal(high, false, t.name);
+  });
+});
+
+test('Класс Б: десять новых арен с перекрёстками и эстакадами', () => {
+  const g = boot();
+  const ch = g.RnRTracks.chapterTracks(1, 'B');
+  assert.equal(ch.length, 10);
+  ch.forEach(function (t) {
+    assert.equal(t.theme.map, 'arena');
+    const T = g.buildTrack(t, 0);
+    assert.ok(intersections(T).length > 0, t.name);
+    assert.ok(T.decks.some((d) => d.z > 0), t.name);
+    assert.ok(startClearance(T) > g.ROADW * 2.5, t.name + ': старт попал в развязку');
   });
 });
 
 test('Сохранённый JSON главы перекрывает формулу', () => {
   const g = boot();
-  const first = g.RnRTracks.chapterTracks(1)[0];
+  const first = g.RnRTracks.chapterTracks(1, 'A')[0];
   g.RnRTracks.adoptChapter(Object.assign({}, first, {name: 'ПРАВКА АРЕНЫ'}));
-  assert.equal(g.RnRTracks.chapterTracks(1)[0].name, 'ПРАВКА АРЕНЫ');
+  assert.equal(g.RnRTracks.chapterTracks(1, 'A')[0].name, 'ПРАВКА АРЕНЫ');
   const dir = path.join(ROOT, 'assets/data/tracks/chapters');
-  const files = fs.readdirSync(dir).filter((f) => /^ch1_arena_\d+\.json$/.test(f));
-  assert.equal(files.length, 10);
+  const files = fs.readdirSync(dir).filter((f) => /^ch1_arena_(?:b_)?\d+\.json$/.test(f));
+  assert.equal(files.length, 20);
   const arenaRoad = 'assets/data/tracks/Textures/road/arena_dirt_01.png';
   files.forEach((file) => {
     const track = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
     assert.equal(track.theme.roadSrc, arenaRoad, file);
+    const normalized = g.RnRTracks.normalize(track);
+    const T = g.buildTrack(normalized, 0);
+    if (normalized.raceClass === 'B') {
+      assert.ok(intersections(T).length > 0, file + ' crossing');
+      assert.ok(T.decks.some((d) => d.z > 0), file + ' deck');
+      assert.ok(startClearance(T) > g.ROADW * 2.5, file + ' start clearance');
+    } else {
+      assert.equal(intersections(T).length, 0, file + ' simple A');
+    }
   });
   assert.equal(fs.existsSync(path.join(ROOT, arenaRoad)), true);
 });
@@ -144,6 +166,20 @@ function intersections(T) {
     if(u>=0&&u<1&&v>=0&&v<1)hits.push([i,j]);
   }
   return hits;
+}
+
+/** Минимальный зазор стартового коридора до другой ветки трассы. */
+function startClearance(T) {
+  let best = Infinity;
+  for (let q = -12; q <= 30; q += 3) {
+    const i = (q + T.N) % T.N, a = T.S[i];
+    for (let j = 0; j < T.N; j++) {
+      const raw = Math.abs(i - j), gap = Math.min(raw, T.N - raw);
+      if (gap < 18) continue;
+      best = Math.min(best, Math.hypot(a.x - T.S[j].x, a.y - T.S[j].y));
+    }
+  }
+  return best;
 }
 
 test('В каждом реальном пересечении ровно одна верхняя дорога, включая карты лаборатории', () => {

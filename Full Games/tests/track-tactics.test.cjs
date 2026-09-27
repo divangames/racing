@@ -45,6 +45,15 @@ test('Кампания и пользовательские карты не ме�
   for (const flags of [{ chapter: 1 }, { custom: true }, { lab: true }, { tactics: { mode: 'off' } }]) assert.equal(c.buildTrack({ ...base, ...flags }, 0).tactics, null);
   assert.equal(c.buildTrack({ ...base, custom: true, tactics: { mode: 'press' } }, 0).tactics.mode, 'press');
 });
+test('Разметка тактики скрыта на старте и появляется только при подъезде', () => {
+  const c = boot(), T = c.buildTrack(c.RnRTracks.STOCK[0], 0), p = T.tactics;
+  c.R = { T, S: T.S, N: T.N, phase: 'go', time: 0, demo: false };
+  const racer = { trackIdx: 0, x: T.S[0].x, y: T.S[0].y, spd: 0, dead: false, finished: false };
+  assert.equal(c.DiVANEngine.tactics.worldVisible(c.R, racer), false);
+  racer.trackIdx = p.entry;
+  racer.x = T.S[p.entry].x; racer.y = T.S[p.entry].y;
+  assert.equal(c.DiVANEngine.tactics.worldVisible(c.R, racer), true);
+});
 test('До воздействия всегда есть предупреждение, каждый цикл возвращается в безопасную фазу', () => {
   for (const p of Object.values(tactics.MODES)) {
     const rest = p.period - p.warning - p.active;

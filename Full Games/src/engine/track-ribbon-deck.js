@@ -145,7 +145,9 @@
     if (q.imageSmoothingQuality) q.imageSmoothingQuality = 'medium';
     const api = spanApi();
     const runs = [];
-    if (api && api.eachSolidRun) {
+    if (api && api.eachRailRun) {
+      api.eachRailRun(T, deck, halfW, function (a, len) { runs.push({ a: a, len: len }); });
+    } else if (api && api.eachSolidRun) {
       api.eachSolidRun(T, deck, function (a, len) { runs.push({ a: a, len: len }); });
     } else if (deck === 0) {
       runs.push({ a: 0, len: N });

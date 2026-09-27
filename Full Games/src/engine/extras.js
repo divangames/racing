@@ -237,7 +237,7 @@
   function drawTrackPickEngine() {
     drawHubBackdrop();
     txt(g, 'ВЫБОР ТРАССЫ', W / 2, 58, 40, '#ffd23f', 'center');
-    txt(g, 'быстрый старт • режим разработчика', W / 2, 96, 15, '#9a93a8', 'center', F_B);
+    txt(g, trackPickReturn === 'free' ? 'выберите локацию свободного заезда' : 'быстрый старт • режим разработчика', W / 2, 96, 15, '#9a93a8', 'center', F_B);
     g._trackTiles = [];
     const list = pickableTracks();
     list.forEach(function (def, i) {

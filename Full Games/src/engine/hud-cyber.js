@@ -13,9 +13,11 @@
     const speedW=small?118:160, speedH=speedW*132/160;
     const weaponW=Math.min(small?360:390,width-side-speedW-margin*2-32), clockW=Math.min(260,width*.34);
     const vehicleW=Math.min(small?200:230,width*.28), taskW=small?140:166;
+    const deadlineW=Math.min(220,width*.38);
     return {small,width,height,
       vehicle:{x:margin,y:margin,w:vehicleW,h:60},
       clock:{x:Math.max(vehicleW+margin+10,(width-clockW)/2),y:margin,w:clockW,h:44},
+      deadline:{x:(width-deadlineW)/2,y:margin+52,w:deadlineW,h:26},
       task:{x:width-margin-taskW,y:margin,w:taskW,h:44},
       speed:{x:margin,y:bottom-speedH,w:speedW,h:speedH},
       arsenal:{x:(width-weaponW)/2,y:bottom-64,w:weaponW,h:64},
@@ -97,29 +99,38 @@
   /** Объявление ведущего временно занимает узкую строку под таймером. */
   function broadcast(c,msg,box) {
     if(!msg||!msg.txt) return;
-    const w=Math.min(330,box.width*.4), rows=lines(c,msg.txt,w-24,12,2), x=(box.width-w)/2,y=70;
+    const w=Math.min(330,box.width*.4), rows=lines(c,msg.txt,w-24,12,2), x=(box.width-w)/2;
+    const y=R.endTimer>0?box.deadline.y+box.deadline.h+8:70;
     c.save();c.globalAlpha=clamp((3.4-msg.t)/.5,0,1);K.frame(c,x,y,w,14+rows.length*15,msg.big?C.red:C.cyan);
     rows.forEach((row,i)=>K.text(c,row,x+12,y+14+i*15,12,C.text,'left',w-24));c.restore();
   }
-  /** Собирает компактный HUD, сохраняя штатные данные оружия и голосовую очередь. */
-  function paint(detailed,c) {
+  /** Финишный отсчёт живёт в собственной плашке и не попадает под рамку часов. */
+  function deadline(c,box) {
+    if(!(R.endTimer>0)) return;
+    const label=(R.endTimerType==='player'?'ДО СХОДА: ':'ДО ФИНИША: ')+Math.ceil(R.endTimer)+' С';
+    K.frame(c,box.x,box.y,box.w,box.h,C.red);
+    K.text(c,label,box.x+box.w/2,box.y+box.h/2,12,C.red,'center',box.w-20,true);
+  }
+  /** Собирает компактный HUD и опциональный слой миссии в одной 3D-проекции. */
+  function paint(detailed,c,overlay) {
     const ui=viewport(),box=layout(ui.width,ui.height);
     c.save();c.setTransform(ui.scale,0,0,ui.scale,0,0);
     panels.vehicle(c,box.vehicle);clock(c,box.clock);objective(c,box.task);
     panels.speed(c,box.speed);panels.arsenal(c,box.arsenal);panels.radar(c,box.map,true);
     standings(c,box,detailed);dialogues(c,box);
-    if(R.endTimer>0) K.text(c,(R.endTimerType==='player'?'ДО СХОДА: ':'ДО ФИНИША: ')+Math.ceil(R.endTimer)+' С',ui.width/2,57,11,C.red,'center');
+    deadline(c,box.deadline);
     if(R.msg) broadcast(c,R.msg,box);
     if(saveFlash>0) K.text(c,'СОХРАНЕНО',box.task.x+box.task.w,box.task.y+box.task.h+10,10,C.cyan,'right');
     if(R.hintT>0) {
       const free=!Object.values(settings.controls||{}).some(keys=>Array.isArray(keys)&&keys.includes('F6'));
       K.text(c,labTest?'ESC — В ЛАБОРАТОРИЮ':free?'F6 — ПОЗИЦИИ   ESC — ПАУЗА':'ESC — ПАУЗА',ui.width/2,box.arsenal.y-12,10,C.muted,'center');
     }
+    if(typeof overlay==='function') overlay(c,box,ui);
     c.restore();return box;
   }
   /** Общий композитор сохраняет ровную середину и изгибает только периферию HUD. */
-  function draw(detailed=false) {
-    DiVANEngine.hudCurvature.render(g,c=>paint(detailed,c));
+  function draw(detailed=false,overlay) {
+    DiVANEngine.hudCurvature.render(g,c=>paint(detailed,c,overlay));
   }
   /** Места всех машин рисует общий слой combatHud; прежний медальон отключён. */
   DiVANEngine.replace('drawPlayerRaceTag',function() {});

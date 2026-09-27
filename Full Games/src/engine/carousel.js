@@ -168,9 +168,10 @@
       g.beginPath(); g.arc(dx + p * gap + gap / 2, dy, on ? 5 : 3.5, 0, TAU); g.fill();
       hits.push({ x: dx + p * gap, y: dy - 12, w: gap, h: 24, i: order[p] });
     }
-    const hint = park
+    const storyHint = !park && typeof storyCarShopHint === 'function' ? storyCarShopHint(selI) : '';
+    const hint = storyHint || (park
       ? (carUnlocked(selI) ? 'ENTER — детали   ·   ESC — в гараж' : 'закрыто   ·   ESC — в гараж')
-      : (carConfirmed ? 'ENTER — НА СТАРТ!' : (isForeignSignature(selCar) ? 'только просмотр   ·   ESC — назад' : 'ENTER — купить/выбрать   ·   ESC — назад'));
+      : (carConfirmed ? 'ENTER — НА СТАРТ!' : (isForeignSignature(selCar) ? 'только просмотр   ·   ESC — назад' : 'ENTER — купить/выбрать   ·   ESC — назад')));
     txt(g, hint, W / 2, H - 20, 13, (!park && carConfirmed) ? '#58ff6b' : '#6f6880', 'center', F_B);
   }
 

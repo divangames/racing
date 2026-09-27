@@ -49,8 +49,26 @@ var SFX_TRACKS = {
  thunder: 'assets/sounds/embirnt/grom.mp3',
  // Трибуна арены (первые клипы; полный набор — arena/index.json)
  arenaCheer: 'assets/sounds/embirnt/arena/aplodisment_01.mp3',
- arenaBoo: 'assets/sounds/embirnt/arena/nedovolny_01.mp3'
+ arenaBoo: 'assets/sounds/embirnt/arena/nedovolny_01.mp3',
+ // Контакт машин и препятствий
+ carHit1: 'assets/sounds/cars/hit/A_CarHit_01.WAV',
+ carHit2: 'assets/sounds/cars/hit/A_CarHit_02.WAV',
+ carHit3: 'assets/sounds/cars/hit/A_CarHit_03.WAV',
+ // Попадание урона в кузов
+ carBody1: 'assets/sounds/cars/hit/A_Car_HitBody_01.WAV',
+ carBody2: 'assets/sounds/cars/hit/A_Car_HitBody_02.WAV',
+ carBody3: 'assets/sounds/cars/hit/A_Car_HitBody_03.WAV',
+ // Приземление после прыжка
+ carLand1: 'assets/sounds/cars/hit/A_Car_Land_01.WAV',
+ carLand2: 'assets/sounds/cars/hit/A_Car_Land_02.WAV'
 };
+
+var CAR_IMPACT_TRACKS = {
+ collision: ['carHit1', 'carHit2', 'carHit3'],
+ damage: ['carBody1', 'carBody2', 'carBody3'],
+ land: ['carLand1', 'carLand2']
+};
+var carImpactTimes = typeof WeakMap !== 'undefined' ? new WeakMap() : null;
 
 ////////////////////////////////////////////////////////
 //
@@ -96,19 +114,25 @@ var SFX = {
   * Играть клип по ключу из SFX_TRACKS.
   * Если локальный файл не найден — пробует следующий URL.
   */
- play: function(id){
+ play: function(id,options){
   const snd=this._snd();
-  if(!snd||snd.sfxOn===false)return;
+  if(!snd||snd.sfxOn===false)return false;
   const urls=this._urls(id);
-  if(!urls.length)return;
+  if(!urls.length)return false;
   const level=Math.max(0,Math.min(1,(snd.sfx??80)/100));
-  if(!level)return;
+  if(!level)return false;
+  const opt=options&&typeof options==='object'?options:{};
+  const scale=Math.max(0,Math.min(1.5,Number.isFinite(opt.volume)?opt.volume:1));
+  const pan=Math.max(-1,Math.min(1,Number.isFinite(opt.pan)?opt.pan:0));
+  const rate=Math.max(.75,Math.min(1.3,Number.isFinite(opt.rate)?opt.rate:1));
   const mixed=window.DiVANEngine&&DiVANEngine.audioMix&&AU.ctx;
-  const vol=mixed ? .65 : level;
-  this._playAt(urls,0,vol);
+  const vol=Math.min(1,(mixed ? .65 : level)*scale);
+  if(!vol)return false;
+  this._playAt(urls,0,vol,pan,rate);
+  return true;
  },
  /** Пробует URL по порядку, пока клип не стартует. */
- _playAt: function(urls,i,vol){
+ _playAt: function(urls,i,vol,pan,rate){
   if(i>=urls.length)return;
   const a=new Audio();
   const mix=window.DiVANEngine&&DiVANEngine.audioMix;
@@ -117,13 +141,48 @@ var SFX = {
    if(mix)mix.releaseMedia(a);
    if(next)return;
    next=true;
-   SFX._playAt(urls,i+1,vol);
+   SFX._playAt(urls,i+1,vol,pan,rate);
   };
   a.referrerPolicy='no-referrer';
   a.volume=vol;
+  try{a.playbackRate=rate||1;}catch(err){}
   a.addEventListener('error',fail);
   a.src=(typeof bootMediaSrc==='function')?bootMediaSrc(urls[i]):urls[i];
-  if(mix){mix.routeMedia(a,0);a.addEventListener('ended',()=>mix.releaseMedia(a),{once:true});}
+  if(mix){mix.routeMedia(a,pan||0);a.addEventListener('ended',()=>mix.releaseMedia(a),{once:true});}
   a.play().catch(fail);
  }
 };
+
+/**
+ * Озвучивает физику автомобиля подписанными клипами из cars/hit.
+ * kind: collision | damage | land. strength ожидается в диапазоне 0..1.
+ */
+function carImpactPlay(kind,racer,strength,position){
+ const ids=CAR_IMPACT_TRACKS[kind];
+ if(!ids||!ids.length||!SFX)return false;
+ const pos=position&&typeof position==='object'?position:{};
+ const now=(typeof performance!=='undefined'&&performance.now)?performance.now():Date.now();
+ const gap=kind==='damage'?65:(kind==='collision'?90:140);
+ if(racer&&carImpactTimes){
+  let times=carImpactTimes.get(racer);
+  if(!times){times={};carImpactTimes.set(racer,times);}
+  if(times[kind]!=null&&now-times[kind]<gap)return false;
+  times[kind]=now;
+ }
+ const force=Math.max(0,Math.min(1,Number.isFinite(strength)?strength:.5));
+ let idx=Math.min(ids.length-1,Math.floor(force*ids.length));
+ if(ids.length>2&&force>.2&&force<.85&&Math.random()<.34)idx=Math.max(0,Math.min(ids.length-1,idx+(Math.random()<.5?-1:1)));
+ let volume=.42+force*.58,pan=0;
+ const listener=typeof P!=='undefined'&&P?P:null;
+ const x=Number.isFinite(pos.x)?pos.x:(racer&&Number.isFinite(racer.x)?racer.x:null);
+ const y=Number.isFinite(pos.y)?pos.y:(racer&&Number.isFinite(racer.y)?racer.y:null);
+ const local=!!pos.local||!!(racer&&racer.isP);
+ if(!local&&listener&&x!=null&&y!=null){
+  const dist=Math.hypot(x-listener.x,y-listener.y);
+  if(dist>=920)return false;
+  volume*=Math.pow(1-dist/920,1.25);
+  pan=Math.max(-.8,Math.min(.8,(x-listener.x)/520));
+ }
+ if(volume<.035)return false;
+ return SFX.play(ids[idx],{volume:volume,pan:pan,rate:.96+Math.random()*.08});
+}

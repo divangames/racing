@@ -259,6 +259,94 @@
   }
 
   /**
+   * Убирает борта в пятне пересечения двух веток.
+   * Этажи, тень и опоры сохраняют читаемость эстакады, но красно-белые
+   * рельсы больше не режут поперёк соседнюю дорогу.
+   * @param {object} T
+   * @param {number} halfW
+   * @returns {boolean[]|null}
+   */
+  function railJunctionMask(T, halfW) {
+    const S = T && T.S, N = S ? S.length : 0;
+    if (N < 24) return null;
+    const width = Math.max(20, +halfW || 95);
+    const cacheHost = T._ribbonSmooth || T;
+    const cacheKey = N + '|' + width;
+    if (cacheHost._railJunctionCache && cacheHost._railJunctionCache.key === cacheKey) {
+      return cacheHost._railJunctionCache.mask;
+    }
+    const mask = new Array(N).fill(false);
+    let any = false;
+    const minSep = 16;
+    const cross = (ax, ay, bx, by) => ax * by - ay * bx;
+    const markReach = function (start, reach) {
+      for (const direction of [-1, 1]) {
+        let distance = 0, index = start;
+        for (let k = 0; k < N / 2 && distance <= reach; k++) {
+          mask[index] = true;
+          const next = (index + direction + N) % N;
+          distance += Math.hypot(S[next].x - S[index].x, S[next].y - S[index].y);
+          index = next;
+        }
+      }
+    };
+    for (let i = 0; i < N; i++) {
+      const a = S[i], b = S[(i + 1) % N];
+      const ax = b.x - a.x, ay = b.y - a.y;
+      for (let j = i + minSep; j < N && N - (j - i) >= minSep; j++) {
+        const c = S[j], d = S[(j + 1) % N];
+        const bx = d.x - c.x, by = d.y - c.y;
+        const det = cross(ax, ay, bx, by);
+        if (Math.abs(det) < 1e-6) continue;
+        const dx = c.x - a.x, dy = c.y - a.y;
+        const u = cross(dx, dy, bx, by) / det;
+        const v = cross(dx, dy, ax, ay) / det;
+        if (u < 0 || u >= 1 || v < 0 || v >= 1) continue;
+        const sine = Math.abs(det) / Math.max(1, Math.hypot(ax, ay) * Math.hypot(bx, by));
+        const reach = (width + 18) / Math.max(.2, sine) + 12;
+        markReach(i, reach);
+        markReach(j, reach);
+        any = true;
+      }
+    }
+    const result = any ? mask : null;
+    cacheHost._railJunctionCache = { key: cacheKey, mask: result };
+    return result;
+  }
+
+  /** Непрерывные куски борта с учётом разрывов и чистых пятен пересечений. */
+  function eachRailRun(T, deck, halfW, cb) {
+    const S = T && T.S, N = S ? S.length : 0;
+    if (!N || typeof cb !== 'function') return;
+    const junctions = railJunctionMask(T, halfW);
+    if (!junctions) {
+      eachSolidRun(T, deck, cb);
+      return;
+    }
+    const mask = new Array(N);
+    let any = false, all = true;
+    for (let i = 0; i < N; i++) {
+      const ok = segSolid(T, i, deck) && !junctions[i];
+      mask[i] = ok;
+      any = any || ok;
+      all = all && ok;
+    }
+    if (!any) return;
+    if (all) { cb(0, N); return; }
+    let hole = 0;
+    while (hole < N && mask[hole]) hole++;
+    let walked = 0;
+    while (walked < N) {
+      const i = (hole + walked) % N;
+      if (!mask[i]) { walked++; continue; }
+      let len = 0;
+      while (len < N && mask[(i + len) % N]) len++;
+      cb(i, len);
+      walked += len;
+    }
+  }
+
+  /**
    * Есть ли этаж z.
    * @param {object} T
    * @param {number} z
@@ -347,6 +435,8 @@
     trackDeck: trackDeckEngine,
     segSolid: segSolid,
     eachSolidRun: eachSolidRun,
+    railJunctionMask: railJunctionMask,
+    eachRailRun: eachRailRun,
     hasDeck: hasDeck,
     detectCrossingDecks: detectCrossingDecks,
     mergeDecks: mergeDecks,

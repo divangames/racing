@@ -7,14 +7,16 @@
 (function (global) {
   'use strict';
 
-  /** Показывает в лаборатории прогресс вместо чёрного экрана дисклеймера. */
+  /** Показывает для теста трассы или главы прогресс вместо ролика и дисклеймера. */
   function showLabLoading() {
-    if (typeof labTest === 'undefined' || !labTest || typeof BOOT === 'undefined' || !BOOT) return;
+    const trackTest = typeof labTest !== 'undefined' && labTest;
+    const chapterTest = !!global.storyChapterTestMode;
+    if ((!trackTest && !chapterTest) || typeof BOOT === 'undefined' || !BOOT) return;
     BOOT.disclaimerMs = 1;
     const root = document.getElementById('boot-screen');
     if (root) root.classList.remove('is-load', 'is-gate');
     const heading = document.getElementById('boot-heading');
-    if (heading) heading.textContent = 'ТЕСТ ТРАССЫ';
+    if (heading) heading.textContent = chapterTest ? 'ТЕСТ ГЛАВЫ' : 'ТЕСТ ТРАССЫ';
     const prompt = document.getElementById('boot-prompt');
     if (prompt) prompt.hidden = true;
     const load = document.getElementById('boot-load');
@@ -45,7 +47,7 @@
 
   /** Ролик создателя завершается только событием ended. Загрузка идёт параллельно. */
   function bootPlayCreatorIntro() {
-    if (typeof labTest !== 'undefined' && labTest) return Promise.resolve();
+    if ((typeof labTest !== 'undefined' && labTest) || global.storyChapterTestMode) return Promise.resolve();
     const root = bootEls().root;
     if (!root) return new Promise(function () {});
     const stage = document.createElement('div');
@@ -133,14 +135,16 @@
     hide();
     setTimeout(function () {
       try {
-        if (labTest) startLabTest();
+        if (global.storyChapterTestMode && typeof global.storyStartChapterTest === 'function') global.storyStartChapterTest();
+        else if (labTest) startLabTest();
         else enterTitle();
         if (cv && cv.focus) cv.focus();
       } catch (e) {
         console.error(e);
-        if (labTest) {
+        if (labTest || global.storyChapterTestMode) {
           try {
-            if (typeof exitLabTest === 'function') exitLabTest();
+            if (global.storyChapterTestMode && global.RnRChapterContent) global.RnRChapterContent.exitTest();
+            else if (typeof exitLabTest === 'function') exitLabTest();
             else location.href = 'Editor.html';
           } catch (err) {}
         }
@@ -266,9 +270,9 @@
     })();
     await intro;
     BOOT.disclaimerT0 = performance.now();
-    const hold = (typeof labTest !== 'undefined' && labTest) ? 0 : bootDisclaimerHoldMs();
+    const hold = (typeof labTest !== 'undefined' && labTest) || global.storyChapterTestMode ? 0 : bootDisclaimerHoldMs();
     if (hold > 0) await bootSleep(hold);
-    if (!loadingDone && !(typeof labTest !== 'undefined' && labTest)) showBootProgress();
+    if (!loadingDone && !(typeof labTest !== 'undefined' && labTest) && !global.storyChapterTestMode) showBootProgress();
     await loading;
     bootFinish();
   }

@@ -70,6 +70,21 @@ test('Вложенные эстакады не укорачивают мост, 
   assert.equal(result.length,1);assert.equal(result[0].from,.8);assert.equal(result[0].to,.2);
 });
 
+test('В пятне пересечения борта прерываются, а этажи сохраняются', () => {
+  const g=bootTrack(),cps=[];
+  for(let i=0;i<32;i++){const t=i/32*Math.PI*2;cps.push([900+720*Math.sin(t),700+430*Math.sin(2*t)]);}
+  const auto=g.buildTrack({cps,theme:{}},0);
+  const flat={...auto,decks:[]};
+  const mask=g.DiVANEngine.trackSpan.railJunctionMask(flat,95);
+  assert(mask && mask.some(Boolean));
+  const runs=[];
+  g.DiVANEngine.trackSpan.eachRailRun(flat,0,95,(a,len)=>runs.push([a,len]));
+  assert(runs.length>=2);
+  assert(runs.reduce((sum,run)=>sum+run[1],0)<flat.N);
+  assert(g.DiVANEngine.trackSpan.railJunctionMask(auto,95).some(Boolean));
+  assert(auto.decks.some(d=>d.z>0),'разрыв борта не убирает эстакаду');
+});
+
 test('Прыжок под мостом сохраняет нижний этаж машины', () => {
   const g=bootTrack();
   g.R={N:100,T:{decks:[{from:.5,to:.8,z:1}]}};

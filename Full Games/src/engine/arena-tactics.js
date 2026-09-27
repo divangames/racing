@@ -113,10 +113,16 @@
   function path(points) {
     g.beginPath(); points.forEach((p, i) => i ? g.lineTo(p.x, p.y) : g.moveTo(p.x, p.y));
   }
+  /** Разметка маршрутов нужна только при подъезде к тактическому участку. */
+  function worldVisible(race, racer) {
+    if (!race || !racer || race.demo || race.phase !== 'go' || racer.dead || racer.finished) return false;
+    const pos = position(race, racer);
+    return !!(pos && pos.near);
+  }
   /** Прозрачная разметка показывает реальный внутренний и внешний путь, а не новую телепортацию. */
   function drawWorld() {
     const plan = R.T.tactics;
-    if (!plan || R.demo) return;
+    if (!plan || !worldVisible(R, P)) return;
     const phase = state(R), color = phase.kind === 'active' ? '#ff715e' : phase.kind === 'warning' ? '#ffd23f' : '#e1b966';
     g.save(); g.lineJoin = 'round'; g.lineCap = 'round';
     g.globalAlpha = phase.kind === 'active' ? .30 : .14;
@@ -202,5 +208,5 @@
     r.ist = clamp(angDiff(Math.atan2(p.y + p.ny * r.aiLane - r.y, p.x + p.nx * r.aiLane - r.x), r.ang) * 2.4, -1, 1);
   });
   engine.wrap('drawHUD', original => function() { original(); drawHud(); });
-  engine.tactics = { state, position, affect, gate, contactGate, shootGate, segmentHit, drawWorld, drawHud };
+  engine.tactics = { state, position, affect, gate, contactGate, shootGate, segmentHit, worldVisible, drawWorld, drawHud };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -31,6 +31,59 @@
   }
 
   /**
+   * Ищет прямую стартовую зону вдали от других веток той же трассы.
+   * @param {object[]} points
+   * @returns {number}
+   */
+  function autoStartIndex(points) {
+    const count = points.length;
+    if (count < 40) return 0;
+    const clearance = new Array(count).fill(Infinity);
+    const local = 18;
+    for (let i = 0; i < count; i++) {
+      for (let j = i + 1; j < count; j++) {
+        const gap = Math.min(j - i, count - (j - i));
+        if (gap < local) continue;
+        const d = Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y);
+        if (d < clearance[i]) clearance[i] = d;
+        if (d < clearance[j]) clearance[j] = d;
+      }
+    }
+    const road = typeof ROADW === 'number' ? ROADW : 95;
+    const safe = road * 2.55;
+    let safest = 0, safestClear = -1, safestCurve = Infinity;
+    let best = -1, bestCurve = Infinity;
+    for (let i = 0; i < count; i++) {
+      let curve = 0, open = Infinity;
+      for (let q = -12; q <= 30; q++) {
+        const p = points[(i + q + count) % count];
+        if (q >= -6 && q <= 6) curve += p.k;
+        if (q % 3 === 0) open = Math.min(open, clearance[(i + q + count) % count]);
+      }
+      if (open > safestClear + .01 || (Math.abs(open - safestClear) <= .01 && curve < safestCurve)) {
+        safest = i; safestClear = open; safestCurve = curve;
+      }
+      if (open >= safe && curve < bestCurve) { best = i; bestCurve = curve; }
+    }
+    return best >= 0 ? best : safest;
+  }
+
+  /** Минимальный зазор всей стартовой площадки до неродной ветки. */
+  function startZoneClearance(points, index) {
+    const count = points.length;
+    let open = Infinity;
+    for (let q = -12; q <= 30; q += 3) {
+      const i = (index + q + count) % count, a = points[i];
+      for (let j = 0; j < count; j++) {
+        const raw = Math.abs(i - j), gap = Math.min(raw, count - raw);
+        if (gap < 18) continue;
+        open = Math.min(open, Math.hypot(a.x - points[j].x, a.y - points[j].y));
+      }
+    }
+    return open;
+  }
+
+  /**
    * Строит равномерный сплайн, старт, деколи и план опасностей.
    * @param {object} def
    * @param {number} idx
@@ -72,21 +125,20 @@
       const b = Math.floor(N * (0.10 + 0.85 * (s + 0.5) / segN));
       upper.push({ a: Math.min(N - 1, a), b: Math.min(N - 1, b) });
     }
-    let si = 0;
+    let si = 0, startMoved = false;
     if (def.start && isFinite(+def.start.x) && isFinite(+def.start.y)) {
       let bd = 1e18;
       for (let i = 0; i < N; i++) {
         const d = (S[i].x - def.start.x) * (S[i].x - def.start.x) + (S[i].y - def.start.y) * (S[i].y - def.start.y);
         if (d < bd) { bd = d; si = i; }
       }
+      const road = typeof ROADW === 'number' ? ROADW : 95;
+      if (startZoneClearance(S, si) < road * 2.55) { si = autoStartIndex(S); startMoved = true; }
     } else {
-      let bk = 1e9;
-      for (let i = 0; i < N; i++) {
-        let w = 0; for (let q = -6; q <= 6; q++) w += S[(i + q + N) % N].k; if (w < bk) { bk = w; si = i; }
-      }
+      si = autoStartIndex(S);
     }
     if (si > 0) { const rot = S.splice(0, si); for (const q of rot) S.push(q); }
-    if (def.start && isFinite(+def.start.ang) && Math.abs(angDiff(def.start.ang, S[0].ang)) > Math.PI / 2) {
+    if (!startMoved && def.start && isFinite(+def.start.ang) && Math.abs(angDiff(def.start.ang, S[0].ang)) > Math.PI / 2) {
       const keep = S[0], rest = S.slice(1).reverse();
       S.length = 0; S.push(keep); for (const q of rest) S.push(q);
       bindTan();
@@ -272,7 +324,7 @@
   global.roadMaterialBlend = roadMaterialBlendEngine;
   engine.track = {
     ROAD_MATERIALS: ROAD_MATERIALS, catmull: catmull, MAT_BLEND: MAT_BLEND,
-    roadMaterialBlend: roadMaterialBlendEngine
+    roadMaterialBlend: roadMaterialBlendEngine, autoStartIndex: autoStartIndex, startZoneClearance: startZoneClearance
   };
   engine.replace('buildTrack', buildTrackEngine);
   engine.replace('distToTrack', distToTrackEngine);

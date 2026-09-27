@@ -4,19 +4,22 @@
     "mission": "race_a",
     "car": 0,
     "stolen": "owned",
-    "scenes": 8
+    "scenes": 7
   },
   "a": {
     "mission": "race_a",
     "tuning": 1,
     "paidEarly": false,
+    "parkLocked": true,
     "div": 1
   },
   "b": {
     "mission": "race_b",
     "cash": 0,
     "div": 2,
-    "state": "race"
+    "state": "race",
+    "track": "КЛЕВЕР ПОЛУНОЧИ",
+    "decks": 3
   },
   "robbery": {
     "early": {
@@ -36,11 +39,11 @@
     "catalog": [
       11,
       12,
-      13,
-      14,
-      15
+      13
     ],
     "flags": {
+      "campaignLoreComplete": true,
+      "introCarChosen": true,
       "introComplete": true,
       "raceACompleted": true,
       "entryBPaid": true,
@@ -60,7 +63,8 @@
     "stolen": false,
     "div": 1,
     "hunt": false,
-    "race": 0
+    "race": 0,
+    "track": "НОЧНОЙ ОВАЛ"
   },
   "errors": []
 }

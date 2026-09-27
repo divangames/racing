@@ -6,8 +6,10 @@
   let context = null;
   const media = new WeakMap();
   const clamp01 = value => Math.max(0, Math.min(1, value));
+  const raceLike = () => state === 'race' || state === 'bearChase';
+  const pausedLike = () => state === 'bearChase' && global.storyBearChase ? global.storyBearChase.pause : paused;
   function live() {
-    return state === 'race' && !paused && !document.hidden && !(typeof R !== 'undefined' && R && R.demo);
+    return raceLike() && !pausedLike() && !document.hidden && !(state === 'race' && typeof R !== 'undefined' && R && R.demo);
   }
   function effectLevel() {
     const s = settings.sound;
@@ -16,8 +18,8 @@
   function musicLevel() {
     const s = settings.sound;
     if (!s.musicOn || document.hidden) return 0;
-    const scale = state === 'race' ? (paused ? .14 : .38)
-      : state === 'settings' || state === 'cameraSetup' ? .28 : .48;
+    const scale = raceLike() ? (pausedLike() ? .14 : .7)
+      : state === 'settings' || state === 'cameraSetup' ? .32 : .52;
     return clamp01((s.music ?? 50) / 100) * scale;
   }
   function smooth(param, value, time = .045) {
@@ -43,14 +45,20 @@
   }
   function sync(immediate = false) {
     if (!ensure()) return;
-    const fx = effectLevel(), world = live() ? fx * .85 : 0;
+    const fx = effectLevel(), world = live() ? fx : 0;
+    if (!document.hidden && AU.ctx.state === 'suspended' && (fx || musicLevel()) && AU.ctx.resume) {
+      try {
+        const resumed = AU.ctx.resume();
+        if (resumed && resumed.catch) resumed.catch(() => {});
+      } catch (err) {}
+    }
     // Меню закрывает и уже звучащие выстрелы. Отклик не проходит через этот канал.
     if (!world || immediate) { AU.sfx.gain.cancelScheduledValues(AU.ctx.currentTime); AU.sfx.gain.value = world; }
     else smooth(AU.sfx.gain, world);
-    const ui = document.hidden ? 0 : fx * 1.85;
+    const ui = document.hidden ? 0 : fx * 1.2;
     if (!ui || immediate) { AU.ui.gain.cancelScheduledValues(AU.ctx.currentTime); AU.ui.gain.value = ui; }
     else smooth(AU.ui.gain, ui, .015);
-    AU.master.gain.value = .65;
+    AU.master.gain.value = .72;
     if (MUSIC.el) {
       const target = musicLevel(), elapsed = Math.max(0, AU.ctx.currentTime - (MUSIC.el._mixAt ?? AU.ctx.currentTime));
       MUSIC.el._mixAt = AU.ctx.currentTime;
@@ -62,10 +70,15 @@
     if (!ensure() || !AU.ctx.createMediaElementSource) return null;
     let route = media.get(el);
     if (!route) {
-      const source = AU.ctx.createMediaElementSource(el), node = AU.ctx.createStereoPanner();
-      source.connect(node); node.connect(AU.sfx);
-      route = { source, node }; media.set(el, route);
-      node.pan.value = pan;
+      try {
+        const source = AU.ctx.createMediaElementSource(el), node = AU.ctx.createStereoPanner();
+        source.connect(node); node.connect(AU.sfx);
+        route = { source, node }; media.set(el, route);
+        node.pan.value = pan;
+      } catch (err) {
+        // Уже привязанный или неподдерживаемый HTMLAudio продолжает играть напрямую.
+        return null;
+      }
     } else smooth(route.node.pan, pan, .065);
     return route;
   }

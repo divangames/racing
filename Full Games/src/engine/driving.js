@@ -124,10 +124,10 @@ function stepVehicleEngine(r,th,steer,dt,hb){
  if(handling&&handling.driftState)handling.driftState(r,dt);
  r.wheelAngle=lerp(r.wheelAngle,r.steerFlt*.42+ad/Math.max(dt,.001)*.2,1-Math.exp(-10*dt));
  r.wheelRot+=r.spd*dt*0.18;
- const drift=Math.abs(ad)/Math.max(dt,.001)/60*Math.abs(r.spd);
  const sliding=Math.abs(lat)>22||hand&&Math.abs(r.spd)>50;
+ r._tireContact=!hov&&!r.air&&!r.finished&&sliding&&Math.abs(r.spd)>55;
  r._skidElapsed=(r._skidElapsed||0)+dt;
- if(r._skidElapsed>=1/60&&!hov&&!r.air&&(sliding&&Math.abs(r.spd)>55||drift>3&&Math.abs(r.spd)>100||(r.finished&&Math.abs(steer)>0.2&&Math.abs(r.spd)>40))&&settings.graphics.skids){
+ if(r._skidElapsed>=1/60&&(r._tireContact||(r.finished&&Math.abs(steer)>0.2&&Math.abs(r.spd)>40))&&settings.graphics.skids){
   r._skidElapsed=0;
   const wx1=r.x-Math.cos(r.ang)*14-Math.sin(r.ang)*14;
   const wy1=r.y-Math.sin(r.ang)*14+Math.cos(r.ang)*14;
@@ -200,7 +200,9 @@ function stepVehicleEngine(r,th,steer,dt,hb){
    if(selfDmg>0)dmgRacer(r,selfDmg,null,'crush');
    landDust(r,impact);
    landSparks(r,impact);
-   if(r.isP){doShake(5+impact*5);swp('triangle',90,35,.2,.3);}
+   if(!R.demo&&typeof carImpactPlay==='function')carImpactPlay('land',r,clamp(impact/1.2,.2,1));
+   else if(r.isP)swp('triangle',90,35,.2,.3);
+   if(r.isP)doShake(5+impact*5);
   }
  }
  if(off&&Math.abs(r.spd)>70&&Math.random()<dt*30){

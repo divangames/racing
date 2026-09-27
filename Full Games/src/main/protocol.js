@@ -20,6 +20,7 @@ const { engineFile, enhanceHtml } = require('./enhancements');
 const { enhanceEditorScript, enhanceMapViewScript, enhanceMapPreviewScript } = require('./editor-enhancements');
 const { enhanceTacticsContent } = require('./tactics-content');
 const { listLabSounds } = require('./lab-sounds');
+const { handleListChapters, handleSaveChapter, handleSaveChapterFrame } = require('./save-chapter');
 const { exportAll } = require('./player-store');
 const { desktopHeadScript } = require('./build-flags');
 
@@ -140,7 +141,7 @@ function resolveContentPath(pathname) {
   return fromContent;
 }
 
-const MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load', 'cast'];
+const MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load', 'cast', 'missions/01'];
 const MUSIC_EXTS = new Set(['.mp3', '.ogg', '.wav', '.m4a']);
 
 /**
@@ -217,6 +218,15 @@ async function handleRnrRequest(request) {
     }
     if (url.pathname === '/__tracks') {
       return handleListTracks();
+    }
+    if (url.pathname === '/__chapters') {
+      return handleListChapters();
+    }
+    if (url.pathname === '/__save-chapter' && request.method === 'POST') {
+      return handleSaveChapter(request);
+    }
+    if (url.pathname === '/__save-chapter-frame' && request.method === 'POST') {
+      return handleSaveChapterFrame(request, url);
     }
     if (url.pathname === '/__music-index') {
       const body = JSON.stringify(listMusicIndex());

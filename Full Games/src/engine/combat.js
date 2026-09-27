@@ -33,7 +33,12 @@
       if (killer && R.shots && R.shots.some(function (s) { return s.laser && s.r === killer; })) {
         spark(r.x, r.y, '#ff00ff', 15, 200);
       } else {
-        r.shield--; spark(r.x, r.y, '#35e0ff', 10, 180); sHit(); return;
+        r.shield--; spark(r.x, r.y, '#35e0ff', 10, 180);
+        if (!R.demo) {
+          if (typeof carImpactPlay === 'function') carImpactPlay('damage', r, .22);
+          else sHit();
+        }
+        return;
       }
     }
     const hpBefore = Math.max(0, r.hp);
@@ -48,7 +53,10 @@
     if (r.isP && !R.demo) doShake(4);
     if (r.hp <= 0) killRacer(r, killer);
     else {
-      if (!R.demo) sHit();
+      if (!R.demo && src !== 'ram' && src !== 'crush') {
+        if (typeof carImpactPlay === 'function') carImpactPlay('damage', r, clamp(d / Math.max(8, r.maxhp * .18), .12, 1));
+        else sHit();
+      }
       if (killer && typeof voiceSay === 'function') voiceSay(r, 'hit', { chance: .38, gap: 6 });
     }
   }

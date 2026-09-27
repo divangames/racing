@@ -193,16 +193,17 @@ const MapApp = (() => {
   /** Вкладки лаборатории. */
   function setTab(name) {
     window.__labTab = name;
-    const car = $('workCar'), map = $('workMap');
+    const car = $('workCar'), map = $('workMap'), chapter = $('workChapter');
     if (car) car.hidden = name !== 'car';
     if (map) map.hidden = name !== 'map';
+    if (chapter) chapter.hidden = name !== 'chapter';
     document.querySelectorAll('.app-tabs .tab').forEach((b) => {
       const on = b.getAttribute('data-tab') === name;
       b.classList.toggle('is-on', on);
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
     const reset = $('resetBtn');
-    if (reset) reset.hidden = name === 'map';
+    if (reset) reset.hidden = name !== 'car';
     if (name === 'map') {
       const show = () => { MapView.sync(); MapView.fit(); MapView.draw(); };
       show();
@@ -407,6 +408,7 @@ const MapApp = (() => {
       if (e.target.closest('#workMap')) setTimeout(() => commit(), 0);
     });
     window.addEventListener('beforeunload', e => {
+      if (window.__labTab === 'chapter') return;
       commit();
       if (docs.some(d => JSON.stringify(MapData.fileTrack(d)) !== saved.get(d))) { e.preventDefault(); e.returnValue = ''; }
     });

@@ -16,6 +16,7 @@ const ROOT = path.resolve(__dirname, '../content');
 /** Песочница голоса и покрышек. */
 function loadTires(opts) {
   const pending = [];
+  const audio = [];
   function FakeAudio() {
     this.src = '';
     this.volume = 1;
@@ -25,6 +26,7 @@ function loadTires(opts) {
     this.playbackRate = 1;
     this.onended = null;
     this.onerror = null;
+    audio.push(this);
     const el = this;
     this.play = function () {
       el.paused = false;
@@ -67,7 +69,7 @@ function loadTires(opts) {
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'car-audio-voice.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'car-tires.js'), 'utf8'), g);
   vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'car-audio.js'), 'utf8'), g);
-  return { g: g, flush: function () { while (pending.length) pending.shift()(); } };
+  return { g: g, audio: audio, flush: function () { while (pending.length) pending.shift()(); } };
 }
 
 test('На камере демо не включает визг шин', () => {
@@ -104,6 +106,102 @@ test('Обычный ход не включает визг покрышек', ()
   const z = g.carTireSlip({ spd: 140, lat: 22, steerFlt: 0.2, car: { hov: false } });
   assert.equal(z.slide, 0);
   assert.equal(z.drift, 0);
+});
+
+test('Остаточное боковое движение не запускает новый визг', () => {
+  const { g } = loadTires({ state: 'race' });
+  g.paused = false;
+  g.R = { phase: 'go' };
+  const racer = { x: 0, y: 0, spd: 140, lat: 30, steerFlt: 0.35, _tireContact: true,
+    car: { hov: false }, st: { top: 200 } };
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), false);
+});
+
+test('Звук шин начинается вместе со следами на дороге', () => {
+  const { g } = loadTires({ state: 'race' });
+  g.paused = false;
+  g.R = { phase: 'go' };
+  const racer = { x: 0, y: 0, spd: 140, lat: 54, steerFlt: 0.4, car: { hov: false }, st: { top: 200 } };
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), true);
+  racer.lat = 20;
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), false);
+});
+
+test('Свежий флаг контакта глушит зависший drift и боковую скорость', () => {
+  const { g } = loadTires({ state: 'race' });
+  g.paused = false;
+  g.R = { phase: 'go' };
+  const racer = { x: 0, y: 0, spd: 180, lat: 90, steerFlt: 1, _tireContact: true,
+    _drift: { active: true, intensity: 1 }, car: { hov: false }, st: { top: 220 } };
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), true);
+  racer._tireContact = false;
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), false);
+});
+
+test('Один занос играет WAV один раз и перевзводится только после зацепа', () => {
+  const { g, audio } = loadTires({ state: 'race' });
+  g.paused = false;
+  g.R = { phase: 'go' };
+  const racer = { x: 0, y: 0, spd: 180, lat: 90, steerFlt: 1, _tireContact: true,
+    car: { hov: false }, st: { top: 220 } };
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), true);
+  const clip = audio[audio.length - 1];
+  clip.paused = true;
+  clip.onended();
+  assert.equal(g.carTiresLive(), false);
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), false, 'непрерывный занос не перезапускает клип');
+  racer.lat = 0;
+  racer._tireContact = false;
+  g.tickCarTires(racer, [racer], 0.5);
+  racer.lat = 90;
+  racer._tireContact = true;
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), true, 'новый реальный срыв снова слышен');
+});
+
+test('Ошибка аудиотика fail-safe глушит все лупы', () => {
+  const { g } = loadTires({ state: 'race' });
+  g.paused = false;
+  g.R = { phase: 'go' };
+  const racer = { x: 0, y: 0, spd: 180, lat: 90, steerFlt: 1, _tireContact: true,
+    car: { hov: false }, st: { top: 220 } };
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), true);
+  g.tickCarEngineField = function () { throw new Error('tick'); };
+  assert.equal(g.tickCarEngine(racer, false, 'race'), false);
+  assert.equal(g.carTiresLive(), false);
+});
+
+test('Ручник включает звук на той же скорости, на которой появляются следы', () => {
+  const { g } = loadTires({ state: 'race' });
+  g.paused = false;
+  g.R = { phase: 'go' };
+  const racer = { x: 0, y: 0, spd: 80, lat: 0, steerFlt: 0, handbrake: true, car: { hov: false }, st: { top: 200 } };
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), true);
+});
+
+test('Визг глушится на обратном отсчёте и после финиша игрока', () => {
+  const { g } = loadTires({ state: 'race' });
+  g.paused = false;
+  g.R = { phase: 'go' };
+  const racer = { x: 0, y: 0, spd: 190, lat: 100, steerFlt: 0.8, car: { hov: false }, st: { top: 220 } };
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), true);
+  g.R.phase = 'count';
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), false);
+  g.R.phase = 'go';
+  racer.finished = true;
+  g.tickCarTires(racer, [racer], 0.5);
+  assert.equal(g.carTiresLive(), false);
 });
 
 test('Неактивный заезд глушит шины до тика моторов', () => {

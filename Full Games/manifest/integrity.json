@@ -1,13 +1,13 @@
 {
   "id": "kolesnica-voyny",
-  "version": "0.2.2.18",
-  "created": "2026-09-24T18:41:07.658Z",
+  "version": "0.2.2.19",
+  "created": "2026-09-27T05:04:02.684Z",
   "note": "Ядро клиента. Полный хеш ассетов — отдельное депо Steam.",
   "files": [
     {
       "path": "rnr.html",
-      "size": 391498,
-      "sha256": "bf510185878a1dedd3cef90f0f65225b3dd41fceb2a2554495260246eeba2e36"
+      "size": 391662,
+      "sha256": "ce2d06849787c79c64ddb12fa61e4b0cf40862ab8a13f8e567898fe60e103749"
     },
     {
       "path": "career.js",
@@ -21,33 +21,33 @@
     },
     {
       "path": "music.js",
-      "size": 8308,
-      "sha256": "4499c00dfebbaffcfb392686be044ba82c4525e9ddcf661b4643ec01818ee38f"
+      "size": 8811,
+      "sha256": "7666df27fa6042b08b0f13f4920a447627eba2066b04c1bbd1763fce0f7e8465"
     },
     {
       "path": "sounds.js",
-      "size": 4762,
-      "sha256": "839fb95699c602d59f45f88b4cb4100fcad66845327113b15327679d325e3fcd"
+      "size": 7696,
+      "sha256": "7ad1ee3abe8912b025ab9ee9076ecc9f8d4762f899542fce72c45519a86c3246"
     },
     {
       "path": "car-audio.js",
-      "size": 11261,
-      "sha256": "9b151fa8a6ba49d8ae2831034c9a101157510d1705cbd1cf857721b5cdbb75fb"
+      "size": 11728,
+      "sha256": "0894d78266557e5f5ea11a7aa29ff5f39e06fc7e2295b56c2f53cf2382d95567"
     },
     {
       "path": "car-audio-voice.js",
       "size": 27727,
-      "sha256": "4a2268584c34a77ca1e56fad0ebcf6056f1d64570492edeee3b9875a65d60156"
+      "sha256": "d584d4ae9758968f25f557ba82d7e488483604caa64884358867497939a71777"
     },
     {
       "path": "car-tires.js",
-      "size": 6022,
-      "sha256": "2d4509310a8be2e61d1342d92abdda39d0bd7c42a7befdfb4640984d84eba6cb"
+      "size": 8347,
+      "sha256": "d071183280c5ba9b5a4a3fe148afe7553215a7cd36dea72e2d96afb0e57fb756"
     },
     {
       "path": "car-nos.js",
-      "size": 5055,
-      "sha256": "7f94361f5788af96317771d867d5e4f29769731bb90ba64a19da039e27f48841"
+      "size": 5944,
+      "sha256": "457953d37c85c2132e4f9660a49dfef91960637fb38185112e63ce961b880f48"
     },
     {
       "path": "weapon-audio.js",
@@ -91,8 +91,8 @@
     },
     {
       "path": "tracks.js",
-      "size": 30882,
-      "sha256": "90bde5383d1c3fd92ad247d64562211ab3494031396469d7da5bfbf38fdf5d72"
+      "size": 32733,
+      "sha256": "6217afdc3c3193d827a2c92214b00e01bf970ab6f9b62913d3520bbf81ffbabe"
     },
     {
       "path": "objects.js",
@@ -131,8 +131,8 @@
     },
     {
       "path": "vfx/weather-audio.js",
-      "size": 7465,
-      "sha256": "f44c5de3e9685e54945742f8c0ad038f6992b5d24a6186ce268aa63e295e9878"
+      "size": 7642,
+      "sha256": "2784ea32dbf24425462df4f03bf2fc765cbb5d65ea6587ffdc7d822f8e5295cf"
     },
     {
       "path": "vfx/arena-crowd.js",
@@ -172,7 +172,7 @@
     {
       "path": "assets/data/cars/01/car.json",
       "size": 2936,
-      "sha256": "59697953bb4ead182e7544688be2e8dff05e3f3d433a75e4f6708833ae2cdd4b"
+      "sha256": "1880a1984d694bead1f02a22dd8849534fea72080455ae271229807a18a5e28a"
     },
     {
       "path": "assets/data/cars/02/car.json",
@@ -272,7 +272,7 @@
     {
       "path": "assets/data/cars/21/car.json",
       "size": 2615,
-      "sha256": "5b993326773ba0675a761a7ac2a5f5146baf47937b0de82a05f04a24e41a0176"
+      "sha256": "78a9879d82f8de1a5229d827ad470c6c1659104461a22c1905583db02d2d5cfe"
     }
   ]
 }

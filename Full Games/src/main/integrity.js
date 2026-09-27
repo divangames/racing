@@ -52,7 +52,13 @@ function requiredAnchors() {
     'Editor.html',
     'editor/lab-audio.js',
     'assets/sounds/engine/sound_001.wav',
-    'assets/sounds/cars/wheels/sound_025.wav'
+    'assets/sounds/cars/wheels/sound_025.wav',
+    'assets/sounds/cars/NOSZ/A_Nitro_Start.WAV',
+    'assets/sounds/cars/NOSZ/A_Nitro_Loop.WAV',
+    'assets/sounds/cars/NOSZ/A_Nitro_End.WAV',
+    'assets/sounds/cars/hit/A_CarHit_01.WAV',
+    'assets/sounds/cars/hit/A_Car_HitBody_01.WAV',
+    'assets/sounds/cars/hit/A_Car_Land_01.WAV'
   ];
 }
 

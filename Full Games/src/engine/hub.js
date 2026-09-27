@@ -183,7 +183,9 @@
     ];
     navs.forEach(function (nv, i) {
       const nx = rx + i * (navW + navGap), sel = tuningSel === nv.row;
-      drawGarageRow(nx, y, navW, navH, sel, nv.col, nv.fill, nv.n, nv.d, '', '');
+      const locked = nv.park && typeof storyBearAutoparkLocked === 'function' && storyBearAutoparkLocked();
+      drawGarageRow(nx, y, navW, navH, sel, locked ? '#6f6880' : nv.col, locked ? 'rgba(111,104,128,.10)' : nv.fill,
+        nv.n, locked ? 'временно недоступен' : nv.d, '', '');
       g._gar.push({ x: nx, y: y, w: navW, h: navH, row: nv.row, isAutopark: !!nv.park });
     });
     y += navH + 16;

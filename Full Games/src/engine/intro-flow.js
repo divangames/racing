@@ -106,6 +106,8 @@
    */
   function enterTitleEngine() {
     if (typeof clearKeys === 'function') clearKeys();
+    const menu = global.DiVANEngine && global.DiVANEngine.titleMenu;
+    if (menu && typeof menu.reset === 'function') menu.reset();
     state = 'title';
     selTitle = -1;
     global.titleConfirm = null;

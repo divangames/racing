@@ -288,6 +288,8 @@
       minStep: hasHint ? 28 : 22
     });
     const colX = lay.colX;
+    const caption = menu && typeof menu.titleCaption === 'function' ? menu.titleCaption() : '';
+    if (caption) txt(g, caption, colX + 2, lay.titleY0 - 28, 15, '#21ddff', 'left', F_B);
     const labOf = menu && menu.titleItemLabel;
     const hintOf = menu && menu.titleItemHint;
     items.forEach(function (t, i) {

@@ -71,6 +71,7 @@ function enhanceEditorScript(source) {
       if (e.target.closest('#workMap')) setTimeout(() => { if (!window.__mapFillLock) commit(); }, 0);
     });
     window.addEventListener('beforeunload', e => {
+      if (window.__labTab === 'chapter') return;
       if (testSession.leaving) return;
       commit();
       if (docs.some(d => JSON.stringify(MapData.fileTrack(d)) !== saved.get(d))) { e.preventDefault(); e.returnValue = ''; }

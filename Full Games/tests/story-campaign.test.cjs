@@ -21,7 +21,7 @@ const ENGINE = path.resolve(__dirname, '../src/engine');
  */
 function bootStory(slice) {
   const CARS = [];
-  for (let i = 0; i < 16; i++) CARS.push({ price: i >= 11 ? 200 : 0, idx: i });
+  for (let i = 0; i < 16; i++) CARS.push({ price: i >= 11 ? 200 + (i - 11) * 50 : 0, idx: i });
   CARS[0].owner = 0;
   CARS[6].owner = 3;
   CARS[7].owner = 1;
@@ -102,11 +102,10 @@ function bootStory(slice) {
     careerAfterResults: function () {},
     drawPreRace: function () { g._pre = true; },
     TRACKDEFS: [
-      { name: 'ОВАЛ' },
-      { name: 'ПЕРЕКРЁСТОК СМЕРТИ' },
-      { name: 'КАНЬОН «КРУШЕНИЕ»' },
-      { name: 'ЛЕДЯНОЙ ПЕРЕВАЛ' },
-      { name: 'ВУЛКАН' }
+      { name: 'ОВАЛ' }, { name: 'ПЕРЕКРЁСТОК СМЕРТИ' },
+      { name: 'КАНЬОН «КРУШЕНИЕ»' }, { name: 'ЛЕДЯНОЙ ПЕРЕВАЛ' },
+      { name: 'ВУЛКАН' }, { name: 'АРЕНА 6' }, { name: 'АРЕНА 7' },
+      { name: 'АРЕНА 8' }, { name: 'АРЕНА 9' }, { name: 'АРЕНА 10' }
     ],
     raceTrackOverride: null,
     R: { place: 0, countsForCareer: true },
@@ -215,7 +214,7 @@ test('Новая глава: комикс Медведя идёт после в�
   assert.equal(g.state, 'worldIntro');
   assert.equal(g.WORLD_INTRO.kind, 'campaign');
   assert.ok(g.WORLD_INTRO.scenes.length >= 2);
-  assert.match(g.WORLD_INTRO.scenes[g.WORLD_INTRO.scenes.length - 1].text, /десять тысяч/i);
+  assert.match(g.WORLD_INTRO.scenes[g.WORLD_INTRO.scenes.length - 1].text, /пять тысяч/i);
   assert.equal(g.storyApplyGarageRobbery(), false);
   g.worldIntroApplyJson({ scenes: [{ text: 'Старая кража' }] });
   assert.equal(g._jsonApplied, undefined);
@@ -229,7 +228,7 @@ test('Новая глава: комикс Медведя идёт после в�
 
 test('А не повышается автоматически; взнос после гонки списывается один раз', () => {
   const g = beginChapter();
-  g.save.cash = 10000;
+  g.save.cash = 5000;
   assert.equal(g.storyPayBearEntry(), false);
   g.R.place = 3;
   for (let i = 0; i < 12; i++) {
@@ -237,9 +236,9 @@ test('А не повышается автоматически; взнос пос
     assert.ok(g.save.race < g.TRACKDEFS.length);
     assert.equal(g.save.storyMission, 'race_a');
   }
-  g.save.cash = 9999;
+  g.save.cash = 4999;
   assert.equal(g.storyPayBearEntry(), false);
-  g.save.cash = 10000;
+  g.save.cash = 5000;
   assert.equal(g.storyPayBearEntry(), true);
   assert.equal(g.save.cash, 0);
   assert.equal(g.save.race, g.TRACKDEFS.length);
@@ -247,17 +246,44 @@ test('А не повышается автоматически; взнос пос
   assert.equal(g.storyPayBearEntry(), false);
 });
 
-test('Глава 1 подменяет календарь десятью трассами арены', () => {
+test('В главе Медведя покупка новых машин закрыта и подписана в интерфейсе', () => {
   const g = beginChapter();
-  const arena = [];
-  for (let i = 0; i < 10; i++) arena.push({ name: 'АРЕНА ' + (i + 1), theme: { map: 'arena' } });
+  g.state = 'car';
+  g.selCar = 11;
+  g.carConfirmed = false;
+  g._pressed = undefined;
+  const cash = g.save.cash;
+  assert.match(g.storyCarShopHint(11), /ПОКУПКА МАШИН ПОКА НЕДОСТУПНА/);
+  assert.match(g.carSelStatus(11, false).t, /ПОКУПКА МАШИН ПОКА НЕДОСТУПНА/);
+  g.press('Enter');
+  assert.equal(g._pressed, undefined);
+  assert.equal(g.save.cash, cash);
+  assert.equal(g.save.car, 0);
+
+  g.save.storyMission = 'buy_junk';
+  assert.equal(g.storyCarShopHint(11), '');
+  g.press('Enter');
+  assert.equal(g._pressed, true);
+});
+
+test('Глава 1 подменяет календарь отдельными трассами А и Б', () => {
+  const g = beginChapter();
+  const arenaA = [], arenaB = [];
+  for (let i = 0; i < 10; i++) {
+    arenaA.push({ name: 'А ' + (i + 1), theme: { map: 'arena' } });
+    arenaB.push({ name: 'Б ' + (i + 1), theme: { map: 'arena' } });
+  }
   g.RnRTracks = {
     STOCK: [{ name: 'СТОК' }],
-    chapterTracks: function (n) { return n === 1 ? arena : []; }
+    chapterTracks: function (n, cls) { return n === 1 ? (cls === 'B' ? arenaB : arenaA) : []; }
   };
   g.storySyncChapterTracks();
   assert.equal(g.TRACKDEFS.length, 10);
-  assert.equal(g.TRACKDEFS[0].theme.map, 'arena');
+  assert.equal(g.TRACKDEFS[0].name, 'А 1');
+  g.save.storyMission = 'race_b';
+  g.storySyncChapterTracks();
+  assert.equal(g.TRACKDEFS.length, 10);
+  assert.equal(g.TRACKDEFS[0].name, 'Б 1');
   g.save.playMode = 'career';
   g.save.storySlice = null;
   g.storySyncChapterTracks();
@@ -265,13 +291,26 @@ test('Глава 1 подменяет календарь десятью трас
   assert.equal(g.TRACKDEFS[0].name, 'СТОК');
 });
 
+test('Кража не снижает цены хлама и доплачивает только до первой покупки', () => {
+  const g = beginChapter();
+  const prices = g.CARS.slice(11, 14).map(c => c.price);
+  g.save.cash = 50;
+  g.save.storyFlags.robberyPending = true;
+  assert.equal(g.storyRobBearGarage(), true);
+  assert.equal(g.save.cash, 200);
+  assert.equal(g.save.storyFlags.junkCashAid, 150);
+  assert.deepEqual(g.CARS.slice(11, 14).map(c => c.price), prices);
+  assert.deepEqual(Array.from(g.carCatalogOrder()), [11, 12, 13]);
+  assert.equal(g.storyBearAutoparkLocked(), true);
+});
+
 test('Б: порог после призов, комикс после ложного взноса, деньги сохраняются', () => {
   const g = beginChapter();
   g.save.storyFlags.raceACompleted = true;
-  g.save.cash = 20000;
+  g.save.cash = 10000;
   g.storyPayBearEntry();
   assert.match(g.storyMissionHud(), /ЗАЕЗДЫ Б/);
-  assert.equal(g.save.cash, 10000);
+  assert.equal(g.save.cash, 5000);
   assert.equal(g.storyRequestBearEntry(), false);
   g.R.place = 3;
   g.save.race = 6;
@@ -281,7 +320,7 @@ test('Б: порог после призов, комикс после ложно
   g.careerOpenFromResults();
   assert.notEqual(g.state, 'worldIntro');
   assert.equal(g.storyRequestBearEntry(), true);
-  assert.equal(g.save.cash, 10000);
+  assert.equal(g.save.cash, 5000);
   assert.equal(g.save.storyFlags.robberyPending, true);
   assert.equal(g.state, 'worldIntro');
   assert.match(g.WORLD_INTRO.title, /ОГРАБЛЕНИЕ/);
@@ -290,7 +329,7 @@ test('Б: порог после призов, комикс после ложно
   g.save.carOwned[12] = true;
   g.save.tuning[12] = { eng: 6 };
   g.storyFinishCampaignIntro();
-  assert.equal(g.save.cash, 10000);
+  assert.equal(g.save.cash, 5000);
   assert.equal(g.save.storyMission, 'buy_junk');
   assert.equal(g.save.race, 0);
   assert.equal(g.carIsOwned(0), false);
@@ -315,7 +354,7 @@ test('Перезагрузка возобновляет комикс и обяз
   assert.equal(g.state, 'car');
   g.enterPreRace();
   assert.equal(g.state, 'car');
-  assert.deepEqual(Array.from(g.carCatalogOrder()), [11, 12, 13, 14, 15]);
+  assert.deepEqual(Array.from(g.carCatalogOrder()), [11, 12, 13]);
   g.selCar = 0;
   g._pressed = undefined;
   g.press('Enter');
@@ -328,6 +367,19 @@ test('Перезагрузка возобновляет комикс и обяз
   g.enterPreRace();
   assert.equal(g.state, 'prerace');
   assert.equal(g.storyHuntActive(), false);
+});
+
+test('После покупки хлама арена циклично остаётся в классах А и Б', () => {
+  const g = beginChapter();
+  g.save.storyMission = 'restart_races';
+  g.save.race = g.TRACKDEFS.length * 2 - 1;
+  g.careerAfterResults(g.save.race, []);
+  assert.equal(g.save.race, 0);
+  assert.match(g.storyMissionHud(), /ЗАЕЗДЫ А НА АРЕНЕ/);
+  g.save.race = g.TRACKDEFS.length - 1;
+  g.careerAfterResults(g.save.race, []);
+  assert.equal(g.save.race, g.TRACKDEFS.length);
+  assert.match(g.storyMissionHud(), /ЗАЕЗДЫ Б НА АРЕНЕ/);
 });
 
 test('Реванш и лаборатория не запускают сюжет; свободная карьера работает по-старому', () => {

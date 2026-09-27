@@ -1628,7 +1628,7 @@ const EditorApp = (() => {
     $('undoBtn').onclick = undo;
     $('redoBtn').onclick = redo;
     window.addEventListener('keydown', (e) => {
-      if (window.__labTab === 'map') return;
+      if (window.__labTab !== 'car') return;
       if (!(e.ctrlKey || e.metaKey)) return;
       const code = e.code || '';
       const key = (e.key || '').toLowerCase();
@@ -1648,7 +1648,7 @@ const EditorApp = (() => {
         const note = $('fileNote');
         if (note && !note.hidden) { e.preventDefault(); hideFileNote(); return; }
       }
-      if (window.__labTab === 'map') return;
+      if (window.__labTab !== 'car') return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
       const k = e.key;

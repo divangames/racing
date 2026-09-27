@@ -34,6 +34,14 @@ test('HTML и WAV используют общую шину, панорама HTM
   const {g,m}=boot(),el={};m.sync(true);const route=m.routeMedia(el,-.6);assert.equal(route.node.dest,g.AU.sfx);
   assert.equal(m.routeMedia(el,.6),route);assert.equal(route.node.pan.value,.6);m.releaseMedia(el);assert.equal(route.node.dest,null);
 });
+test('Заблокированный браузером аудиоконтекст возобновляется при активном миксе',()=>{
+  const {g,m}=boot();let resumes=0;g.AU.ctx.state='suspended';g.AU.ctx.resume=()=>{resumes++;return Promise.resolve();};
+  m.sync(true);assert.equal(resumes,1);
+});
+test('Ошибка маршрутизации HTMLAudio не отменяет воспроизведение',()=>{
+  const {g,m}=boot();g.AU.ctx.createMediaElementSource=()=>{throw new Error('already connected');};
+  assert.equal(m.routeMedia({}),null);
+});
 test('Панорама моторов соответствует экрану и не меняется от разворота игрока',()=>{
   const g={carEngineMakeSlot:()=>({}),DiVANEngine:{},settings:{sound:{sfx:80,sfxOn:true}}};g.window=g;vm.createContext(g);
   vm.runInContext(read('content/car-audio.js'),g);

@@ -80,6 +80,9 @@ function tickCarEngine(player, paused, screen) {
   try {
     return tickCarEngineField(player, paused, screen);
   } catch (err) {
+    // Любая ошибка аудиотика должна fail-safe глушить все лупы, иначе
+    // последний визг шин остаётся звучать до конца заезда.
+    carEngineHalt();
     return false;
   }
 }
@@ -188,17 +191,18 @@ function tickCarEnginePreview(base, screen) {
 }
 function tickCarEngineField(player, paused, screen) {
   const base = carEngineVol() * CAR_ENGINE_PLAYER;
-  if (screen !== 'race') {
+  const racing = screen === 'race' || screen === 'bearChase';
+  if (!racing) {
     carEngineHalt();
     return false;
   }
-  const live = screen === 'race' && !paused && !document.hidden && player && !player.dead && base > 0;
+  const live = racing && !paused && !document.hidden && player && !player.dead && base > 0;
   if (!live) {
     carEngineHalt();
     return false;
   }
   carEngineTickSlot(carEnginePlayer, player, base, 0);
-  const pack = (typeof R !== 'undefined' && R && R.racers) ? R.racers : [];
+  const pack = screen === 'race' && typeof R !== 'undefined' && R && R.racers ? R.racers : [];
   const cap = carEngineNpcCap();
   const ranked = [];
   for (let i = 0; i < pack.length; i++) {
@@ -257,7 +261,9 @@ function carEngineTickSlot(slot, racer, mixVol, pan) {
   const inAir = !!racer.air;
   const landed = !!slot.wasAir && !inAir;
   slot.wasAir = inAir;
-  const counting = typeof R !== 'undefined' && R && R.phase === 'count';
+  // Состояние прошлой гонки не должно обрывать мотор и шины в погоне.
+  const counting = typeof state === 'string' && state === 'race' &&
+    typeof R !== 'undefined' && R && R.phase === 'count';
   const gasGo = gas > 0 && !hb && !counting;
   slot.gas = gasGo ? gas : 0;
 

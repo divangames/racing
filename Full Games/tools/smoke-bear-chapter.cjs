@@ -44,17 +44,20 @@ app.whenReady().then(async () => {
   await run('WORLD_INTRO.cur = 10000');
   await shot('01-intro');
   const a = await run(`(() => {
-    endWorldIntro(); finishCameraSetup(); press('Enter'); press('Enter');
+    endWorldIntro(); finishCameraSetup(); press('Enter'); storyFinishCampaignIntro();
+    const parkState = state; garageAction(0, 7);
+    const parkLocked = state === parkState && /\u0412РЕМЕННО НЕДОСТУПЕН/.test(garMsg);
     save.cash = 10500; garageAction(0, 1);
     const tuning = save.tuning[save.car].eng;
     const paidEarly = storyPayBearEntry();
     enterPreRace(); confirmPreRace();
     R.place = 3; R.countsForCareer = true; careerAfterResults(save.race, []);
-    save.cash = 10000; state = 'garage';
-    return {mission:save.storyMission, tuning, paidEarly, div:R.div};
+    save.cash = 5000; state = 'garage';
+    return {mission:save.storyMission, tuning, paidEarly, parkLocked, div:R.div};
   })()`);
   assert.equal(a.mission, 'race_a');
   assert.equal(a.paidEarly, false);
+  assert.equal(a.parkLocked, true);
   assert.ok(a.tuning > 0);
   assert.equal(a.div, 1);
   await shot('02-races-a');
@@ -62,11 +65,13 @@ app.whenReady().then(async () => {
     storyPayBearEntry();
     const cash = save.cash;
     enterPreRace(); confirmPreRace();
-    return {mission:save.storyMission, cash, div:R.div, state};
+    return {mission:save.storyMission, cash, div:R.div, state, track:R.T.name, decks:R.T.decks.length};
   })()`);
   assert.equal(b.mission, 'race_b');
   assert.equal(b.cash, 0);
   assert.equal(b.div, 2);
+  assert.equal(b.track, 'КЛЕВЕР ПОЛУНОЧИ');
+  assert.ok(b.decks > 0);
   const robbery = await run(`(() => {
     save.cash = 20000; R.place = 3; R.countsForCareer = true;
     careerAfterResults(save.race, []); state = 'results';
@@ -84,8 +89,23 @@ app.whenReady().then(async () => {
   await until('WORLD_INTRO.imgs[5].naturalWidth > 0');
   await run('WORLD_INTRO.frame = 1; WORLD_INTRO.cur = 10000');
   await shot('03-robbery');
+  const chase = await run(`(() => {
+    storyFinishCampaignIntro();
+    return {state, pending:save.storyFlags.robberyPending, mission:save.storyMission,
+      distance:storyBearChase.distance, phase:storyBearChase.phase};
+  })()`);
+  assert.equal(chase.state, 'bearChase');
+  assert.equal(chase.pending, true);
+  assert.equal(chase.phase, 'CHASE_START');
+  await shot('04-chase');
   const purchase = await run(`(() => {
-    endWorldIntro();
+    storyBearChase.phase = 'CHASE'; storyBearChase.phaseTime = 0;
+    storyBearChase.distance = MISSION_01.greenZoneDistance - 2;
+    storyBearChase.playerSpeed = MISSION_01.playerMaxSpeed;
+    storyBearChase.truckSpeed = MISSION_01.playerMaxSpeed;
+    for(let i=0;i<110;i++) storyBearChaseStep(storyBearChase,{throttle:1},.05,()=>.5);
+    for(let i=0;i<210;i++) storyBearChaseStep(storyBearChase,{},.05,()=>.5);
+    storyBearChase.comicIndex = 5; press('Enter');
     const cash = save.cash, owned = carIsOwned(STARTER_LO), mission = save.storyMission;
     storyContinueCampaign();
     return {state, cash, owned, mission, catalog:carCatalogOrder(), flags:save.storyFlags, loadedMission:save.storyMission};
@@ -93,8 +113,8 @@ app.whenReady().then(async () => {
   assert.equal(purchase.state, 'car');
   assert.equal(purchase.owned, false);
   assert.equal(purchase.mission, 'buy_junk');
-  assert.ok(purchase.catalog.every(i => i >= 11 && i <= 15));
-  await shot('04-buy-body');
+  assert.deepEqual(purchase.catalog, [11, 12, 13]);
+  await shot('05-buy-body');
   const restart = await run(`(() => {
     const price = CARS[selCar].price, cash = save.cash;
     press('Enter');
@@ -103,7 +123,7 @@ app.whenReady().then(async () => {
     enterPreRace(); confirmPreRace();
     return {state, paid, price, mission:save.storyMission, car:save.car,
       owned:carIsOwned(save.car), stolen:carIsOwned(charCarIdx(0)), div:R.div,
-      hunt:storyHuntActive(), race:save.race};
+      hunt:storyHuntActive(), race:save.race, track:R.T.name};
   })()`);
   assert.equal(restart.paid, restart.price);
   assert.equal(restart.state, 'race');
@@ -113,8 +133,9 @@ app.whenReady().then(async () => {
   assert.equal(restart.hunt, false);
   assert.equal(restart.div, 1);
   assert.equal(restart.race, 0);
-  await shot('05-restart');
-  const report = { intro, a, b, robbery, purchase, restart, errors };
+  assert.equal(restart.track, 'НОЧНОЙ ОВАЛ');
+  await shot('06-restart');
+  const report = { intro, a, b, robbery, chase, purchase, restart, errors };
   fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2));
   assert.deepEqual(errors, []);
   console.log(JSON.stringify(report, null, 2));

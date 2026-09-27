@@ -57,13 +57,10 @@
     if (impact.closing < 28 || !impactReady(a, b)) return;
     const force = clamp(impact.closing / 320, .15, 1);
     for (const r of [a, b]) r._contactGrace = Math.max(r._contactGrace || 0, .28);
-    let lost = 0;
     if (!atLine && impact.closing > 60) {
       const base = Math.min(12, 1 + (impact.closing - 50) * .018);
-      const hp = (a.hp || 0) + (b.hp || 0);
       dmgRacer(a, base * clamp(2 * impact.mb / (impact.ma + impact.mb), .6, 1.4) * kitRamOut(b) * kitRamIn(a) * (b.dmgMul || 1), b, 'ram');
       dmgRacer(b, base * clamp(2 * impact.ma / (impact.ma + impact.mb), .6, 1.4) * kitRamOut(a) * kitRamIn(b) * (a.dmgMul || 1), a, 'ram');
-      lost = hp - ((a.hp || 0) + (b.hp || 0));
       for (const r of [a, b]) {
         r.bobVel = Math.max(-28, (r.bobVel || 0) - 10 * force);
       }
@@ -73,8 +70,10 @@
     if (!reduced && typeof spark === 'function') spark(impact.x, impact.y, atLine ? '#9badb7' : '#ffd23f', 4 + Math.round(force * 6), 80 + force * 100);
     const near = a.isP || b.isP || typeof nearP === 'function' && nearP(impact.x, impact.y, 500);
     if (!R.demo && near) {
-      // Урон уже звучит через dmgRacer; касание и щит получают один короткий удар.
-      if (lost <= 0 && typeof sHit === 'function') sHit();
+      // Один звук контакта на пару: dmgRacer не дублирует таран звуком корпуса.
+      if (typeof carImpactPlay === 'function') {
+        carImpactPlay('collision', impact.attacker, force, { x: impact.x, y: impact.y, local: a.isP || b.isP });
+      } else if (typeof sHit === 'function') sHit();
       if (!reduced && (a.isP || b.isP) && typeof doShake === 'function') doShake(1.5 + force * 4);
     }
   }

@@ -257,7 +257,7 @@ window.StudioCheck = {
   /** Устанавливает инструменты после готовности исходного интерфейса. */
   function start() {
     enhanceCarInspector();
-    bindTabKeys(document.querySelector('.app-tabs'),[document.getElementById('workCar'),document.getElementById('workMap')]);
+    bindTabKeys(document.querySelector('.app-tabs'),[document.getElementById('workCar'),document.getElementById('workMap'),document.getElementById('workChapter')]);
     if (typeof MapApp === 'undefined' || typeof MapApp.getDocument !== 'function') {
       const notice=document.createElement('p');notice.className='studio-report';notice.setAttribute('role','status');
       notice.textContent='Базовый редактор доступен. Для расширенной истории и импорта этой версии контента обновите клиент.';

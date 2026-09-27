@@ -1,45 +1,30 @@
-﻿@echo off
+@echo off
 chcp 65001 >nul
 setlocal EnableExtensions DisableDelayedExpansion
 cd /d "%~dp0"
 set "ROOT=%~dp0.."
+title Колесница войны - управление проектом
+color 0B
+
+for /f "usebackq delims=" %%i in (`node -p "require('./config/game.json').version"`) do set "GAME_VERSION=%%i"
+for /f "usebackq delims=" %%i in (`node -p "require('./config/launcher.json').version"`) do set "LAUNCHER_VERSION=%%i"
 
 if not "%~1"=="" goto dispatch
 
 :menu
 cls
-echo ============================================================
-echo              КОЛЕСНИЦА ВОЙНЫ — ПРОЕКТ
-echo ============================================================
 echo.
-echo   Запуск и файлы
-echo    1. Запустить игру
-echo    2. Открыть DiVANEngine
-echo    3. Синхронизировать контент
-echo    4. Проверить файлы и манифест
-echo.
-echo   Сборка и релизы
-echo    5. Собрать портативный билд
-echo    6. Собрать EXE-установщик
-echo    7. Собрать MSI-установщик
-echo    8. Выложить игру
-echo    9. Выложить лаунчер
-echo.
-echo   Git и сайты
-echo   10. Commit
-echo   11. Push
-echo   12. Commit + Push
-echo   13. Обновить Pages
-echo   14. Обновить диздок
-echo   15. Обновить Pages + диздок
-echo   16. ВСЁ: Pages + диздок + Commit + Push
-echo   17. Показать git status
-echo   18. Доверить сертификату Divan Games
-echo.
-echo    0. Выход
+echo  КОЛЕСНИЦА ВОЙНЫ        Игра %GAME_VERSION%  /  Лаунчер %LAUNCHER_VERSION%
+echo  ===========================================================================
+echo   ЗАПУСК:  [1] Игра    [2] DiVANEngine    [3] Синхронизация    [4] Проверка
+echo   СБОРКА:  [5] Portable    [6] EXE    [7] MSI    [8] Игра    [9] Лаунчер
+echo   GIT:     [10] Commit    [11] Push    [12] Commit + Push    [17] Status
+echo   САЙТЫ:   [13] Pages    [14] Диздок    [15] Оба    [16] Всё + Commit + Push
+echo  ---------------------------------------------------------------------------
+echo   [18] Сертификат Divan Games                                      [0] Выход
 echo.
 set "CHOICE="
-set /p CHOICE=Выберите действие: 
+set /p "CHOICE=  Выбор [0-18] > "
 if "%CHOICE%"=="1" call :start_game
 if "%CHOICE%"=="2" call :start_editor
 if "%CHOICE%"=="3" call :sync_content

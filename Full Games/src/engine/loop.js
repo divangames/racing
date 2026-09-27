@@ -39,8 +39,8 @@ function frameEngine(now){
  }else if(window.RnRArenaCrowd)RnRArenaCrowd.halt();
  if(state==='settings'||state==='cameraSetup')updateTitleRace(dt);
  if(typeof tickTitleFx==='function')tickTitleFx(dt);
- if(window.RnRWeatherAudio)RnRWeatherAudio.sync(state==='race'?R:null,settings);
- updEngine(P,paused,state);
+ if(window.RnRWeatherAudio)RnRWeatherAudio.sync(state==='race'?R:state==='bearChase'?window.storyBearChaseRace:null,settings);
+ updEngine(state==='bearChase'?window.storyBearChaseAudioPlayer:P,state==='bearChase'&&window.storyBearChase?window.storyBearChase.pause:paused,state);
  if(CHIP.on)CHIP.pump();
  if(state==='intro'&&!introDone){
   const sc=introScenes()[introFrame];

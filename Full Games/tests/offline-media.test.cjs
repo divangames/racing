@@ -33,6 +33,14 @@ test('Папки музыки и FX лежат на диске', () => {
   ['money.mp3', 'CashBay.mp3', 'carPay.wav'].forEach(function (name) {
     assert.ok(fs.existsSync(path.join(fx, name)), 'нет эффекта: ' + name);
   });
+  ['A_Nitro_Start.WAV', 'A_Nitro_Loop.WAV', 'A_Nitro_End.WAV'].forEach(function (name) {
+    assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'cars', 'NOSZ', name)), 'нет фазы нитро: ' + name);
+  });
+  ['A_CarHit_01.WAV', 'A_CarHit_02.WAV', 'A_CarHit_03.WAV',
+    'A_Car_HitBody_01.WAV', 'A_Car_HitBody_02.WAV', 'A_Car_HitBody_03.WAV',
+    'A_Car_Land_01.WAV', 'A_Car_Land_02.WAV'].forEach(function (name) {
+    assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'sounds', 'cars', 'hit', name)), 'нет звука авто: ' + name);
+  });
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'titles.json')), 'нет манифеста фонов титула');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'title-medved_1920x1080.webp')), 'нет HD-фона титула');
   assert.ok(fs.existsSync(path.join(ROOT, 'assets', 'data', 'cats', 'Titles', 'title-medved_3440x1440.webp')), 'нет ультраширокого фона титула');
@@ -65,6 +73,35 @@ test('Десктоп даёт только локальные URL музыки �
   const web = g.musicSources('assets/music/main/0.mp3');
   assert.equal(web[0], 'assets/music/main/0.mp3');
   assert.ok(web.some(function (u) { return u.indexOf('ikrinka24.com') >= 0; }));
+});
+
+test('Музыка повторяет запуск категории после асинхронного поиска файлов', async () => {
+  const g = {
+    console,
+    window: null,
+    __RNR_DESKTOP__: true,
+    lastMusicCat: 'racing',
+    MUSIC: {
+      curCat: 'racing', cur: null, el: null,
+      list: function (cat) { return (g.MUSIC_TRACKS && g.MUSIC_TRACKS[cat]) || []; }
+    },
+    fetch: function (url) {
+      if (url === '__music-index') {
+        return Promise.resolve({
+          ok: true,
+          headers: { get: function () { return 'application/json'; } },
+          text: function () { return Promise.resolve(JSON.stringify({ racing: ['0.mp3'] })); }
+        });
+      }
+      return Promise.resolve({ ok: false, headers: { get: function () { return ''; } } });
+    }
+  };
+  g.window = g;
+  g.globalThis = g;
+  vm.runInNewContext(fs.readFileSync(path.join(ROOT, 'music.js'), 'utf8'), g);
+  await g.MUSIC_SCAN.promise;
+  assert.equal(g.lastMusicCat, null);
+  assert.deepEqual(Array.from(g.MUSIC_TRACKS.racing), ['assets/music/racing/0.mp3']);
 });
 
 test('Заставка на десктопе пропускает http CDN', () => {

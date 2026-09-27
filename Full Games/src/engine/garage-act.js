@@ -52,7 +52,12 @@
    */
   function garageActionEngine(col, row) {
     const kind = garageRowKind(row);
-    if (kind === 'park') { enterAutopark(); sClick(); return; }
+    if (kind === 'park') {
+      if (typeof storyBearAutoparkLocked === 'function' && storyBearAutoparkLocked()) {
+        garMsg = 'АВТОПАРК ВРЕМЕННО НЕДОСТУПЕН'; garMsgT = 2.4; sHit(); return;
+      }
+      enterAutopark(); sClick(); return;
+    }
     if (kind === 'race') { enterPreRace(); return; }
     if (kind === 'armory') { enterArmory(); sClick(); return; }
     if (kind === 'gym') { gymSel = 0; state = 'gym'; sClick(); return; }

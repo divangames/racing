@@ -7312,6 +7312,9 @@ function drawCarDetail(){
  if(foreign){cta='принадлежит: '+charDative(carOwnerIdx(autoparkSel));ctaCol='#c8c0d4';}
  else if(same){cta='ЭТО ТВОЯ МАШИНА';ctaCol='#58ff6b';}
  else if(owned){cta='ENTER  —  ПЕРЕСЕСТЬ';ctaCol='#35e0ff';}
+ else if(typeof storyCarShopHint==='function'&&storyCarShopHint(autoparkSel)){
+  cta='ПОКУПКА МАШИН ПОКА НЕДОСТУПНА';ctaCol='#8f88a0';
+ }
  else{
   const can=save.cash>=car.price;
   cta=can?'ENTER  —  КУПИТЬ  '+fm(car.price):'НЕ ХВАТАЕТ  '+fm(car.price-save.cash);

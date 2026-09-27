@@ -17,7 +17,8 @@
   /** Возвращает состояние оружия из реального магазина, перегрева и задержки выстрела. */
   function weaponState(r, weapon, magazine, heatMax) {
     if (r.dead) return { text: 'НЕДОСТУПНО', ratio: 0, ready: false };
-    if (r.wepOver > 0) return { text: (magazine > 0 ? 'ПЕРЕЗАРЯДКА ' : 'ОХЛАЖДЕНИЕ ') + r.wepOver.toFixed(1) + 'с', ratio: clamp(1 - r.wepOver / Math.max(.001, heatMax), 0, 1), ready: false };
+    if (r.wepOver > 0) return { text: (r.chaseWeaponHeat || magazine <= 0 ? 'ОХЛАЖДЕНИЕ ' : 'ПЕРЕЗАРЯДКА ') + r.wepOver.toFixed(1) + 'с', ratio: clamp(1 - r.wepOver / Math.max(.001, heatMax), 0, 1), ready: false };
+    if (r.chaseWeaponHeat) return { text: 'НАГРЕВ ' + Math.round((r.wepHeat || 0) * 100) + '%', ratio: clamp(1 - (r.wepHeat || 0), 0, 1), ready: r.cdW <= 0 };
     if (magazine > 0) return { text: (r.wepAmmo | 0) + ' / ' + magazine, ratio: clamp(r.wepAmmo / magazine, 0, 1), ready: r.wepAmmo > 0 && r.cdW <= 0 };
     if (weapon.type === 'gatling') return { text: 'НАГРЕВ ' + Math.round((r.wepHeat || 0) * 100) + '%', ratio: clamp(1 - (r.wepHeat || 0), 0, 1), ready: r.cdW <= 0 };
     if (weapon.type === 'nails' && r.cdW <= 0 && !kitSliding(r)) return { text: 'НУЖЕН ЗАНОС', ratio: 0, ready: false };

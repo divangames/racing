@@ -30,14 +30,16 @@
   }
   /** Семплы кузова глушат пилу; без файлов остаётся прежний тон. */
   DiVANEngine.replace('updEngine', function(player, isPaused, screen) {
-    if (screen !== 'race' || isPaused || document.hidden) {
+    const racing = screen === 'race' || screen === 'bearChase';
+    if (screen === 'bearChase' && window.storyBearChaseAudioPlayer) player = window.storyBearChaseAudioPlayer;
+    if (!racing || isPaused || document.hidden) {
       if (typeof carTiresHalt === 'function') carTiresHalt();
       if (typeof carEngineHalt === 'function') carEngineHalt();
       if (AU.ctx && AU.engG) AU.engG.gain.setTargetAtTime(0, AU.ctx.currentTime, .04);
       muteTire(AU.ctx ? AU.ctx.currentTime : 0, true);
       return;
     }
-    const active = screen === 'race' && !isPaused && !document.hidden && player && !player.dead && settings.sound.sfxOn;
+    const active = racing && !isPaused && !document.hidden && player && !player.dead && settings.sound.sfxOn;
     if (!active && typeof carTiresHalt === 'function') carTiresHalt();
     if (typeof tickCarEngine === 'function') tickCarEngine(player, isPaused, screen);
     if (!active && typeof carTiresHalt === 'function') carTiresHalt();
@@ -54,7 +56,7 @@
       AU.engO.frequency.setTargetAtTime(pitch, now, .065);
       AU.engO2.frequency.setTargetAtTime(pitch * 1.503, now, .08);
       AU.engF.frequency.setTargetAtTime(260 + speed * 1050, now, .09);
-      AU.engG.gain.setTargetAtTime(active ? .026 + Math.min(speed, 1) * .045 : 0, now, .05);
+      AU.engG.gain.setTargetAtTime(active ? .05 + Math.min(speed, 1) * .1 : 0, now, .05);
     }
     const bus = tireBus();
     if (bus) {

@@ -28,6 +28,15 @@ app.whenReady().then(async()=>{
     report.screens.push({name,...result});return result;
   }
   await capture('title',"enterTitle();selTitle=0");
+  const freeMenu=await capture('title-free',"DiVANEngine.titleMenu.openFreeMenu();selTitle=0");
+  const freeLabels=await win.webContents.executeJavaScript("g._titleItems.map(item=>item.label)");
+  assert(freeLabels.includes('ВЫБРАТЬ ЛОКАЦИЮ'));assert(freeLabels.includes('ВЫЙТИ В ГЛАВНОЕ МЕНЮ'));
+  const freeReturn=await win.webContents.executeJavaScript(`(()=>{
+    DiVANEngine.titleMenu.applyTitleAction('free-location',{free:null});
+    const opened=state==='tracks'&&trackPickReturn==='free';press('Escape');
+    return {opened,back:state==='title'&&DiVANEngine.titleMenu.isFreeMenu()};})()`);
+  assert(freeReturn.opened&&freeReturn.back);report.freeMenu={labels:freeLabels,...freeReturn,regions:freeMenu.regions.length};
+  await win.webContents.executeJavaScript("DiVANEngine.titleMenu.closeFreeMenu();menuPaint()");
   const pointer=await win.webContents.executeJavaScript(`(()=>{
     const b=DiVANEngine.menu.regions().find(b=>b.id==='title-'+g._titleItems.findIndex(i=>i.id==='settings'));
     const rect=cv.getBoundingClientRect(),x=rect.left+(b.x+b.w/2)*rect.width/cv.width,y=rect.top+(b.y+b.h/2)*rect.height/cv.height;

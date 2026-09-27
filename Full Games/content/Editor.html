@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="editor/fonts.css">
 <link rel="stylesheet" href="editor/editor.css?v=20260915a">
 <link rel="stylesheet" href="editor/content-browser.css?v=20260905o">
+<link rel="stylesheet" href="editor/chapter-editor.css?v=20260926a">
 </head>
 <body>
 <main class="app">
@@ -24,6 +25,7 @@
       <div class="app-tabs" role="tablist" aria-label="Разделы редактора">
         <button type="button" class="tab is-on" role="tab" data-tab="car" aria-selected="true">Машина</button>
         <button type="button" class="tab" role="tab" data-tab="map" aria-selected="false">Карта</button>
+        <button type="button" class="tab" role="tab" data-tab="chapter" aria-selected="false">Редактор глав</button>
       </div>
     </div>
     <nav class="top-actions" aria-label="Навигация">
@@ -364,6 +366,117 @@
       </section>
     </div>
   </div>
+  <div class="chapter-workspace" id="workChapter" hidden>
+    <aside class="chapter-rail chapter-card" aria-label="Главы и точки запуска">
+      <div class="chapter-card-head">
+        <div>
+          <div class="chapter-kicker">КАМПАНИЯ</div>
+          <h2>Главы</h2>
+        </div>
+        <span class="chapter-badge">DEV</span>
+      </div>
+      <div id="chapterList" class="chapter-mission-list" role="listbox" aria-label="Список миссий"></div>
+      <div class="chapter-divider"></div>
+      <div class="chapter-card-head compact">
+        <div>
+          <div class="chapter-kicker">БЫСТРЫЙ СТАРТ</div>
+          <h2>Точка миссии</h2>
+        </div>
+      </div>
+      <div id="chapterPoints" class="chapter-point-list" role="listbox" aria-label="Точки запуска"></div>
+    </aside>
+
+    <section class="chapter-stage chapter-card" aria-label="Монтаж главы">
+      <header class="chapter-stage-head">
+        <div>
+          <div id="chapterReadChapter" class="chapter-kicker">ГЛАВА 1</div>
+          <h2 id="chapterReadTitle">Колесница смерти — Погоня</h2>
+          <p id="chapterReadObjective">Не упусти грузовик</p>
+        </div>
+        <div class="chapter-stage-actions">
+          <button type="button" id="chapterTestBtn" class="primary">▶ Тест с этой точки</button>
+          <button type="button" id="chapterSaveBtn">Сохранить</button>
+        </div>
+      </header>
+
+      <div class="chapter-preview" id="chapterPreview">
+        <img id="chapterPreviewImage" alt="Кадр комикса" hidden>
+        <div class="chapter-preview-shade"></div>
+        <div class="chapter-preview-empty" id="chapterPreviewEmpty">
+          <span>КАДР НЕ НАЗНАЧЕН</span>
+          <small>Выберите изображение справа</small>
+        </div>
+        <div class="chapter-preview-copy">
+          <strong id="chapterPreviewSpeaker">ИВАН</strong>
+          <p id="chapterPreviewText">Выберите сцену для редактирования.</p>
+          <small id="chapterPreviewSub"></small>
+        </div>
+        <div class="chapter-preview-count" id="chapterPreviewCount">01 / 01</div>
+      </div>
+
+      <div class="chapter-strip-head">
+        <div class="chapter-scene-tabs" id="chapterComicSections" role="tablist" aria-label="Комиксы главы"></div>
+        <button type="button" id="chapterAddScene">+ Новый кадр</button>
+      </div>
+      <div id="chapterSceneList" class="chapter-scene-list" aria-label="Кадры комикса"></div>
+    </section>
+
+    <aside class="chapter-inspector chapter-card" aria-label="Настройки главы">
+      <div class="chapter-inspector-scroll">
+        <section class="chapter-editor-section">
+          <div class="chapter-section-title">Карточка миссии</div>
+          <div class="field"><label for="chapterTitle">Название</label><input id="chapterTitle" maxlength="80"></div>
+          <div class="field-grid">
+            <div class="field"><label for="chapterName">Глава</label><input id="chapterName" maxlength="40"></div>
+            <div class="field"><label for="chapterObjective">Цель</label><input id="chapterObjective" maxlength="80"></div>
+          </div>
+        </section>
+
+        <section class="chapter-editor-section">
+          <div class="chapter-section-title">Выбранный кадр</div>
+          <div class="field"><label for="chapterSpeaker">Говорящий / титр</label><input id="chapterSpeaker" maxlength="60"></div>
+          <div class="field"><label for="chapterText">Основной текст</label><textarea id="chapterText" rows="4" maxlength="1000"></textarea></div>
+          <div class="field"><label for="chapterSub">Подпись / ремарка</label><textarea id="chapterSub" rows="2" maxlength="500"></textarea></div>
+          <div class="field"><label for="chapterImage">Путь к изображению</label><input id="chapterImage" spellcheck="false" placeholder="assets/.../frame.png"></div>
+          <div class="chapter-frame-actions">
+            <label class="chapter-upload">Заменить кадр<input id="chapterFrameFile" type="file" accept="image/png,image/webp,image/jpeg"></label>
+            <button type="button" id="chapterSceneDuplicate">Копия</button>
+            <button type="button" id="chapterSceneUp" title="Переместить кадр левее">←</button>
+            <button type="button" id="chapterSceneDown" title="Переместить кадр правее">→</button>
+            <button type="button" id="chapterSceneDelete" class="danger">Удалить</button>
+          </div>
+        </section>
+
+        <section class="chapter-editor-section">
+          <div class="chapter-section-title">Баланс погони</div>
+          <div id="chapterConfig" class="chapter-config-grid"></div>
+        </section>
+        <section class="chapter-editor-section">
+          <div class="chapter-section-title">Трасса погони</div>
+          <div class="field-grid">
+            <div class="field"><label for="chapterRoadWidth">Ширина полотна</label><input id="chapterRoadWidth" type="number" min="70" max="150" step="1"></div>
+            <div class="field"><label for="chapterCurveAmount">Сила поворотов</label><input id="chapterCurveAmount" type="number" min="0" max="90" step="1"></div>
+          </div>
+          <div class="field"><label for="chapterGroundSrc">Фон трассы</label><input id="chapterGroundSrc" spellcheck="false" placeholder="assets/.../ground.webp"></div>
+          <label class="chapter-upload chapter-track-upload">Загрузить фон<input id="chapterGroundFile" type="file" accept="image/png,image/webp,image/jpeg"></label>
+          <div class="field"><label for="chapterRoadSrc">Текстура дороги</label><input id="chapterRoadSrc" spellcheck="false" placeholder="assets/.../road.webp"></div>
+          <label class="chapter-upload chapter-track-upload">Загрузить дорогу<input id="chapterRoadFile" type="file" accept="image/png,image/webp,image/jpeg"></label>
+          <div class="field"><label for="chapterRailSrc">Борты трассы</label><input id="chapterRailSrc" spellcheck="false" placeholder="assets/.../rail.webp"></div>
+          <label class="chapter-upload chapter-track-upload">Загрузить борты<input id="chapterRailFile" type="file" accept="image/png,image/webp,image/jpeg"></label>
+          <div class="chapter-track-colors">
+            <div class="field"><label for="chapterGroundColor">Цвет фона</label><input id="chapterGroundColor" type="color"></div>
+            <div class="field"><label for="chapterRoadColor">Цвет дороги</label><input id="chapterRoadColor" type="color"></div>
+            <div class="field"><label for="chapterLineColor">Разметка</label><input id="chapterLineColor" type="color"></div>
+          </div>
+          <p class="hint">Эти материалы используются только в погоне. Звук трибун здесь всегда выключен.</p>
+        </section>
+      </div>
+      <footer class="chapter-inspector-foot">
+        <div id="chapterStatus" class="chapter-status" role="status">Загрузка глав…</div>
+        <button type="button" id="chapterSaveBottom" class="primary">Сохранить главу</button>
+      </footer>
+    </aside>
+  </div>
 </main>
 <div id="fileNote" class="file-note" hidden role="alertdialog" aria-modal="true" aria-labelledby="fileNoteTitle">
   <div class="file-note-card" id="fileNoteCard">
@@ -437,5 +550,9 @@
 <script src="editor/map-panel.js?v=20260913t"></script>
 <script src="editor/map-view.js?v=20260913q"></script>
 <script src="editor/map-app.js?v=20260915b"></script>
+<script src="editor/chapter-data.js?v=20260926a"></script>
+<script src="editor/chapter-balance-editor.js?v=20260926a"></script>
+<script src="editor/chapter-track-editor.js?v=20260926a"></script>
+<script src="editor/chapter-editor.js?v=20260926b"></script>
 </body>
 </html>

@@ -1,14 +1,16 @@
 ////////////////////////////////////////////////////////
 //
-// Глава Медведя, срез 1: комикс → А → взнос 10 000 →
-// Б (ложный взнос) → ограбление → хлам → первый дивизион.
+// Глава Медведя, срез 1: комикс → А → взнос 5 000 →
+// Б (ложный взнос) → ограбление → хлам → цикл А/Б на арене.
 //
 ////////////////////////////////////////////////////////
 
 (function (global) {
   'use strict';
 
-  const FEE = 10000;
+  const FEE = 5000;
+  const JUNK_CHOICE_COUNT = 3;
+  const ARENA_CLASS_TRACKS = 10;
   let feeAsk = false;
   let feeAskYes = true;
 
@@ -19,7 +21,9 @@
     if (typeof TRACKDEFS === 'undefined' || !Array.isArray(TRACKDEFS)) return;
     const api = typeof RnRTracks !== 'undefined' ? RnRTracks : null;
     if (!api || typeof api.chapterTracks !== 'function' || !api.STOCK || !api.STOCK.length) return;
-    const src = active() ? api.chapterTracks(1) : api.STOCK;
+    const classB = active() && (save.storyMission === 'race_b' ||
+      (save.storyMission === 'restart_races' && (save.race | 0) >= ARENA_CLASS_TRACKS));
+    const src = active() ? api.chapterTracks(1, classB ? 'B' : 'A') : api.STOCK;
     if (!src || !src.length) return;
     TRACKDEFS.length = 0;
     for (let i = 0; i < src.length; i++) TRACKDEFS.push(src[i]);
@@ -33,13 +37,31 @@
     return !!(save && save.playMode === 'campaign' && save.char === 0 && save.storySlice === 'bear_chapter_1');
   }
 
+  /** В сюжетной покупке доступны первые три кузова хлама. */
+  function storyJunk(i) {
+    return i >= STARTER_LO && i < STARTER_LO + JUNK_CHOICE_COUNT;
+  }
+
   /**
-   * Стартовый хлам.
-   * @param {number} i
-   * @returns {boolean}
+   * Деньги после кражи не меняют цену хлама: при необходимости касса
+   * пополняется ровно до самого дешёвого из трёх сюжетных кузовов.
    */
-  function junk(i) {
-    return i >= STARTER_LO && i <= STARTER_HI;
+  function ensureJunkBudget() {
+    if (!active()) return 0;
+    const prices = [];
+    for (let i = STARTER_LO; i < Math.min(CARS.length, STARTER_LO + JUNK_CHOICE_COUNT); i++) {
+      const price = Number(CARS[i] && CARS[i].price);
+      if (Number.isFinite(price) && price > 0) prices.push(price);
+    }
+    if (!prices.length) return 0;
+    const need = Math.min.apply(null, prices);
+    const cash = Math.max(0, Number(save.cash) || 0);
+    const aid = Math.max(0, need - cash);
+    if (aid > 0) {
+      save.cash = cash + aid;
+      flags().junkCashAid = (flags().junkCashAid | 0) + aid;
+    }
+    return aid;
   }
 
   /**
@@ -64,6 +86,24 @@
    */
   function buying() {
     return active() && save.storyMission === 'buy_junk';
+  }
+
+  /** До сюжетной покупки хлама новые машины в кампании недоступны. */
+  function purchasesLocked() {
+    return active() && !buying();
+  }
+
+  /** В главе Медведя автопарк закрыт: сюжет использует отдельный выбор машины. */
+  function autoparkLocked() {
+    return active();
+  }
+
+  /** Подпись основной кнопки автопарка. */
+  function carShopHint(i) {
+    if (!purchasesLocked()) return '';
+    return typeof carIsOwned === 'function' && carIsOwned(i)
+      ? 'ENTER — ВЫБРАТЬ · ПОКУПКА МАШИН ПОКА НЕДОСТУПНА'
+      : 'ПОКУПКА МАШИН ПОКА НЕДОСТУПНА · ESC — НАЗАД';
   }
 
   /**
@@ -104,7 +144,7 @@
    * @returns {string}
    */
   function feeHud() {
-    return Math.min(FEE, save.cash | 0).toLocaleString('ru-RU') + ' / 10 000';
+    return Math.min(FEE, save.cash | 0).toLocaleString('ru-RU') + ' / 5 000';
   }
 
   /**
@@ -122,8 +162,12 @@
       if (lack()) return 'ЗАЕЗДЫ Б · ' + feeHud() + ' · ещё ' + lack().toLocaleString('ru-RU');
       return 'ЗАЕЗДЫ Б · ' + feeHud() + ' · прокатись, как в А';
     }
-    if (buying()) return 'ГАРАЖ ОГРАБЛЕН · КУПИ СТАРЫЙ КОРПУС';
-    return 'ХЛАМ · СНОВА ПЕРВЫЙ ДИВИЗИОН · ГОНЯЙ';
+    if (buying()) return 'ГАРАЖ ОГРАБЛЕН · ВЫБЕРИ ОДИН ИЗ ТРЁХ СТАРЫХ КУЗОВОВ';
+    if (save.storyMission === 'restart_races') {
+      const cls = (save.race | 0) < ARENA_CLASS_TRACKS ? 'А' : 'Б';
+      return 'ХЛАМ · ЗАЕЗДЫ ' + cls + ' НА АРЕНЕ';
+    }
+    return 'ХЛАМ · АРЕНА · ГОНЯЙ';
   }
 
   /**
@@ -137,9 +181,10 @@
   /**
    * Вступление — комикс пилота. Кража — те же кадры, пока нет отдельных.
    * @param {boolean} robbery
+   * @param {number} [sceneIndex]
    * @returns {boolean}
    */
-  function openComic(robbery) {
+  function openComic(robbery, sceneIndex) {
     if (!active()) return false;
     const pack = medvedPack();
     WORLD_INTRO.kind = 'campaign';
@@ -148,21 +193,36 @@
     WORLD_INTRO.dir = typeof playerComicsDir === 'function' ? playerComicsDir(0) : 'assets/data/players/01/comics/';
     if (pack && pack.imgs && pack.imgs.length) WORLD_INTRO.imgs = pack.imgs;
     else if (typeof worldIntroEnqueueImgs === 'function') worldIntroEnqueueImgs();
-    if (robbery) {
-      WORLD_INTRO.scenes = [
-        { img: 0, text: 'Десять тысяч на «следующий допуск» он уже нёс в кармане. Гараж встретил тишиной. Свет погашен. Замок вырван вместе с петлями.' },
-        { img: 5, text: 'Пока Медведь гонял заезды Б, гараж вскрыли. Машины, запчасти, тюнинг — на эвакуаторе. «Дьявол» ушёл вместе с железом.' },
-        { img: 6, text: 'Деньги были при нём. На старый корпус хватит. «Ладно. Начнём сначала». Дальше снова первый дивизион — уже на хламе.' }
-      ];
-    } else {
-      const base = pack && pack.scenes ? pack.scenes.slice() : (
+    const fallback = robbery ? [
+        { img: 0, text: 'Гараж встретил тишиной. Замок вырван, ворота распахнуты. Вдали огромный боевой грузовик увозит машину Ивана.' },
+        { img: 5, text: 'МЕДВЕДЬ: «ЯНОТ! ЭТО МОЯ МАШИНА!»  ЯНОТ: «Вижу».  МЕДВЕДЬ: «Так догони его!»  ЯНОТ: «Я вообще-то этим и занимаюсь».' },
+        { img: 6, text: 'Водитель PitterMAX замечает погоню. Задняя платформа открывается, на трассу падает горящая бочка. ЯНОТ: «Ну вот. Началось».' }
+      ] : (pack && pack.scenes ? pack.scenes.slice() : (
         typeof campaignIntroFallbackScenes === 'function' ? campaignIntroFallbackScenes() : []
-      );
-      WORLD_INTRO.scenes = base.concat([
-        { img: 6, text: 'Сначала заезды А. Гараж открыт: ремонтируй, тюнингуй, зарабатывай. Допуск в Б — десять тысяч. Сначала прокатись, потом внеси.' }
+      )).concat([
+        { img: 6, text: 'Сначала заезды А. Гараж открыт: ремонтируй, тюнингуй, зарабатывай. Допуск в Б — пять тысяч. Сначала прокатись, потом внеси.' }
       ]);
-    }
+    const runtimeKey = robbery ? 'introScenes' : 'chapterIntroScenes';
+    const editable = global.RnRChapterContent && RnRChapterContent.scenes(runtimeKey, []);
+    if (editable && editable.length && typeof Image !== 'undefined') {
+      WORLD_INTRO.imgs = editable.map(function (scene) {
+        const image = new Image();
+        if (scene.image && typeof worldIntroFetchImg === 'function') worldIntroFetchImg(image, [scene.image]);
+        else if (scene.image) image.src = scene.image;
+        return image;
+      });
+      WORLD_INTRO.scenes = editable.map(function (scene, index) {
+        const speaker = scene.speaker ? scene.speaker + ': ' : '';
+        return { img: index, text: speaker + scene.text + (scene.sub ? '\n' + scene.sub : '') };
+      });
+      const chapter = RnRChapterContent.get();
+      if (chapter && chapter.title && robbery) WORLD_INTRO.title = chapter.title.toUpperCase();
+    } else WORLD_INTRO.scenes = fallback;
     worldIntroBeginScreen();
+    if (robbery && Number(sceneIndex) > 0) {
+      WORLD_INTRO.frame = Math.min(WORLD_INTRO.scenes.length - 1, Math.max(0, Number(sceneIndex) | 0));
+      if (typeof worldIntroResetType === 'function') worldIntroResetType();
+    }
     return true;
   }
 
@@ -221,6 +281,9 @@
     } else if (save.storyMission === 'race_b') {
       flags().raceBCompleted = true;
       save.race = n + ((prevRace + 1) % n);
+    } else if (save.storyMission === 'restart_races') {
+      // После кражи остаёмся только в классах А/Б этой арены.
+      save.race = (prevRace + 1) % (n * 2);
     }
   }
 
@@ -244,6 +307,7 @@
     save.winStreak = 0;
     save.careerWins = 0;
     save.bet = 0;
+    ensureJunkBudget();
     raceTrackOverride = null;
     raceBoard = null;
     persist();
@@ -257,8 +321,11 @@
   function finishComic() {
     if (!active()) return false;
     if (pending()) {
-      rob();
-      enterCarSel(STARTER_LO);
+      if (typeof startStoryBearChase === 'function') startStoryBearChase();
+      else {
+        rob();
+        enterCarSel(STARTER_LO);
+      }
     } else if (!flags().introComplete) {
       flags().introComplete = true;
       save.storyChapter = 1;
@@ -310,7 +377,7 @@
   }
 
   /**
-   * Карточка «списать десять тысяч?».
+   * Карточка подтверждения взноса.
    */
   function drawFeeAsk() {
     if (!feeAsk) return;
@@ -318,7 +385,7 @@
     g.fillRect(0, 0, W, H);
     panel(g, W / 2 - 280, H / 2 - 110, 560, 220, 'rgba(16,12,10,.97)', '#ff9d2e', 16);
     txt(g, 'ВЗНОС В ЗАЕЗДЫ Б', W / 2, H / 2 - 64, 22, '#ffd23f', 'center', F_B);
-    txt(g, 'Списать 10 000 с кассы? Тюнинг и пушки с собой не вернут.', W / 2, H / 2 - 24, 14, '#c8c0d4', 'center');
+    txt(g, 'Списать 5 000 с кассы? Тюнинг и пушки с собой не вернут.', W / 2, H / 2 - 24, 14, '#c8c0d4', 'center');
     const p = askPair();
     panel(g, p.no.x, p.no.y, p.no.w, p.no.h, !feeAskYes ? 'rgba(88,255,107,.16)' : 'rgba(20,17,28,.9)', !feeAskYes ? '#58ff6b' : '#3a3548', 10);
     txt(g, 'НЕТ', p.no.x + p.no.w / 2, p.no.y + 22, 18, !feeAskYes ? '#58ff6b' : '#8f88a0', 'center');
@@ -368,7 +435,11 @@
     storyRobBearGarage: rob,
     storyFinishBearComic: finishComic,
     storyResumeBearChapter: resume,
-    storySyncChapterTracks: syncCatalog
+    storySyncChapterTracks: syncCatalog,
+    storyCarShopHint: carShopHint,
+    storyBearAutoparkLocked: autoparkLocked,
+    storyEnsureJunkBudget: ensureJunkBudget,
+    storyOpenBearComic: openComic
   });
 
   const startCamp = global.storyStartNewCampaign;
@@ -413,7 +484,7 @@
     return prev(data);
   });
   wrap('persist', prev => function () {
-    if (buying() && junk(save.car) && save.carOwned && save.carOwned[save.car]) {
+    if (buying() && storyJunk(save.car) && save.carOwned && save.carOwned[save.car]) {
       save.temporaryCar = save.car;
       save.storyMission = 'restart_races';
       flags().junkPurchased = true;
@@ -440,17 +511,32 @@
     if (buying()) { enterCarSel(STARTER_LO); return; }
     return prev();
   });
+  wrap('enterAutopark', prev => function () {
+    if (!autoparkLocked()) return prev();
+    if (typeof garMsg !== 'undefined') {
+      garMsg = 'АВТОПАРК ВРЕМЕННО НЕДОСТУПЕН';
+      garMsgT = 2.4;
+    }
+    if (typeof sHit === 'function') sHit();
+  });
+  wrap('carSelStatus', prev => function (i, owned) {
+    if (purchasesLocked() && !owned) {
+      return { t: 'ПОКУПКА МАШИН ПОКА НЕДОСТУПНА', col: '#8f88a0' };
+    }
+    return prev.apply(this, arguments);
+  });
   wrap('careerMakeBrief', prev => function () {
     const brief = prev.apply(this, arguments);
     if (!active() || !brief) return brief;
     brief.news = (brief.news || []).filter(n => n.kind !== 'div');
-    const title = save.storyMission === 'restart_races' ? 'СНОВА ПЕРВЫЙ ДИВИЗИОН'
+    const title = save.storyMission === 'restart_races'
+      ? ('АРЕНА · ЗАЕЗДЫ ' + ((save.race | 0) < ARENA_CLASS_TRACKS ? 'А' : 'Б'))
       : save.storyMission === 'race_b' ? 'ЗАЕЗДЫ Б' : 'ГЛАВА МЕДВЕДЯ';
     brief.news.unshift({ kind: 'story', title: title, text: missionHud(), col: '#ff9d2e' });
     brief.news = brief.news.slice(0, 6);
     if (canPay()) {
       const sub = canPayB() ? 'якобы следующий уровень' : 'допуск в заезды Б';
-      brief.actions = [{ id: 'bear_entry', label: 'ВНЕСТИ 10 000', sub: sub }].concat(brief.actions || []);
+      brief.actions = [{ id: 'bear_entry', label: 'ВНЕСТИ 5 000', sub: sub }].concat(brief.actions || []);
     }
     return brief;
   });
@@ -472,7 +558,7 @@
   });
   wrap('carCatalogOrder', prev => function () {
     const list = prev();
-    return buying() ? list.filter(junk) : list;
+    return buying() ? list.filter(storyJunk) : list;
   });
   wrap('press', prev => function (c, k) {
     const introPick = active() && !flags().introComplete && state === 'car' &&
@@ -485,7 +571,8 @@
       if (buying() && state === 'car' && isBack(c)) { enterTitle(); return; }
       if (isConfirm(c) && (state === 'car' || state === 'detail')) {
         const i = state === 'car' ? selCar : autoparkSel;
-        if (storyBlocksTake(i) || (buying() && !junk(i))) { sHit(); return; }
+        const unowned = typeof carIsOwned === 'function' && !carIsOwned(i);
+        if (storyBlocksTake(i) || (buying() && !storyJunk(i)) || (purchasesLocked() && unowned)) { sHit(); return; }
       }
     }
     const out = prev(c, k);
@@ -501,7 +588,7 @@
     if (canPay() && !feeAsk) {
       const b = feeRect();
       panel(g, b.x, b.y, b.w, b.h, '#241b13', '#ff9d2e', 6);
-      txt(g, canPayB() ? 'ВНЕСТИ 10 000 · ДАЛЬШЕ' : 'ВНЕСТИ 10 000 · Б', b.x + b.w / 2, b.y + 14, 13, '#ffd23f', 'center', F_B);
+      txt(g, canPayB() ? 'ВНЕСТИ 5 000 · ДАЛЬШЕ' : 'ВНЕСТИ 5 000 · Б', b.x + b.w / 2, b.y + 14, 13, '#ffd23f', 'center', F_B);
     }
     drawFeeAsk();
   });
