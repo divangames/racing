@@ -1,0 +1,2223 @@
+{
+  "errors": [],
+  "screens": [
+    {
+      "width": 1366,
+      "height": 768,
+      "ids": [
+        "campaign-new",
+        "load-game",
+        "free-menu",
+        "settings",
+        "developers",
+        "exit"
+      ],
+      "labels": [
+        "НАЧАТЬ НОВУЮ ИГРУ",
+        "ЗАГРУЗИТЬ ИГРУ",
+        "СВОБОДНЫЙ ЗАЕЗД",
+        "НАСТРОЙКА",
+        "РАЗРАБОТЧИКИ",
+        "ВЫХОД"
+      ],
+      "states": [
+        "default",
+        "default",
+        "default",
+        "default",
+        "default",
+        "default"
+      ],
+      "assetsReady": true,
+      "status": {
+        "profile": "НЕТ СОХРАНЕНИЯ",
+        "car": "НЕ ВЫБРАНА",
+        "driver": "НЕ ВЫБРАН"
+      },
+      "boxes": [
+        {
+          "x": 35.20000000000004,
+          "y": 231.46666666666667,
+          "w": 475.73333333333335,
+          "h": 459.73333333333335
+        },
+        {
+          "x": 35.20000000000004,
+          "y": 609.0666666666666,
+          "w": 475.73333333333335,
+          "h": 82.13333333333333
+        },
+        {
+          "x": 36.26666855067015,
+          "y": 265.60001385211945,
+          "w": 475.73335814476013,
+          "h": 62.93333661556244
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 334.9333508014679,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 388.2666869163513,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 441.60002303123474,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 494.93335914611816,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 548.2666952610016,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        }
+      ],
+      "components": true,
+      "tokens": {
+        "bg": "#0d1418",
+        "panel": "#172025",
+        "panelInset": "#11181d",
+        "panelActive": "#30383c",
+        "panelActiveMid": "#242c30",
+        "panelActiveEnd": "#1d2529",
+        "line": "#45545b",
+        "cyan": "#91adb8",
+        "amber": "#efb342",
+        "danger": "#e87565",
+        "text": "#edf2ef",
+        "muted": "#a6b2b8",
+        "space1": 4,
+        "space2": 8,
+        "space3": 12,
+        "space4": 20,
+        "glow": 5
+      },
+      "accessible": 6
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "ids": [
+        "campaign-new",
+        "load-game",
+        "free-menu",
+        "settings",
+        "developers",
+        "exit"
+      ],
+      "labels": [
+        "НАЧАТЬ НОВУЮ ИГРУ",
+        "ЗАГРУЗИТЬ ИГРУ",
+        "СВОБОДНЫЙ ЗАЕЗД",
+        "НАСТРОЙКА",
+        "РАЗРАБОТЧИКИ",
+        "ВЫХОД"
+      ],
+      "states": [
+        "default",
+        "default",
+        "default",
+        "default",
+        "default",
+        "default"
+      ],
+      "assetsReady": true,
+      "status": {
+        "profile": "НЕТ СОХРАНЕНИЯ",
+        "car": "НЕ ВЫБРАНА",
+        "driver": "НЕ ВЫБРАН"
+      },
+      "boxes": [
+        {
+          "x": 49.5,
+          "y": 325.5,
+          "w": 669,
+          "h": 646.5
+        },
+        {
+          "x": 49.5,
+          "y": 856.5,
+          "w": 669,
+          "h": 115.5
+        },
+        {
+          "x": 51,
+          "y": 373.5,
+          "w": 669,
+          "h": 88.5
+        },
+        {
+          "x": 63,
+          "y": 471,
+          "w": 642,
+          "h": 66
+        },
+        {
+          "x": 63,
+          "y": 546,
+          "w": 642,
+          "h": 66
+        },
+        {
+          "x": 63,
+          "y": 621,
+          "w": 642,
+          "h": 66
+        },
+        {
+          "x": 63,
+          "y": 696,
+          "w": 642,
+          "h": 66
+        },
+        {
+          "x": 63,
+          "y": 771,
+          "w": 642,
+          "h": 66
+        }
+      ],
+      "components": true,
+      "tokens": {
+        "bg": "#0d1418",
+        "panel": "#172025",
+        "panelInset": "#11181d",
+        "panelActive": "#30383c",
+        "panelActiveMid": "#242c30",
+        "panelActiveEnd": "#1d2529",
+        "line": "#45545b",
+        "cyan": "#91adb8",
+        "amber": "#efb342",
+        "danger": "#e87565",
+        "text": "#edf2ef",
+        "muted": "#a6b2b8",
+        "space1": 4,
+        "space2": 8,
+        "space3": 12,
+        "space4": 20,
+        "glow": 5
+      },
+      "accessible": 6
+    },
+    {
+      "width": 2560,
+      "height": 1440,
+      "ids": [
+        "campaign-new",
+        "load-game",
+        "free-menu",
+        "settings",
+        "developers",
+        "exit"
+      ],
+      "labels": [
+        "НАЧАТЬ НОВУЮ ИГРУ",
+        "ЗАГРУЗИТЬ ИГРУ",
+        "СВОБОДНЫЙ ЗАЕЗД",
+        "НАСТРОЙКА",
+        "РАЗРАБОТЧИКИ",
+        "ВЫХОД"
+      ],
+      "states": [
+        "default",
+        "default",
+        "default",
+        "default",
+        "default",
+        "default"
+      ],
+      "assetsReady": true,
+      "status": {
+        "profile": "НЕТ СОХРАНЕНИЯ",
+        "car": "НЕ ВЫБРАНА",
+        "driver": "НЕ ВЫБРАН"
+      },
+      "boxes": [
+        {
+          "x": 66,
+          "y": 434,
+          "w": 892,
+          "h": 862
+        },
+        {
+          "x": 66,
+          "y": 1142,
+          "w": 892,
+          "h": 154
+        },
+        {
+          "x": 68,
+          "y": 498,
+          "w": 892,
+          "h": 118
+        },
+        {
+          "x": 84,
+          "y": 628,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 728,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 828,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 928,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 1028,
+          "w": 856,
+          "h": 88
+        }
+      ],
+      "components": true,
+      "tokens": {
+        "bg": "#0d1418",
+        "panel": "#172025",
+        "panelInset": "#11181d",
+        "panelActive": "#30383c",
+        "panelActiveMid": "#242c30",
+        "panelActiveEnd": "#1d2529",
+        "line": "#45545b",
+        "cyan": "#91adb8",
+        "amber": "#efb342",
+        "danger": "#e87565",
+        "text": "#edf2ef",
+        "muted": "#a6b2b8",
+        "space1": 4,
+        "space2": 8,
+        "space3": 12,
+        "space4": 20,
+        "glow": 5
+      },
+      "accessible": 6
+    },
+    {
+      "width": 3440,
+      "height": 1440,
+      "ids": [
+        "campaign-new",
+        "load-game",
+        "free-menu",
+        "settings",
+        "developers",
+        "exit"
+      ],
+      "labels": [
+        "НАЧАТЬ НОВУЮ ИГРУ",
+        "ЗАГРУЗИТЬ ИГРУ",
+        "СВОБОДНЫЙ ЗАЕЗД",
+        "НАСТРОЙКА",
+        "РАЗРАБОТЧИКИ",
+        "ВЫХОД"
+      ],
+      "states": [
+        "default",
+        "default",
+        "default",
+        "default",
+        "default",
+        "default"
+      ],
+      "assetsReady": true,
+      "status": {
+        "profile": "НЕТ СОХРАНЕНИЯ",
+        "car": "НЕ ВЫБРАНА",
+        "driver": "НЕ ВЫБРАН"
+      },
+      "boxes": [
+        {
+          "x": 66,
+          "y": 434,
+          "w": 892,
+          "h": 862
+        },
+        {
+          "x": 66,
+          "y": 1142,
+          "w": 892,
+          "h": 154
+        },
+        {
+          "x": 68,
+          "y": 498,
+          "w": 892,
+          "h": 118
+        },
+        {
+          "x": 84,
+          "y": 628,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 728,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 828,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 928,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 1028,
+          "w": 856,
+          "h": 88
+        }
+      ],
+      "components": true,
+      "tokens": {
+        "bg": "#0d1418",
+        "panel": "#172025",
+        "panelInset": "#11181d",
+        "panelActive": "#30383c",
+        "panelActiveMid": "#242c30",
+        "panelActiveEnd": "#1d2529",
+        "line": "#45545b",
+        "cyan": "#91adb8",
+        "amber": "#efb342",
+        "danger": "#e87565",
+        "text": "#edf2ef",
+        "muted": "#a6b2b8",
+        "space1": 4,
+        "space2": 8,
+        "space3": 12,
+        "space4": 20,
+        "glow": 5
+      },
+      "accessible": 6
+    },
+    {
+      "page": "free",
+      "saved": false,
+      "width": 1366,
+      "height": 768,
+      "ids": [
+        "free-new",
+        "free-location",
+        "free-back"
+      ],
+      "caption": "СВОБОДНЫЙ ЗАЕЗД",
+      "count": 3,
+      "accessible": "СВОБОДНЫЙ ЗАЕЗД",
+      "plate": "assets/data/cats/Titles/title-bestya_1920x1080.png",
+      "boxes": [
+        {
+          "x": 35.20000000000004,
+          "y": 231.46666666666667,
+          "w": 475.73333333333335,
+          "h": 299.73333333333335
+        },
+        {
+          "x": 35.20000000000004,
+          "y": 449.06666666666666,
+          "w": 475.73333333333335,
+          "h": 82.13333333333333
+        },
+        {
+          "x": 36.26666855067015,
+          "y": 265.60001385211945,
+          "w": 475.73335814476013,
+          "h": 62.93333661556244
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 334.9333508014679,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 388.2666869163513,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        }
+      ]
+    },
+    {
+      "page": "free",
+      "saved": true,
+      "width": 1366,
+      "height": 768,
+      "ids": [
+        "free-new",
+        "free-continue",
+        "free-location",
+        "free-back"
+      ],
+      "caption": "СВОБОДНЫЙ ЗАЕЗД",
+      "count": 4,
+      "accessible": "СВОБОДНЫЙ ЗАЕЗД",
+      "plate": "assets/data/cats/Titles/title-bestya_1920x1080.png",
+      "boxes": [
+        {
+          "x": 35.20000000000004,
+          "y": 231.46666666666667,
+          "w": 475.73333333333335,
+          "h": 353.06666666666666
+        },
+        {
+          "x": 35.20000000000004,
+          "y": 502.4,
+          "w": 475.73333333333335,
+          "h": 82.13333333333333
+        },
+        {
+          "x": 36.26666855067015,
+          "y": 265.60001385211945,
+          "w": 475.73335814476013,
+          "h": 62.93333661556244
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 334.9333508014679,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 388.2666869163513,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        },
+        {
+          "x": 44.800002329051495,
+          "y": 441.60002303123474,
+          "w": 456.5333571434021,
+          "h": 46.93333578109741
+        }
+      ]
+    },
+    {
+      "page": "free",
+      "saved": false,
+      "width": 1920,
+      "height": 1080,
+      "ids": [
+        "free-new",
+        "free-location",
+        "free-back"
+      ],
+      "caption": "СВОБОДНЫЙ ЗАЕЗД",
+      "count": 3,
+      "accessible": "СВОБОДНЫЙ ЗАЕЗД",
+      "plate": "assets/data/cats/Titles/title-bestya_1920x1080.png",
+      "boxes": [
+        {
+          "x": 49.5,
+          "y": 325.5,
+          "w": 669,
+          "h": 421.5
+        },
+        {
+          "x": 49.5,
+          "y": 631.5,
+          "w": 669,
+          "h": 115.5
+        },
+        {
+          "x": 51,
+          "y": 373.5,
+          "w": 669,
+          "h": 88.5
+        },
+        {
+          "x": 63,
+          "y": 471,
+          "w": 642,
+          "h": 66
+        },
+        {
+          "x": 63,
+          "y": 546,
+          "w": 642,
+          "h": 66
+        }
+      ]
+    },
+    {
+      "page": "free",
+      "saved": true,
+      "width": 1920,
+      "height": 1080,
+      "ids": [
+        "free-new",
+        "free-continue",
+        "free-location",
+        "free-back"
+      ],
+      "caption": "СВОБОДНЫЙ ЗАЕЗД",
+      "count": 4,
+      "accessible": "СВОБОДНЫЙ ЗАЕЗД",
+      "plate": "assets/data/cats/Titles/title-bestya_1920x1080.png",
+      "boxes": [
+        {
+          "x": 49.5,
+          "y": 325.5,
+          "w": 669,
+          "h": 496.5
+        },
+        {
+          "x": 49.5,
+          "y": 706.5,
+          "w": 669,
+          "h": 115.5
+        },
+        {
+          "x": 51,
+          "y": 373.5,
+          "w": 669,
+          "h": 88.5
+        },
+        {
+          "x": 63,
+          "y": 471,
+          "w": 642,
+          "h": 66
+        },
+        {
+          "x": 63,
+          "y": 546,
+          "w": 642,
+          "h": 66
+        },
+        {
+          "x": 63,
+          "y": 621,
+          "w": 642,
+          "h": 66
+        }
+      ]
+    },
+    {
+      "page": "free",
+      "saved": false,
+      "width": 2560,
+      "height": 1440,
+      "ids": [
+        "free-new",
+        "free-location",
+        "free-back"
+      ],
+      "caption": "СВОБОДНЫЙ ЗАЕЗД",
+      "count": 3,
+      "accessible": "СВОБОДНЫЙ ЗАЕЗД",
+      "plate": "assets/data/cats/Titles/title-bestya_1920x1080.png",
+      "boxes": [
+        {
+          "x": 66,
+          "y": 434,
+          "w": 892,
+          "h": 562
+        },
+        {
+          "x": 66,
+          "y": 842,
+          "w": 892,
+          "h": 154
+        },
+        {
+          "x": 68,
+          "y": 498,
+          "w": 892,
+          "h": 118
+        },
+        {
+          "x": 84,
+          "y": 628,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 728,
+          "w": 856,
+          "h": 88
+        }
+      ]
+    },
+    {
+      "page": "free",
+      "saved": true,
+      "width": 2560,
+      "height": 1440,
+      "ids": [
+        "free-new",
+        "free-continue",
+        "free-location",
+        "free-back"
+      ],
+      "caption": "СВОБОДНЫЙ ЗАЕЗД",
+      "count": 4,
+      "accessible": "СВОБОДНЫЙ ЗАЕЗД",
+      "plate": "assets/data/cats/Titles/title-bestya_1920x1080.png",
+      "boxes": [
+        {
+          "x": 66,
+          "y": 434,
+          "w": 892,
+          "h": 662
+        },
+        {
+          "x": 66,
+          "y": 942,
+          "w": 892,
+          "h": 154
+        },
+        {
+          "x": 68,
+          "y": 498,
+          "w": 892,
+          "h": 118
+        },
+        {
+          "x": 84,
+          "y": 628,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 728,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 828,
+          "w": 856,
+          "h": 88
+        }
+      ]
+    },
+    {
+      "page": "free",
+      "saved": false,
+      "width": 3440,
+      "height": 1440,
+      "ids": [
+        "free-new",
+        "free-location",
+        "free-back"
+      ],
+      "caption": "СВОБОДНЫЙ ЗАЕЗД",
+      "count": 3,
+      "accessible": "СВОБОДНЫЙ ЗАЕЗД",
+      "plate": "assets/data/cats/Titles/title-bestya_3440x1440.png",
+      "boxes": [
+        {
+          "x": 66,
+          "y": 434,
+          "w": 892,
+          "h": 562
+        },
+        {
+          "x": 66,
+          "y": 842,
+          "w": 892,
+          "h": 154
+        },
+        {
+          "x": 68,
+          "y": 498,
+          "w": 892,
+          "h": 118
+        },
+        {
+          "x": 84,
+          "y": 628,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 728,
+          "w": 856,
+          "h": 88
+        }
+      ]
+    },
+    {
+      "page": "free",
+      "saved": true,
+      "width": 3440,
+      "height": 1440,
+      "ids": [
+        "free-new",
+        "free-continue",
+        "free-location",
+        "free-back"
+      ],
+      "caption": "СВОБОДНЫЙ ЗАЕЗД",
+      "count": 4,
+      "accessible": "СВОБОДНЫЙ ЗАЕЗД",
+      "plate": "assets/data/cats/Titles/title-bestya_3440x1440.png",
+      "boxes": [
+        {
+          "x": 66,
+          "y": 434,
+          "w": 892,
+          "h": 662
+        },
+        {
+          "x": 66,
+          "y": 942,
+          "w": 892,
+          "h": 154
+        },
+        {
+          "x": 68,
+          "y": 498,
+          "w": 892,
+          "h": 118
+        },
+        {
+          "x": 84,
+          "y": 628,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 728,
+          "w": 856,
+          "h": 88
+        },
+        {
+          "x": 84,
+          "y": 828,
+          "w": 856,
+          "h": 88
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "width": 1366,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "campaign-new"
+      ],
+      "state": "worldIntro",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "load-game"
+      ],
+      "state": "slotSelect",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-menu"
+      ],
+      "state": "title",
+      "free": true,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "keyboard",
+      "index": 3,
+      "calls": [
+        "settings"
+      ],
+      "state": "settings",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "keyboard",
+      "index": 4,
+      "calls": [
+        "developers"
+      ],
+      "state": "developers",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "keyboard",
+      "index": 5,
+      "calls": [
+        "exit"
+      ],
+      "state": "title",
+      "free": false,
+      "exit": true
+    },
+    {
+      "width": 1366,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "campaign-new"
+      ],
+      "state": "worldIntro",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "load-game"
+      ],
+      "state": "slotSelect",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-menu"
+      ],
+      "state": "title",
+      "free": true,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "mouse",
+      "index": 3,
+      "calls": [
+        "settings"
+      ],
+      "state": "settings",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "mouse",
+      "index": 4,
+      "calls": [
+        "developers"
+      ],
+      "state": "developers",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1366,
+      "method": "mouse",
+      "index": 5,
+      "calls": [
+        "exit"
+      ],
+      "state": "title",
+      "free": false,
+      "exit": true
+    },
+    {
+      "width": 1920,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "campaign-new"
+      ],
+      "state": "worldIntro",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "load-game"
+      ],
+      "state": "slotSelect",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-menu"
+      ],
+      "state": "title",
+      "free": true,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "keyboard",
+      "index": 3,
+      "calls": [
+        "settings"
+      ],
+      "state": "settings",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "keyboard",
+      "index": 4,
+      "calls": [
+        "developers"
+      ],
+      "state": "developers",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "keyboard",
+      "index": 5,
+      "calls": [
+        "exit"
+      ],
+      "state": "title",
+      "free": false,
+      "exit": true
+    },
+    {
+      "width": 1920,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "campaign-new"
+      ],
+      "state": "worldIntro",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "load-game"
+      ],
+      "state": "slotSelect",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-menu"
+      ],
+      "state": "title",
+      "free": true,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "mouse",
+      "index": 3,
+      "calls": [
+        "settings"
+      ],
+      "state": "settings",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "mouse",
+      "index": 4,
+      "calls": [
+        "developers"
+      ],
+      "state": "developers",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 1920,
+      "method": "mouse",
+      "index": 5,
+      "calls": [
+        "exit"
+      ],
+      "state": "title",
+      "free": false,
+      "exit": true
+    },
+    {
+      "width": 2560,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "campaign-new"
+      ],
+      "state": "worldIntro",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "load-game"
+      ],
+      "state": "slotSelect",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-menu"
+      ],
+      "state": "title",
+      "free": true,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "keyboard",
+      "index": 3,
+      "calls": [
+        "settings"
+      ],
+      "state": "settings",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "keyboard",
+      "index": 4,
+      "calls": [
+        "developers"
+      ],
+      "state": "developers",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "keyboard",
+      "index": 5,
+      "calls": [
+        "exit"
+      ],
+      "state": "title",
+      "free": false,
+      "exit": true
+    },
+    {
+      "width": 2560,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "campaign-new"
+      ],
+      "state": "worldIntro",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "load-game"
+      ],
+      "state": "slotSelect",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-menu"
+      ],
+      "state": "title",
+      "free": true,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "mouse",
+      "index": 3,
+      "calls": [
+        "settings"
+      ],
+      "state": "settings",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "mouse",
+      "index": 4,
+      "calls": [
+        "developers"
+      ],
+      "state": "developers",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 2560,
+      "method": "mouse",
+      "index": 5,
+      "calls": [
+        "exit"
+      ],
+      "state": "title",
+      "free": false,
+      "exit": true
+    },
+    {
+      "width": 3440,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "campaign-new"
+      ],
+      "state": "worldIntro",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "load-game"
+      ],
+      "state": "slotSelect",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-menu"
+      ],
+      "state": "title",
+      "free": true,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "keyboard",
+      "index": 3,
+      "calls": [
+        "settings"
+      ],
+      "state": "settings",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "keyboard",
+      "index": 4,
+      "calls": [
+        "developers"
+      ],
+      "state": "developers",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "keyboard",
+      "index": 5,
+      "calls": [
+        "exit"
+      ],
+      "state": "title",
+      "free": false,
+      "exit": true
+    },
+    {
+      "width": 3440,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "campaign-new"
+      ],
+      "state": "worldIntro",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "load-game"
+      ],
+      "state": "slotSelect",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-menu"
+      ],
+      "state": "title",
+      "free": true,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "mouse",
+      "index": 3,
+      "calls": [
+        "settings"
+      ],
+      "state": "settings",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "mouse",
+      "index": 4,
+      "calls": [
+        "developers"
+      ],
+      "state": "developers",
+      "free": false,
+      "exit": false
+    },
+    {
+      "width": 3440,
+      "method": "mouse",
+      "index": 5,
+      "calls": [
+        "exit"
+      ],
+      "state": "title",
+      "free": false,
+      "exit": true
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": false,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "cameraSetup",
+      "free": true,
+      "confirm": false,
+      "returnTo": "title"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": false,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": false,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": false,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "cameraSetup",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": false,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": false,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": true,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "title",
+      "free": true,
+      "confirm": true,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": true,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "free-continue"
+      ],
+      "state": "garage",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": true,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": true,
+      "method": "keyboard",
+      "index": 3,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": true,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "title",
+      "free": true,
+      "confirm": true,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": true,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "free-continue"
+      ],
+      "state": "garage",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": true,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1366,
+      "saved": true,
+      "method": "mouse",
+      "index": 3,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": false,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "cameraSetup",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": false,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": false,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": false,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "cameraSetup",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": false,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": false,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": true,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "title",
+      "free": true,
+      "confirm": true,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": true,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "free-continue"
+      ],
+      "state": "garage",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": true,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": true,
+      "method": "keyboard",
+      "index": 3,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": true,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "title",
+      "free": true,
+      "confirm": true,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": true,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "free-continue"
+      ],
+      "state": "garage",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": true,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 1920,
+      "saved": true,
+      "method": "mouse",
+      "index": 3,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": false,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "cameraSetup",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": false,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": false,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": false,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "cameraSetup",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": false,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": false,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": true,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "title",
+      "free": true,
+      "confirm": true,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": true,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "free-continue"
+      ],
+      "state": "garage",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": true,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": true,
+      "method": "keyboard",
+      "index": 3,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": true,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "title",
+      "free": true,
+      "confirm": true,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": true,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "free-continue"
+      ],
+      "state": "garage",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": true,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 2560,
+      "saved": true,
+      "method": "mouse",
+      "index": 3,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": false,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "cameraSetup",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": false,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": false,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": false,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "cameraSetup",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": false,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": false,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": true,
+      "method": "keyboard",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "title",
+      "free": true,
+      "confirm": true,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": true,
+      "method": "keyboard",
+      "index": 1,
+      "calls": [
+        "free-continue"
+      ],
+      "state": "garage",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": true,
+      "method": "keyboard",
+      "index": 2,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": true,
+      "method": "keyboard",
+      "index": 3,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": true,
+      "method": "mouse",
+      "index": 0,
+      "calls": [
+        "free-new"
+      ],
+      "state": "title",
+      "free": true,
+      "confirm": true,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": true,
+      "method": "mouse",
+      "index": 1,
+      "calls": [
+        "free-continue"
+      ],
+      "state": "garage",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": true,
+      "method": "mouse",
+      "index": 2,
+      "calls": [
+        "free-location"
+      ],
+      "state": "tracks",
+      "free": true,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "free",
+      "width": 3440,
+      "saved": true,
+      "method": "mouse",
+      "index": 3,
+      "calls": [
+        "free-back"
+      ],
+      "state": "title",
+      "free": false,
+      "confirm": false,
+      "returnTo": "free"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 1366,
+      "method": "keyboard",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 1366,
+      "method": "mouse",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 1920,
+      "method": "keyboard",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 1920,
+      "method": "mouse",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 2560,
+      "method": "keyboard",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 2560,
+      "method": "mouse",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 3440,
+      "method": "keyboard",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 3440,
+      "method": "mouse",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    }
+  ]
+}

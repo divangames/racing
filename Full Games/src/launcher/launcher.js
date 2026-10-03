@@ -112,6 +112,10 @@ function setStatus(text) {
   el.status.textContent = text;
 }
 
+function errorText(error, fallback) {
+  return error && typeof error.message === 'string' && error.message ? error.message : fallback;
+}
+
 /**
  * Рисует итог проверки.
  * @param {object} check
@@ -190,7 +194,15 @@ async function runSync() {
   el.sync.disabled = true;
   setStatus('Связываюсь с GitHub…');
   setBar(2);
-  const result = await window.rnrLauncher.sync();
+  let result;
+  try { result = await window.rnrLauncher.sync(); }
+  catch (error) {
+    setStatus(errorText(error, 'Не удалось скачать игру.'));
+    el.sync.disabled = false;
+    el.play.disabled = true;
+    paintBusy(null, null);
+    return;
+  }
   if (result && result.ok) {
     paintInstall(result.install);
     paintBusy(result.install, null);
@@ -220,7 +232,15 @@ async function runSelfUpdate() {
   if (el.sync) el.sync.disabled = true;
   setStatus('Спрашиваю GitHub про лаунчер…');
   setBar(2);
-  const result = await window.rnrLauncher.selfUpdate();
+  let result;
+  try { result = await window.rnrLauncher.selfUpdate(); }
+  catch (error) {
+    setStatus(errorText(error, 'Не удалось обновить лаунчер.'));
+    el.self.disabled = false;
+    if (el.sync) el.sync.disabled = false;
+    paintBusy(null, null);
+    return;
+  }
   if (result && result.applying) {
     setBar(100);
     setStatus('Установщик запущен. Лаунчер закроется и откроется снова.');
@@ -274,7 +294,13 @@ async function boot() {
     if (typeof info.pct === 'number') setBar(info.pct);
     if (info.label) setStatus(info.label);
   });
-  const data = await window.rnrLauncher.status();
+  let data;
+  try { data = await window.rnrLauncher.status(); }
+  catch (error) {
+    setStatus(errorText(error, 'Не удалось прочитать состояние лаунчера.'));
+    el.play.disabled = true;
+    return;
+  }
   const inst = data.install || {};
   const self = data.selfUpdate || {};
   paintMeta(data);
@@ -297,20 +323,26 @@ async function boot() {
 el.play.addEventListener('click', async () => {
   el.play.disabled = true;
   if (window.rnrLauncherAudio) window.rnrLauncherAudio.hush();
-  const result = await window.rnrLauncher.play();
-  if (!result.ok) {
-    applyCheck(result);
+  try {
+    const result = await window.rnrLauncher.play();
+    if (!result.ok) {
+      applyCheck(result);
+      if (window.rnrLauncherAudio) window.rnrLauncherAudio.wake();
+    } else el.play.disabled = false;
+  } catch (error) {
+    setStatus(errorText(error, 'Не удалось запустить игру.'));
+    el.play.disabled = false;
     if (window.rnrLauncherAudio) window.rnrLauncherAudio.wake();
-  } else el.play.disabled = false;
+  }
 });
 
 el.verify.addEventListener('click', async () => {
   el.verify.disabled = true;
   setStatus('Полная проверка...');
   setBar(4);
-  const result = await window.rnrLauncher.verify(true);
-  applyCheck(result);
-  el.verify.disabled = false;
+  try { applyCheck(await window.rnrLauncher.verify(true)); }
+  catch (error) { setStatus(errorText(error, 'Не удалось проверить файлы.')); el.play.disabled = true; }
+  finally { el.verify.disabled = false; }
 });
 
 /**

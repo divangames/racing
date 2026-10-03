@@ -6,7 +6,10 @@ const output=path.resolve(__dirname,'../build/menu-design-check');fs.mkdirSync(o
 app.setPath('userData',fs.mkdtempSync(path.join(output,'profile-')));
 app.disableHardwareAcceleration();app.commandLine.appendSwitch('autoplay-policy','no-user-gesture-required');
 let writes=0;
-for(const [name,method] of [['save-car','handleSaveCar'],['save-track','handleSaveTrack']])require('../src/main/'+name)[method]=async()=>{writes++;return new Response('{"ok":true}');};
+for(const file of ['save-car','save-track','save-chapter','save-texture','save-object']){
+  const api=require('../src/main/'+file);
+  for(const method of Object.keys(api))if(method.startsWith('handleSave'))api[method]=async()=>{writes++;return new Response('{"ok":true}');};
+}
 const protocol=require('../src/main/protocol');protocol.registerPrivilegedScheme();
 const report={errors:[],screens:[]};
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -16,6 +19,7 @@ app.whenReady().then(async()=>{
   win.webContents.setAudioMuted(true);win.webContents.on('console-message',event=>{if(event.level==='error')report.errors.push(event.message);});
   await win.loadURL('rnr://game/rnr.html?lab=1&car=0');
   await until(win,"typeof R!=='undefined'&&!!R&&BOOT.ready&&!!DiVANEngine.menuAudio");
+  await until(win,'DiVANEngine.titleUI.assetsReady()');
   await win.webContents.executeJavaScript("requestAnimationFrame=()=>0;paused=true;labTest=false;audioInit();");await delay(300);
   await win.webContents.executeJavaScript(`window.menuPaint=()=>{
     updateView();g.setTransform(1,0,0,1,0,0);g.fillStyle='#0b1015';g.fillRect(0,0,cv.width,cv.height);
@@ -28,6 +32,21 @@ app.whenReady().then(async()=>{
     report.screens.push({name,...result});return result;
   }
   await capture('title',"enterTitle();selTitle=0");
+  await win.webContents.executeJavaScript("DiVANEngine.titleMenu.applyTitleAction('developers',{});void 0");
+  await until(win,"state==='developers'&&DiVANEngine.credits&&MUSIC.curCat==='developers'");
+  await delay(1200);
+  await win.webContents.executeJavaScript(`window.creditsLines=[];
+    const originalText=g.fillText.bind(g);
+    g.fillText=function(text,...args){if(state==='developers')creditsLines.push(text);return originalText(text,...args);};
+    menuPaint();void 0;`);
+  await capture('developers',"gt+=18");
+  const credits=await win.webContents.executeJavaScript(`(()=>{
+    const category=musicCat(),track=MUSIC.cur;
+    const hasNames=creditsLines.includes('Иван Радыгин');
+    press('Escape');return {category,track,hasNames,back:state==='title',music:musicCat()};
+  })()`);
+  assert.equal(credits.category,'developers');assert(credits.track.endsWith('Titles/cast/01.mp3'));
+  assert(credits.hasNames);assert(credits.back);assert.equal(credits.music,'cast');report.credits=credits;
   const freeMenu=await capture('title-free',"DiVANEngine.titleMenu.openFreeMenu();selTitle=0");
   const freeLabels=await win.webContents.executeJavaScript("g._titleItems.map(item=>item.label)");
   assert(freeLabels.includes('ВЫБРАТЬ ЛОКАЦИЮ'));assert(freeLabels.includes('ВЫЙТИ В ГЛАВНОЕ МЕНЮ'));
@@ -48,6 +67,7 @@ app.whenReady().then(async()=>{
     cv.dispatchEvent(new MouseEvent('mousemove',{clientX:x,clientY:y,bubbles:true}));
     const selected=g._titleItems[selTitle].id;
     cv.dispatchEvent(new MouseEvent('mousedown',{clientX:x,clientY:y,button:0,bubbles:true}));
+    cv.dispatchEvent(new MouseEvent('mouseup',{clientX:x,clientY:y,button:0,bubbles:true}));
     return {selected,state};})()`);
   assert.equal(pointer.selected,'settings');assert.equal(pointer.state,'settings');report.pointer=pointer;
   await capture('settings',"settingsState='main';settingsTab=0");
@@ -67,6 +87,15 @@ app.whenReady().then(async()=>{
     ['autopark',"state='autopark';autoparkSel=save.car"],['detail',"state='detail';autoparkSel=save.car"],
     ['gym',"state='gym';gymSel=0"],['armory',"enterArmory()"],['prerace',"state='prerace';save.cash=2500;save.bet=2;raceBoard=makeRaceBoard()"]];
   for(const [name,setup] of screens)await capture(name,setup);
+  report.tracks=await win.webContents.executeJavaScript(`(()=>{
+    state='tracks';trackPickSel=pickableTracks().length-1;menuPaint();
+    const viewport={...g._trackViewport};
+    const visible=g._trackTiles.map((b,i)=>b?{i,x:b.x,y:b.y,w:b.w,h:b.h}:null).filter(Boolean);
+    return {viewport,visible,selected:trackPickSel};
+  })()`);
+  assert(report.tracks.visible.some(b=>b.i===report.tracks.selected));
+  assert(report.tracks.visible.every(b=>b.y>=report.tracks.viewport.top&&b.y+b.h<=report.tracks.viewport.bottom));
+  await capture('tracks-last',"state='tracks';trackPickSel=pickableTracks().length-1");
   report.roster=await win.webContents.executeJavaScript(`(()=>{
     state='char';bioOpen=-1;selChar=PLAYABLE_IDS[0];menuPaint();
     const layout={...g._charCarousel},footer={...g._charFooter};press('ArrowLeft');for(let i=0;i<40;i++)menuPaint();
@@ -81,7 +110,7 @@ app.whenReady().then(async()=>{
     paused=true;menuPaint();const pause={hidden:cv.classList.contains('rnr-driving-cursor-hidden'),cursor:getComputedStyle(cv).cursor};
     return {driving,pause};
   })()`);
-  assert(report.cursor.driving.hidden);assert.equal(report.cursor.driving.cursor,'none');assert(!report.cursor.pause.hidden);assert.notEqual(report.cursor.pause.cursor,'none');
+  assert(!report.cursor.driving.hidden);assert.match(report.cursor.driving.cursor,/cursor-game\.png/);assert(!report.cursor.pause.hidden);assert.equal(report.cursor.pause.cursor,report.cursor.driving.cursor);
   report.pause=await win.webContents.executeJavaScript(`(()=>{
     const b=DiVANEngine.menu.regions().find(b=>b.id==='pause-0'),r=cv.getBoundingClientRect();
     cv.dispatchEvent(new MouseEvent('mousedown',{clientX:r.left+(b.x+b.w/2)*r.width/cv.width,clientY:r.top+(b.y+b.h/2)*r.height/cv.height,button:0,bubbles:true}));
@@ -96,6 +125,27 @@ app.whenReady().then(async()=>{
     const result=await capture('pause-'+w,"state='race';paused=true;applyResolution();R.phase='go';R.time=10");
     for(const b of result.regions){assert(b.x>=0&&b.y>=0&&b.x+b.w<=w+1&&b.y+b.h<=h+1,'Пауза вне экрана');}
     await capture('title-'+w,"enterTitle();selTitle=0");
+  }
+  // Shared skin is checked at each supported game resolution, rather than
+  // assuming that a screenshot of the title validates the rest of the menus.
+  const matrix=[...screens,['settings',"openSettings('title');settingsState='main';settingsTab=0"],
+    ...['graphics','sound','game','controls'].map(pane=>['settings-'+pane,`state='settings';settingsState='${pane}';settingsTab=0`]),
+    ['results',"state='results';paused=false"],['career',"state='career'"],['career-tracks',"state='careerTracks'"],
+    ['pause',"state='race';paused=true;pauseMenuIndex=0"],['exit',"enterTitle();openExitWarn()"]];
+  report.matrix=[];
+  for(const [w,h] of [[1366,768],[1920,1080],[2560,1440],[3440,1440]]){
+    win.setContentSize(w,h);await delay(100);
+    await win.webContents.executeJavaScript('settings.graphics.resolution=0;applyResolution();void 0');
+    for(const [name,setup] of matrix){
+      await win.webContents.executeJavaScript('closeExitWarn();garagePaused=false;void 0');
+      const shot=await capture(name+'-'+w,setup);
+      for(const box of shot.regions)assert(box.x>=0&&box.y>=0&&box.x+box.w<=w+1&&box.y+box.h<=h+1,'Interactive region outside viewport: '+name);
+      report.matrix.push({name,width:w,height:h,regions:shot.regions.length});
+    }
+    await win.webContents.executeJavaScript("closeExitWarn();openSettings('title');settingsState='main';settingsTab=0;press('ArrowDown');menuPaint();void 0");
+    assert.equal(await win.webContents.executeJavaScript('settingsTab'),1);
+    await win.webContents.executeJavaScript("press('Escape');menuPaint();void 0");
+    assert.equal(await win.webContents.executeJavaScript('state'),'title');
   }
   report.audio=await win.webContents.executeJavaScript(`(async()=>{
     const a=DiVANEngine.menuAudio;await AU.ctx.resume();state='settings';settingsState='main';settings.sound.sfxOn=true;settings.sound.sfx=80;applyAudioSettings();

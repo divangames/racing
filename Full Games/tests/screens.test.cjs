@@ -90,7 +90,7 @@ test('Пункты меню и камера мира считаются без c
   const items = g.DiVANEngine.screens.titleItems({ race: 0 }, false);
   assert.equal(items[0].id, 'campaign-new');
   assert.equal(items[0].label, 'НАЧАТЬ НОВУЮ ИГРУ');
-  assert.equal(items.length,5);
+  assert.equal(items.length,6);
   assert.ok(ids(items).includes('load-game'));
   assert.ok(labels(items).includes('ЗАГРУЗИТЬ ИГРУ'));
   assert.ok(labels(items).includes('СВОБОДНЫЙ ЗАЕЗД'));

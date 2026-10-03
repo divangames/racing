@@ -50,7 +50,7 @@
   }
 
   /**
-   * Главное меню всегда состоит из пяти пунктов в фиксированном порядке.
+   * Главное меню: игра, заезд, настройки, разработчики и выход.
    * @param {object|null} saveObj
    * @param {boolean} dev
    * @param {object|null} storyObj
@@ -73,6 +73,7 @@
       { id: 'load-game', label: 'ЗАГРУЗИТЬ ИГРУ' },
       { id: 'free-menu', label: 'СВОБОДНЫЙ ЗАЕЗД' },
       { id: 'settings', label: 'НАСТРОЙКА' },
+      { id: 'developers', label: 'РАЗРАБОТЧИКИ' },
       { id: 'exit', label: 'ВЫХОД' }
     ];
   }
@@ -183,6 +184,9 @@
         break;
       case 'exit':
         if (typeof openExitWarn === 'function') openExitWarn();
+        break;
+      case 'developers':
+        if (global.DiVANEngine.credits) global.DiVANEngine.credits.open();
         break;
       default: {
         const neverId = id;

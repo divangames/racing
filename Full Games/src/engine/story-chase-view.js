@@ -15,11 +15,11 @@
   let visibleBounds = {left: -1280, right: 2560, top: -720, bottom: 1440};
 
   const COMIC = [
-    {who: 'ЯНОТ', text: 'Он не ушёл. Он показал, куда нам пока нельзя.', sub: 'За разрывом исчезает не цель, а приглашение продолжить.'},
-    {who: 'МЕДВЕДЬ / ЯНОТ', text: 'МЕДВЕДЬ: «В памяти Camaro остался оригинал приказа». ЯНОТ: «Значит, они забрали не машину. Они забрали свидетеля».', sub: 'Медведь впервые называет настоящую цену погони.'},
-    {who: 'МЕДВЕДЬ / ЯНОТ', text: 'МЕДВЕДЬ: «Крепление сломано снаружи. Они спешили только до моста». ЯНОТ: «После моста дорога одна».', sub: 'Погоня проиграна; расследование получило направление.'},
-    {who: 'ЯНОТ / МЕДВЕДЬ', text: 'ЯНОТ: «Возвращаемся». МЕДВЕДЬ: «Там нечего возвращать». ЯНОТ: «Тогда перестанем возвращать. Начнём строить».', sub: 'Цель меняется: не вернуть прошлое, а снова получить возможность действовать.'},
-    {who: 'ЯНОТ / МЕДВЕДЬ', text: 'ЯНОТ: «На Camaro денег нет. На право снова выйти на трассу — хватит». МЕДВЕДЬ: «Из этого?» ЯНОТ: «Отряд начинается не с машины».', sub: 'Три дешёвых кузова становятся первым выбором новой команды.'},
+    {who: 'БЕСТИЯ', text: 'Он не ушёл. Он показал, куда нам пока нельзя.', sub: 'За разрывом исчезает не цель, а приглашение продолжить.'},
+    {who: 'МЕДВЕДЬ / БЕСТИЯ', text: 'МЕДВЕДЬ: «В памяти Camaro остался оригинал приказа». БЕСТИЯ: «Значит, они забрали не машину. Они забрали свидетеля».', sub: 'Медведь впервые называет настоящую цену погони.'},
+    {who: 'МЕДВЕДЬ / БЕСТИЯ', text: 'МЕДВЕДЬ: «Крепление сломано снаружи. Они спешили только до моста». БЕСТИЯ: «После моста дорога одна».', sub: 'Погоня проиграна; расследование получило направление.'},
+    {who: 'БЕСТИЯ / МЕДВЕДЬ', text: 'БЕСТИЯ: «Возвращаемся в гараж». МЕДВЕДЬ: «Мьёльнир не потянет грузовик?» БЕСТИЯ: «Он довёз нас. За PitterMAX пойдём на другой машине».', sub: 'Бестия предлагает собрать тяжёлую Колесницу для новой попытки.'},
+    {who: 'БЕСТИЯ / МЕДВЕДЬ', text: 'БЕСТИЯ: «На боевую машину денег нет. На три кузова хватит». МЕДВЕДЬ: «Из этого?» БЕСТИЯ: «Колесницу строят с рамы».', sub: 'Три дешёвых кузова становятся первым выбором новой команды.'},
     {who: 'ГЛАВА 1', text: 'СОБЕРИ КОЛЕСНИЦУ', sub: 'Первую колесницу собирают не ради победы. Ради права продолжить погоню.  ENTER'}
   ];
 
@@ -164,14 +164,14 @@
     g.restore();
   }
 
-  /** Рисует машину Янот, включая резкую остановку боком у разлома. */
+  /** Рисует «Мьёльнир» Бестии, включая остановку боком у разлома. */
   function drawPlayer(model) {
     const x = Model.playerScreenX(model), y = Model.playerScreenY(model);
     const angle = Model.roadHeading(model, y) + model.steerVisual * .1 + (model.bridgeDrift || 0);
     drawBrakeEffects(model, x, y, angle);
     try {
-      const car = typeof CARS !== 'undefined' && (CARS[CFG.tonyaCarIndex] || CARS[save.car]);
-      const character = typeof CHARS !== 'undefined' && CHARS[save.char];
+      const car = typeof CARS !== 'undefined' && (CARS[CFG.chaseCarIndex] || CARS[save.car]);
+      const character = typeof CHARS !== 'undefined' && (CHARS[CFG.chaseDriverIndex] || CHARS[save.char]);
       if (car && typeof drawCar === 'function') {
         drawCar(g, {x: x, y: y, ang: angle,
           car: car, ch: character, nitro: model.nitroTime > 0 ? 1 : 0,
@@ -290,6 +290,11 @@
     return comicImages[src];
   }
 
+  /** Загружает финальные кадры во время погони, до перехода к комиксу. */
+  function preloadComics() {
+    comicPages().forEach(function (page) { comicImage(page.image); });
+  }
+
   /** Рисует текущий кадр комикса. */
   function drawComic(model) {
     const w = Model.screenWidth(), h = Model.screenHeight(), pages = comicPages();
@@ -311,5 +316,5 @@
       '#70687e', 'center', typeof F_B !== 'undefined' ? F_B : undefined);
   }
 
-  global.RnRStoryChaseView = {drawWorld, drawFailure, drawComic, comicPages};
+  global.RnRStoryChaseView = {drawWorld, drawFailure, drawComic, comicPages, preloadComics};
 })(typeof window !== 'undefined' ? window : globalThis);

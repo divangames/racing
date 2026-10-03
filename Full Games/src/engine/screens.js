@@ -258,7 +258,7 @@
   function drawStudioMark(colX) {
     const img = titleStudioLogo;
     if (!img || !img.complete || !img.naturalWidth) return;
-    const markW = 108;
+    const markW = global.DiVANEngine.titleUI ? 72 : 108;
     const markH = markW * img.naturalHeight / img.naturalWidth;
     const y = H - 14 - markH;
     g.save();
@@ -289,38 +289,44 @@
     });
     const colX = lay.colX;
     const caption = menu && typeof menu.titleCaption === 'function' ? menu.titleCaption() : '';
-    const captionGap = caption ? 20 : 0;
-    if (caption) txt(g, caption, colX + 2, lay.titleY0 - 24, 15, '#21ddff', 'left', F_B);
+    const componentUI = global.DiVANEngine.titleUI && menu;
+    const captionGap = caption && !componentUI ? 20 : 0;
+    if (caption && !componentUI) txt(g, caption, colX + 2, lay.titleY0 - 24, 15, '#21ddff', 'left', F_B);
     const labOf = menu && menu.titleItemLabel;
     const hintOf = menu && menu.titleItemHint;
-    items.forEach(function (t, i) {
-      const y = lay.titleY0 + captionGap + i * lay.titleStep, sel = i === selTitle;
-      const label = labOf ? labOf(t) : (t && t.label) || '';
-      const hint = hintOf ? hintOf(t) : (t && t.hint) || '';
-      const M = global.DiVANEngine.menu;
-      if (M) {
-        M.row(g, colX - 8, y - lay.panelH / 2 - 2, lay.itemW, lay.panelH, label, sel,
-          {id: 'title-' + i, size: lay.panelH < 36 ? 13 : 15, hint: lay.panelH >= 36 ? hint : '',
-            number: String(i + 1).padStart(2, '0'), danger: t.id === 'exit', focus: () => { selTitle = i; }});
-        return;
-      }
-      if (sel) {
-        if (global.DiVANEngine.cyberKit) global.DiVANEngine.cyberKit.frame(g, colX - 16, y - lay.panelH / 2 - 2, lay.itemW + 24, lay.panelH + (hint ? 10 : 0));
-        txt(g, '▸', colX - 2, y - 2, Math.max(14, lay.selFs - 2), '#21ddff', 'right');
-        txt(g, label, colX + 10, y - 2, lay.selFs, '#b9efff', 'left');
-      } else {
-        txt(g, label, colX + 10, y - 2, lay.idleFs, '#78a5b8', 'left');
-      }
-      if (hint) txt(g, hint, colX + 10, y + 12, 11, sel ? '#78a5b8' : '#567d8f', 'left', F_B);
-    });
+    g._titleItems = items;
+    if (componentUI) {
+      global.DiVANEngine.titleUI.draw(g, lay, items, selTitle, gameVersionLabel(), titleStageRight());
+    } else {
+      items.forEach(function (t, i) {
+        const y = lay.titleY0 + captionGap + i * lay.titleStep, sel = i === selTitle;
+        const label = labOf ? labOf(t) : (t && t.label) || '';
+        const hint = hintOf ? hintOf(t) : (t && t.hint) || '';
+        const M = global.DiVANEngine.menu;
+        if (M) {
+          M.row(g, colX - 8, y - lay.panelH / 2 - 2, lay.itemW, lay.panelH, label, sel,
+            {id: 'title-' + i, size: lay.panelH < 36 ? 13 : 15, hint: lay.panelH >= 36 ? hint : '',
+              number: String(i + 1).padStart(2, '0'), danger: t.id === 'exit', focus: () => { selTitle = i; }});
+          return;
+        }
+        if (sel) {
+          if (global.DiVANEngine.cyberKit) global.DiVANEngine.cyberKit.frame(g, colX - 16, y - lay.panelH / 2 - 2, lay.itemW + 24, lay.panelH + (hint ? 10 : 0));
+          txt(g, '▸', colX - 2, y - 2, Math.max(14, lay.selFs - 2), '#21ddff', 'right');
+          txt(g, label, colX + 10, y - 2, lay.selFs, '#b9efff', 'left');
+        } else {
+          txt(g, label, colX + 10, y - 2, lay.idleFs, '#78a5b8', 'left');
+        }
+        if (hint) txt(g, hint, colX + 10, y + 12, 11, sel ? '#78a5b8' : '#567d8f', 'left', F_B);
+      });
+    }
     g._titleY0 = lay.titleY0 + captionGap;
     g._titleStep = lay.titleStep;
     g._titleHit = lay.panelH / 2 + 4;
     g._titleColX = colX - 8;
     g._titleItemW = lay.itemW;
-    drawStudioMark(colX);
+    drawStudioMark(componentUI ? colX - 7 : colX);
     const ver = gameVersionLabel();
-    if (ver) txt(g, ver, titleStageRight() - 22, H - 16, 11, '#5a5468', 'right', F_B);
+    if (ver && !componentUI) txt(g, ver, titleStageRight() - 22, H - 16, 11, '#5a5468', 'right', F_B);
     g._titleItems = items;
     drawLabWarn();
     drawExitWarn();
@@ -338,6 +344,7 @@
       drawPressStart();
     },
     title: ['drawTitle'],
+    developers: function () { global.DiVANEngine.credits.draw(); },
     cameraSetup: ['drawCameraSetup'],
     settings: ['drawSettings'],
     help: ['drawHelp'],

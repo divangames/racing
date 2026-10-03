@@ -34,6 +34,11 @@ test('HTML и WAV используют общую шину, панорама HTM
   const {g,m}=boot(),el={};m.sync(true);const route=m.routeMedia(el,-.6);assert.equal(route.node.dest,g.AU.sfx);
   assert.equal(m.routeMedia(el,.6),route);assert.equal(route.node.pan.value,.6);m.releaseMedia(el);assert.equal(route.node.dest,null);
 });
+test('Тихий HTML-клип можно усилить до общего лимитера',()=>{
+  const {g,m}=boot(),el={};m.sync(true);const route=m.routeMedia(el,0,6.4);
+  assert.equal(route.node.dest,route.amp);assert.equal(route.amp.dest,g.AU.sfx);assert.equal(route.amp.gain.value,6.4);
+  m.releaseMedia(el);assert.equal(route.amp.dest,null);
+});
 test('Заблокированный браузером аудиоконтекст возобновляется при активном миксе',()=>{
   const {g,m}=boot();let resumes=0;g.AU.ctx.state='suspended';g.AU.ctx.resume=()=>{resumes++;return Promise.resolve();};
   m.sync(true);assert.equal(resumes,1);

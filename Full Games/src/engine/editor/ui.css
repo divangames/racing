@@ -1,0 +1,70 @@
+@font-face{font-family:Bender;src:url('/assets/fonts/bender/Bender.otf') format('opentype');font-weight:400;font-display:swap}
+@font-face{font-family:Bender;src:url('/assets/fonts/bender/Bender-Bold.otf') format('opentype');font-weight:500 700;font-display:swap}
+@font-face{font-family:Bender;src:url('/assets/fonts/bender/Bender-Black.otf') format('opentype');font-weight:800 900;font-display:swap}
+:root{--font:Bender,sans-serif;--display:Bender,sans-serif;--editor-space:calc(100dvh - 168px);--ease-ui:cubic-bezier(.23,1,.32,1)}
+body{font-family:var(--font);font-size:14px;line-height:1.4}
+.lab-splash,.studio-busy{font-family:var(--font)}
+button,input,select,textarea{font-family:var(--font)}
+button{transition:background-color 140ms ease,border-color 140ms ease,transform 120ms var(--ease-ui)}
+button:not(:disabled):active{transform:scale(.97)}
+button:disabled:hover{background:#1a2936;border-color:#364958}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--yellow);outline-offset:2px}
+input,select,textarea{min-width:0;max-width:100%}
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),select{min-height:36px}
+textarea{resize:vertical;min-height:80px}
+.stage-card,.panel,.chapter-stage,.chapter-rail,.chapter-inspector{min-width:0}
+.machine-name,.chapter-stage-title,.chapter-item strong{overflow-wrap:anywhere}
+.car-list,.layer-list{gap:4px}
+.hint,.stage-note,.car-save-summary,.chapter-point span,.chapter-status{font-size:12px;line-height:1.5}
+.field>label,.map-inspector-nav button,.car-inspector-nav button{font-size:12px}
+.top-actions,.stage-tools,.actions,.chapter-stage-actions{flex-wrap:wrap}
+.topbar{gap:12px}
+.app-tabs{flex-wrap:wrap}
+.app-tabs button{font-size:14px}
+.chapter-scene-tabs{max-width:100%;flex-wrap:wrap;overflow:visible}
+.chapter-scene-tabs button{white-space:normal;text-align:left;min-width:0}
+.chapter-stage-head{gap:12px;flex-wrap:wrap}
+.chapter-stage-head>div{min-width:0}
+.chapter-status,.studio-report{overflow-wrap:anywhere}
+.panel,.chapter-rail,.chapter-inspector-scroll,.asset-grid,.asset-tree{scrollbar-width:thin;scrollbar-color:#536b7b #101922}
+.chapter-scene-list{scrollbar-width:thin;scrollbar-color:#536b7b #101922}
+@media(min-width:761px){
+  #workCar{height:var(--editor-space);min-height:0}
+  .workspace-map{height:var(--editor-space);grid-template-rows:minmax(0,1fr) minmax(140px,23vh)}
+  .workspace-map .map-stage-wrap{min-height:120px}
+  #workCar #stage{min-height:180px}
+}
+@media(min-width:1181px){
+  .chapter-workspace{height:var(--editor-space);min-height:0;grid-template-columns:minmax(200px,240px) minmax(0,1fr) minmax(280px,350px)}
+  .chapter-preview{min-height:200px;flex:1}
+  .chapter-stage{overflow:auto}
+  .chapter-inspector-scroll{flex:1}
+}
+@media(min-width:761px) and (max-width:1180px){
+  .chapter-workspace{grid-template-columns:210px minmax(0,1fr)}
+  .chapter-preview{flex:none;aspect-ratio:16/9;min-height:220px}
+  .chapter-rail{max-height:var(--editor-space)}
+  .chapter-inspector-scroll{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:1000px) and (min-width:761px){
+  #workCar,.workspace-map{height:auto;grid-template-columns:minmax(0,1fr)}
+  #workCar #stage{flex:none;height:320px;min-height:240px}
+  #workCar .panel{max-height:600px}
+  .workspace-map{grid-template-rows:auto minmax(220px,35vh) auto}
+  .workspace-map .stage-card{grid-column:1;grid-row:1}
+  .workspace-map #mapStage{height:320px;min-height:240px}
+  .workspace-map #assetDock{grid-column:1;grid-row:2}
+  .workspace-map .panel{grid-column:1;grid-row:3;max-height:600px}
+  .workspace-map .map-inspector-actions{flex-wrap:wrap}
+  .map-test-options{width:auto;max-width:100%}
+}
+@media(max-width:760px){
+  .topbar{align-items:flex-start;justify-content:flex-start}
+  .topbar>div{max-width:100%;min-width:0}
+  .chapter-preview{flex:none;aspect-ratio:16/9;min-height:220px}
+  .chapter-rail{max-height:320px;overflow:auto}
+  .chapter-scene-tabs button{flex:1 1 140px}
+  .workspace-map .panel,.panel{max-height:none}
+  .stage-tools button{min-height:36px}
+}
+@media(prefers-reduced-motion:reduce){button{transition:none}button:not(:disabled):active{transform:none}}

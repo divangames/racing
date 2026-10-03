@@ -9,6 +9,7 @@
   let sceneKind = 'chapter-intro';
   let selectedScene = 0;
   let dirty = false;
+  let saving = false;
   let fillLock = false;
 
   const $ = (id) => document.getElementById(id);
@@ -45,14 +46,14 @@
   function pointHint(id) {
     const hints = {
       CHAPTER_INTRO: 'вступительный комикс · выбранный кадр', INTRO: 'комикс погони · выбранный кадр',
-      TRUCK_INTRO: 'катсцена · 15 секунд PitterMAX и въезд Янот', CHASE_START: 'обучение', CHASE: 'игровой цикл',
+      TRUCK_INTRO: 'катсцена · 15 секунд PitterMAX и въезд Бестии', CHASE_START: 'обучение', CHASE: 'игровой цикл',
       RED_WARNING: 'таймер поражения', GREEN_HOLD: 'таймер победы', ENGINE_FAILURE: 'катсцена',
       BRIDGE_APPROACH: 'начало разрушения', BRIDGE_COLLAPSE: 'каскадный взрыв моста',
       BRAKE_HIT: 'резкий удар по тормозам', DRIFT_STOP: 'боковой занос к обрыву',
-      DRIFT_SETTLE: 'ударная остановка', PLAYER_CLOSEUP: 'пауза на Бричке',
+      DRIFT_SETTLE: 'ударная остановка', PLAYER_CLOSEUP: 'пауза на Мьёльнире',
       SEPARATION_SHOT: 'общий план разрыва', GAP_TRAVERSE: 'пролёт камеры через пропасть',
       TRUCK_FOCUS: 'переход камеры к PitterMAX', TRUCK_ESCAPE: 'один гудок и уход за кадр',
-      AFTERMATH_RETURN: 'возврат к Бричке', POST_COMIC: 'комикс · выбранный кадр',
+      AFTERMATH_RETURN: 'возврат к Мьёльниру', POST_COMIC: 'комикс · выбранный кадр',
       FAILED: 'экран поражения', GARAGE: 'выбор хлама'
     };
     return hints[id] || 'точка сценария';
@@ -93,6 +94,7 @@
       node.dataset.sceneKind = section.id;
       node.setAttribute('role', 'tab');
       node.setAttribute('aria-selected', section.id === sceneKind ? 'true' : 'false');
+      node.tabIndex = section.id === sceneKind ? 0 : -1;
       node.onclick = () => selectSceneKind(section.id);
       host.append(node);
     });
@@ -291,14 +293,24 @@
 
   /** Записывает главу на диск. */
   async function save() {
-    if (!current()) return;
+    if (!current() || saving) return;
+    const document = current(), snapshot = JSON.stringify(document);
+    saving = true;
+    ['chapterSaveBtn','chapterSaveBottom'].forEach(id => { $(id).disabled = true; });
     setStatus('Сохраняю главу…');
     try {
-      await ChapterData.save(current());
-      dirty = false;
-      setStatus('Сохранено: content/chapters/' + current().id + '.json');
+      await ChapterData.save(JSON.parse(snapshot));
+      if (current() === document) {
+        if (JSON.stringify(document) === snapshot) {
+          dirty = false;
+          setStatus('Глава сохранена');
+        } else setStatus('Предыдущие правки сохранены. Есть новые несохранённые изменения.', 'dirty');
+      }
     } catch (error) {
-      setStatus(error.message + '. Запустите редактор через editor.bat.', 'error');
+      setStatus('Не удалось сохранить главу: ' + error.message + '. Повторите сохранение.', 'error');
+    } finally {
+      saving = false;
+      ['chapterSaveBtn','chapterSaveBottom'].forEach(id => { $(id).disabled = false; });
     }
   }
 

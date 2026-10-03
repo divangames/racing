@@ -1,0 +1,80 @@
+{
+  "regular": {
+    "rail": {
+      "x": 0,
+      "y": 0,
+      "w": 348,
+      "h": 720
+    },
+    "actions": {
+      "x": 0,
+      "y": 195.359375,
+      "w": 332,
+      "h": 216
+    },
+    "dock": {
+      "x": 12,
+      "y": 636.078125,
+      "w": 320,
+      "h": 63.890625
+    },
+    "height": 720,
+    "width": 1280
+  },
+  "updating": {
+    "rail": {
+      "x": 0,
+      "y": 0,
+      "w": 348,
+      "h": 720
+    },
+    "actions": {
+      "x": 0,
+      "y": 158.03125,
+      "w": 332,
+      "h": 328
+    },
+    "dock": {
+      "x": 12,
+      "y": 636.09375,
+      "w": 320,
+      "h": 63.890625
+    },
+    "height": 720,
+    "width": 1280
+  },
+  "compact": {
+    "rail": {
+      "x": 0,
+      "y": 0,
+      "w": 348,
+      "h": 576
+    },
+    "actions": {
+      "x": 0,
+      "y": 110.03125,
+      "w": 332,
+      "h": 328
+    },
+    "dock": {
+      "x": 12,
+      "y": 492.09375,
+      "w": 320,
+      "h": 63.890625
+    },
+    "height": 576,
+    "width": 1024
+  },
+  "failures": {
+    "status": "status failure",
+    "verify": {
+      "text": "verify failure",
+      "enabled": true
+    },
+    "play": {
+      "text": "play failure",
+      "enabled": true
+    }
+  },
+  "errors": []
+}

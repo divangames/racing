@@ -68,8 +68,20 @@ test('документ миссии хранит точки запуска, се
   assert.ok(comics.cinematicScenes.every(scene => points.includes(scene.id)));
   assert.equal(chapter.config.attackWarningTime, .8);
   assert.equal(chapter.config.chaseFarCameraZoom, 1.12);
-  assert.equal(comics.postScenes[0].speaker, 'ЯНОТ');
-  assert.match(comics.postScenes[0].image, /players\/06\/comics/);
+  assert.equal(comics.postScenes[0].speaker, 'БЕСТИЯ');
+  assert.match(comics.postScenes[0].image, /chapters\/assets\/mission-01\/chase-outro-bridge\.png$/);
+});
+
+test('все кадры погони показывают Бестию и ссылаются на доступные изображения', () => {
+  const chapter = JSON.parse(read('content/chapters/mission-01.json'));
+  const sections = Object.fromEntries(chapter.comicSections.map(section => [section.runtimeKey, section.scenes]));
+  const chaseScenes = [...sections.cinematicScenes, ...sections.introScenes, ...sections.postScenes];
+  assert.doesNotMatch(JSON.stringify(chaseScenes), /Янот|ЯНОТ|Бричк|БРИЧК/);
+  assert.match(sections.chapterIntroScenes.at(-1).image, /chapter-intro-bestia\.png$/);
+  for (const scene of [...sections.chapterIntroScenes, ...chaseScenes]) {
+    if (!scene.image || scene.image.startsWith('assets/')) continue;
+    assert.ok(fs.existsSync(path.join(root, 'content', scene.image)), `Нет кадра ${scene.id}: ${scene.image}`);
+  }
 });
 
 test('черновик запускается из любой точки и возвращается в редактор', () => {

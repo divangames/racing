@@ -1,3 +1,6 @@
-2026/09/24-20:07:56.376 7b30 Reusing MANIFEST E:\Программирование\!!!GAMES\Racing\Full Games\build\draft-test-check\profile\Local Storage\leveldb/MANIFEST-000001
-2026/09/24-20:07:56.380 7b30 Recovering log #7
-2026/09/24-20:07:56.380 7b30 Reusing old log E:\Программирование\!!!GAMES\Racing\Full Games\build\draft-test-check\profile\Local Storage\leveldb/000007.log 
+2026/10/03-12:33:26.297 6e2c Reusing MANIFEST E:\Программирование\!!!GAMES\Racing\Full Games\build\draft-test-check\profile\Local Storage\leveldb/MANIFEST-000001
+2026/10/03-12:33:26.298 6e2c Recovering log #7
+2026/10/03-12:33:26.299 6e2c Reusing old log E:\Программирование\!!!GAMES\Racing\Full Games\build\draft-test-check\profile\Local Storage\leveldb/000007.log 
+2026/10/03-12:33:55.374 87f0 Level-0 table #10: started
+2026/10/03-12:33:55.379 87f0 Level-0 table #10: 16561 bytes OK
+2026/10/03-12:33:55.383 87f0 Delete type=0 #7

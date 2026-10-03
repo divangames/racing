@@ -156,7 +156,14 @@ test('PitterMAX находится только в UNIQUE и хранит оба
   assert.match(g.PITTER_MAX.sprites.cargo, /PitterMAX\/1\.png$/);
   assert.match(g.PITTER_MAX.sprites.empty, /PitterMAX\/1_none\.png$/);
   assert.equal(g.RnRTransport.PLAYER.PitterMAX, undefined);
-  assert.equal(g.MISSION_01.tonyaCarIndex, 10);
+  assert.equal(g.MISSION_01.chaseCarIndex, 21);
+  assert.equal(g.MISSION_01.chaseDriverIndex, 13);
+  const hud = fs.readFileSync(path.join(ENGINE, 'story-chase-hud.js'), 'utf8');
+  const view = fs.readFileSync(path.join(ENGINE, 'story-chase-view.js'), 'utf8');
+  assert.match(hud, /CARS\[CFG\.chaseCarIndex\]/);
+  assert.match(hud, /name: 'МЬЁЛЬНИР'/);
+  assert.match(hud, /CHARS\[CFG\.chaseDriverIndex\]/);
+  assert.match(view, /CHARS\[CFG\.chaseDriverIndex\]/);
 });
 
 test('погоня использует гоночную камеру, дорожный ribbon и звук заезда без трибун', () => {
@@ -177,7 +184,7 @@ test('погоня использует гоночную камеру, доро�
   assert.doesNotMatch(loop, /state==='bearChase'[^\n]*arenaCrowd/);
 });
 
-test('PitterMAX пятнадцать секунд занимает кадр, затем камера спускается к Бричке', () => {
+test('PitterMAX пятнадцать секунд занимает кадр, затем камера спускается к Мьёльниру', () => {
   const g = boot();
   const m = g.storyBearChaseCreate(function () { return .5; });
   assert.equal(m.phase, 'TRUCK_INTRO');
@@ -488,7 +495,7 @@ test('мост рушится после грузовика, машина ост
   assert.ok(gapY < g.RnRStoryChaseModel.playerScreenY(m));
   const lowerEdge = gapY + g.MISSION_01.bridgeGapLength * m.bridgeCollapse * .52;
   assert.ok(g.RnRStoryChaseModel.playerScreenY(m) - lowerEdge > 18,
-    'Бричка должна остановиться перед нижней кромкой, а не над провалом');
+    'Мьёльнир должен остановиться перед нижней кромкой, а не над провалом');
   run(g, m, g.MISSION_01.bridgeApproachTime + .05, {});
   const cinematicTime = m.bridgeCinematicTime;
   run(g, m, g.MISSION_01.bridgeCollapseTime, {});
@@ -514,7 +521,7 @@ test('мост рушится после грузовика, машина ост
   assert.ok(Math.abs(narrow.bridgeDriftTargetX) <= 42);
 });
 
-test('камера берёт торможение, разрыв, PitterMAX и возвращается к Бричке', () => {
+test('камера берёт торможение, разрыв, PitterMAX и возвращается к Мьёльниру', () => {
   const g = boot();
   const m = g.storyBearChaseCreate(function () { return .5; });
   g.RnRStoryChaseBridge.begin(m);
@@ -670,7 +677,7 @@ test('вступление передаёт игрока и грузовик в 
   for(const key of ['zoom','targetX','targetY','anchorX','anchorY']) assert.ok(Math.abs(before[key]-after[key])<.001,key);
 });
 
-test('финал непрерывен без вызовов рисования, грузовик и Бричка остаются на своих берегах', () => {
+test('финал непрерывен без вызовов рисования, грузовик и Мьёльнир остаются на своих берегах', () => {
   for(const dt of [.01,.025,.05]) {
     const g=boot(), M=g.RnRStoryChaseModel, B=g.RnRStoryChaseBridge, m=M.create(()=>.5);
     m.phase='CHASE'; m.distance=25; m.spawnTimer=999; m.greenTimer=4.999; m.playerSpeed=1;

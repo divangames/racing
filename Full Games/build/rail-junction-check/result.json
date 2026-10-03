@@ -1,0 +1,47 @@
+{
+  "errors": [],
+  "game": [
+    {
+      "mode": "junction",
+      "bakeMs": 141.69999999552965,
+      "N": 344,
+      "decks": [],
+      "left": 32,
+      "right": 32,
+      "independent": true
+    },
+    {
+      "mode": "overpass",
+      "bakeMs": 101.5,
+      "N": 344,
+      "decks": [
+        {
+          "from": 0.7238372093023255,
+          "to": 0.8313953488372093,
+          "z": 1
+        }
+      ],
+      "left": 0,
+      "right": 0,
+      "independent": false
+    }
+  ],
+  "editor": [
+    {
+      "width": 1440,
+      "height": 900,
+      "bridge": "overpass",
+      "junction": "junction",
+      "points": 20,
+      "overflow": false
+    },
+    {
+      "width": 800,
+      "height": 600,
+      "bridge": "overpass",
+      "junction": "junction",
+      "points": 20,
+      "overflow": false
+    }
+  ]
+}

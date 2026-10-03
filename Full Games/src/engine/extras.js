@@ -238,10 +238,21 @@
     drawHubBackdrop();
     txt(g, 'ВЫБОР ТРАССЫ', W / 2, 58, 40, '#ffd23f', 'center');
     txt(g, trackPickReturn === 'free' ? 'выберите локацию свободного заезда' : 'быстрый старт • режим разработчика', W / 2, 96, 15, '#9a93a8', 'center', F_B);
-    g._trackTiles = [];
     const list = pickableTracks();
+    const rows = Math.max(1, Math.ceil(list.length / 3));
+    const visibleRows = Math.min(5, rows);
+    const selectedRow = Math.floor(trackPickSel / 3);
+    const firstRow = Math.max(0, Math.min(rows - visibleRows, selectedRow - 2));
+    const top = 148, bottom = H - 72, gapY = 8;
+    const tileH = Math.min(196, Math.floor((bottom - top - (visibleRows - 1) * gapY) / visibleRows));
+    g._trackTiles = Array(list.length).fill(null);
+    g._trackViewport = { top, bottom, firstRow, visibleRows, rows };
     list.forEach(function (def, i) {
-      const r = trackTileRect(i), sel = i === trackPickSel;
+      const row = Math.floor(i / 3);
+      if (row < firstRow || row >= firstRow + visibleRows) return;
+      const base = trackTileRect(i);
+      const r = { x: base.x, y: top + (row - firstRow) * (tileH + gapY), w: base.w, h: tileH };
+      const sel = i === trackPickSel;
       const th = def.theme || {};
       const cap = Math.max(22, Math.min(44, (r.h * 0.28) | 0));
       panel(g, r.x, r.y, r.w, r.h, sel ? 'rgba(255,157,46,.16)' : 'rgba(20,17,28,.92)', sel ? '#ffd23f' : '#3a3548', 10);
@@ -250,8 +261,11 @@
       drawTrackOutline(g, def, r.x + 10, r.y + 10, r.w - 20, r.h - cap - 8);
       txt(g, def.name, r.x + r.w / 2, r.y + r.h - cap / 2 - 2, r.h < 120 ? 12 : 16, sel ? '#ffd23f' : '#c8c0d4', 'center');
       if (def.custom) txt(g, 'СВОЯ', r.x + 24, r.y + 24, 11, '#3d9eff', 'left', F_B);
-      g._trackTiles.push(r);
+      g._trackTiles[i] = r;
     });
+    if (rows > visibleRows) {
+      txt(g, 'РЯД ' + (selectedRow + 1) + ' / ' + rows, W - 72, H - 29, 12, '#9baebd', 'right', F_B);
+    }
     txt(g, '← → ↑ ↓ — плитка • ENTER — старт • ESC — назад', W / 2, H - 28, 14, '#6f6880', 'center', F_B);
   }
 

@@ -64,3 +64,13 @@ test('Гонка — racing, гараж — garage, выключатель гл�
   const local = g.musicSources('assets/music/racing/0.mp3');
   assert.deepEqual(local, ['assets/music/racing/0.mp3']);
 });
+
+test('погоня берёт только 01.wav из ассетов миссии, не сканируя старый плейлист', () => {
+  const music = fs.readFileSync(path.resolve(__dirname, '../content/music.js'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '../content/rnr.html'), 'utf8');
+  const protocol = fs.readFileSync(path.resolve(__dirname, '../src/main/protocol.js'), 'utf8');
+  assert.match(music, /MISSION_01_TRACK = 'assets\/data\/Missions\/01\/01\.wav'/);
+  assert.match(html, /cat==='missions\/01'\?\[MISSION_01_TRACK\]/);
+  assert.doesNotMatch(music.match(/var MUSIC_CATS = [^;]+;/)[0], /missions\/01/);
+  assert.doesNotMatch(protocol.match(/const MUSIC_CATS = [^;]+;/)[0], /missions\/01/);
+});

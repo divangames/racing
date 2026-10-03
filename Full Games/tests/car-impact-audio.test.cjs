@@ -14,6 +14,7 @@ const vm = require('node:vm');
 
 test('Автомобильные события выбирают свои группы WAV', () => {
   const played = [];
+  const routed = [];
   class AudioMock {
     constructor() { this.volume = 1; this.playbackRate = 1; }
     addEventListener() {}
@@ -24,7 +25,12 @@ test('Автомобильные события выбирают свои гру
     Audio: AudioMock,
     settings: { sound: { sfxOn: true, sfx: 80 } },
     performance: { now: () => 1000 },
-    P: { x: 0, y: 0 }
+    P: { x: 0, y: 0 },
+    AU: { ctx: {} },
+    DiVANEngine: { audioMix: {
+      routeMedia(audio, pan, boost) { routed.push({ volume: audio.volume, pan, boost }); },
+      releaseMedia() {}
+    } }
   };
   g.window = g;
   g.globalThis = g;
@@ -39,5 +45,7 @@ test('Автомобильные события выбирают свои гру
   assert.match(played[0], /assets\/sounds\/cars\/hit\/A_CarHit_03\.WAV$/);
   assert.equal(g.carGearPlay({ isP: true }, .7, 0), true);
   assert.match(played[1], /assets\/sounds\/cars\/GearSwitch\/GearSwitch_[1-4]\.WAV$/);
+  assert.equal(routed[1].boost, 6.4, 'тихий семпл коробки усилен до лимитера');
+  assert.ok(routed[1].volume > .85, 'щелчок не теряется под мотором');
   assert.equal(g.carGearPlay({ isP: true }, .7, 0), false, 'дребезг ввода не дублирует щелчок');
 });

@@ -2,7 +2,9 @@
   "id": "ch1_arena_08",
   "name": "ДВОЙНАЯ ЧАША",
   "published": true,
-  "autoHazards": false,
+  "tactics": null,
+  "crossingMode": "overpass",
+  "autoHazards": true,
   "theme": {
     "ground": "#16110e",
     "dark": "#0a0807",
@@ -162,6 +164,5 @@
   "shortcuts": [],
   "chapter": 1,
   "chapterId": "ch1_arena",
-  "chapterTitle": "Глава 1 · Арена А",
-  "raceClass": "A"
+  "chapterTitle": "Глава 1 · Арена А"
 }

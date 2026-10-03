@@ -66,14 +66,18 @@
     }
   }
   // HTML-клипы используют ту же громкость и панораму, что декодированные WAV.
-  function routeMedia(el, pan = 0) {
+  function routeMedia(el, pan = 0, gain = 1) {
     if (!ensure() || !AU.ctx.createMediaElementSource) return null;
     let route = media.get(el);
     if (!route) {
       try {
         const source = AU.ctx.createMediaElementSource(el), node = AU.ctx.createStereoPanner();
-        source.connect(node); node.connect(AU.sfx);
-        route = { source, node }; media.set(el, route);
+        const boost = Math.max(1, Math.min(8, Number.isFinite(gain) ? gain : 1));
+        const amp = boost > 1 ? AU.ctx.createGain() : null;
+        source.connect(node);
+        if (amp) { amp.gain.value = boost; node.connect(amp); amp.connect(AU.sfx); }
+        else node.connect(AU.sfx);
+        route = { source, node, amp }; media.set(el, route);
         node.pan.value = pan;
       } catch (err) {
         // Уже привязанный или неподдерживаемый HTMLAudio продолжает играть напрямую.
@@ -84,7 +88,11 @@
   }
   function releaseMedia(el) {
     const route = media.get(el);
-    if (route) { route.source.disconnect(); route.node.disconnect(); media.delete(el); }
+    if (route) {
+      route.source.disconnect(); route.node.disconnect();
+      if (route.amp) route.amp.disconnect();
+      media.delete(el);
+    }
   }
   E.audioMix = { live, effectLevel, musicLevel, sync, routeMedia, releaseMedia, smooth };
   E.wrap('audioInit', previous => function () { const result = previous.apply(this, arguments); sync(true); return result; });

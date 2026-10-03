@@ -50,11 +50,13 @@
     const n = order.length;
     const selI = park ? autoparkSel : selCar;
     const selPos = carCatalogPos(selI);
+    const menu=global.DiVANEngine.menu;
+    const immediate=introReduceMotion||menu?.inputMode?.()==='keyboard';
     if (park) {
-      parkScroll += wrapDelta(parkScroll, selPos, n) * 0.18;
+      parkScroll = immediate?selPos:parkScroll+wrapDelta(parkScroll, selPos, n)*.18;
       parkScroll = ((parkScroll % n) + n) % n;
     } else {
-      carSelScroll += wrapDelta(carSelScroll, selPos, n) * 0.18;
+      carSelScroll = immediate?selPos:carSelScroll+wrapDelta(carSelScroll, selPos, n)*.18;
       carSelScroll = ((carSelScroll % n) + n) % n;
     }
     const scroll = park ? parkScroll : carSelScroll;
@@ -88,7 +90,7 @@
       const stroke = sel ? '#35e0ff' : (Math.abs(d) < 0.55 ? '#5a5468' : 'rgba(255,255,255,.08)');
       drawHubCard(x, y, cw, cardH, stroke);
       if (sel) {
-        g.fillStyle = 'rgba(53,224,255,.06)'; g.fillRect(x + 2, y + 2, cw - 4, 48);
+        g.save();g.globalAlpha*=.06;g.fillStyle = menu?.colors.accent||'#35e0ff'; g.fillRect(x + 2, y + 2, cw - 4, 48);g.restore();
       }
       hits.push({ x: x, y: y, w: cw, h: cardH, i: i });
       txt(g, car.name, x + cw / 2, y + 28, sel ? 18 : 14, unlocked ? car.col : '#5a5468', 'center');
@@ -113,7 +115,7 @@
         g.fillStyle = unlocked ? 'rgba(8,7,12,.42)' : 'rgba(8,7,12,.72)';
         rr(g, artX, artY, artW, artH, 10); g.fill();
       } else {
-        g.strokeStyle = 'rgba(53,224,255,.4)'; g.lineWidth = 1.5;
+        g.strokeStyle = menu?.colors.cool||'rgba(53,224,255,.4)'; g.lineWidth = 1;
         rr(g, artX, artY, artW, artH, 10); g.stroke();
       }
       if (!unlocked) {
@@ -150,12 +152,12 @@
       else txt(g, st.t, x + cw / 2, y + cardH - 22, sel ? 14 : 12, st.col, 'center', F_B);
       if (sel && !owned && !foreign && unlocked && save.cash < CARS[i].price)
         txt(g, 'не хватает $' + (CARS[i].price - save.cash), x + cw / 2, y + cardH - 42, 11, '#ff3d2e', 'center', F_B);
-      if (ow != null) drawCarOwnerCorner(x, y, cw, cardH, ow, sel ? 228 : 110);
+      if (ow != null) drawCarOwnerCorner(x, y, cw, cardH, ow, sel ? 96 : 72);
     });
     g.restore();
-    const pulse = 0.6 + 0.4 * Math.sin(gt * 3.2);
+    const pulse = menu?1:0.6 + 0.4 * Math.sin(gt * 3.2);
     g.globalAlpha = n > 1 ? pulse : 0.3;
-    g.fillStyle = '#35e0ff';
+    g.fillStyle = menu?.colors.accent||'#35e0ff';
     g.beginPath(); g.moveTo(34, H / 2 - 16); g.lineTo(16, H / 2); g.lineTo(34, H / 2 + 16); g.closePath(); g.fill();
     g.beginPath(); g.moveTo(W - 34, H / 2 - 16); g.lineTo(W - 16, H / 2); g.lineTo(W - 34, H / 2 + 16); g.closePath(); g.fill();
     g.globalAlpha = 1;
@@ -164,7 +166,7 @@
     const gap = 22, dotsW = n * gap, dx = W / 2 - dotsW / 2, dy = H - 48;
     for (let p = 0; p < n; p++) {
       const on = p === selPos;
-      g.fillStyle = on ? '#35e0ff' : '#3a3548';
+      g.fillStyle = on ? menu?.colors.accent||'#35e0ff' : menu?.colors.line||'#3a3548';
       g.beginPath(); g.arc(dx + p * gap + gap / 2, dy, on ? 5 : 3.5, 0, TAU); g.fill();
       hits.push({ x: dx + p * gap, y: dy - 12, w: gap, h: 24, i: order[p] });
     }
@@ -172,7 +174,7 @@
     const hint = storyHint || (park
       ? (carUnlocked(selI) ? 'ENTER — детали   ·   ESC — в гараж' : 'закрыто   ·   ESC — в гараж')
       : (carConfirmed ? 'ENTER — НА СТАРТ!' : (isForeignSignature(selCar) ? 'только просмотр   ·   ESC — назад' : 'ENTER — купить/выбрать   ·   ESC — назад')));
-    txt(g, hint, W / 2, H - 20, 13, (!park && carConfirmed) ? '#58ff6b' : '#6f6880', 'center', F_B);
+    txt(g, hint, W / 2, H - 30, 13, (!park && carConfirmed) ? '#58ff6b' : '#6f6880', 'center', F_B);
   }
 
   const engine = global.DiVANEngine;

@@ -52,6 +52,10 @@
     }
     if (state === 'title') {
       const items = g._titleItems || [];
+      if(global.DiVANEngine.titleUI&&g._titleBoxes){
+        const index=g._titleBoxes.findIndex(box=>hitRect(x,y,box));
+        if(index>=0&&!items[index]?.disabled){selTitle=index;press('Enter');}return;
+      }
       const lay = {
         y0: g._titleY0 || 320,
         step: g._titleStep || 32,
@@ -68,7 +72,7 @@
     }
     if (state === 'tracks' && g._trackTiles) {
       for (let i = 0; i < g._trackTiles.length; i++) {
-        if (!hitRect(x, y, g._trackTiles[i])) continue;
+        if (!g._trackTiles[i] || !hitRect(x, y, g._trackTiles[i])) continue;
         if (trackPickSel === i) startDevTrack(i);
         else { trackPickSel = i; sClick(); }
         return;

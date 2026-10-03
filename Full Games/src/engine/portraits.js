@@ -177,7 +177,7 @@
   }
 
   /**
-   * Хозяин авто — крупный портрет в правом нижнем углу карточки.
+   * Хозяин авто — компактный знак в правом нижнем углу карточки.
    * @param {number} x
    * @param {number} y
    * @param {number} w
@@ -189,7 +189,9 @@
     if (ownerIdx == null) return;
     g.save();
     rr(g, x, y, w, h, 16); g.clip();
-    drawCarOwnerMark(x + w - size * 0.36, y + h - size * 0.34, size, ownerIdx);
+    const cx = x + w - size / 2 - 12, cy = y + h - size / 2 - 14;
+    g.beginPath(); g.arc(cx, cy, size / 2 + 2, 0, TAU); g.clip();
+    drawCarOwnerMark(cx, cy, size, ownerIdx);
     g.restore();
   }
 

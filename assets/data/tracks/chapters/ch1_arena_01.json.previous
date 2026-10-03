@@ -130,11 +130,11 @@
     {
       "pack": "arena_5mu4jh",
       "id": "chatgpt_image_17_sent_2026_g_23_49_02",
-      "x": 2496,
-      "y": 1261.1317919036505,
-      "w": 1254,
-      "h": 1254,
-      "ang": 0,
+      "x": 1631.4089709762532,
+      "y": 1194.4358296449775,
+      "w": 1153.68,
+      "h": 1153.68,
+      "ang": -0.019543669385966633,
       "layer": "over",
       "carLayer": "over",
       "roadLayer": "over",
@@ -155,5 +155,6 @@
   "shortcuts": [],
   "chapter": 1,
   "chapterId": "ch1_arena",
-  "chapterTitle": "Глава 1 · Арена"
+  "chapterTitle": "Глава 1 · Арена А",
+  "raceClass": "A"
 }

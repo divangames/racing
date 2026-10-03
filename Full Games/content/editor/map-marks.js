@@ -48,7 +48,7 @@ const MapMarks = (() => {
       }
     }
     ctx.fillStyle = sel ? '#3d9eff' : '#e8c547';
-    ctx.font = '700 16px Montserrat,sans-serif';
+    ctx.font = '700 16px Bender,sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('СТАРТ', 0, -110);
     ctx.fillStyle = '#ededed';
@@ -212,7 +212,7 @@ const MapMarks = (() => {
     ctx.stroke();
     ctx.fill();
     ctx.fillStyle = '#ff9d2e';
-    ctx.font = '700 12px Montserrat,sans-serif';
+    ctx.font = '700 12px Bender,sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('ВХОД', e[0], e[1] - r - 8);
     ctx.fillStyle = '#58ff6b';

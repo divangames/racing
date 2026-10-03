@@ -2,7 +2,9 @@
   "id": "ch1_arena_b_04",
   "name": "РАЗВЯЗКА ПАЛАЧА",
   "published": true,
-  "autoHazards": false,
+  "tactics": null,
+  "crossingMode": "overpass",
+  "autoHazards": true,
   "theme": {
     "ground": "#16110e",
     "dark": "#0a0807",
@@ -169,8 +171,8 @@
   "items": [],
   "objects": [],
   "start": {
-    "x": 466.0207998444482,
-    "y": 982.1138518575494,
+    "x": 2303.378559910462,
+    "y": 916.3333401676098,
     "ang": 0.28326604809021455
   },
   "hazards": {
@@ -182,6 +184,5 @@
   "shortcuts": [],
   "chapter": 1,
   "chapterId": "ch1_arena_b",
-  "chapterTitle": "Глава 1 · Арена Б",
-  "raceClass": "B"
+  "chapterTitle": "Глава 1 · Арена Б"
 }

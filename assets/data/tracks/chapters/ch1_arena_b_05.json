@@ -4,7 +4,7 @@
   "published": true,
   "tactics": null,
   "crossingMode": "overpass",
-  "autoHazards": false,
+  "autoHazards": true,
   "theme": {
     "ground": "#16110e",
     "dark": "#0a0807",

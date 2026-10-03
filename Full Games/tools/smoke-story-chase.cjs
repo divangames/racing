@@ -5,7 +5,9 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const assert = require('node:assert/strict');
-const output = path.resolve(__dirname, '../build/story-chase-check');
+const output = process.env.RNR_STORY_CHASE_OUTPUT
+  ? path.resolve(process.env.RNR_STORY_CHASE_OUTPUT)
+  : path.resolve(__dirname, '../build/story-chase-check');
 fs.mkdirSync(output, { recursive: true });
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'rnr-story-chase-'));
 app.setPath('userData', profile);
@@ -44,6 +46,7 @@ app.whenReady().then(async () => {
   async function shot(name, settleMs = 250) {
     await run('updateView(); g.setTransform(viewS,0,0,viewS,viewOX,viewOY); DiVANEngine.screens.paint(state)');
     if (settleMs) await new Promise(resolve => setTimeout(resolve, settleMs));
+    await run('updateView(); g.setTransform(viewS,0,0,viewS,viewOX,viewOY); DiVANEngine.screens.paint(state)');
     fs.writeFileSync(path.join(output, name + '.png'), (await win.webContents.capturePage()).toPNG());
   }
   async function naturalBridgeShot(name, elapsed) {
@@ -61,12 +64,25 @@ app.whenReady().then(async () => {
   await win.loadURL('rnr://game/rnr.html?chapterTest=1&chapter=mission-01&point=TRUCK_INTRO');
   await until("!!(typeof BOOT !== 'undefined' && BOOT.ready && typeof startStoryBearChase === 'function' && window.RnRStoryChaseHud)");
   await until("!document.getElementById('boot-screen')");
+  await until("!!(RnRChapterContent && RnRChapterContent.get())");
   const editorBoot = await run(`({testMode:storyChapterTestMode,
     creatorVideo:!!document.querySelector('.boot-creator-video')})`);
   editorBoot.elapsedMs = Date.now() - bootStartedAt;
   assert.equal(editorBoot.testMode, true);
   assert.equal(editorBoot.creatorVideo, false);
   assert.ok(editorBoot.elapsedMs < 10000);
+  const missionArt = await run(`Promise.all(
+    RnRChapterContent.get().comicSections.flatMap(section => section.scenes)
+      .filter(scene => scene.image && scene.image.startsWith('chapters/assets/mission-01/'))
+      .map(scene => new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve({id: scene.id, width: image.naturalWidth});
+        image.onerror = () => reject(new Error('Кадр не загружен: ' + scene.image));
+        image.src = scene.image;
+      }))
+  )`);
+  assert.ok(missionArt.length >= 9);
+  assert.ok(missionArt.every(image => image.width > 0));
   const started = await run(`(() => {
     save=newSave(); storyPatchSave(save);
     save.playMode='campaign'; save.char=0; save.car=0; save.storySlice='bear_chapter_1';
@@ -74,12 +90,28 @@ app.whenReady().then(async () => {
     startStoryBearChase(); storyBearChase.phase='TRUCK_INTRO'; storyBearChase.phaseTime=.9;
     storyBearChase.distance=72; storyBearChase.playerSpeed=.86; storyBearChase.truckSpeed=.78;
     return {state, category:PITTER_MAX.category, cargo:PITTER_MAX.sprites.cargo,
-      zone:storyBearChaseZone(72), musicCategory:musicCat(), missionTracks:MUSIC.list('missions/01').length};
+      zone:storyBearChaseZone(72), musicCategory:musicCat(), missionTracks:MUSIC.list('missions/01').length,
+      missionTrack:MUSIC.list('missions/01')[0]};
   })()`);
   assert.equal(started.state, 'bearChase');
   assert.equal(started.category, 'UNIQUE');
   assert.equal(started.musicCategory, 'missions/01');
-  assert.ok(started.missionTracks > 0);
+  assert.equal(started.missionTracks, 1);
+  assert.equal(started.missionTrack, 'assets/data/Missions/01/01.wav');
+  const missionAudio = await run(`(async () => {
+    const url = MUSIC.list('missions/01')[0];
+    const response = await fetch(url, {method: 'HEAD'});
+    if (!response.ok) throw new Error('Трек миссии недоступен: ' + response.status);
+    return await new Promise((resolve, reject) => {
+      const audio = new Audio();
+      const timer = setTimeout(() => reject(new Error('Таймаут декодирования трека миссии')), 12000);
+      audio.onloadedmetadata = () => {clearTimeout(timer); resolve({duration: audio.duration, type: response.headers.get('content-type')}); audio.src = '';};
+      audio.onerror = () => {clearTimeout(timer); reject(new Error('WAV миссии не декодируется'));};
+      audio.preload = 'metadata'; audio.src = url;
+    });
+  })()`);
+  assert.equal(missionAudio.type, 'audio/wav');
+  assert.ok(missionAudio.duration > 0);
   await shot('00-truck-intro');
   await run("storyBearChase.phase='TRUCK_INTRO'; storyBearChase.phaseTime=MISSION_01.introTruckHoldTime+MISSION_01.introCameraPanTime*.7");
   await shot('00-player-entry');
@@ -169,6 +201,8 @@ app.whenReady().then(async () => {
     bt.close + bt.separation + bt.traverse + bt.truck * .5);
   await naturalBridgeShot('natural-11-return', bt.approach + bt.collapse + bt.brake + bt.drift + bt.settle +
     bt.close + bt.separation + bt.traverse + bt.truck + bt.escape + bt.return * .55);
+  await run("storyBearChaseApplyPoint('POST_COMIC', 0)");
+  await shot('12-comic-bestia', 0);
   const retry = await run(`(() => {
     storyBearChaseApplyPoint('FAILED'); press('Enter');
     return {phase:storyBearChase.phase,hp:storyBearChase.hp,maxHp:storyBearChase.maxHp};
@@ -185,7 +219,7 @@ app.whenReady().then(async () => {
   assert.equal(finished.pending, false);
   assert.equal(finished.robbed, true);
   assert.equal(finished.personalCarState, 'stolen');
-  const report = { editorBoot, started, skippedIntro, barrelDrop, brakeCamera, damage, bridge, retry, finished, errors };
+  const report = { editorBoot, missionArt: missionArt.length, started, missionAudio, skippedIntro, barrelDrop, brakeCamera, damage, bridge, retry, finished, errors };
   fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(report, null, 2));
   assert.deepEqual(errors, []);
   console.log(JSON.stringify(report, null, 2));

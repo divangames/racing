@@ -23,8 +23,9 @@
     playerBrakeSpeed: .34,
     playerAcceleration: .62,
     playerSteerSpeed: 260,
-    // «Бричка» Янот: отдельная от машины Медведя на платформе.
-    tonyaCarIndex: 10,
+    // «Мьёльнир» Бестии: отдельная от Camaro Медведя на платформе.
+    chaseCarIndex: 21,
+    chaseDriverIndex: 13,
     distanceSpeedScale: 14,
     distancePixelScale: 2.15,
     introTruckHoldTime: 15,

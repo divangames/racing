@@ -1,0 +1,31 @@
+:root {
+  --ui-bg: #0d1418;
+  --ui-panel: #172025;
+  --ui-panel-inset: #11181d;
+  --ui-panel-active: #30383c;
+  --ui-panel-active-mid: #242c30;
+  --ui-panel-active-end: #1d2529;
+  --ui-line: #45545b;
+  --ui-cyan: #91adb8;
+  --ui-amber: #efb342;
+  --ui-danger: #e87565;
+  --ui-text: #edf2ef;
+  --ui-muted: #a6b2b8;
+  --ui-space-1: 4;
+  --ui-space-2: 8;
+  --ui-space-3: 12;
+  --ui-space-4: 20;
+  --ui-glow: 5;
+}
+/* Canvas supplies the visible Bender text; this is its screen-reader counterpart. */
+.title-menu-accessibility {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  font-family: Bender, sans-serif;
+}

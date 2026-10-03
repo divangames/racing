@@ -302,7 +302,7 @@
     return start - (model.bridgeTruckTravel || 0);
   }
 
-  /** Возвращает высоту Брички с реальным продвижением к кромке. */
+  /** Возвращает высоту Мьёльнира с реальным продвижением к кромке. */
   function playerScreenY(model, height) {
     return (Number.isFinite(model.bridgeStartPlayerY) ? model.bridgeStartPlayerY : height * .56) -
       (model.bridgePlayerAdvance || 0);

@@ -243,7 +243,7 @@ const MapPreview = (() => {
     ctx.lineWidth = 2.5;
     ctx.stroke();
     ctx.fillStyle = col;
-    ctx.font = '700 14px Montserrat,sans-serif';
+    ctx.font = '700 14px Bender,sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     const mark = {money: '$', wrench: '+', wep: 'Z', ult: '*', nit: 'N', shield: 'O', bolt: '!'};

@@ -66,6 +66,7 @@
         "music-gate.js",
         "title-bg.js",
         "title-menu.js",
+        "credits.js",
         "screens.js",
         "title-fx.js",
         "render.js",
@@ -123,6 +124,7 @@
         "telemetry.js",
           "hud-cyber-kit.js",
           "menu-theme.js",
+        "title-ui.js",
         "hud-cyber-panels.js",
         "hud-curvature.js",
         "hud-cyber.js",
@@ -138,7 +140,9 @@
       ],
       "styles": [
         "boot-intro.css",
-        "stripe-motion.css"
+        "stripe-motion.css",
+        "cursor.css",
+        "title-ui.css"
       ]
     },
     "lab": {
@@ -152,6 +156,7 @@
         "editor/splash.js",
         "editor/busy.js",
         "editor/workbench.js",
+        "editor/ui.js",
         "editor/car-light-editor.js",
         "finish-gate.js",
         "arena-effects.js",
@@ -171,7 +176,9 @@
         "editor/workbench.css",
         "editor/car-light-editor.css",
         "editor/game-preview.css",
-        "editor/road-editor.css"
+        "editor/road-editor.css",
+        "editor/ui.css",
+        "cursor.css"
       ]
     }
   }

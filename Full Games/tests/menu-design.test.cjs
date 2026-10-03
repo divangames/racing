@@ -1,6 +1,6 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
-function menuBoot(){
+function menuBoot(kit){
   const listeners={},labels=[];
   const g=new Proxy({globalAlpha:1,_exitHits:[],_labHits:[],_titleConfirmHits:[],getTransform:()=>({a:2,d:2,e:40,f:20}),createLinearGradient:()=>({addColorStop(){}}),fillText:(...args)=>labels.push(args)}, {get:(o,k)=>k in o?o[k]:()=>{}});
   const c={g,gt:0,W:1280,H:720,viewW:1280,viewH:720,state:'race',paused:true,garagePaused:false,pauseMenuIndex:0,garagePauseIndex:0,exitWarn:false,exitWarnSel:0,labWarnSel:0,settingsState:'main',
@@ -9,12 +9,20 @@ function menuBoot(){
     press:()=>{c.confirmed=(c.confirmed||0)+1;},DiVANEngine:{replace(name,fn){c[name]=fn;},wrap(name,factory){c[name]=factory(c[name]);},screens:{paint(mode){
       if(mode==='race')c.DiVANEngine.menu.pause(g,640,360,['ПРОДОЛЖИТЬ','НАСТРОЙКИ','ВЫЙТИ'],c.pauseMenuIndex,false);
     }}}};
+  if(kit)c.DiVANEngine.cyberKit=kit;
   c.window=c;vm.createContext(c);vm.runInContext(fs.readFileSync(path.join(__dirname,'../src/engine/menu-theme.js'),'utf8'),c);return {c,M:c.DiVANEngine.menu,listeners,labels};
 }
 test('Подсветка меню одинакова на 30/60/120 Гц и отключает движение по системной настройке',()=>{
   const values=[];
   for(const fps of [30,60,120]){const {c,M}=menuBoot();M.mix('selection',0);for(let i=1;i<=fps;i++){c.gt=i/fps;M.mix('selection',1);}values.push(M.mix('selection',1));c.reduced=true;assert.equal(M.mix('selection',0),0);assert.equal(M.mix('selection',1),1);}
   assert(Math.max(...values)-Math.min(...values)<1e-10);
+});
+test('Bender используется для мелких подписей и крупных заголовков меню',()=>{
+  const {c,M}=menuBoot();
+  for(const size of [11,15,22,32]) {
+    M.text(c.g,'Разработчики',100,100,size);
+    assert.match(c.g.font,/Bender/);assert.doesNotMatch(c.g.font,/Segoe UI/);
+  }
 });
 test('Пауза использует реальные координаты Canvas: наведение выбирает, клик срабатывает один раз',()=>{
   const {c,M,listeners}=menuBoot();c.DiVANEngine.screens.paint('race');const b=M.regions()[1];
@@ -36,6 +44,23 @@ test('Все пункты общей паузы помещаются в комп
     const {c,M}=menuBoot();M.pause(c.g,width,height,Array.from({length:n},(_,i)=>'ПУНКТ '+i),0,false);
     for(const b of M.regions()){assert(b.x>=40&&b.y>=20);assert(b.x+b.w<=40+width*2&&b.y+b.h<=20+height*2);}
   }
+});
+
+test('Общие меню используют PNG-подложку и мгновенный выбор из токенов титула',()=>{
+  const {c,M}=menuBoot();let surfaces=0;
+  c.DiVANEngine.titleUI={tokens:()=>({bg:'#0d1418',panel:'#172025',panelActive:'#30383c',line:'#45545b',text:'#edf2ef',muted:'#a6b2b8',amber:'#efb342',cyan:'#91adb8',danger:'#e87565'}),metalSurface(){surfaces++;}};
+  M.refreshTokens();assert.equal(M.colors.accent,'#efb342');assert.equal(M.color('#21ddff'),'#efb342');
+  assert.equal(M.frame(c.g,20,30,300,44,true),1);assert.equal(M.frame(c.g,20,30,300,44,false),0);
+  assert.equal(surfaces,2);
+});
+
+test('Адаптация старого HUD kit действует только в меню, оригинальная отрисовка гонки сохранена',()=>{
+  const calls=[],kit={colors:{line:'#225568',red:'#ff3158'}};
+  for(const name of ['frame','text','icon','meter','rule','keycap'])kit[name]=function(){calls.push({name,args:Array.from(arguments)});};
+  const {c}=menuBoot(kit);
+  kit.frame(c.g,1,2,300,100);kit.meter(c.g,1,2,100,4,.5);assert.equal(calls.length,2);
+  c.__rnrMenuTheme=true;kit.frame(c.g,1,2,300,100);kit.meter(c.g,1,2,100,4,.5);assert.equal(calls.length,2);
+  c.__rnrMenuTheme=false;kit.frame(c.g,1,2,300,100);assert.equal(calls.length,3);
 });
 
 function audioBoot(){

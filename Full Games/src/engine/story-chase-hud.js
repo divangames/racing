@@ -11,16 +11,18 @@
   let truck = null;
   let race = null;
 
-  /** Создаёт совместимое с HUD состояние Янот на машине из cars/11. */
+  /** Создаёт совместимое с HUD состояние Бестии на «Мьёльнире». */
   function makePlayer() {
-    const car = CARS[CFG.tonyaCarIndex];
-    const pilot = CHARS[5] || CHARS[save.char] || CHARS[0];
+    const sourceCar = CARS[CFG.chaseCarIndex];
+    // Не меняем общий каталог: в этой миссии показываем сюжетное имя машины.
+    const car = Object.assign({}, sourceCar, {name: 'МЬЁЛЬНИР'});
+    const pilot = CHARS[CFG.chaseDriverIndex] || CHARS[save.char] || CHARS[0];
     if (typeof makeRacer === 'function') {
       const racer = makeRacer(pilot, car, true, typeof blankTune === 'function' ? blankTune() : {}, 4, {noAiScale: true});
       racer.lap = 0;
       return racer;
     }
-    return {car, ch: pilot, chIdx: 5, skillLvl: 1, st: {top: 360, maxhp: 100},
+    return {car, ch: pilot, chIdx: CFG.chaseDriverIndex, skillLvl: 1, st: {top: 360, maxhp: 100},
       hp: 100, maxhp: 100, lap: 0, cdN: 0, cdW: 0, cdU: 0, nitro: 0,
       shield: 0, bubble: 0, invuln: 0, dead: false, air: false, handbrake: false};
   }

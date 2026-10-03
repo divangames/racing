@@ -81,9 +81,9 @@ test('Новая кампания с сейвом спрашивает, без �
 test('Главное меню фиксировано и меняет только действие кампании', () => {
   const api = bootMenu().DiVANEngine.titleMenu;
   const fresh=api.titleItems(null,false,null);
-  assert.deepEqual(Array.from(fresh,item=>item.label),['НАЧАТЬ НОВУЮ ИГРУ','ЗАГРУЗИТЬ ИГРУ','СВОБОДНЫЙ ЗАЕЗД','НАСТРОЙКА','ВЫХОД']);
+  assert.deepEqual(Array.from(fresh,item=>item.label),['НАЧАТЬ НОВУЮ ИГРУ','ЗАГРУЗИТЬ ИГРУ','СВОБОДНЫЙ ЗАЕЗД','НАСТРОЙКА','РАЗРАБОТЧИКИ','ВЫХОД']);
   const active=api.titleItems({race:3},true,{storyCampaign:'medved_v1'});
-  assert.equal(active.length,5);assert.equal(active[0].label,'ПРОДОЛЖИТЬ ИГРУ');
+  assert.equal(active.length,6);assert.equal(active[0].label,'ПРОДОЛЖИТЬ ИГРУ');
 });
 
 test('Свободный заезд открывает отдельное меню и показывает доступное действие', () => {

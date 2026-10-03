@@ -81,8 +81,38 @@ test('В пятне пересечения борта прерываются, а
   g.DiVANEngine.trackSpan.eachRailRun(flat,0,95,(a,len)=>runs.push([a,len]));
   assert(runs.length>=2);
   assert(runs.reduce((sum,run)=>sum+run[1],0)<flat.N);
-  assert(g.DiVANEngine.trackSpan.railJunctionMask(auto,95).some(Boolean));
+  assert.equal(g.DiVANEngine.trackSpan.railJunctionMask(auto,95),null,'борта разных этажей не обрезаются');
   assert(auto.decks.some(d=>d.z>0),'разрыв борта не убирает эстакаду');
+});
+
+test('Перекрёсток обрезает стороны независимо и обновляет маску после смены этажа', () => {
+  const g=bootTrack(), api=g.DiVANEngine.trackSpan, cps=[];
+  for(let i=0;i<32;i++){const t=i/32*Math.PI*2;cps.push([900+720*Math.sin(t),700+430*Math.sin(2*t)]);}
+  const T=g.buildTrack({cps,theme:{},crossingMode:'junction'},0);
+  T.decks=[];
+  const left=api.railJunctionMask(T,95,1,9), right=api.railJunctionMask(T,95,-1,9);
+  assert(left && right);
+  assert(left.some((cut,i)=>cut!==right[i]),'нельзя удалять оба борта общей маской');
+  for(const side of [1,-1]){
+    const covered=new Set(), mask=side===1?left:right;
+    api.eachRailRun(T,0,95,(a,len)=>{for(let k=0;k<len;k++)covered.add((a+k)%T.N);},side,9);
+    for(let i=0;i<T.N;i++)assert.equal(covered.has(i),!mask[i]);
+  }
+  T.decks=g.buildTrack({cps,theme:{}},0).decks;
+  const changed=api.railJunctionMask(T,95,1,9);
+  assert(changed===null || changed.some((cut,i)=>cut!==left[i]),'маска должна учитывать новые этажи');
+});
+
+test('Обычный поворот сохраняет оба борта при разной плотности сплайна', () => {
+  const g=bootTrack(), api=g.DiVANEngine.trackSpan;
+  for(const N of [64,256]){
+    const S=Array.from({length:N},(_,i)=>{
+      const t=i/N*TAU;
+      return {x:600*Math.cos(t),y:600*Math.sin(t),nx:-Math.cos(t),ny:-Math.sin(t)};
+    });
+    const T={S,N,decks:[],gaps:[]};
+    for(const side of [1,-1])assert.equal(api.railJunctionMask(T,95,side,9),null);
+  }
 });
 
 test('Прыжок под мостом сохраняет нижний этаж машины', () => {

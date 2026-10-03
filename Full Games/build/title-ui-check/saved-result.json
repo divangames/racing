@@ -1,0 +1,86 @@
+{
+  "errors": [],
+  "screens": [],
+  "actions": [
+    {
+      "page": "saved-campaign",
+      "width": 1366,
+      "method": "keyboard",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 1366,
+      "method": "mouse",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 1920,
+      "method": "keyboard",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 1920,
+      "method": "mouse",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 2560,
+      "method": "keyboard",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 2560,
+      "method": "mouse",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 3440,
+      "method": "keyboard",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    },
+    {
+      "page": "saved-campaign",
+      "width": 3440,
+      "method": "mouse",
+      "calls": [
+        "campaign-continue"
+      ],
+      "state": "garage",
+      "mode": "campaign"
+    }
+  ]
+}

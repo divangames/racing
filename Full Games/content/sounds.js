@@ -133,14 +133,15 @@ var SFX = {
   const scale=Math.max(0,Math.min(1.5,Number.isFinite(opt.volume)?opt.volume:1));
   const pan=Math.max(-1,Math.min(1,Number.isFinite(opt.pan)?opt.pan:0));
   const rate=Math.max(.75,Math.min(1.3,Number.isFinite(opt.rate)?opt.rate:1));
+  const boost=Math.max(1,Math.min(8,Number.isFinite(opt.boost)?opt.boost:1));
   const mixed=window.DiVANEngine&&DiVANEngine.audioMix&&AU.ctx;
   const vol=Math.min(1,(mixed ? .65 : level)*scale);
   if(!vol)return false;
-  this._playAt(urls,0,vol,pan,rate);
+  this._playAt(urls,0,vol,pan,rate,boost);
   return true;
  },
  /** Пробует URL по порядку, пока клип не стартует. */
- _playAt: function(urls,i,vol,pan,rate){
+ _playAt: function(urls,i,vol,pan,rate,boost){
   if(i>=urls.length)return;
   const a=new Audio();
   const mix=window.DiVANEngine&&DiVANEngine.audioMix;
@@ -149,14 +150,14 @@ var SFX = {
    if(mix)mix.releaseMedia(a);
    if(next)return;
    next=true;
-   SFX._playAt(urls,i+1,vol,pan,rate);
+   SFX._playAt(urls,i+1,vol,pan,rate,boost);
   };
   a.referrerPolicy='no-referrer';
   a.volume=vol;
   try{a.playbackRate=rate||1;}catch(err){}
   a.addEventListener('error',fail);
   a.src=(typeof bootMediaSrc==='function')?bootMediaSrc(urls[i]):urls[i];
-  if(mix){mix.routeMedia(a,pan||0);a.addEventListener('ended',()=>mix.releaseMedia(a),{once:true});}
+  if(mix){mix.routeMedia(a,pan||0,boost||1);a.addEventListener('ended',()=>mix.releaseMedia(a),{once:true});}
   a.play().catch(fail);
  }
 };
@@ -204,5 +205,7 @@ function carGearPlay(racer,strength,pan){
  carGearLast=idx;carGearAt=now;
  const force=Math.max(0,Math.min(1,Number.isFinite(strength)?strength:.6));
  const side=Math.max(-.8,Math.min(.8,Number.isFinite(pan)?pan:0));
- return SFX.play(CAR_GEAR_TRACKS[idx],{volume:.5+force*.35,pan:side,rate:.97+Math.random()*.06});
+ // Исходные GearSwitch тихие (-24..-31 dB RMS), поэтому локальный
+ // механический щелчок усиливается до лимитера и не теряется под мотором.
+ return SFX.play(CAR_GEAR_TRACKS[idx],{volume:1.4+force*.1,boost:6.4,pan:side,rate:.97+Math.random()*.06});
 }

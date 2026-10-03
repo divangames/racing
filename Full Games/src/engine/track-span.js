@@ -258,67 +258,80 @@
     }
   }
 
-  /**
-   * Убирает борта в пятне пересечения двух веток.
-   * Этажи, тень и опоры сохраняют читаемость эстакады, но красно-белые
-   * рельсы больше не режут поперёк соседнюю дорогу.
-   * @param {object} T
-   * @param {number} halfW
-   * @returns {boolean[]|null}
-   */
-  function railJunctionMask(T, halfW) {
+  /** Segment clipping against a road triangle, including either endpoint inside. */
+  function railHitsTriangle(a, b, triangle) {
+    const cross = (ax, ay, bx, by) => ax * by - ay * bx;
+    const [p, q, r] = triangle;
+    const winding = Math.sign(cross(q.x-p.x, q.y-p.y, r.x-p.x, r.y-p.y));
+    if (!winding) return false;
+    let from = 0, to = 1;
+    for (let k = 0; k < 3; k++) {
+      const u = triangle[k], v = triangle[(k+1)%3];
+      const start = winding * cross(v.x-u.x, v.y-u.y, a.x-u.x, a.y-u.y);
+      const delta = winding * cross(v.x-u.x, v.y-u.y, b.x-a.x, b.y-a.y);
+      if (Math.abs(delta) < 1e-9) { if (start < 0) return false; continue; }
+      const t = -start / delta;
+      if (delta > 0) from = Math.max(from, t);
+      else to = Math.min(to, t);
+      if (from >= to) return false;
+    }
+    return to - from > 1e-6;
+  }
+
+  /** Clip each side against remote road polygons on the same deck only. */
+  function railJunctionMask(T, halfW, side, railHalf) {
     const S = T && T.S, N = S ? S.length : 0;
     if (N < 24) return null;
     const width = Math.max(20, +halfW || 95);
     const cacheHost = T._ribbonSmooth || T;
-    const cacheKey = N + '|' + width;
-    if (cacheHost._railJunctionCache && cacheHost._railJunctionCache.key === cacheKey) {
-      return cacheHost._railJunctionCache.mask;
-    }
-    const mask = new Array(N).fill(false);
-    let any = false;
-    const minSep = 16;
-    const cross = (ax, ay, bx, by) => ax * by - ay * bx;
-    const markReach = function (start, reach) {
-      for (const direction of [-1, 1]) {
-        let distance = 0, index = start;
-        for (let k = 0; k < N / 2 && distance <= reach; k++) {
-          mask[index] = true;
-          const next = (index + direction + N) % N;
-          distance += Math.hypot(S[next].x - S[index].x, S[next].y - S[index].y);
-          index = next;
+    const padding = Math.max(0, +railHalf || 0);
+    const cacheKey = width + '|' + padding + '|' + JSON.stringify([T.decks || [], T.gaps || []]);
+    let cache = cacheHost._railJunctionCache;
+    if (!cache || cache.source !== S || cache.key !== cacheKey) {
+      const distance = [0], roads = [];
+      const offset = (p, amount) => ({x:p.x+p.nx*amount, y:p.y+p.ny*amount});
+      for (let i = 0; i < N; i++) {
+        const a=S[i], b=S[(i+1)%N];
+        distance.push(distance[i]+Math.hypot(b.x-a.x,b.y-a.y));
+        const points=[offset(a,-width-padding),offset(b,-width-padding),
+          offset(b,width+padding),offset(a,width+padding)];
+        roads.push({points, deck:trackDeckEngine(T,i/N), solid:!inTrackGapEngine(T,i/N),
+          minX:Math.min(...points.map(p=>p.x)), maxX:Math.max(...points.map(p=>p.x)),
+          minY:Math.min(...points.map(p=>p.y)), maxY:Math.max(...points.map(p=>p.y))});
+      }
+      const masks = {1:new Array(N).fill(false), '-1':new Array(N).fill(false)};
+      const total = distance[N];
+      for (const railSide of [1,-1]) {
+        for (let i = 0; i < N; i++) {
+          const a=offset(S[i],railSide*(width+8)), b=offset(S[(i+1)%N],railSide*(width+8));
+          const minX=Math.min(a.x,b.x), maxX=Math.max(a.x,b.x);
+          const minY=Math.min(a.y,b.y), maxY=Math.max(a.y,b.y);
+          for (let j = 0; j < N; j++) {
+            const road=roads[j], along=Math.abs(distance[j]-distance[i]);
+            // Exclude the local bend by arc length rather than sample count.
+            if (Math.min(along,total-along) <= width*2+32 || !road.solid || road.deck !== roads[i].deck) continue;
+            if (maxX < road.minX || minX > road.maxX || maxY < road.minY || minY > road.maxY) continue;
+            const p=road.points;
+            if (railHitsTriangle(a,b,[p[0],p[1],p[2]]) || railHitsTriangle(a,b,[p[0],p[2],p[3]])) {
+              masks[railSide][i]=true;
+              break;
+            }
+          }
         }
       }
-    };
-    for (let i = 0; i < N; i++) {
-      const a = S[i], b = S[(i + 1) % N];
-      const ax = b.x - a.x, ay = b.y - a.y;
-      for (let j = i + minSep; j < N && N - (j - i) >= minSep; j++) {
-        const c = S[j], d = S[(j + 1) % N];
-        const bx = d.x - c.x, by = d.y - c.y;
-        const det = cross(ax, ay, bx, by);
-        if (Math.abs(det) < 1e-6) continue;
-        const dx = c.x - a.x, dy = c.y - a.y;
-        const u = cross(dx, dy, bx, by) / det;
-        const v = cross(dx, dy, ax, ay) / det;
-        if (u < 0 || u >= 1 || v < 0 || v >= 1) continue;
-        const sine = Math.abs(det) / Math.max(1, Math.hypot(ax, ay) * Math.hypot(bx, by));
-        const reach = (width + 18) / Math.max(.2, sine) + 12;
-        markReach(i, reach);
-        markReach(j, reach);
-        any = true;
-      }
+      cache = {source:S, key:cacheKey, masks,
+        mask:masks[1].map((value,i)=>value || masks[-1][i])};
+      cacheHost._railJunctionCache=cache;
     }
-    const result = any ? mask : null;
-    cacheHost._railJunctionCache = { key: cacheKey, mask: result };
-    return result;
+    const mask = side === 1 || side === -1 ? cache.masks[side] : cache.mask;
+    return mask.some(Boolean) ? mask : null;
   }
 
   /** Непрерывные куски борта с учётом разрывов и чистых пятен пересечений. */
-  function eachRailRun(T, deck, halfW, cb) {
+  function eachRailRun(T, deck, halfW, cb, side, railHalf) {
     const S = T && T.S, N = S ? S.length : 0;
     if (!N || typeof cb !== 'function') return;
-    const junctions = railJunctionMask(T, halfW);
+    const junctions = railJunctionMask(T, halfW, side, railHalf);
     if (!junctions) {
       eachSolidRun(T, deck, cb);
       return;

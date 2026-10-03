@@ -2648,7 +2648,7 @@ function musicOn(){
 }
 const MUSIC={
  el:null,cur:null,curCat:null,playedCount:0,bag:[],
- list(cat){return ((window.MUSIC_TRACKS&&MUSIC_TRACKS[cat])||[]).filter(Boolean);},
+ list(cat){return cat==='missions/01'?[MISSION_01_TRACK]:((window.MUSIC_TRACKS&&MUSIC_TRACKS[cat])||[]).filter(Boolean);},
  /** Перемешивает папку; первый трек не совпадает с только что игравшим. */
  reshuffle(){
   const list=this.list(this.curCat).slice();

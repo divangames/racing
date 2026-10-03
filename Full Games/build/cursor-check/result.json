@@ -1,0 +1,137 @@
+{
+  "errors": [],
+  "screens": [
+    {
+      "page": "game",
+      "width": 1440,
+      "height": 900,
+      "cursors": {
+        "body": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "canvas": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "a": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "button": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "input": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "textarea": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "select": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "summary": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "disabled": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default"
+      },
+      "size": [
+        60,
+        76
+      ],
+      "transparent": 1562,
+      "glow": 2087
+    },
+    {
+      "page": "game",
+      "width": 800,
+      "height": 600,
+      "cursors": {
+        "body": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "canvas": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "a": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "button": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "input": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "textarea": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "select": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "summary": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "disabled": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default"
+      },
+      "size": [
+        60,
+        76
+      ],
+      "transparent": 1562,
+      "glow": 2087
+    },
+    {
+      "page": "editor",
+      "width": 1440,
+      "height": 900,
+      "cursors": {
+        "body": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "canvas": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "a": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "button": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "input": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "textarea": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "select": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "summary": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "disabled": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default"
+      },
+      "size": [
+        60,
+        76
+      ],
+      "transparent": 1562,
+      "glow": 2087
+    },
+    {
+      "page": "editor",
+      "width": 800,
+      "height": 600,
+      "cursors": {
+        "body": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "canvas": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "a": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "button": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "input": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "textarea": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "select": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "summary": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default",
+        "disabled": "url(\"rnr://game/__engine/cursor-game.png\") 10 10, default"
+      },
+      "size": [
+        60,
+        76
+      ],
+      "transparent": 1562,
+      "glow": 2087
+    },
+    {
+      "page": "launcher",
+      "width": 1440,
+      "height": 900,
+      "cursors": {
+        "body": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "canvas": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "a": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "button": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "input": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "textarea": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "select": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "summary": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "disabled": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default"
+      },
+      "size": [
+        60,
+        76
+      ],
+      "transparent": 1562,
+      "glow": 2087
+    },
+    {
+      "page": "launcher",
+      "width": 800,
+      "height": 600,
+      "cursors": {
+        "body": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "canvas": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "a": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "button": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "input": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "textarea": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "select": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "summary": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default",
+        "disabled": "url(\"file:///E:/%D0%9F%D1%80%D0%BE%D0%B3%D1%80%D0%B0%D0%BC%D0%BC%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D0%B5/!!!GAMES/Racing/Full%20Games/src/engine/cursor-game.png\") 10 10, default"
+      },
+      "size": [
+        60,
+        76
+      ],
+      "transparent": 1562,
+      "glow": 2087
+    }
+  ]
+}

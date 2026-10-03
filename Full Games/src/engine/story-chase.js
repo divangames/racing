@@ -12,11 +12,11 @@
   const TUTORIAL_CARD_WIDTH = 520;
   const TUTORIAL_CARD_HEIGHT = 62;
   const CINEMATIC_LINES = [
-    {id: 'BRIDGE_APPROACH', speaker: 'МЕДВЕДЬ / ЯНОТ', text: 'МЕДВЕДЬ: «Он подпустил нас». ЯНОТ: «Значит, уже выбрал место».'},
-    {id: 'BRIDGE_COLLAPSE', speaker: 'ЯНОТ', text: 'Мост! Руль ровно!'},
-    {id: 'PLAYER_CLOSEUP', speaker: 'ЯНОТ', text: 'Стоим. Не выходи — край ещё сыплется.'},
+    {id: 'BRIDGE_APPROACH', speaker: 'МЕДВЕДЬ / БЕСТИЯ', text: 'МЕДВЕДЬ: «Он подпустил нас». БЕСТИЯ: «Значит, мост выбрали заранее».'},
+    {id: 'BRIDGE_COLLAPSE', speaker: 'БЕСТИЯ', text: 'Мост падает! Держись!'},
+    {id: 'PLAYER_CLOSEUP', speaker: 'БЕСТИЯ', text: 'Стоим. Не выходи — край ещё сыплется.'},
     {id: 'TRUCK_ESCAPE', speaker: 'МЕДВЕДЬ', text: 'Он не спасается. Он везёт нас туда, куда ему приказали.'},
-    {id: 'AFTERMATH_RETURN', speaker: 'ЯНОТ', text: 'Живы. Значит, поражение ещё можно превратить в улику.'}
+    {id: 'AFTERMATH_RETURN', speaker: 'БЕСТИЯ', text: 'Живы. Значит, поражение ещё можно превратить в улику.'}
   ];
   const audioPlayer = {st: {top: 360}, spd: 0, lat: 0, steerFlt: 0, ith: 0,
     x: 0, y: 0, nitro: 0, air: false, handbrake: false, finished: false, dead: false, isP: true};
@@ -35,9 +35,9 @@
       nitro: typeof ctrlHeld === 'function' ? ctrlHeld('nitro') : false};
   }
 
-  /** Обновляет данные машины Янот для общих моторных и шинных звуков. */
+  /** Обновляет данные «Мьёльнира» для общих моторных и шинных звуков. */
   function syncAudio(input) {
-    audioPlayer.car = typeof CARS !== 'undefined' ? CARS[CFG.tonyaCarIndex] : null;
+    audioPlayer.car = typeof CARS !== 'undefined' ? CARS[CFG.chaseCarIndex] : null;
     audioPlayer.spd = chase.playerSpeed * audioPlayer.st.top;
     // В игровом заносе моста общий шинный канал получает реальное окно контакта.
     const skidStrength = chase.bridgeSlip || chase.bridgeSkid || 0;
@@ -62,7 +62,8 @@
   function start() {
     Horn.reset();
     chase = Model.create(); global.storyBearChase = chase;
-    audioPlayer.car = typeof CARS !== 'undefined' ? CARS[CFG.tonyaCarIndex] : null;
+    View.preloadComics();
+    audioPlayer.car = typeof CARS !== 'undefined' ? CARS[CFG.chaseCarIndex] : null;
     audioRace.T.theme = Model.trackSettings().theme;
     audioRace.weather = audioRace.T.theme.weather ? {id: audioRace.T.theme.weather} : null;
     if (typeof clearKeys === 'function') clearKeys();
@@ -75,6 +76,7 @@
   function retry() {
     Horn.reset();
     chase = Model.create(); global.storyBearChase = chase;
+    View.preloadComics();
     chase.phase = 'CHASE_START';
     audioRace.T.theme = Model.trackSettings().theme;
     audioRace.weather = audioRace.T.theme.weather ? {id: audioRace.T.theme.weather} : null;

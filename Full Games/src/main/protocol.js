@@ -141,7 +141,7 @@ function resolveContentPath(pathname) {
   return fromContent;
 }
 
-const MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load', 'cast', 'missions/01'];
+const MUSIC_CATS = ['main', 'change', 'garage', 'intro', 'racing', 'Load', 'cast'];
 const MUSIC_EXTS = new Set(['.mp3', '.ogg', '.wav', '.m4a']);
 
 /**

@@ -92,10 +92,10 @@
    * @param {number} len
    * @param {number} halfW
    */
-  function strokeRailRun(q, S, a, len, halfW) {
+  function strokeRailRun(q, S, a, len, halfW, side) {
     const rb = ribbon();
     if (!rb) return;
-    for (const side of [1, -1]) {
+    {
       q.strokeStyle = 'rgba(0,0,0,.4)';
       q.lineWidth = 7;
       q.stroke(rb.offsetRun(S, a, len, side, halfW - 1));
@@ -145,17 +145,17 @@
     if (q.imageSmoothingQuality) q.imageSmoothingQuality = 'medium';
     const api = spanApi();
     const runs = [];
-    if (api && api.eachRailRun) {
-      api.eachRailRun(T, deck, halfW, function (a, len) { runs.push({ a: a, len: len }); });
-    } else if (api && api.eachSolidRun) {
-      api.eachSolidRun(T, deck, function (a, len) { runs.push({ a: a, len: len }); });
-    } else if (deck === 0) {
-      runs.push({ a: 0, len: N });
+    for (const side of [1, -1]) {
+      const add = (a, len) => runs.push({a, len, side});
+      if (api && api.eachRailRun) api.eachRailRun(T, deck, halfW, add, side, railHalf);
+      else if (api && api.eachSolidRun) api.eachSolidRun(T, deck, add);
+      else if (deck === 0) add(0, N);
     }
     if (tex) {
       for (let r = 0; r < runs.length; r++) {
         const run = runs[r];
-        for (const side of [1, -1]) {
+        {
+          const side = run.side;
           q.strokeStyle = 'rgba(0,0,0,.45)';
           q.lineWidth = railHalf * 2 + 3;
           q.stroke(rb.offsetRun(S, run.a, run.len, side, halfW + 8));
@@ -173,12 +173,13 @@
       }
       return;
     }
-    for (let r = 0; r < runs.length; r++) strokeRailRun(q, S, runs[r].a, runs[r].len, halfW);
+    for (let r = 0; r < runs.length; r++) strokeRailRun(q, S, runs[r].a, runs[r].len, halfW, runs[r].side);
     for (let r = 0; r < runs.length; r++) {
       const run = runs[r];
       for (let k = 0; k < run.len; k += 5) {
         const p = S[(run.a + k) % N];
-        for (const side of [1, -1]) {
+        {
+          const side = run.side;
           q.fillStyle = '#24140e';
           q.beginPath();
           q.arc(p.x + p.nx * side * (halfW + 8), p.y + p.ny * side * (halfW + 8), 1.6, 0, TAU);

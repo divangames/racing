@@ -9,6 +9,21 @@
 
   /** Пункты корня настроек — клик сравнивает те же строки. */
   const SETTINGS_MAIN = ['НАСТРОЙКА ГРАФИКИ', 'НАСТРОЙКИ ЗВУКА', 'НАСТРОЙКА ИГРЫ', 'НАЗАД'];
+  const cameraAtlas = typeof Image !== 'undefined' ? new Image() : null;
+  if (cameraAtlas) cameraAtlas.src = '/__engine/title-ui-assets/camera-calibration-atlas.png';
+  function cameraPart(sx, sy, sw, sh, x, y, w, h) {
+    if (!cameraAtlas?.complete || !cameraAtlas.naturalWidth) return;
+    // Coordinates refer to the supplied 1672×941 atlas; never render its baked UI.
+    const scaleX = cameraAtlas.naturalWidth / 1672, scaleY = cameraAtlas.naturalHeight / 941;
+    g.drawImage(cameraAtlas, sx*scaleX, sy*scaleY, sw*scaleX, sh*scaleY, x, y, w, h);
+  }
+  function cameraMetal(x,y,w,h,opacity=.65) {
+    // Repeat a small blank header patch at its original density, without labels.
+    g.save();g.beginPath();g.rect(x,y,w,h);g.clip();g.globalAlpha*=opacity;
+    for(let yy=y;yy<y+h;yy+=28)for(let xx=x;xx<x+w;xx+=180)
+      cameraPart(390,112,270,23,xx,yy,180,28);
+    g.restore();
+  }
 
   /** Общая форма меню с теми же срезами и подсветкой, что у HUD гонки. */
   function hudPanel(c, x, y, w, h, fill, stroke, cut) {
@@ -103,22 +118,60 @@
     const LX = (W - viewW) / 2, LY = (H - viewH) / 2;
     g.fillStyle = '#03101a'; g.fillRect(LX, LY, viewW, viewH);
     drawTitleRace();
-    const fade = g.createLinearGradient(0, H * .42, 0, H);
-    fade.addColorStop(0, 'rgba(3,12,20,0)');
-    fade.addColorStop(.35, 'rgba(3,12,20,.45)');
-    fade.addColorStop(1, 'rgba(3,12,20,.88)');
-    g.fillStyle = fade; g.fillRect(0, 0, W, H);
     g._setHits = [];
-    const cx = W / 2, cardW = 760, cardX = cx - cardW / 2, cardY = H - 268;
-    hudPanel(g, cardX, cardY, cardW, 236, 'rgba(3,12,20,.86)', '#21ddff', 16);
-    txt(g, 'КАМЕРА', cx, cardY + 36, 32, '#b9efff', 'center');
-    txt(g, 'Смотри заезд. Подгони дистанцию, пока машина не сядет в кадр.', cx, cardY + 68, 14, '#e0f6ff', 'center', F_B);
-    drawZoomBar(cardX + 48, cardY + 102, cardW - 96, true);
-    const bx = cx - 150, by = cardY + 152, bw = 300, bh = 48;
-    hudPanel(g, bx, by, bw, bh, 'rgba(33,221,255,.2)', '#b9efff', 12);
-    txt(g, 'ДАЛЬШЕ', cx, by + 24, 20, '#b9efff', 'center');
-    g._setHits.push({ act: 'camGo', x: bx, y: by, w: bw, h: bh });
-    txt(g, '← → или колесо — зум  •  ENTER — дальше, если так удобно', cx, cardY + 218, 13, '#567d8f', 'center', F_B);
+    const M = global.DiVANEngine.menu, C = M?.colors || {text:'#edf2ef',muted:'#a6b2b8',cool:'#91adb8',accent:'#efb342',line:'#45545b'};
+    const cx = W / 2, cardW = Math.min(760, W - 72), cardX = cx - cardW / 2, cardY = H - 262, cardH = 190;
+    const label = (s,x,y,size,color,align='center',width,heavy=false) => M ? M.text(g,s,x,y,size,color,align,width,heavy) : txt(g,s,x,y,size,color,align,F_B);
+    g.save();
+    // The backing stays inside the atlas rails; no generic outer menu frame.
+    g.fillStyle='#11181d';
+    g.fillRect(cardX+16,cardY+13,cardW-32,cardH-27);
+    cameraMetal(cardX+16,cardY+13,cardW-32,cardH-27);
+    // Assemble only blank edge strips, handles and the insignia from the atlas.
+    cameraPart(150,58,1378,22,cardX,cardY,cardW,13);
+    cameraPart(180,386,420,29,cardX+12,cardY+cardH-14,cardW/2-12,14);
+    cameraPart(1080,386,420,29,cx,cardY+cardH-14,cardW/2-12,14);
+    cameraPart(150,80,30,300,cardX,cardY+13,16,cardH-27);
+    cameraPart(1488,80,32,300,cardX+cardW-16,cardY+13,16,cardH-27);
+    cameraPart(94,125,60,190,cardX-23,cardY+32,28,113);
+    cameraPart(1518,125,60,190,cardX+cardW-5,cardY+32,28,113);
+    cameraPart(220,86,135,112,cardX+28,cardY+16,54,45);
+    g.fillStyle='#4eafc3';g.globalAlpha=.8;g.fillRect(cardX+132,cardY+15,76,1);g.fillRect(cardX+cardW-210,cardY+15,76,1);g.globalAlpha=1;
+    label('КАМЕРА',cx,cardY+28,27,C.text,'center',cardW-240,true);
+    label('Настрой обзор с бортовой камеры перед стартом',cx,cardY+52,12,C.muted,'center',cardW-180);
+    label('CAM–01',cardX+cardW-34,cardY+30,11,C.cool,'right');
+    label('RACE UNIT',cardX+cardW-34,cardY+47,8,C.muted,'right');
+    g.fillStyle='#4eafc3';for(let i=0;i<3;i++){const x=cardX+cardW-59+i*8;g.beginPath();g.moveTo(x,cardY+54);g.lineTo(x+5,cardY+54);g.lineTo(x-2,cardY+62);g.lineTo(x-7,cardY+62);g.closePath();g.fill();}
+    g.fillStyle=C.line;g.fillRect(cardX+26,cardY+68,cardW-52,1);
+    const railX=cardX+106,railW=cardW-212,railY=cardY+96,z=raceZoom(),t=Math.max(0,Math.min(1,zoomT(z,CAM_ZOOM_MIN,CAM_ZOOM_MAX))),thumb=railX+railW*t;
+    const bx=cx-123,by=cardY+139,bw=246,bh=48;
+    const buttonActive=mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh&&M?.inputMode()==='mouse';
+    const sliderActive = settingsZoomDrag || !buttonActive;
+    g.strokeStyle=C.cool;g.lineWidth=1;
+    for(let i=0;i<=12;i++){const x=railX+railW*i/12;g.beginPath();g.moveTo(x,railY-13);g.lineTo(x,railY-7);g.moveTo(x,railY+7);g.lineTo(x,railY+13);g.stroke();}
+    g.fillStyle=C.line;g.fillRect(railX,railY-3,railW,6);g.fillStyle=sliderActive?C.accent:C.cool;g.fillRect(railX,railY-3,railW*t,6);
+    g.shadowColor=C.accent;g.shadowBlur=sliderActive?6:0;g.beginPath();g.arc(thumb,railY,11,0,TAU);g.fillStyle='#172025';g.fill();g.strokeStyle=sliderActive?C.accent:C.cool;g.lineWidth=2;g.stroke();g.shadowBlur=0;
+    g.beginPath();g.arc(thumb,railY,6,0,TAU);g.fillStyle=sliderActive?C.accent:C.text;g.fill();
+    g.fillStyle=sliderActive?C.accent:C.cool;g.beginPath();g.moveTo(thumb,railY-25);g.lineTo(thumb-2,railY-20);g.lineTo(thumb,railY-14);g.lineTo(thumb+2,railY-20);g.closePath();g.fill();
+    label('ДАЛЬШЕ',railX-20,railY,11,C.text,'right');label('БЛИЖЕ',railX+railW+20,railY,11,C.text,'left');
+    label(String(Math.round(z*100)),thumb,railY+29,20,sliderActive?C.accent:C.text,'center',60,true);
+    g._setHits.push({act:'zoombar',x:railX,y:railY-20,w:railW,h:40});
+    g.fillStyle=C.line;g.fillRect(cardX+26,cardY+133,cardW-52,1);
+    if(M)M.frame(g,bx,by,bw,bh,buttonActive);else hudPanel(g,bx,by,bw,bh,'#172025','#225568',10);
+    cameraMetal(bx+14,by+8,bw-28,bh-16,.9);
+    cameraPart(52,606,461,19,bx,by,bw,10);
+    cameraPart(52,684,461,20,bx,by+bh-10,bw,10);
+    cameraPart(52,625,45,59,bx,by+10,24,bh-20);
+    cameraPart(470,625,43,59,bx+bw-23,by+10,23,bh-20);
+    label('ДАЛЬШЕ',cx-14,by+bh/2,18,C.text,'center',bw-76,true);
+    label('»',cx+46,by+bh/2,30,C.accent,'center',40,true);
+    g._setHits.push({act:'camGo',x:bx,y:by,w:bw,h:bh});
+    const keycap=(key,x,y,w=21)=>{g.fillStyle='#111b22';g.fillRect(x,y,w,21);g.strokeStyle=C.cool;g.lineWidth=.8;g.strokeRect(x+.5,y+.5,w-1,20);label(key,x+w/2,y+11,11,C.cool);};
+    keycap('←',cardX+43,by+13);keycap('→',cardX+72,by+13);
+    label('— камера / колесо',cardX+102,by+24,10,C.muted,'left',140);
+    keycap('ENTER',cardX+cardW-174,by+5,43);label('дальше',cardX+cardW-121,by+16,10,C.muted,'left');
+    label('ESC — МЕНЮ',cardX+cardW-174,by+34,9,C.cool,'left');
+    g.restore();
     if (cameraSetupHint) {
       g.fillStyle = 'rgba(3,12,20,.7)'; g.fillRect(0, 0, W, H);
       const mx0 = W / 2 - 310, my0 = H / 2 - 120, mw = 620, mh = 240;
@@ -189,7 +242,7 @@
           const value = settings.graphics.shake === false ? 0 : (settings.graphics[opt.key] ?? 60);
           const x = px + 258, width = pw - 346;
           g.fillStyle = '#25434d'; g.fillRect(x, y - 3, width, 6);
-          g.fillStyle = '#79dce6'; g.fillRect(x, y - 3, width * value / 100, 6);
+          g.fillStyle = global.DiVANEngine.menu?.colors.accent||'#79dce6'; g.fillRect(x, y - 3, width * value / 100, 6);
           txt(g, value + '%', px + pw - 36, y, 15, '#b9efff', 'right');
           g._setHits.push({act: 'gfxRange', i, key: opt.key, x: x - 8, y: y - 15, w: width + 16, h: 30, start: x, width});
         } else if (opt.type === 'res') {
@@ -284,7 +337,7 @@
 
   const engine = global.DiVANEngine;
   if (!engine) return;
-  engine.options = { SETTINGS_MAIN, zoomT };
+  engine.options = { SETTINGS_MAIN, zoomT, cameraAssetsReady: () => !!cameraAtlas?.complete && cameraAtlas.naturalWidth > 0 };
   /**
    * Пункты звука: музыка, эффекты, биом и арена отдельно.
    * @returns {object[]}

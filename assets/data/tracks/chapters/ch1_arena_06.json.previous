@@ -3,9 +3,6 @@
   "name": "КОЛЬЦО ФАКЕЛОВ",
   "published": true,
   "autoHazards": false,
-  "chapter": 1,
-  "chapterId": "ch1_arena",
-  "chapterTitle": "Глава 1 · Арена",
   "theme": {
     "ground": "#16110e",
     "dark": "#0a0807",
@@ -15,9 +12,10 @@
     "map": "arena",
     "weather": "clear",
     "groundSrc": "",
-    "roadSrc": "",
-    "railSrc": "",
-    "groundScale": 1
+    "roadSrc": "assets/data/tracks/Textures/road/arena_dirt_01.png",
+    "railSrc": "assets/data/tracks/Textures/rails/bort_01_png.png",
+    "groundScale": 2.2,
+    "crowdSound": true
   },
   "zones": [
     {
@@ -137,5 +135,9 @@
     "oils": [],
     "pads": []
   },
-  "shortcuts": []
+  "shortcuts": [],
+  "chapter": 1,
+  "chapterId": "ch1_arena",
+  "chapterTitle": "Глава 1 · Арена А",
+  "raceClass": "A"
 }

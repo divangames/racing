@@ -1,0 +1,174 @@
+{
+  "errors": [],
+  "screens": [
+    {
+      "tab": "car",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "map",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "chapter",
+      "width": 1440,
+      "height": 900,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "car",
+      "width": 1024,
+      "height": 768,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "map",
+      "width": 1024,
+      "height": 768,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "chapter",
+      "width": 1024,
+      "height": 768,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "car",
+      "width": 800,
+      "height": 600,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "map",
+      "width": 800,
+      "height": 600,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "chapter",
+      "width": 800,
+      "height": 600,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "car",
+      "width": 640,
+      "height": 720,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "map",
+      "width": 640,
+      "height": 720,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    },
+    {
+      "tab": "chapter",
+      "width": 640,
+      "height": 720,
+      "overflow": false,
+      "font": "Bender, sans-serif",
+      "clipped": [],
+      "unlabeled": []
+    }
+  ],
+  "keyboard": {
+    "selected": "map",
+    "focused": "map"
+  },
+  "typing": {
+    "nativeUndo": true
+  },
+  "sections": {
+    "seen": [
+      "Машины",
+      "Слои",
+      "Свет",
+      "Параметры",
+      "Дорога",
+      "Трассы",
+      "Карточка",
+      "Текстуры",
+      "Покрытие",
+      "Сохранение",
+      "Точка главы 1",
+      "Точка главы 2",
+      "Точка главы 3",
+      "Точка главы 4",
+      "Точка главы 5",
+      "Точка главы 6",
+      "Точка главы 7",
+      "Точка главы 8",
+      "Точка главы 9",
+      "Точка главы 10",
+      "Точка главы 11",
+      "Точка главы 12",
+      "Точка главы 13",
+      "Точка главы 14",
+      "Точка главы 15",
+      "Точка главы 16",
+      "Точка главы 17",
+      "Точка главы 18",
+      "Точка главы 19",
+      "Точка главы 20",
+      "Точка главы 21",
+      "Мост — реплики в игре",
+      "Вступительный комикс",
+      "Погоня — вступление",
+      "Погоня — финал"
+    ],
+    "sceneKey": true
+  },
+  "dialog": {
+    "focused": true,
+    "closed": true,
+    "restored": true
+  },
+  "saving": {
+    "calls": 1,
+    "busy": true,
+    "pending": true,
+    "failed": true,
+    "objectFailed": true,
+    "retry": true,
+    "objectPending": true
+  }
+}

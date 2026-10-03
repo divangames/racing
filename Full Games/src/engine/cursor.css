@@ -1,0 +1,6 @@
+/* One compact native cursor for every game/editor/launcher control.
+   Extra root specificity overrides the legacy link, text and disabled cursors. */
+html:root:root:root:root, html:root:root:root:root body, html:root:root:root:root body *,
+html:root:root:root:root body *::before, html:root:root:root:root body *::after {
+  cursor: url("./cursor-game.png") 10 10, default !important;
+}

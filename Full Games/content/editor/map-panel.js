@@ -155,6 +155,7 @@ const MapPanel = (() => {
       const row = document.createElement('div');
       row.className = 'zone-row';
       const mat = document.createElement('select');
+      mat.setAttribute('aria-label', 'Материал зоны покрытия');
       RnRTracks.MATERIALS.forEach((m) => {
         const o = document.createElement('option');
         o.value = m.id;
@@ -165,9 +166,11 @@ const MapPanel = (() => {
       mat.onchange = () => { z.material = mat.value; setDirty(); };
       const a = document.createElement('input');
       a.type = 'number'; a.step = '0.01'; a.min = '0'; a.max = '1'; a.value = z.from;
+      a.setAttribute('aria-label', 'Начало зоны покрытия, доля круга');
       a.onchange = () => { z.from = +a.value; setDirty(); };
       const b = document.createElement('input');
       b.type = 'number'; b.step = '0.01'; b.min = '0'; b.max = '1'; b.value = z.to;
+      b.setAttribute('aria-label', 'Конец зоны покрытия, доля круга');
       b.onchange = () => { z.to = +b.value; setDirty(); };
       row.append(mat, a, b);
       box.appendChild(row);

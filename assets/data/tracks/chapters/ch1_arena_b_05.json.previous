@@ -2,6 +2,8 @@
   "id": "ch1_arena_b_05",
   "name": "МОСТЫ ЯРОСТИ",
   "published": true,
+  "tactics": null,
+  "crossingMode": "overpass",
   "autoHazards": false,
   "theme": {
     "ground": "#16110e",
@@ -144,8 +146,8 @@
   "items": [],
   "objects": [],
   "start": {
-    "x": 1800,
-    "y": 1200,
+    "x": 1510.384245464552,
+    "y": 1076.0003705479448,
     "ang": 0.39843941041727526
   },
   "hazards": {
@@ -157,6 +159,5 @@
   "shortcuts": [],
   "chapter": 1,
   "chapterId": "ch1_arena_b",
-  "chapterTitle": "Глава 1 · Арена Б",
-  "raceClass": "B"
+  "chapterTitle": "Глава 1 · Арена Б"
 }

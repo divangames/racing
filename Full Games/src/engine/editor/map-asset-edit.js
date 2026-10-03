@@ -7,6 +7,8 @@
 
 window.MapAssetEdit = (() => {
   let def, api, canvas, ctx;
+  let returnFocus = null;
+  let saving = false;
   const MIN_SIZE = 8;
 
   /** Поля окна. */
@@ -357,6 +359,9 @@ window.MapAssetEdit = (() => {
 
   /** Открыть окно. */
   function open(src, handlers) {
+    if (saving) return;
+    returnFocus = document.activeElement;
+    if ($id('assetEditStatus')) $id('assetEditStatus').textContent = '';
     MapAssetColl.reset();
     def = {
       pack: src.pack, id: src.id, name: src.name, src: src.src, file: src.file,
@@ -394,6 +399,8 @@ window.MapAssetEdit = (() => {
     if (box) box.hidden = true;
     def = null;
     MapAssetColl.endDrag();
+    if (returnFocus && returnFocus.isConnected) returnFocus.focus();
+    returnFocus = null;
   }
 
   /** Размер спрайта. */
@@ -403,15 +410,26 @@ window.MapAssetEdit = (() => {
 
   /** Сохранить. */
   async function save() {
-    if (!def || !api) return;
+    if (!def || !api || saving) return;
     if ($id('assetEditName')) def.name = $id('assetEditName').value.slice(0, 42);
     applyLayer();
     MapAssetColl.syncPoly(def);
+    const original = def, snapshot = JSON.stringify(def);
+    saving = true;
+    $id('assetEditSave').disabled = true;
+    const status = $id('assetEditStatus');
+    if (status) status.textContent = 'Сохраняю объект…';
     try {
-      await api.save(def);
-      close();
+      await api.save(JSON.parse(snapshot));
+      if (def === original) {
+        if (JSON.stringify(def) === snapshot && $id('assetEditName').value.slice(0, 42) === original.name) close();
+        else if (status) status.textContent = 'Предыдущие правки сохранены. Сохраните новые изменения.';
+      }
     } catch (err) {
-      if ($id('mapSaveState')) $id('mapSaveState').textContent = 'Сбой .oblab';
+      if (status && def === original) status.textContent = 'Не удалось сохранить объект. Повторите сохранение.';
+    } finally {
+      saving = false;
+      $id('assetEditSave').disabled = false;
     }
   }
 
@@ -431,6 +449,10 @@ window.MapAssetEdit = (() => {
   function bind() {
     if (window.__assetEditBound) return;
     window.__assetEditBound = true;
+    const status = document.createElement('p');
+    status.id = 'assetEditStatus'; status.className = 'hint';
+    status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
+    $id('assetEditSave')?.parentElement.before(status);
     bindSizeControls();
     bindEditorLayout();
     const c = $id('assetEditCanvas');

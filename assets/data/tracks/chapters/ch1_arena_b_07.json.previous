@@ -199,6 +199,21 @@
       "lockRatio": true,
       "flipX": false,
       "flipY": false
+    },
+    {
+      "pack": "arena_5mu4jh",
+      "id": "chatgpt_image_17_sent_2026_g_23_49_02",
+      "x": 1415.4914535531586,
+      "y": 280.43003416093813,
+      "w": 1254,
+      "h": 1254,
+      "ang": 0,
+      "layer": "under",
+      "carLayer": "under",
+      "roadLayer": "over",
+      "lockRatio": true,
+      "flipX": false,
+      "flipY": false
     }
   ],
   "start": {

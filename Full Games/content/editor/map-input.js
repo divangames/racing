@@ -370,6 +370,8 @@ const MapInput = (() => {
     canvas.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+    window.addEventListener('blur', onUp);
     canvas.addEventListener('wheel', onWheel, {passive: false});
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
     window.addEventListener('keydown', (e) => { if (live() && e.code === 'Space') st.spacePan = true; });

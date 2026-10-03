@@ -174,7 +174,7 @@ window.StudioCheck = {
     const roadInput=document.getElementById('mapRoadFile');
     const roadLabel=roadInput&&roadInput.closest('label');
     if(roadLabel&&!document.getElementById('mapRoadReplaceBtn')){
-      const replaceInput=document.createElement('input');replaceInput.type='file';replaceInput.accept=roadInput.accept;replaceInput.hidden=true;
+      const replaceInput=document.createElement('input');replaceInput.type='file';replaceInput.accept=roadInput.accept;replaceInput.hidden=true;replaceInput.setAttribute('aria-label','Замена текстуры дороги');
       const replaceBtn=button('Заменить выбранную дорогу',()=>{
         const src=MapApp.getDocument().theme.roadSrc||'';
         if(!/\/Textures\/road\//i.test(src)){
@@ -268,7 +268,7 @@ window.StudioCheck = {
     document.querySelector('.title').textContent='DiVANEngine';
     try { document.title = 'DiVANEngine'; } catch (err) {}
     const actions=document.createElement('div');actions.className='studio-actions';
-    const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.hidden=true;
+    const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.hidden=true;input.setAttribute('aria-label','Импорт трассы JSON');
     const status=document.createElement('p');status.className='studio-report';status.setAttribute('role','status');
     const summary=document.createElement('div');summary.className='studio-summary';
     const exportBtn=button('Экспорт JSON',()=>{

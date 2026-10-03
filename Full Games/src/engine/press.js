@@ -187,6 +187,10 @@
    * @returns {boolean}
    */
   function hub(c) {
+    if (state === 'developers') {
+      if (isBack(c)) { global.DiVANEngine.credits.close(); sClick(); }
+      return true;
+    }
     if (state === 'title') {
       if (typeof isBack === 'function' ? isBack(c) : c === 'Escape') {
         const menu = global.DiVANEngine && global.DiVANEngine.titleMenu;

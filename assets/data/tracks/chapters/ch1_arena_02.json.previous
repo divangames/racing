@@ -12,7 +12,7 @@
     "map": "arena",
     "weather": "clear",
     "groundSrc": "",
-    "roadSrc": "",
+    "roadSrc": "assets/data/tracks/Textures/road/arena_dirt_01.png",
     "railSrc": "assets/data/tracks/Textures/rails/bort_01.png",
     "groundScale": 2.1,
     "crowdSound": true
@@ -146,5 +146,6 @@
   "shortcuts": [],
   "chapter": 1,
   "chapterId": "ch1_arena",
-  "chapterTitle": "Глава 1 · Арена"
+  "chapterTitle": "Глава 1 · Арена А",
+  "raceClass": "A"
 }

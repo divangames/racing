@@ -57,7 +57,8 @@
     if (selPos < 0) selPos = 0;
     if (charScroll == null || !Number.isFinite(charScroll)) charScroll = selPos;
     const scrollDelta = charWrapDelta(charScroll, selPos, n);
-    charScroll += Math.abs(scrollDelta) < .002 ? scrollDelta : scrollDelta * .2;
+    charScroll = introReduceMotion||global.DiVANEngine.menu?.inputMode?.()==='keyboard'
+      ?selPos:charScroll+(Math.abs(scrollDelta)<.002?scrollDelta:scrollDelta*.2);
     charScroll = ((charScroll % n) + n) % n;
     const cards = ids.map(function (idx, slot) {
       const d = charWrapDelta(charScroll, slot, n);
@@ -102,7 +103,7 @@
       const ay = 358, aw = 46, ah = 86;
       const leftX = clipX + 4, rightX = clipRight - aw - 4;
       const pulse = .72 + Math.sin(gt * 3.2) * .18;
-      g.save(); g.globalAlpha = pulse; g.fillStyle = '#35e0ff';
+      g.save(); g.globalAlpha = pulse; g.fillStyle = global.DiVANEngine.menu?.colors.accent||'#35e0ff';
       g.beginPath(); g.moveTo(leftX + 28, ay + 22); g.lineTo(leftX + 12, ay + ah / 2); g.lineTo(leftX + 28, ay + ah - 22); g.closePath(); g.fill();
       g.beginPath(); g.moveTo(rightX + aw - 28, ay + 22); g.lineTo(rightX + aw - 12, ay + ah / 2); g.lineTo(rightX + aw - 28, ay + ah - 22); g.closePath(); g.fill();
       g.restore();
@@ -116,7 +117,7 @@
     const dotsX = centerX - dotsW / 2;
     for (let p = 0; p < n; p++) {
       const on = p === selPos;
-      g.fillStyle = on ? '#35e0ff' : '#3a3548';
+      g.fillStyle = on ? global.DiVANEngine.menu?.colors.accent||'#35e0ff' : global.DiVANEngine.menu?.colors.line||'#3a3548';
       const dotX = dotsX + p * dotsGap + dotsGap / 2;
       if (on) { rr(g, dotX - 7, dotsY - 3, 14, 6, 3); g.fill(); }
       else { g.beginPath(); g.arc(dotX, dotsY, 2.8, 0, TAU); g.fill(); }
